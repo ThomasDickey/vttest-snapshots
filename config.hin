@@ -1,4 +1,4 @@
-/* $Id: config.hin,v 1.8 1996/08/16 10:46:59 tom Exp $ */
+/* $Id: config.hin,v 1.9 1997/05/18 20:22:03 tom Exp $ */
 
 /* define this if you have the alarm() function */
 #undef HAVE_ALARM
@@ -8,6 +8,9 @@
 
 /* define this if you have the Xenix rdchk() function */
 #undef HAVE_RDCHK
+
+/* define this if the POSIX VDISABLE symbol is defined, not equal to -1 */
+#undef HAVE_POSIX_VDISABLE
 
 /* define this if you have <sgtty.h> */
 #undef HAVE_SGTTY_H

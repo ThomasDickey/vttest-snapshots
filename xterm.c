@@ -1,10 +1,10 @@
-/* $Id: xterm.c,v 1.15 1996/09/28 12:52:34 tom Exp $ */
+/* $Id: xterm.c,v 1.16 1997/04/19 01:00:58 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
 
-#define MCHR(c) (c - ' ')
+#define MCHR(c) (((c) - ' ') & 0xff)
 
 #define isQuit(c) (((c) == 'q') || ((c) == 'Q'))
 
