@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.9 1996/09/28 00:31:42 tom Exp $ */
+/* $Id: unix_io.c,v 1.11 1997/05/23 11:00:08 tom Exp $ */
 
 #include <stdarg.h>
 #include <vttest.h>
@@ -84,10 +84,7 @@ instr(void)
     if (i++ == sizeof(result)-2) break;
   }
 #else
-#if USE_FCNTL
-  while(read(2,result+i,1) == 1)
-    if (i++ == sizeof(result)-2) break;
-#else
+#if USE_FIONREAD
   while(ioctl(0,FIONREAD,&l1), l1 > 0L) {
     while(l1-- > 0L) {
       read(0,result+i,1);
@@ -95,6 +92,9 @@ instr(void)
     }
   }
 out1:
+#else
+  while(read(2,result+i,1) == 1)
+    if (i++ == sizeof(result)-2) break;
 #endif
 #endif
   result[i] = '\0';
@@ -114,13 +114,20 @@ get_reply(void)
   return instr(); /* cf: vms_io.c */
 }
 
+/*
+ * Read to the next newline, truncating the buffer at BUFSIZ-1 characters
+ */
 void
 inputline(char *s)
 {
   do {
-    int len = gets(s) != 0 ? strlen(s) : 0;
-    if (len > 0 && s[len-1] == '\n')
-      s[--len] = '\0';
+    int ch;
+    char *d = s;
+    while ((ch = getchar()) != EOF && ch != '\n') {
+      if ((d - s) < BUFSIZ-2)
+        *d++ = ch;
+    }
+    *d = 0;
   } while (!*s);
 }
 
@@ -136,14 +143,14 @@ inflush(void)
   while(rdchk(0))
     read(0,&val,1);
 #else
-#if USE_FCNTL
-  while(read(2,&val,1) > 0)
-    ;
-#else
+#if USE_FIONREAD
   long l1;
   ioctl (0, FIONREAD, &l1);
   while(l1-- > 0L)
     read(0,&val,1);
+#else
+  while(read(2,&val,1) > 0)
+    ;
 #endif
 #endif
 }

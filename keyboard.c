@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.22 1996/10/29 22:28:14 tom Exp $ */
+/* $Id: keyboard.c,v 1.23 1997/05/23 10:51:26 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -562,7 +562,7 @@ tst_AnswerBack(MENU_ARGS)
 static int
 tst_AutoRepeat(MENU_ARGS)
 {
-  char arptstring[500];
+  char arptstring[BUFSIZ];
 
   vt_clear(2);
   vt_move(10,1);

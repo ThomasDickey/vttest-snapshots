@@ -1,5 +1,12 @@
-$Id: CHANGES,v 1.60 1997/05/18 20:27:26 tom Exp $
+$Id: CHANGES,v 1.62 1997/05/23 11:01:43 tom Exp $
 -------------------------------------------------------------------------------
+
+970524
+	eliminate 'gets()' calls, which can overflow buffer.
+
+970520
+	implement CF_FCNTL_VS_IOCTL check to make this build on SCO 3.x and
+	CLIX, which are both non-POSIX systems.
 
 970518
 	add CF_POSIX_VDISABLE test to work around gcc 2.6.2 bug.
