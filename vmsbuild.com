@@ -1,11 +1,11 @@
-$! $Id: vmsbuild.com,v 1.3 1996/08/28 23:02:11 tom Exp $
+$! $Id: vmsbuild.com,v 1.5 1996/09/08 20:00:37 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
 $!	VMS system version 6.1, 6.2
 $!	DEC C version 5.0, 5.2
 $!
-$!      Build the option-file
+$!	Build the option-file
 $!
 $ release := 2
 $ open/write optf vms_link.opt
@@ -15,8 +15,11 @@ $ write optf "esc.obj"
 $ write optf "keyboard.obj"
 $ write optf "nonvt100.obj"
 $ write optf "reports.obj"
+$ write optf "reset.obj"
 $ write optf "setup.obj"
+$ write optf "sixel.obj"
 $ write optf "status.obj"
+$ write optf "vt220.obj"
 $ write optf "vt420.obj"
 $ write optf "vt52.obj"
 $ write optf "vms_io.obj"
@@ -70,7 +73,7 @@ $  then
 $
 $   CFLAGS := 'CFLAGS/Diagnostics /Define=("RELEASE=''RELEASE',''DEFS'") /Include=([])
 $
-$  	if "''p1'" .nes. "" then goto 'p1
+$	if "''p1'" .nes. "" then goto 'p1
 $
 $ all :
 $	call make color
@@ -79,8 +82,11 @@ $	call make keyboard
 $	call make main
 $	call make nonvt100
 $	call make reports
+$	call make reset
 $	call make setup
+$	call make sixel
 $	call make status
+$	call make vt220
 $	call make vt420
 $	call make vt52
 $	call make vms_io

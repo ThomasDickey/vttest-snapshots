@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.45 1996/09/05 10:57:28 tom Exp $ */
+/* $Id: esc.c,v 1.49 1996/09/08 21:54:19 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -146,7 +146,7 @@ do_csi(char *fmt, ...)
   va_end(ap);
   FLUSH;
 
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fputs("Send: ", log_fp);
     put_string(log_fp, csi_output());
     va_start(ap, fmt);
@@ -168,7 +168,7 @@ do_dcs(char *fmt, ...)
   fputs(st_output(), stdout);
   FLUSH;
 
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     va_start(ap, fmt);
     fputs("Send: ", log_fp);
     put_string(log_fp, dcs_output());
@@ -184,7 +184,7 @@ esc(char *s)
 {
   printf("%c%s", ESC, s);
 
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fprintf(log_fp, "Send: ");
     put_char(log_fp, ESC);
     put_string(log_fp, s);
@@ -448,6 +448,12 @@ decrqss(char *pn) /* VT200 Request Status-String */
 }
 
 void
+decsace(int flag) /* VT400 Select attribute change extent */
+{
+  do_csi("%d*x", flag ? 2 : 0);
+}
+
+void
 decsasd(int pn) /* VT200 Select active status display */
 {
   do_csi("%d$}", pn);
@@ -498,6 +504,12 @@ decsel(int pn1) /* VT200 selective erase in line */
 }
 
 void
+decsera(int top, int left, int bottom, int right) /* VT400 Selective erase rectangular area */
+{
+  do_csi("%d;%d;%d;%d${", top, left, bottom, right);
+}
+
+void
 decsnls(int pn) /* VT400 Select number of lines per screen */
 {
   do_csi("%d*|", pn);
@@ -515,6 +527,12 @@ decstbm(int pn1, int pn2)  /* Set Top and Bottom Margins */
   if (pn1 || pn2) brc2(pn1, pn2, 'r');
   else            esc("[r");
   /* Good for >24-line terminals */
+}
+
+void
+decstr(void)  /* VT200 Soft terminal reset */
+{
+  do_csi("!p");
 }
 
 void

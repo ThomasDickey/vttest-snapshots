@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.26 1996/09/02 13:14:16 tom Exp $ */
+/* $Id: nonvt100.c,v 1.27 1996/09/05 22:57:58 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -14,49 +14,6 @@ not_impl(MENU_ARGS)
 {
   cup(1,1);
   printf("Sorry, test not implemented:\r\n\r\n  %s", the_title);
-  cup(max_lines-1,1);
-  return MENU_HOLD;
-}
-
-static void
-report_ok(char *ref, char *tst)
-{
-  if ((tst = skip_csi(tst)) == 0)
-    tst = "?";
-  show_result(!strcmp(ref, tst) ? SHOW_SUCCESS : SHOW_FAILURE);
-}
-
-/* Kermit 3.13 and dtterm implement this; it's probably for VT220 */
-static int
-tst_C8C1T(MENU_ARGS)
-{
-  char *report;
-
-  ed(2);
-  cup(5,1);
-  println("This tests the VT200+ control sequence to direct the terminal to emit 8-bit");
-  println("control-sequences instead of <esc> sequences.");
-
-  set_tty_raw(TRUE);
-  set_tty_echo(FALSE);
-
-  s8c1t(1);
-  cup(1,1); dsr(6);
-  report = instr();
-  cup(10,1);
-  printf("8-bit controls enabled: ");
-  chrprint(report);
-  report_ok("1;1R", report);
-
-  s8c1t(0);
-  cup(1,1); dsr(6);
-  report = instr();
-  cup(12,1);
-  printf("8-bit controls disabled: ");
-  chrprint(report);
-  report_ok("1;1R", report);
-
-  restore_ttymodes();
   cup(max_lines-1,1);
   return MENU_HOLD;
 }
@@ -161,7 +118,7 @@ tst_CNL(MENU_ARGS)
 }
 
 /*
- * VT420 & up
+ * VT510 & up
  *
  * There's a comment in the MS-DOS Kermit 3.13 documentation that implies CPL
  * is used to replace RI (reverse-index).  ECMA-48 doesn't specify scrolling
@@ -181,124 +138,6 @@ tst_CPL(MENU_ARGS)
   cup(max_lines-2, 1);
   ed(0);
   println("If your terminal supports CPL, the lines above this are numbered.");
-  return MENU_HOLD;
-}
-
-/*
- * Test DEC's selective-erase (set-protected area) by drawing a box of
- * *'s that will remain, and a big X of *'s that gets cleared..
- */
-int
-tst_DECSCA(MENU_ARGS)
-{
-  int i, j, pass;
-  int tmar = 5;
-  int bmar = max_lines - 8;
-  int lmar = 20;
-  int rmar = min_cols - lmar;
-
-  ed(2);
-
-  for (pass = 0; pass < 2; pass++) {
-    if (pass == 0)
-      decsca(1);
-    for (i = tmar; i <= bmar; i++) {
-      cup(i, lmar);
-      for (j = lmar; j <= rmar; j++) {
-        printf("*");
-      }
-    }
-    if (pass == 0) {
-      decsca(0);
-
-      for (j = 0; j <= 2; j++) {
-        for (i = 1; i < tmar; i++) {
-          cup(i, lmar - tmar + (i+j)); printf("*");
-          cup(i, rmar + tmar - (i+j)); printf("*");
-        }
-        for (i = bmar + 1; i < max_lines; i++) {
-          cup(i, lmar + bmar - i + j); printf("*");
-          cup(i, rmar - bmar + i - j); printf("*");
-        }
-        cup(max_lines/2, min_cols/2);
-        decsed(j);
-      }
-
-      for (i = rmar+1; i <= min_cols; i++) {
-        cup(tmar, i);        printf("*");
-        cup(max_lines/2, i); printf("*");
-      }
-      cup(max_lines/2, min_cols/2);
-      decsel(0); /* after the cursor */
-
-      for (i = 1; i < lmar; i++) {
-        cup(tmar, i);        printf("*");
-        cup(max_lines/2, i); printf("*");
-      }
-      cup(max_lines/2, min_cols/2);
-      decsel(1); /* before the cursor */
-
-      cup(tmar, min_cols/2);
-      decsel(2); /* the whole line */
-
-      cup(max_lines-3, 1);
-      ed(0);
-      println("If your terminal supports DEC protected areas (DECSCA, DECSED, DECSEL),");
-      println("there will be an solid box made of *'s in the middle of the screen.");
-      holdit();
-    }
-  }
-  return MENU_NOHOLD;
-}
-
-/*
- * VT220 & up
- *
- * Test if the terminal can make the cursor invisible
- */
-static int
-tst_DECTCEM(MENU_ARGS)
-{
-  ed(2);
-  cup(1,1);
-  rm("?25");
-  println("The cursor should be invisible");
-  holdit();
-  sm("?25");
-  println("The cursor should be visible again");
-  return MENU_HOLD;
-}
-
-/*
- * VT200 and higher (though VT420 manual says it's VT400 & higher)
- *
- * Test to ensure that 'ech' (erase character) is honored, with no parameter,
- * explicit parameter, and longer than the screen width (to ensure that the
- * terminal doesn't try to wrap-around the erasure).
- */
-int
-tst_ECH(MENU_ARGS)
-{
-  int i;
-
-  ed(2);
-  decaln();
-  for (i = 1; i <= max_lines; i++) {
-    cup(i, min_cols - i - 2);
-    do_csi("X"); /* make sure default-parameter works */
-    cup(i, min_cols - i - 1);
-    printf("*");
-    ech(min_cols);
-    printf("*"); /* this should be adjacent, in the upper-right corner */
-  }
-
-  cup(max_lines-4, 1);
-  ed(0);
-
-  cup(max_lines-4, min_cols - (max_lines + 6));
-  println("diagonal: ^^ (clear)");
-  println("ECH test: there should be E's with a gap before diagonal of **'s");
-  println("The lower-right diagonal region should be cleared.  Nothing else.");
   return MENU_HOLD;
 }
 
@@ -516,78 +355,6 @@ tst_VPA(MENU_ARGS)
 /******************************************************************************/
 
 static int
-tst_PageFormat(MENU_ARGS)
-{
-  static MENU my_menu[] = {
-      { "Exit",                                              0 },
-      { "Test set columns per page (DECSCPP)",               not_impl },
-      { "Test columns mode (DECCOLM)",                       not_impl },
-      { "Test set lines per page (DECSLPP)",                 not_impl },
-      { "Test set left and right margins (DECSLRM)",         not_impl },
-      { "Test set vertical split-screen (DECVSSM)",          not_impl },
-      { "",                                                  0 }
-    };
-
-  do {
-    ed(2);
-    title(0); printf("Page Format Tests");
-    title(2); println("Choose test type:");
-  } while (menu(my_menu));
-  return MENU_NOHOLD;
-}
-
-/******************************************************************************/
-
-static int
-tst_PageMovement(MENU_ARGS)
-{
-  static MENU my_menu[] = {
-      { "Exit",                                              0 },
-      { "Test Next Page (NP)",                               not_impl },
-      { "Test Preceding Page (PP)",                          not_impl },
-      { "Test Page Position Absolute (PPA)",                 not_impl },
-      { "Test Page Position Backward (PPB)",                 not_impl },
-      { "Test Page Position Relative (PPR)",                 not_impl },
-      { "",                                                  0 }
-    };
-
-  do {
-    ed(2);
-    title(0); printf("Page Format Tests");
-    title(2); println("Choose test type:");
-  } while (menu(my_menu));
-  return MENU_NOHOLD;
-}
-
-/******************************************************************************/
-
-/* FIXME: some of the VT420 stuff should be here... */
-
-static int
-tst_vt220(MENU_ARGS)
-{
-  static MENU my_menu[] = {
-      { "Exit",                                              0 },
-      { "Test page-format controls",                         tst_PageFormat },
-      { "Test page-movement controls",                       tst_PageMovement },
-      { "Test Erase Char (ECH)",                             tst_ECH },
-      { "Test Previous-Line (CPL)",                          tst_CPL },
-      { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
-      { "Test 8-bit controls (C7C1T/C8C1T)",                 tst_C8C1T },
-      { "",                                                  0 }
-    };
-
-  do {
-    ed(2);
-    title(0); printf("VT220/VT320 Tests");
-    title(2); println("Choose test type:");
-  } while (menu(my_menu));
-  return MENU_NOHOLD;
-}
-
-/******************************************************************************/
-
-static int
 tst_ecma48_curs(MENU_ARGS)
 {
   static MENU my_menu[] = {
@@ -598,6 +365,7 @@ tst_ecma48_curs(MENU_ARGS)
       { "Test Cursor-Horizontal-Index (CHT)",                tst_CHT },
       { "Test Line-Position-Absolute (VPA)",                 tst_VPA },
       { "Test Next-Line (CNL)",                              tst_CNL },
+      { "Test Previous-Line (CPL)",                          tst_CPL },
       { "",                                                  0 }
     };
 

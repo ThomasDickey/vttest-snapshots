@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.53 1996/09/02 13:35:26 tom Exp $ */
+/* $Id: main.c,v 1.57 1996/09/08 22:47:20 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -25,6 +25,7 @@ FILE *log_fp       = 0;
 char *current_menu = "";
 int brkrd;
 int reading;
+int log_disabled  = FALSE;
 int max_lines     = 24;
 int max_cols      = 132;
 int min_cols      = 80;
@@ -38,7 +39,7 @@ jmp_buf intrenv;
 static void
 usage(void)
 {
-  fprintf(stderr, "Usage: vttest [-l] [-p] [-8] [24x80.132]\n");
+  fprintf(stderr, "Usage: vttest [-l] [-p] [-8] [-f font] [24x80.132]\n");
   exit(EXIT_FAILURE);
 }
 
@@ -67,8 +68,17 @@ main(int argc, char *argv[])
     if (*opt == '-') {
       while (*++opt != '\0') {
 	switch (*opt) {
+	case 'f':
+          if (!*++opt) {
+            if (argc-- < 1)
+              usage();
+            opt = *++argv;
+          }
+          setup_softchars(opt);
+          opt = "?";
+          break;
 	case 'l':
-	  log_fp = fopen("vttest.log", "w");
+          enable_logging();
 	  break;
 	case 'p':
 	  use_padding = TRUE;
@@ -127,7 +137,7 @@ main(int argc, char *argv[])
   initterminal(0);
 #endif
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf("VT100 test program, version %d.%d", RELEASE, PATCHLEVEL);
 
     title(1);
@@ -241,8 +251,8 @@ tst_movements(MENU_ARGS)
   }
   deccolm(FALSE);
 
-  ed(2);
-  cup(1,1);
+  vt_clear(2);
+  vt_move(1,1);
   println("Test of cursor-control characters inside ESC sequences.");
   println("Below should be two identical lines:");
   println("");
@@ -255,8 +265,8 @@ tst_movements(MENU_ARGS)
   println("");
   holdit();
 
-  ed(2);
-  cup(1,1);
+  vt_clear(2);
+  vt_move(1,1);
   println("Test of leading zeros in ESC sequences.");
   printf("Two lines below you should see the sentence \"%s\".",ctext);
   for (col = 1; *ctext; col++)
@@ -718,7 +728,8 @@ tst_bugs(MENU_ARGS)
   "" };
 
   do {
-    ed(2); cup(1,1);
+    vt_clear(2);
+    vt_move(1,1);
     for (i = 0; *hmsg[i]; i++)
       println(hmsg[i]);
     println("");
@@ -998,39 +1009,19 @@ bug_s(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
-int
-tst_rst(MENU_ARGS)
-{
-  /*
-   * Test of
-   *    - RIS    (Reset to Initial State)
-   *    - DECTST (invoke terminal test)
-   */
-
-  cup(10,1);
-  printf ("The terminal will now be RESET. ");
-  holdit();
-  ris();
-  zleep(5000);          /* Wait 5.0 seconds */
-  cup(10,1);
-  println("The terminal is now RESET. Next, the built-in confidence test");
-  printf("%s", "will be invoked. ");
-  holdit();
-  ed(2);
-  dectst(1);
-  zleep(5000);          /* Wait 5.0 seconds */
-  cup(10,1);
-  println("If the built-in confidence test found any errors, a code");
-  printf("%s", "is visible above. ");
-  return MENU_HOLD;
-}
-
 void
 initterminal(int pn)
 {
   init_ttymodes(pn);
+  setup_terminal("");
+}
 
   /* Set up my personal prejudices      */
+int
+setup_terminal(MENU_ARGS)
+{
+  if (LOG_ENABLED)
+    fprintf(log_fp, "Setup Terminal with test-defaults\n");
 
   esc("<");           /* Enter ANSI mode (if in VT52 mode)    */
   rm("?1");           /* cursor keys normal   */
@@ -1043,12 +1034,16 @@ initterminal(int pn)
   sm("?40");          /* Enable 80/132 switch */
   decstbm(0,0);       /* No scroll region     */
   sgr("0");           /* Normal character attributes  */
+
+  return MENU_NOHOLD;
 }
 
 void
 bye (void)
 {
   /* Force my personal prejudices upon the poor luser   */
+  if (LOG_ENABLED)
+    fprintf(log_fp, "Cleanup & exit\n");
 
   esc("<");           /* Enter ANSI mode (if in VT52 mode)    */
   rm("?1");           /* cursor keys normal   */
@@ -1062,8 +1057,8 @@ bye (void)
 
   /* Say goodbye */
 
-  ed(2);
-  cup(12,30);
+  vt_clear(2);
+  vt_move(12,30);
   printf("That's all, folks!\n");
   printf("\n\n\n");
   inflush();
@@ -1110,6 +1105,20 @@ scanto(char *str, int *pos, int toc)
     return(result);
   }
   return(0);
+}
+
+int
+scan_any(char *str, int *pos, int toc)
+{
+  int save = *pos;
+  int value = scanto(str, pos, ';');
+  if (value == 0) {
+    *pos = save;
+    value = scanto(str, pos, toc);
+    if (str[*pos] != '\0')
+      value = 0;
+  }
+  return value;
 }
 
 static char *
@@ -1164,11 +1173,11 @@ menu(MENU *table)
 
     if (choice < 0) {
       for (choice = 0; choice <= tablesize; choice++) {
-        ed(2);
+        vt_clear(2);
         if (table[choice].dispatch != 0) {
           char *save = push_menu(choice);
           char *name = table[choice].description;
-          if (log_fp != 0)
+          if (LOG_ENABLED)
             fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
           if ((*table[choice].dispatch)(name) == MENU_HOLD)
             holdit();
@@ -1177,11 +1186,11 @@ menu(MENU *table)
       }
       return 1;
     } else if (choice <= tablesize) {
-      ed(2);
+      vt_clear(2);
       if (table[choice].dispatch != 0) {
         char *save = push_menu(choice);
         char *name = table[choice].description;
-        if (log_fp != 0)
+        if (LOG_ENABLED)
           fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
         if ((*table[choice].dispatch)(name) != MENU_NOHOLD)
           holdit();
@@ -1199,7 +1208,7 @@ chrprint (char *s)
   int i;
 
   printf("  ");
-  sgr("7");
+  vt_hilite(TRUE);
   printf(" ");
   for (i = 0; s[i] != '\0'; i++) {
     int c = (unsigned char)s[i];
@@ -1208,7 +1217,7 @@ chrprint (char *s)
     else
       printf("%c ", c);
   }
-  sgr("");
+  vt_hilite(FALSE);
 }
 
 /*
@@ -1286,7 +1295,7 @@ strip_terminator(char *src)
 	  src[--have] = '\0';
 	}
   }
-  if (!ok && log_fp != 0)
+  if (!ok && LOG_ENABLED)
     fprintf(log_fp, "Missing ST\n");
   return ok;
 }
@@ -1294,7 +1303,7 @@ strip_terminator(char *src)
 void
 title(int offset)
 {
-  cup(TITLE_LINE+offset, 10);
+  vt_move(TITLE_LINE+offset, 10);
   if (offset == 0 && *current_menu)
     printf("Menu %s: ", current_menu);
 }
@@ -1339,11 +1348,47 @@ show_result(const char *fmt, ...)
   my_vfprintf(stdout, ap, fmt);
   va_end(ap);
 
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fputs("Result: ", log_fp);
     va_start(ap, fmt);
     my_vfprintf(log_fp, ap, fmt);
     va_end(ap);
     fputc('\n', log_fp);
   }
+}
+
+/*
+ * Bypass normal logging for control sequences that are used only to format
+ * the test results.
+ */
+void
+vt_clear(int code)
+{
+  log_disabled++;
+  ed(code);
+  log_disabled--;
+}
+
+void
+vt_el(int code)
+{
+  log_disabled++;
+  el(code);
+  log_disabled--;
+}
+
+void
+vt_move(int row, int col)
+{
+  log_disabled++;
+  cup(row, col);
+  log_disabled--;
+}
+
+void
+vt_hilite(int flag)
+{
+  log_disabled++;
+  sgr(flag ? "7" : "");
+  log_disabled--;
 }

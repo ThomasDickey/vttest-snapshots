@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.31 1996/09/05 10:57:38 tom Exp $ */
+/* $Id: esc.h,v 1.33 1996/09/08 21:54:10 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -98,6 +98,7 @@ void decrara(int top, int left, int bottom, int right, int attr);
 void decrc(void);
 void decreqtparm(int pn);
 void decrqss(char *pn);
+void decsace(int flag);
 void decsasd(int pn);
 void decsc(void);
 void decsca(int pn1);
@@ -105,9 +106,11 @@ void decsclm(int flag);
 void decscnm(int flag);
 void decsed(int pn1);
 void decsel(int pn1);
+void decsera(int top, int left, int bottom, int right);
 void decsnls(int pn);
 void decssdt(int pn);
 void decstbm(int pn1, int pn2);
+void decstr(void);
 void decswl(void);
 void dectst(int pn);
 void dl(int pn);

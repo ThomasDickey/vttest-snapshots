@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.15 1996/09/05 10:40:53 tom Exp $ */
+/* $Id: vms_io.c,v 1.16 1996/09/08 22:05:15 tom Exp $ */
 
 #define DEBUG
 
@@ -40,7 +40,7 @@ static int      cr_flag = TRUE;
 static void
 give_up(int status)
 {
-  if (log_fp)
+  if (LOG_ENABLED)
     fprintf(log_fp, "status=%#x\n", status);
   close_tty();
   exit(status);
@@ -116,7 +116,7 @@ read_vms_tty(int length, int timed)
     timeout = 2; /* seconds */
 
 #ifdef DEBUG
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fprintf(log_fp, "reading: len=%d, flags=%#x\n", length, my_flags);
     fflush(log_fp);
   }
@@ -124,7 +124,7 @@ read_vms_tty(int length, int timed)
   status = sys$qiow(EFN, iochan, my_flags,
     &iosb, 0, 0, ibuf, length, timeout, term, 0, 0);
 #ifdef DEBUG
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fprintf(log_fp,
           "read: st=%d, cnt=%#x, dev=%#x\n",
           iosb.status, iosb.count, iosb.dev_dep_data);
@@ -186,7 +186,7 @@ instr(void)
   memcpy(result+1, ibuf, nibuf);
   result[1 + nibuf] = '\0';
 
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fputs("Reply: ", log_fp);
     put_string(log_fp, result);
     fputs("\n", log_fp);
@@ -214,7 +214,7 @@ get_reply(void)
   memcpy(result+1, ibuf, nibuf);
   result[1 + nibuf] = '\0';
 
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fputs("Reply: ", log_fp);
     put_string(log_fp, result);
     fputs("\n", log_fp);
@@ -314,7 +314,7 @@ init_ttymodes(int pn)
   || iosb.status != SS$_NORMAL)
     give_up(status);
 #ifdef DEBUG
-  if (log_fp != 0)
+  if (LOG_ENABLED)
     fprintf(log_fp,
           "sense: st=%d, cnt=%#x, dev=%#x\n",
           iosb.status, iosb.count, iosb.dev_dep_data);
@@ -337,7 +337,7 @@ init_ttymodes(int pn)
   min_cols  = newmode[0]>>16;
   tty_speed = lookup_speed(iosb.count & 0xff);
 
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fprintf(log_fp, "TTY modes %#x, %#x, %#x\n", oldmode[0], oldmode[1], oldmode[2]);
     fprintf(log_fp, "iosb.count = %#x\n", iosb.count);
     fprintf(log_fp, "iosb.dev_dep_data = %#x\n", iosb.dev_dep_data);
