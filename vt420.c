@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.49 1996/09/27 10:17:58 tom Exp $ */
+/* $Id: vt420.c,v 1.50 1996/10/30 00:33:35 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -78,17 +78,16 @@ any_decrqss(char *msg, char *func)
   report = get_reply();
   vt_move(3,10);
   chrprint(report);
-  if ((report = skip_dcs(report)) != 0
-   && strip_terminator(report)
-   && strip_suffix(report, func)) {
-    if (!strncmp(report, "1$r", 3))
+  switch (parse_decrqss(report, func)) {
+    case 1:
       show = "ok (valid request)";
-    else if (!strncmp(report, "0$r", 3))
+      break;
+    case 0:
       show = "invalid request";
-    else
+      break;
+    default:
       show = SHOW_FAILURE;
-  } else {
-    show = SHOW_FAILURE;
+      break;
   }
   show_result(show);
 

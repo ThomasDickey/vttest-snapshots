@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.45 1996/10/28 00:42:55 tom Exp $ */
+/* $Id: vttest.h,v 1.46 1996/10/30 00:34:06 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -200,9 +200,11 @@ extern int bug_f(MENU_ARGS);
 extern int bug_l(MENU_ARGS);
 extern int bug_s(MENU_ARGS);
 extern int bug_w(MENU_ARGS);
+extern int get_level(void);
 extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
 extern int not_impl(MENU_ARGS);
+extern int parse_decrqss(char *report, char *func);
 extern int set_level(int level);
 extern int scan_any(char *str, int *pos, int toc);
 extern int scanto(char *str, int *pos, int toc);
