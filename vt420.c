@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.45 1996/09/11 11:07:26 tom Exp $ */
+/* $Id: vt420.c,v 1.48 1996/09/12 20:12:36 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -58,6 +58,10 @@ any_decrqpsr(MENU_ARGS, int Ps)
   return MENU_HOLD;
 }
 
+/*
+ * FIXME: The VT420 manual says that a valid response begins "DCS 0 $ r",
+ * however I see "DCS 1 $ r" on a real VT420, consistently.
+ */
 static int
 any_decrqss(char *msg, char *func)
 {
@@ -77,9 +81,9 @@ any_decrqss(char *msg, char *func)
   if ((report = skip_dcs(report)) != 0
    && strip_terminator(report)
    && strip_suffix(report, func)) {
-    if (!strncmp(report, "0$r", 3))
+    if (!strncmp(report, "1$r", 3))
       show = "ok (valid request)";
-    else if (!strncmp(report, "1$r", 3))
+    else if (!strncmp(report, "0$r", 3))
       show = "invalid request";
     else
       show = SHOW_FAILURE;
@@ -483,11 +487,13 @@ tst_DECBI(MENU_ARGS)
   int last = max_lines - 4;
   int final = min_cols / 4;
 
-  cup(1,1);
   for (n = final; n > 0; n--) {
-    for (m = 0; m < 4; m++)
-      decbi();
-    printf("%3d ", n);
+    cup(1,1);
+    if (n != final) {
+      for (m = 0; m < 4; m++)
+        decbi();
+    }
+    printf("%3d", n);
   }
 
   vt_move(last,1);
@@ -552,6 +558,7 @@ tst_DECCARA(MENU_ARGS)
 
   vt_move(last, 1);
   vt_clear(0);
+
   println(the_title);
   println("There should be an open rectangle formed by reverse-video E's");
   holdit();
@@ -563,6 +570,7 @@ tst_DECCARA(MENU_ARGS)
 
   vt_move(last, 1);
   vt_clear(0);
+
   println(the_title);
   println("There should be an open rectangle formed by reverse-video E's");
   println("combined with wrapping at the margins.");
@@ -641,6 +649,7 @@ tst_DECCRA(MENU_ARGS)
 
   vt_move(max_lines-2, 1);
   vt_clear(0);
+
   println("The box should be copied, overlapping");
   return MENU_HOLD;
 }
@@ -678,6 +687,7 @@ tst_DECERA(MENU_ARGS)
 
   vt_move(max_lines-3,1);
   vt_clear(0);
+
   println(the_title);
   println("There should be a rectangle cleared in the middle of the screen.");
   return MENU_HOLD;
@@ -705,11 +715,13 @@ tst_DECFI(MENU_ARGS)
   int last = max_lines - 4;
   int final = min_cols / 4;
 
-  cup(1,min_cols-4);
   for (n = 1; n <= final; n++) {
-    for (m = 0; m < 4; m++)
-      decfi();
-    printf("%3d ", n);
+    cup(1,min_cols-3);
+    printf("%3d", n); /* leaves cursor in rightmost column */
+    if (n != final) {
+      for (m = 0; m < 4; m++)
+        decfi();
+    }
   }
 
   vt_move(last,1);
@@ -732,6 +744,7 @@ tst_DECFRA(MENU_ARGS)
 
   vt_move(max_lines-3,1);
   vt_clear(0);
+
   println(the_title);
   println("There should be a rectangle filled in the middle of the screen.");
   return MENU_HOLD;
@@ -848,6 +861,7 @@ tst_DECRARA(MENU_ARGS)
 
   vt_move(last, 1);
   vt_clear(0);
+
   println(the_title);
   println("There should be an open rectangle formed by reverse-video E's");
   holdit();
@@ -857,8 +871,10 @@ tst_DECRARA(MENU_ARGS)
   decrara(top, left, bottom, right, 7); /* invert a rectangle) */
   decrara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
 
-  vt_move(last+1, 1);
+  vt_move(last, 1);
   vt_clear(0);
+
+  println(the_title);
   println("There should be an open rectangle formed by reverse-video E's");
   println("combined with wrapping at the margins.");
   return MENU_HOLD;
@@ -1154,6 +1170,7 @@ tst_DECSERA(MENU_ARGS)
 
   vt_move(last, 1);
   vt_clear(0);
+
   println(the_title);
   println("There should be an open rectangle formed by blanks on a background of E's");
 

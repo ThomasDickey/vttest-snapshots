@@ -1,4 +1,4 @@
-$Id: CHANGES,v 1.41 1996/09/11 11:03:41 tom Exp $
+$Id: CHANGES,v 1.42 1996/09/12 23:53:42 tom Exp $
 -------------------------------------------------------------------------------
 
 VERSION 2.6
@@ -8,7 +8,8 @@ VERSION 2.6
 	VT420) tests.
 
 960908
-	implement DECDLD tests.
+	implement DECDLD tests. Tested with fonts from "The VT200 TOOLKIT" by
+	Tabik & DiGiantomasso, Professional Software (availble via DECUS).
 
 960905
 	implement DECCARA, DECRARA, DECSACE, DECSERA tests.

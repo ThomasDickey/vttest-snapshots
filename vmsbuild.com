@@ -1,9 +1,9 @@
-$! $Id: vmsbuild.com,v 1.5 1996/09/08 20:00:37 tom Exp $
+$! $Id: vmsbuild.com,v 1.6 1996/09/12 23:58:37 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
-$!	VMS system version 6.1, 6.2
-$!	DEC C version 5.0, 5.2
+$!	VMS system version 5.4-2
+$!	VAX-C version 3.2
 $!
 $!	Build the option-file
 $!

@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.57 1996/09/08 22:47:20 tom Exp $ */
+/* $Id: main.c,v 1.58 1996/09/11 22:35:46 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -402,7 +402,7 @@ tst_screen(MENU_ARGS)
   printf(
   "Origin mode test. This line should be at the bottom of the screen.");
   cup(1,1);
-  printf("%s", "This line should be at the top if the screen. ");
+  printf("%s", "This line should be at the top of the screen. ");
   holdit();
   decstbm(1,max_lines);
 
