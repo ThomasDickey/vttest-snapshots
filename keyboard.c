@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.28 2002/04/22 22:50:49 tom Exp $ */
+/* $Id: keyboard.c,v 1.31 2004/08/03 19:09:38 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -509,7 +509,7 @@ show_function_keys(int flag)
 }
 
 static void
-show_keyboard(int flag, char *scs_params)
+show_keyboard(int flag GCC_UNUSED, char *scs_params)
 {
   int i;
 
@@ -582,7 +582,7 @@ tst_AutoRepeat(MENU_ARGS)
   println("");
   println("Hold down an alphanumeric key for a while, then push RETURN.");
   printf("%s", "Auto Repeat OFF: ");
-  rm("?8"); /* DECARM */
+  decarm(FALSE);  /* DECARM */
   inputline(arptstring);
   if (LOG_ENABLED)
     fprintf(log_fp, "Input: %s\n", arptstring);
@@ -593,7 +593,7 @@ tst_AutoRepeat(MENU_ARGS)
 
   println("Hold down an alphanumeric key for a while, then push RETURN.");
   printf("%s", "Auto Repeat ON: ");
-  sm("?8"); /* DECARM */
+  decarm(TRUE);
   inputline(arptstring);
   if (LOG_ENABLED)
     fprintf(log_fp, "Input: %s\n", arptstring);
@@ -613,7 +613,7 @@ tst_ControlKeys(MENU_ARGS)
   char temp[80];
   char *kbds = strcpy(temp, " ");
 
-  static struct ckey {
+  static struct {
       int  ccount;
       char *csymbol;
   } ckeytab [] = {
@@ -721,8 +721,7 @@ tst_CursorKeys(MENU_ARGS)
   set_tty_echo(FALSE);
 
   for (ckeymode = 0; ckeymode <= 2; ckeymode++) {
-    if (ckeymode) sm("?1"); /* DECCKM */
-    else          rm("?1");
+    decckm(ckeymode); /* DECCKM */
 
     show_cursor_keys(1);
     vt_move(21,1); printf("<%s>%20s", curkeymodes[ckeymode], "");
@@ -752,7 +751,7 @@ tst_CursorKeys(MENU_ARGS)
     }
   }
 
-  rm("?1");
+  decckm(FALSE);
   restore_level(&save);
   vt_move(max_lines-1,1); vt_el(0);
   restore_ttymodes();

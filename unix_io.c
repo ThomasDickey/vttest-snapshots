@@ -1,11 +1,11 @@
-/* $Id: unix_io.c,v 1.12 1999/01/20 23:09:56 tom Exp $ */
+/* $Id: unix_io.c,v 1.17 2004/08/04 00:40:34 tom Exp $ */
 
 #include <stdarg.h>
 #include <vttest.h>
 #include <esc.h>
 
 static void
-give_up(int sig)
+give_up(SIG_ARGS GCC_UNUSED)
 {
   if (LOG_ENABLED) {
     fprintf(log_fp, "** killing program due to timeout\n");
@@ -29,24 +29,25 @@ reset_inchar(void)
 char
 inchar(void)
 {
-  int lval; char ch;
+  int lval;
+  char ch = 0;
 
   fflush(stdout);
   lval = last_char;
   brkrd = FALSE;
   reading = TRUE;
-#if HAVE_ALARM
+#ifdef HAVE_ALARM
   signal(SIGALRM, give_up);
-  alarm(60);	/* timeout after 1 minute, in case user's keyboard is hung */
+  alarm(60);    /* timeout after 1 minute, in case user's keyboard is hung */
 #endif
-  read(0,&ch,1);
-#if HAVE_ALARM
+  read(0, &ch, 1);
+#ifdef HAVE_ALARM
   alarm(0);
 #endif
   reading = FALSE;
 #ifdef DEBUG
   {
-    FILE *fp = fopen("ttymodes.log","a");
+    FILE *fp = fopen("ttymodes.log", "a");
     if (fp != 0) {
       fprintf(fp, "%d>%#x\n", brkrd, ch);
       fclose(fp);
@@ -57,9 +58,9 @@ inchar(void)
     last_char = 0177;
   else
     last_char = ch;
-  if ((last_char==0177) && (last_char==lval))
+  if ((last_char == 0177) && (last_char == lval))
     give_up(SIGTERM);
-  return(last_char);
+  return (last_char);
 }
 
 /*
@@ -71,7 +72,7 @@ char *
 instr(void)
 {
 #if USE_FIONREAD
-  long l1;
+  int l1;
 #endif
   int i;
   static char result[1024];
@@ -81,23 +82,26 @@ instr(void)
 /* Wait 0.1 seconds (1 second in vanilla UNIX) */
   zleep(100);
   fflush(stdout);
-#if HAVE_RDCHK
-  while(rdchk(0)) {
-    read(0,result+i,1);
-    if (i++ == sizeof(result)-2) break;
+#ifdef HAVE_RDCHK
+  while (rdchk(0)) {
+    read(0, result + i, 1);
+    if (i++ == sizeof(result) - 2)
+      break;
   }
 #else
 #if USE_FIONREAD
-  while(ioctl(0,FIONREAD,&l1), l1 > 0L) {
-    while(l1-- > 0L) {
-      read(0,result+i,1);
-      if (i++ == sizeof(result)-2) goto out1;
+  while (ioctl(0, FIONREAD, &l1), l1 > 0L) {
+    while (l1-- > 0L) {
+      read(0, result + i, 1);
+      if (i++ == sizeof(result) - 2)
+        goto out1;
     }
   }
 out1:
 #else
-  while(read(2,result+i,1) == 1)
-    if (i++ == sizeof(result)-2) break;
+  while (read(2, result + i, 1) == 1)
+    if (i++ == sizeof(result) - 2)
+      break;
 #endif
 #endif
   result[i] = '\0';
@@ -108,13 +112,13 @@ out1:
     fputs("\n", log_fp);
   }
 
-  return(result);
+  return (result);
 }
 
 char *
 get_reply(void)
 {
-  return instr(); /* cf: vms_io.c */
+  return instr();   /* cf: vms_io.c */
 }
 
 /*
@@ -127,7 +131,7 @@ inputline(char *s)
     int ch;
     char *d = s;
     while ((ch = getchar()) != EOF && ch != '\n') {
-      if ((d - s) < BUFSIZ-2)
+      if ((d - s) < BUFSIZ - 2)
         *d++ = ch;
     }
     *d = 0;
@@ -142,18 +146,17 @@ inflush(void)
 {
   int val;
 
-#if HAVE_RDCHK
-  while(rdchk(0))
-    read(0,&val,1);
+#ifdef HAVE_RDCHK
+  while (rdchk(0))
+    read(0, &val, 1);
 #else
 #if USE_FIONREAD
   long l1;
-  ioctl (0, FIONREAD, &l1);
-  while(l1-- > 0L)
-    read(0,&val,1);
+  ioctl(0, FIONREAD, &l1);
+  while (l1-- > 0L)
+    read(0, &val, 1);
 #else
-  while(read(2,&val,1) > 0)
-    ;
+  while (read(2, &val, 1) > 0) ;
 #endif
 #endif
 }
@@ -173,7 +176,9 @@ readnl(void)
   fflush(stdout);
   brkrd = FALSE;
   reading = TRUE;
-  do { read(0,&ch,1); } while(ch != '\n' && !brkrd);
+  do {
+    read(0, &ch, 1);
+  } while (ch != '\n' && !brkrd);
   if (brkrd)
     give_up(SIGTERM);
   reading = FALSE;
@@ -185,12 +190,13 @@ readnl(void)
 void
 zleep(int t)
 {
-#if HAVE_USLEEP
+#ifdef HAVE_USLEEP
   unsigned msecs = t * 1000;
   usleep(msecs);
 #else
   unsigned secs = t / 1000;
-  if (secs == 0) secs = 1;
-  sleep(secs);	/* UNIX can only sleep whole seconds */
+  if (secs == 0)
+    secs = 1;
+  sleep(secs);  /* UNIX can only sleep whole seconds */
 #endif
 }

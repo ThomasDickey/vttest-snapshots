@@ -1,4 +1,4 @@
-$! $Id: vmsbuild.com,v 1.11 2003/02/15 16:16:18 tom Exp $
+$! $Id: vmsbuild.com,v 1.13 2004/08/01 20:37:59 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
@@ -12,6 +12,7 @@ $ open/write optf vms_link.opt
 $ write optf "Identification=""VtTest ''release'.7"""
 $ write optf "charsets.obj"
 $ write optf "color.obj"
+$ write optf "draw.obj"
 $ write optf "esc.obj"
 $ write optf "keyboard.obj"
 $ write optf "mouse.obj"
@@ -24,6 +25,7 @@ $ write optf "sixel.obj"
 $ write optf "status.obj"
 $ write optf "tek4014.obj"
 $ write optf "vt220.obj"
+$ write optf "vt320.obj"
 $ write optf "vt420.obj"
 $ write optf "vt52.obj"
 $ write optf "vms_io.obj"
@@ -82,6 +84,7 @@ $
 $ all :
 $	call make charsets
 $	call make color
+$	call make draw
 $	call make esc
 $	call make keyboard
 $	call make main
@@ -95,6 +98,7 @@ $	call make sixel
 $	call make status
 $	call make tex4014
 $	call make vt220
+$	call make vt320
 $	call make vt420
 $	call make vt52
 $	call make vms_io

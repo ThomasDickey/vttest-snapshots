@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.14 1997/05/20 19:53:01 tom Exp $ */
+/* $Id: ttymodes.c,v 1.16 2004/08/04 00:32:06 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -58,7 +58,7 @@ disable_control_chars(TTY *modes)
 # if USE_POSIX_TERMIOS
     int n;
     int temp;
-#   if HAVE_POSIX_VDISABLE
+#   ifdef HAVE_POSIX_VDISABLE
       temp = _POSIX_VDISABLE;
 #   else
       errno = 0;
@@ -122,9 +122,9 @@ void dump_ttymodes(char *tag, int flag)
     fprintf(log_fp, "%s (%d):\n", tag, flag);
 # if USE_POSIX_TERMIOS || USE_TERMIO
     tcgetattr(0, &tmp_modes);
-    fprintf(log_fp, " iflag %08lo\n", tmp_modes.c_iflag);
-    fprintf(log_fp, " oflag %08lo\n", tmp_modes.c_oflag);
-    fprintf(log_fp, " lflag %08lo\n", tmp_modes.c_lflag);
+    fprintf(log_fp, " iflag %08o\n", tmp_modes.c_iflag);
+    fprintf(log_fp, " oflag %08o\n", tmp_modes.c_oflag);
+    fprintf(log_fp, " lflag %08o\n", tmp_modes.c_lflag);
     if (!tmp_modes.c_lflag & ICANON) {
       fprintf(log_fp, " %d:min  =%d\n", VMIN,  tmp_modes.c_cc[VMIN]);
       fprintf(log_fp, " %d:time =%d\n", VTIME, tmp_modes.c_cc[VTIME]);
@@ -183,7 +183,7 @@ void init_ttymodes(int pn)
     new_modes.sg_flags = old_modes.sg_flags | CBREAK;
 # endif
   set_ttymodes(&new_modes);
-# if HAVE_FCNTL_H
+# ifdef HAVE_FCNTL_H
   close(2);
   open("/dev/tty", O_RDWR|O_NDELAY);
 # endif
@@ -207,9 +207,9 @@ set_tty_crmod(int enabled)
 #ifdef UNIX
 # if USE_POSIX_TERMIOS || USE_TERMIO
 #   if USE_POSIX_TERMIOS
-#     define MASK_CRMOD ((unsigned long) (ICRNL | IXON))
+#     define MASK_CRMOD ((unsigned) (ICRNL | IXON))
 #   else
-#     define MASK_CRMOD ((unsigned long) (ICRNL))
+#     define MASK_CRMOD ((unsigned) (ICRNL))
 #   endif
     if (enabled) {
       new_modes.c_iflag |= MASK_CRMOD;
@@ -266,7 +266,7 @@ set_tty_raw(int enabled)
     set_ttymodes(&new_modes);
     set_tty_crmod(FALSE);
 # else /* USE_SGTTY */
-#   if HAVE_FCNTL_H
+#   ifdef HAVE_FCNTL_H
       new_modes.sg_flags &= ~CBREAK;
 #   endif
     new_modes.sg_flags |= RAW;
@@ -287,7 +287,7 @@ set_tty_raw(int enabled)
     new_modes = old_modes;      /* FIXME */
 # else /* USE_SGTTY */
     new_modes.sg_flags &= ~RAW;
-#   if HAVE_FCNTL_H
+#   ifdef HAVE_FCNTL_H
       new_modes.sg_flags |= CBREAK;
 #   endif
     ioctl(0, TIOCSETC, &old_tchars);

@@ -1,4 +1,4 @@
-# $Id: descrip.mms,v 1.13 2003/03/01 19:40:49 tom Exp $
+# $Id: descrip.mms,v 1.15 2004/08/01 20:37:59 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
@@ -13,6 +13,7 @@ CFLAGS	= /Listing /Include=([]) $(DEFINES)
 C_SRC = \
 	charsets.c \
 	color.c \
+	draw.c \
 	esc.c \
 	keyboard.c \
 	main.c \
@@ -29,16 +30,19 @@ C_SRC = \
 	unix_io.c \
 	vms_io.c \
 	vt220.c \
+	vt320.c \
 	vt420.c \
 	vt52.c \
 	xterm.c
 H_SRC = \
 	vttest.h \
+	draw.h \
 	esc.h \
 	ttymodes.h
 OBJS = \
 	charsets.obj, \
 	color.obj, \
+	draw.obj, \
 	esc.obj, \
 	keyboard.obj, \
 	main.obj, \
@@ -53,6 +57,7 @@ OBJS = \
 	tek4014.obj, \
 	vms_io.obj, \
 	vt220.obj, \
+	vt320.obj, \
 	vt420.obj, \
 	vt52.obj, \
 	xterm.obj

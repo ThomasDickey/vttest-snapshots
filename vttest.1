@@ -1,4 +1,4 @@
-.\" $Id: vttest.1,v 1.10 2001/12/01 00:52:48 tom Exp $
+.\" $Id: vttest.1,v 1.11 2004/08/01 19:22:07 tom Exp $
 .TH VTTEST 1 "LOCAL"
 .
 .SH NAME
@@ -13,9 +13,9 @@ is a program designed to test the functionality of a VT100 terminal
 (or emulator thereof).
 It tests both display (escape sequence handling) and keyboard.
 .PP
-The program is menu\-driven and contains full on\-line operating instructions.
-To run a given menu\-item, you must enter its number.
-You can run all menu\-items (for a given level) by entering an asterisk,
+The program is menu-driven and contains full on-line operating instructions.
+To run a given menu-item, you must enter its number.
+You can run all menu-items (for a given level) by entering an asterisk,
 i.e, `*'.
 .
 .SH OPTIONS
@@ -26,16 +26,16 @@ may specify 24x80.80, for example, to avoid a misleading display.
 .PP
 Other options are:
 .TP 5
-.BI \-f " file"
+.BI -f " file"
 specify a file containing a DRCS (soft character definition) string.
 .TP 5
-.B \-l
+.B -l
 log test results to \fIvttest.log\fP.
 .TP 5
-.B \-p
+.B -p
 use padding, e.g., for a VT100 connected to a high-speed line.
 .TP 5
-.B \-8
+.B -8
 use 8-bit controls (this can be changed with a menu option).
 .
 .SH AUTHOR

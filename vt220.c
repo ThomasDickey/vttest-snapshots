@@ -1,7 +1,8 @@
-/* $Id: vt220.c,v 1.11 1999/10/08 00:26:40 tom Exp $ */
+/* $Id: vt220.c,v 1.17 2004/08/02 23:41:54 tom Exp $ */
 
 /*
- * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002)
+ * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
+ * Reference:  VT220 Program Reference Manual (EK-VT220-RM-002).
  */
 #include <vttest.h>
 #include <ttymodes.h>
@@ -74,16 +75,29 @@ show_KeyboardStatus(char *report)
     case 11:  show = "Swiss (German)";       break;
     case 12:  show = "Swedish";              break;
     case 13:  show = "Norwegian/Danish";     break;
-    case 14:  show = "French";               break;
-    case 15:  show = "Spanish";              break;
-    case 16:  show = "Portugese";            break;
-    case 17:  show = "Hebrew";               break; /* FIXME: kermit says 14 */
+    case 14:  show = "French/Belgian";       break;
+    case 15:  show = "Spanish Int.";         break;
+    case 16:  show = "Portugese";            break; /* vt3XX */
+    case 19:  show = "Hebrew";               break; /* vt5XX: kermit says 14 */
+    case 22:  show = "Greek";                break; /* vt5XX */
+    case 28:  show = "Canadian (English)";   break; /* vt4XX */
+    case 29:  show = "Turkish Q/Turkish";    break; /* vt5XX */
+    case 30:  show = "Turkish F/Turkish";    break; /* vt5XX */
+    case 31:  show = "Hungarian";            break; /* vt5XX */
+    case 32:  show = "Spanish National";     break; /* vt4XX in PC mode */
+    case 33:  show = "Slovak";               break; /* vt5XX */
+    case 34:  show = "Czech";                break; /* vt5XX */
+    case 35:  show = "Polish";               break; /* vt5XX */
+    case 36:  show = "Romanian";             break; /* vt5XX */
+    case 38:  show = "SCS";                  break; /* vt5XX */
+    case 39:  show = "Russian";              break; /* vt5XX */
+    case 40:  show = "Latin American";       break; /* vt5XX */
     default:  show = "unknown";
     }
   }
   show_result(show);
 
-  /* VT420 implements additional parameters past those reported by the VT220 */
+  /* vt420 implements additional parameters past those reported by the VT220 */
   save = pos;
   code = scan_any(report, &pos, 'n');
   if (save != pos) {
@@ -104,22 +118,6 @@ show_KeyboardStatus(char *report)
     }
     show_result(show);
   }
-}
-
-static void
-show_Locator_Status(char *report)
-{
-  int pos = 0;
-  int code = scanto(report, &pos, 'n');
-  char *show;
-
-  switch(code) {
-  case 53: show = "No locator"; break;
-  case 50: show = "Locator ready"; break;
-  case 58: show = "Locator busy"; break;
-  default: show = SHOW_FAILURE;
-  }
-  show_result(show);
 }
 
 static void
@@ -157,7 +155,7 @@ show_UDK_Status(char *report)
 
 /* VT220 & up.
  */
-int
+static int
 tst_S8C1T(MENU_ARGS)
 {
   char *report;
@@ -194,7 +192,7 @@ tst_S8C1T(MENU_ARGS)
  * Test DEC's selective-erase (set-protected area) by drawing a box of
  * *'s that will remain, and a big X of *'s that gets cleared..
  */
-int
+static int
 tst_DECSCA(MENU_ARGS)
 {
   int i, j, pass;
@@ -260,7 +258,7 @@ tst_DECSCA(MENU_ARGS)
  *
  * Test if the terminal can make the cursor invisible
  */
-int
+static int
 tst_DECTCEM(MENU_ARGS)
 {
   vt_move(1,1);
@@ -272,11 +270,12 @@ tst_DECTCEM(MENU_ARGS)
   return MENU_HOLD;
 }
 
-int
+static int
 tst_DECUDK(MENU_ARGS)
 {
   int key;
 
+  /* *INDENT-OFF* */
   static struct {
     int code;
     char *name;
@@ -303,6 +302,7 @@ tst_DECUDK(MENU_ARGS)
     { 32, "F18" },
     { 33, "F19" },
     { 34, "F20" } };
+  /* *INDENT-ON* */
 
   for (key = 0; key < TABLESIZE(keytable); key++) {
     char temp[80];
@@ -337,16 +337,11 @@ tst_DECUDK(MENU_ARGS)
   return MENU_HOLD;
 }
 
+/* vt220 & up */
 int
 tst_DSR_keyboard(MENU_ARGS)
 {
   return any_DSR(PASS_ARGS, "?26n", show_KeyboardStatus);
-}
-
-int
-tst_DSR_locator(MENU_ARGS)
-{
-  return any_DSR(PASS_ARGS, "?53n", show_Locator_Status);
 }
 
 int
@@ -368,7 +363,7 @@ tst_DSR_userkeys(MENU_ARGS)
  * explicit parameter, and longer than the screen width (to ensure that the
  * terminal doesn't try to wrap-around the erasure).
  */
-int
+static int
 tst_ECH(MENU_ARGS)
 {
   int i;
@@ -404,7 +399,6 @@ tst_device_status(MENU_ARGS)
       { "Test Keyboard Status",                              tst_DSR_keyboard },
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
-      { "Test Locator Status",                               tst_DSR_locator },
       { "",                                                  0 }
     };
 
@@ -418,20 +412,43 @@ tst_device_status(MENU_ARGS)
 
 /******************************************************************************/
 
-static int
-tst_terminal_modes(MENU_ARGS)
+int
+tst_vt220_screen(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test Send/Receive mode (SRM)",                      tst_SRM },
       { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
+      { "Test Erase Char (ECH)",                             tst_ECH },
+      { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
       { "",                                                  0 }
     };
 
   do {
     vt_clear(2);
-    title(0); printf("VT220 Terminal Mode Tests");
+    title(0); printf("VT220 Screen-Display Tests");
     title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+
+int
+tst_vt220_reports(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Device Status Report (DSR)",                   tst_device_status },
+      { "",                                                  0 }
+    };
+  /* *INDENT-ON* */
+
+  do {
+    vt_clear(2);
+    title(0) && printf("VT220 Reports");
+    title(2) && println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -443,20 +460,19 @@ tst_vt220(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
+      { "Test reporting functions",                          tst_vt220_reports },
+      { "Test screen-display functions",                     tst_vt220_screen },
       { "Test 8-bit controls (S7C1T/S8C1T)",                 tst_S8C1T },
-      { "Test Device Status Report (DSR)",                   tst_device_status },
-      { "Test Erase Char (ECH)",                             tst_ECH },
       { "Test Printer (MC)",                                 tst_printing },
-      { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
       { "Test Soft Character Sets (DECDLD)",                 tst_softchars },
-      { "Test Terminal Modes",                               tst_terminal_modes },
-      { "Test user-defined keys (DECUDK)",                   tst_DECUDK },
+      { "Test Soft Terminal Reset (DECSTR)",                 tst_DECSTR },
+      { "Test User-Defined Keys (DECUDK)",                   tst_DECUDK },
       { "",                                                  0 }
     };
 
   do {
     vt_clear(2);
-    title(0); printf("VT220/VT320 Tests");
+    title(0); printf("VT220 Tests");
     title(2); println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;

@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.68 2002/04/09 00:12:56 pw Exp $ */
+/* $Id: main.c,v 1.81 2004/08/04 21:44:02 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -155,6 +155,7 @@ main(int argc, char *argv[])
     title(2); println("Choose test type:");
   } while (menu(mainmenu));
   bye();
+  return EXIT_SUCCESS;
 }
 
 int
@@ -169,6 +170,7 @@ tst_movements(MENU_ARGS)
      ED  (Erase in Display)
      EL  (Erase in Line)
      DECALN (Screen Alignment Display)
+     DECAWM (Autowrap)
      <CR> <BS>
      Cursor control characters inside CSI sequences
   */
@@ -186,6 +188,9 @@ tst_movements(MENU_ARGS)
     inner_l = (width - 60) / 2;
     inner_r = 61 + inner_l;
     hlfxtra = (width - 80) / 2;
+
+    if (LOG_ENABLED)
+      fprintf(log_fp, "tst_movements box(%d cols)\n", pass ? max_cols : min_cols);
 
     decaln();
     cup( 9,inner_l); ed(1);
@@ -253,6 +258,63 @@ tst_movements(MENU_ARGS)
   }
   deccolm(FALSE);
 
+  /* DECAWM demo */
+  for (pass = 0; pass <= 1; pass++) {
+    static char on_left[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static char on_right[] = "abcdefghijklmnopqrstuvwxyz";
+    int height = sizeof(on_left) - 1;
+    int region = max_lines - 6;
+
+    if (LOG_ENABLED)
+      fprintf(log_fp, "tst_movements wrap(%d cols)\n", pass ? max_cols : min_cols);
+
+    /* note: DECCOLM clears the screen */
+    if (pass == 0) { deccolm(FALSE); width = min_cols; }
+    else           { deccolm(TRUE);  width = max_cols; }
+
+    println("Test of autowrap, mixing control and print characters.");
+    println("The left/right margins should have letters in order:");
+
+    decstbm(3, region + 3);
+    decom(TRUE);        /* this also homes the cursor */
+    for (i = 0; i < height; ++i) {
+      switch (i % 4) {
+      case 0:
+        /* draw characters as-is, for reference */
+        cup(region + 1, 1) && printf("%c", on_left[i]);
+        cup(region + 1, width) && printf("%c", on_right[i]);
+        printf("\n");
+        break;
+      case 1:
+        /* simple wrapping */
+        cup(region, width) && printf("%c%c", on_right[i - 1], on_left[i]);
+        /* backspace at right margin */
+        cup(region + 1, width) && printf("%c\010 %c", on_left[i], on_right[i]);
+        printf("\n");
+        break;
+      case 2:
+        /* tab to right margin */
+        cup(region + 1, width) && printf("%c\010\010\011\011%c", on_left[i], on_right[i]);
+        cup(region + 1, 2) && printf("\010%c\n", on_left[i]);
+        break;
+      default:
+        /* newline at right margin */
+        cup(region + 1, width) && printf("\n");
+        cup(region, 1) && printf("%c", on_left[i]);
+        cup(region, width) && printf("%c", on_right[i]);
+        break;
+      }
+    }
+    decom(FALSE);
+    decstbm(0, 0);
+    cup(max_lines - 2, 1);
+    holdit();
+  }
+  deccolm(FALSE); /* 80 cols */
+
+  if (LOG_ENABLED)
+    fprintf(log_fp, "tst_movements cursor-controls in ESC sequences\n");
+
   vt_clear(2);
   vt_move(1,1);
   println("Test of cursor-control characters inside ESC sequences.");
@@ -279,6 +341,9 @@ tst_movements(MENU_ARGS)
   println("");
   holdit();
 
+  if (LOG_ENABLED)
+    fprintf(log_fp, "tst_movements leading zeros in ESC sequences\n");
+
   vt_clear(2);
   vt_move(1,1);
   println("Test of leading zeros in ESC sequences.");
@@ -295,7 +360,7 @@ void do_scrolling(void)
   int soft, row, down, i;
 
   ed(2);
-  sm("?6"); /* Origin mode (relative) */
+  decom(TRUE); /* Origin mode (relative) */
   for (soft = -1; soft <= 0; soft++) {
     if (soft) decsclm(TRUE);
     else      decsclm(FALSE);
@@ -342,12 +407,12 @@ tst_screen(MENU_ARGS)
   static char *attr[5] = { ";0", ";1", ";4", ";5", ";7" };
 
   cup(1,1);
-  sm("?7");  /* DECAWM: Wrap Around ON */
+  decawm(TRUE); /* DECAWM: Wrap Around ON */
   for (col = 1; col <= min_cols*2; col++) printf("*");
-  rm("?7");  /* DECAWM: Wrap Around OFF */
+  decawm(FALSE); /* DECAWM: Wrap Around OFF */
   cup(3,1);
   for (col = 1; col <= min_cols*2; col++) printf("*");
-  sm("?7");  /* DECAWM: Wrap Around ON */
+  decawm(TRUE); /* DECAWM: Wrap Around ON */
   cup(5,1);
   println("This should be three identical lines of *'s completely filling");
   println("the top of the screen without any empty lines between.");
@@ -411,7 +476,7 @@ tst_screen(MENU_ARGS)
   "This line should be the one above the bottom of the screen. ");
   holdit();
   ed(2);
-  rm("?6"); /* Origin mode (absolute) */
+  decom(FALSE); /* Origin mode (absolute) */
   cup(max_lines,1);
   printf(
   "Origin mode test. This line should be at the bottom of the screen.");
@@ -549,6 +614,7 @@ tst_doublesize(MENU_ARGS)
   cup(11,1); decdhl(1); printf("x%c%c%c%c%cx",9,9,9,9,9);
   cup(12,1); decdhl(0); printf("x%c%c%c%c%cx",9,9,9,9,9);
   cup(13,1); decdhl(1); printf("x%c%c%c%c%cx",9,9,9,9,9);
+  scs(1, '0');  /* should look the same as scs_graphics() */
   cup(14,1); decdhl(0); printf("x                                      x");
   cup(15,1); decdhl(1); printf("x                                      x");
   cup(16,1); decdhl(0); printf("mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj");
@@ -601,13 +667,13 @@ tst_insdel(MENU_ARGS)
     printf("Screen accordion test (Insert & Delete Line). "); holdit();
     ri(); el(2);
     decstbm( 2,max_lines-1);
-    sm("?6");
+    decom(TRUE);
     cup(1,1);
     for (row=1; row<=max_lines; row++) {
       il(row);
       dl(row);
     }
-    rm("?6");
+    decom(FALSE);
     decstbm( 0, 0);
     cup(2,1);
     printf(
@@ -994,14 +1060,15 @@ setup_terminal(MENU_ARGS)
     fprintf(log_fp, "Setup Terminal with test-defaults\n");
 
   default_level();    /* Enter ANSI mode (if in VT52 mode)    */
-  rm("?1");           /* cursor keys normal   */
+  decckm(FALSE);      /* cursor keys normal   */
   deccolm(FALSE);     /* 80 col mode          */
   decsclm(FALSE);     /* Jump scroll          */
   decscnm(FALSE);     /* Normal screen        */
-  rm("?6");           /* Absolute origin mode */
-  sm("?7");           /* Wrap around on       */
-  rm("?8");           /* Auto repeat off      */
-  sm("?40");          /* Enable 80/132 switch */
+  decom(FALSE);       /* Absolute origin mode */
+  decawm(TRUE);       /* Wrap around on       */
+  decarm(FALSE);      /* Auto repeat off      */
+  sm("?40");          /* Enable 80/132 switch (xterm) */
+  rm("?45");          /* Disable reverse wrap (xterm) */
   decstbm(0,0);       /* No scroll region     */
   sgr("0");           /* Normal character attributes  */
 
@@ -1016,12 +1083,12 @@ bye (void)
     fprintf(log_fp, "Cleanup & exit\n");
 
   default_level();    /* Enter ANSI mode (if in VT52 mode)    */
-  rm("?1");           /* cursor keys normal   */
+  decckm(FALSE);      /* cursor keys normal   */
   deccolm(FALSE);     /* 80 col mode          */
   decscnm(FALSE);     /* Normal screen        */
-  rm("?6");           /* Absolute origin mode */
-  sm("?7");           /* Wrap around on       */
-  sm("?8");           /* Auto repeat on       */
+  decom(FALSE);       /* Absolute origin mode */
+  decawm(TRUE);       /* Wrap around on       */
+  decarm(TRUE);       /* Auto repeat on       */
   decstbm(0,0);       /* No scroll region     */
   sgr("0");           /* Normal character attributes  */
 
@@ -1038,12 +1105,12 @@ bye (void)
 
 #ifdef UNIX
 RETSIGTYPE
-onbrk(SIG_ARGS)
+onbrk(SIG_ARGS GCC_UNUSED)
 {
   signal(SIGINT, onbrk);
   if (reading) {
     brkrd = TRUE;
-#if HAVE_ALARM
+#ifdef HAVE_ALARM
     alarm(0);
 #endif
   } else {
@@ -1052,7 +1119,7 @@ onbrk(SIG_ARGS)
 }
 
 RETSIGTYPE
-onterm(SIG_ARGS)
+onterm(SIG_ARGS GCC_UNUSED)
 {
   signal(SIGTERM, onterm);
   longjmp(intrenv, 1);
@@ -1300,12 +1367,13 @@ int parse_decrqss(char *report, char *func)
   return code;
 }
 
-void
+int
 title(int offset)
 {
   vt_move(TITLE_LINE+offset, 10);
   if (offset == 0 && *current_menu)
     printf("Menu %s: ", current_menu);
+  return 1; /* used for indenting */
 }
 
 static void
@@ -1377,12 +1445,13 @@ vt_el(int code)
   log_disabled--;
 }
 
-void
+int
 vt_move(int row, int col)
 {
   log_disabled++;
   cup(row, col);
   log_disabled--;
+  return 1;
 }
 
 void

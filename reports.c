@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.27 1999/10/25 23:54:31 tom Exp $ */
+/* $Id: reports.c,v 1.28 2004/08/03 01:07:35 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -53,11 +53,11 @@ struct table {
     {   4, "Sixel Graphics" },                          /* kermit */
     {   6, "selective erase" },                         /* vt400 */
     {   7, "soft character set (DRCS)" },               /* vt400 */
-    {   8, "user-defined keys" },                       /* vt400 */
+    {   8, "user-defined keys (UDK)" },                 /* vt400 */
     {   9, "national replacement character-sets" },     /* kermit */
     {  10, "text ruling vector" },                      /* ? */
     {  11, "25th status line" },                        /* ? */
-    {  12, "Serbo-Croation (SCS)" },                    /* vt500 */
+    {  12, "Serbo-Croatian (SCS)" },                    /* vt500 */
     {  13, "local editing mode" },                      /* kermit */
     {  14, "8-bit architecture" },                      /* ? */
     {  15, "DEC technical set" },                       /* vt400 */
@@ -193,10 +193,44 @@ tst_DA(MENU_ARGS)
       int value = scan_DA(cmp, &reportpos);
       show_result("%s\n", lookup(operating_level, value));
       println("");
-      while ((value = scan_DA(cmp, &reportpos)) != 0) {
-        printf("   ");
-        show_result("%d = %s\n", value, lookup(extensions, value));
-        println("");
+      if (value == 12) {
+        if ((value = scan_DA(cmp, &reportpos)) != 0) {
+          printf("   ");
+          switch (value) {
+          case 5:
+            break;
+          case 7:
+            show_result("with AVO");
+            println("");
+            break;
+          default:
+            printf("unknown code %d", value);
+            println("");
+            break;
+          }
+        }
+        if ((value = scan_DA(cmp, &reportpos)) != 0) {
+          printf("   ");
+          switch (value) {
+          case 1:
+            show_result("with printer");
+            break;
+          default:
+            printf("unknown code %d", value);
+            break;
+          }
+          println("");
+        }
+        if ((value = scan_DA(cmp, &reportpos)) != 0) {
+          printf("    ROM version %d", value);
+          println("");
+        }
+      } else {
+        while ((value = scan_DA(cmp, &reportpos)) != 0) {
+          printf("   ");
+          show_result("%d = %s\n", value, lookup(extensions, value));
+          println("");
+        }
       }
       found = TRUE;
     }
@@ -231,6 +265,8 @@ tst_DA_2(MENU_ARGS)
     { 24,  "kermit" },
     { 28,  "DECterm" },
     { 41,  "VT420" },
+    { 64,  "VT520" },
+    { 65,  "VT525" },
   };
 
   char *report;
@@ -259,7 +295,16 @@ tst_DA_2(MENU_ARGS)
       }
       vt_move(4,10); printf("Pp=%d (%s)", Pp, name);
       vt_move(5,10); printf("Pv=%d, firmware version %d.%d", Pv, Pv/10, Pv%10);
-      vt_move(6,10); printf("Pc=%d, ROM cartridge registration number", Pc);
+      vt_move(6,10);
+      switch (Pp) {
+      case 64:
+      case 65:
+        printf("Pc=%d, %s keyboard", Pc, Pc ? "PC" : "VT");
+        break;
+      default:
+        printf("Pc=%d, ROM cartridge registration number", Pc);
+        break;
+      }
     }
   }
   show_result(show);

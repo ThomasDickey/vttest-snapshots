@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.28 2003/03/01 19:40:55 tom Exp $
+# $Id: makefile.in,v 1.33 2004/08/04 21:54:56 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -11,6 +11,7 @@ VPATH  = @srcdir@
 
 CC		= @CC@
 LINK		= $(CC)
+LINT		= @LINT@
 INSTALL 	= @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
@@ -23,8 +24,8 @@ LDFLAGS 	= @LDFLAGS@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
-bindir		= @bindir@
-mandir		= @mandir@/man$(manext)
+bindir		= $(DESTDIR)@bindir@
+mandir		= $(DESTDIR)@mandir@/man$(manext)
 manext		= 1
 
 #### End of system configuration section. ####
@@ -36,11 +37,13 @@ INCLUDES	= -I. -I$(srcdir)
 CPPFLAGS	= $(DEFINES) $(INCLUDES) @CPPFLAGS@
 
 .c.o:
-	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
+@RULE_CC@
+	@ECHO_CC@$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
 C_SRC = \
 	charsets.c \
 	color.c \
+	draw.c \
 	esc.c \
 	keyboard.c \
 	main.c \
@@ -56,16 +59,19 @@ C_SRC = \
 	ttymodes.c \
 	unix_io.c \
 	vt220.c \
+	vt320.c \
 	vt420.c \
 	vt52.c \
 	xterm.c
 H_SRC = \
 	vttest.h \
+	draw.h \
 	esc.h \
 	ttymodes.h
 OBJS  = \
 	charsets.o \
 	color.o \
+	draw.o \
 	esc.o \
 	keyboard.o \
 	main.o \
@@ -81,6 +87,7 @@ OBJS  = \
 	ttymodes.o \
 	unix_io.o \
 	vt220.o \
+	vt320.o \
 	vt420.o \
 	vt52.o \
 	xterm.o
@@ -97,7 +104,7 @@ DISTFILES = MANIFEST configure $(SRC)
 all:	$(THIS)
 
 $(THIS): $(OBJS)
-	$(LINK) $(CFLAGS) $(LDFLAGS) -o $(THIS) $(OBJS) $(LIBS)
+	@ECHO_LD@$(LINK) $(CFLAGS) $(LDFLAGS) -o $(THIS) $(OBJS) $(LIBS)
 
 $(OBJS): config.h $(THIS).h patchlev.h
 
