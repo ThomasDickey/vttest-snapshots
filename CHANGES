@@ -1,5 +1,13 @@
-$Id: CHANGES,v 1.52 1996/10/30 01:52:13 tom Exp $
+$Id: CHANGES,v 1.55 1996/11/14 01:50:10 tom Exp $
 -------------------------------------------------------------------------------
+
+961113
+	corrected early return from test for DECRPM when badly-formatted
+	reply is received.
+
+	add DA1 codes from vt500 manual (from Jeffrey Altman).
+
+	refined test to restore ANSI mode based on VT420 testing.
 
 961029
 	extend vt52 test to check operating level when restoring ANSI mode.
