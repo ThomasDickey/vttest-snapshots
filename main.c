@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.61 1996/09/28 14:52:23 tom Exp $ */
+/* $Id: main.c,v 1.62 1996/10/28 00:40:08 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1021,7 +1021,7 @@ setup_terminal(MENU_ARGS)
   if (LOG_ENABLED)
     fprintf(log_fp, "Setup Terminal with test-defaults\n");
 
-  set_level(1);       /* Enter ANSI mode (if in VT52 mode)    */
+  default_level();    /* Enter ANSI mode (if in VT52 mode)    */
   rm("?1");           /* cursor keys normal   */
   deccolm(FALSE);     /* 80 col mode          */
   decsclm(FALSE);     /* Jump scroll          */
@@ -1043,7 +1043,7 @@ bye (void)
   if (LOG_ENABLED)
     fprintf(log_fp, "Cleanup & exit\n");
 
-  set_level(1);       /* Enter ANSI mode (if in VT52 mode)    */
+  default_level();    /* Enter ANSI mode (if in VT52 mode)    */
   rm("?1");           /* cursor keys normal   */
   deccolm(FALSE);     /* 80 col mode          */
   decscnm(FALSE);     /* Normal screen        */

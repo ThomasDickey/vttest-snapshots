@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.6 1996/09/28 14:19:59 tom Exp $ */
+/* $Id: vt52.c,v 1.7 1996/10/28 00:52:31 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -118,8 +118,16 @@ tst_vt52(MENU_ARGS)
   vt52ed();    /* Erase to end of screen  */
   println("Test of terminal response to IDENTIFY command");
 
+  /*
+   * According to J.Altman, DECID isn't recognized by VT5xx terminals. However,
+   * real DEC terminals through VT420 do, though it isn't recommended.
+   */
   set_tty_raw(TRUE);
-  esc("Z");     /* Identify     */
+  if (terminal_id() < 200) {
+    esc("Z");     /* Identify     */
+  } else {
+    da();
+  }
   response = get_reply();
   println("");
 
@@ -129,10 +137,12 @@ tst_vt52(MENU_ARGS)
 
   printf("Response was");
   chrprint(response);
-  for(i = 0; resptable[i].rcode[0] != '\0'; i++)
-    if (!strcmp(response, resptable[i].rcode))
+  for(i = 0; resptable[i].rcode[0] != '\0'; i++) {
+    if (!strcmp(response, resptable[i].rcode)) {
+      show_result("%s", resptable[i].rmsg);
       break;
-  printf("%s", resptable[i].rmsg);
+    }
+  }
   println("");
   println("");
   return MENU_HOLD;
