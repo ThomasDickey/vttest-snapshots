@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.56 2003/03/01 00:23:10 tom Exp $ */
+/* $Id: vttest.h,v 1.68 2004/08/03 22:45:05 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -20,32 +20,36 @@
 
 #endif
 
+#ifndef GCC_UNUSED
+#define GCC_UNUSED /* ARGSUSED */
+#endif
+
 #define SIG_ARGS int sig	/* FIXME: configure-test */
 
 #include <stdio.h>
 #include <stdarg.h>
 
-#if HAVE_STDLIB_H
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
 
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#if HAVE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
 #include <ctype.h>
 
-#if HAVE_TERMIOS_H && HAVE_TCGETATTR
+#if defined(HAVE_TERMIOS_H) && defined(HAVE_TCGETATTR)
 #  define USE_POSIX_TERMIOS 1
 #else
-#  if HAVE_TERMIO_H
+#  ifdef HAVE_TERMIO_H
 #    define USE_TERMIO 1
 #  else
-#    if HAVE_SGTTY_H
+#    ifdef HAVE_SGTTY_H
 #      define USE_SGTTY 1
 #      define USE_FIONREAD 1
 #    else
@@ -56,6 +60,22 @@
 #      endif
 #    endif
 #  endif
+#endif
+
+#ifndef USE_FIONREAD
+#define USE_FIONREAD 0
+#endif
+
+#ifndef USE_POSIX_TERMIOS
+#define USE_POSIX_TERMIOS 0
+#endif
+
+#ifndef USE_SGTTY
+#define USE_SGTTY 0
+#endif
+
+#ifndef USE_TERMIO
+#define USE_TERMIO 0
 #endif
 
 #include <signal.h>
@@ -77,24 +97,24 @@
 #  else
 #    if USE_SGTTY
 #      include <sgtty.h>
-#      define TTY struct sgttyb 
+#      define TTY struct sgttyb
 #    endif
 #  endif
 #endif
 
-#if HAVE_SYS_FILIO_H
+#ifdef HAVE_SYS_FILIO_H
 #  include <sys/filio.h>	/* FIONREAD */
 #endif
 
-#if HAVE_FCNTL_H
+#ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
 #if !defined(sun) || !defined(NL0)
-#  if HAVE_IOCTL_H
+#  ifdef HAVE_IOCTL_H
 #   include <ioctl.h>
 #  else
-#   if HAVE_SYS_IOCTL_H
+#   ifdef HAVE_SYS_IOCTL_H
 #    include <sys/ioctl.h>
 #   endif
 #  endif
@@ -166,7 +186,8 @@ extern int sscanf(const char *src, const char *fmt, ...);
 extern long strtol(const char *src, char **dst, int base);
 #endif
 
-#define MENU_ARGS    char *   the_title
+#define MENU_DECL    char *   the_title
+#define MENU_ARGS    char *   the_title GCC_UNUSED
 #define PASS_ARGS /* char * */the_title
 
 typedef struct {
@@ -189,12 +210,15 @@ typedef struct {
 /* main.c */
 extern RETSIGTYPE onbrk(SIG_ARGS);
 extern RETSIGTYPE onterm(SIG_ARGS);
+extern char *parse_Sdesig(const char *source, int *offset);
 extern char *skip_csi(char *input);
 extern char *skip_dcs(char *input);
 extern char *skip_digits(char *src);
 extern char *skip_prefix(char *prefix, char *input);
 extern char *skip_ss3(char *input);
 extern int any_DSR(MENU_ARGS, char *text, void (*explain)(char *report));
+extern int any_decrqpsr(MENU_ARGS, int Ps);
+extern int any_decrqss(char *msg, char *func);
 extern int bug_a(MENU_ARGS);
 extern int bug_b(MENU_ARGS);
 extern int bug_c(MENU_ARGS);
@@ -209,23 +233,22 @@ extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
 extern int not_impl(MENU_ARGS);
 extern int parse_decrqss(char *report, char *func);
-extern int set_level(int level);
 extern int scan_any(char *str, int *pos, int toc);
 extern int scanto(char *str, int *pos, int toc);
+extern int set_DECRPM(int level);
+extern int set_level(int level);
 extern int setup_terminal(MENU_ARGS);
 extern int strip_suffix(char *src, char *suffix);
 extern int strip_terminator(char *src);
 extern int terminal_id(void);
-extern int tst_DECSCA(MENU_ARGS);
+extern int title(int offset);
+extern int tst_DECRPM(MENU_ARGS);
 extern int tst_DECSTR(MENU_ARGS);
-extern int tst_DECTCEM(MENU_ARGS);
-extern int tst_DECUDK(MENU_ARGS);
+extern int tst_DSR_cursor(MENU_ARGS);
 extern int tst_DSR_keyboard(MENU_ARGS);
 extern int tst_DSR_locator(MENU_ARGS);
 extern int tst_DSR_printer(MENU_ARGS);
 extern int tst_DSR_userkeys(MENU_ARGS);
-extern int tst_ECH(MENU_ARGS);
-extern int tst_S8C1T(MENU_ARGS);
 extern int tst_SD(MENU_ARGS);
 extern int tst_SRM(MENU_ARGS);
 extern int tst_SU(MENU_ARGS);
@@ -248,9 +271,18 @@ extern int tst_softchars(MENU_ARGS);
 extern int tst_statusline(MENU_ARGS);
 extern int tst_tek4014(MENU_ARGS);
 extern int tst_vt220(MENU_ARGS);
+extern int tst_vt220_reports(MENU_ARGS);
+extern int tst_vt220_screen(MENU_ARGS);
+extern int tst_vt320(MENU_ARGS);
+extern int tst_vt320_DECRQSS(MENU_ARGS);
+extern int tst_vt320_cursor(MENU_ARGS);
+extern int tst_vt320_report_presentation(MENU_ARGS);
+extern int tst_vt320_reports(MENU_ARGS);
+extern int tst_vt320_screen(MENU_ARGS);
 extern int tst_vt420(MENU_ARGS);
 extern int tst_vt52(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
+extern int vt_move(int row, int col);
 extern void bye(void);
 extern void chrprint(char *s);
 extern void default_level(void);
@@ -264,10 +296,8 @@ extern void scs_graphics(void);
 extern void scs_normal(void);
 extern void setup_softchars(char *filename);
 extern void show_result(const char *fmt, ...);
-extern void title(int offset);
 extern void vt_clear(int code);
 extern void vt_el(int code);
 extern void vt_hilite(int flag);
-extern void vt_move(int row, int col);
 
 #endif /* VTTEST_H */

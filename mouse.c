@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.2 2002/04/22 23:49:09 tom Exp $ */
+/* $Id: mouse.c,v 1.3 2004/08/02 23:41:54 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -154,7 +154,6 @@ static void
 show_dec_locator_events(MENU_ARGS, int mode, int pixels)
 {
   int row, now;
-  int high, wide;
 
   vt_move(1,1);
   println(the_title);

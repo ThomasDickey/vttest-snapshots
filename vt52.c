@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.13 1999/10/05 21:34:55 tom Exp $ */
+/* $Id: vt52.c,v 1.14 2004/08/03 01:21:13 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -22,7 +22,7 @@ isreturn(char *reply)
 int
 tst_vt52(MENU_ARGS)
 {
-  static struct rtabl {
+  static struct {
       char *rcode;
       char *rmsg;
   } resptable[] = {

@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.33 2003/02/15 17:05:28 tom Exp $ */
+/* $Id: xterm.c,v 1.34 2004/07/23 19:07:28 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -23,7 +23,7 @@ check_rc(int row, int col)
   el(2);
   if ((params = skip_csi(report)) == 0
    || strcmp(params, expected) != 0) {
-    printf("cursor save/restore %s, expected \"%s\", got \"%s\"",
+    printf("cursor save/restore %s, got \"%s\", expected \"%s\"",
            SHOW_FAILURE, params, expected);
   } else {
     printf("cursor save/restore %s", SHOW_SUCCESS);

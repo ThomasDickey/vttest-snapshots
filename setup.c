@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.26 1996/10/30 00:03:41 tom Exp $ */
+/* $Id: setup.c,v 1.27 2004/08/03 01:20:43 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -242,7 +242,7 @@ set_level(int request)
  * terminal returns as a response to DA).
  */
 void
-default_level()
+default_level(void)
 {
   if (max_level < 0)
     find_levels();

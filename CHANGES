@@ -1,5 +1,43 @@
-$Id: CHANGES,v 1.88 2003/03/01 19:38:28 tom Exp $
+$Id: CHANGES,v 1.94 2004/08/04 00:31:31 tom Exp $
 -------------------------------------------------------------------------------
+
+20040804
+	change parameter for ioctl(fd, FIONREAD, &param) to an int.
+
+	add a test screen for BCE color behavior with ECH, DCH and scrolling.
+
+	add a demo of some of the VT100 autowrap behavior to menu 1.
+
+	add xterm's control sequence to disable reverse wraparound to the
+	initialization (this would conflict with DECGPCS if that were tested,
+	but eliminates some user confusion in menu-1).
+
+	add entries for VT520/VT525 DA2 responses.
+
+	decode DA1 response for VT125.
+
+	add note in REP test regarding undefined behavior from using two
+	REP controls in a row (report by Brian Pence).
+
+	change SPA test to allow setting/unsetting ERM while running it
+	(request by Brian Pence).
+
+	add VT420, VT520 entries to table for DECRPM test, and split that
+	into VT320- and VT420-only tests.
+
+	add VT520 entries to character-set and keyboard dialect tables.
+
+	correct cleanup from menu 3 (see 990120), which left G1-G3 set to
+	tested character sets rather than resetting to ASCII.
+
+	split-out vt320.c, modifying VT220- and VT420-menus to avoid
+	most duplication by pointing to lower-level terminals in the menu.
+
+	correct message from check_rc() in xterm.c (report by Brian Pence).
+
+	add --disable-echo option to configure script
+
+	update configure script.
 
 20030301
 	add tek4014 test menu, for xterm.

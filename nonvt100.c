@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.31 1999/07/12 10:46:19 tom Exp $ */
+/* $Id: nonvt100.c,v 1.38 2004/08/01 23:14:11 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -7,14 +7,15 @@
  */
 #include <vttest.h>
 #include <ttymodes.h>
+#include <draw.h>
 #include <esc.h>
 
 int
 not_impl(MENU_ARGS)
 {
-  vt_move(1,1);
+  vt_move(1, 1);
   printf("Sorry, test not implemented:\r\n\r\n  %s", the_title);
-  vt_move(max_lines-1,1);
+  vt_move(max_lines - 1, 1);
   return MENU_HOLD;
 }
 
@@ -26,11 +27,11 @@ tst_CBT(MENU_ARGS)
   int last = (min_cols + 7) / 8;
 
   for (n = 1; n <= last; n++) {
-    cup(1,min_cols);
+    cup(1, min_cols);
     cbt(n);
     printf("%d", last + 1 - n);
   }
-  vt_move(max_lines-3,1);
+  vt_move(max_lines - 3, 1);
   vt_clear(0);
   println(the_title);
   println("The tab-stops should be numbered consecutively starting at 1.");
@@ -44,15 +45,15 @@ tst_CHA(MENU_ARGS)
 {
   int n;
 
-  for (n = 1; n < max_lines-3; n++) {
+  for (n = 1; n < max_lines - 3; n++) {
     cup(n, min_cols - n);
     cha(n);
     printf("+");
   }
-  vt_move(max_lines-3, 1);
+  vt_move(max_lines - 3, 1);
   for (n = 1; n <= min_cols; n++)
-    printf("%c", n == max_lines-3 ? '+' : '*');
-  vt_move(max_lines-2, 1);
+    printf("%c", n == max_lines - 3 ? '+' : '*');
+  vt_move(max_lines - 2, 1);
   println(the_title);
   println("There should be a diagonal of +'s down to the row of *'s above this message");
   return MENU_HOLD;
@@ -69,28 +70,28 @@ tst_CHT(MENU_ARGS)
   int n;
   int last = (min_cols * 2 + 7) / 8;
 
-  vt_move(1,1);
+  vt_move(1, 1);
   println("CHT with param == 1:");
   for (n = 0; n < last; n++) {
     cht(1);
     printf("*");
   }
 
-  vt_move(4,1);
+  vt_move(4, 1);
   println("CHT with param != 1:");
   for (n = 0; n < last; n++) {
-    cup(5,1);
+    cup(5, 1);
     cht(n);
     printf("+");
   }
 
-  vt_move(7,1);
+  vt_move(7, 1);
   println("Normal tabs:");
   for (n = 0; n < last; n++) {
     printf("\t*");
   }
 
-  vt_move(max_lines-3, 1);
+  vt_move(max_lines - 3, 1);
   println(the_title);
   println("The lines with *'s above should look the same (they're designed to");
   println("wrap-around once).");
@@ -107,11 +108,11 @@ tst_CNL(MENU_ARGS)
   printf("1.");
   for (n = 1; n <= max_lines - 3; n++) {
     cup(1, min_cols);
-    cnl(n-1);
+    cnl(n - 1);
     printf("%d.", n);
   }
 
-  vt_move(max_lines-3, 1);
+  vt_move(max_lines - 3, 1);
   vt_clear(0);
   println(the_title);
   println("The lines above this should be numbered in sequence, from 1.");
@@ -131,12 +132,12 @@ tst_CPL(MENU_ARGS)
   int i;
 
   vt_move(max_lines, 1);
-  for (i = max_lines-1; i > 0; i--) {
+  for (i = max_lines - 1; i > 0; i--) {
     cpl(1);
     printf("%d.", i);
   }
 
-  vt_move(max_lines-3, 1);
+  vt_move(max_lines - 3, 1);
   vt_clear(0);
   println(the_title);
   println("The lines above this should be numbered in sequence, from 1.");
@@ -148,7 +149,7 @@ static int
 tst_HPA(MENU_ARGS)
 {
   int n;
-  int last = max_lines-4;
+  int last = max_lines - 4;
 
   for (n = 1; n < last; n++) {
     cup(n, min_cols - n);
@@ -159,7 +160,7 @@ tst_HPA(MENU_ARGS)
   vt_move(last, 1);
   for (n = 1; n <= min_cols; n++)
     printf("%c", n == last ? '+' : '*');
-  vt_move(last+1, 1);
+  vt_move(last + 1, 1);
   println(the_title);
   println("There should be a diagonal of +'s down to the row of *'s above this message.");
   println("(The + in the row of *'s is the target)");
@@ -173,28 +174,29 @@ static int
 tst_REP(MENU_ARGS)
 {
   int n;
-  int last = max_lines-4;
+  int last = max_lines - 5;
 
-  vt_move(1,1);
+  vt_move(1, 1);
   for (n = 1; n < last; n++) {
     if (n > 1) {
       printf(" ");
       if (n > 2)
-        rep(n-2);
+        rep(n - 2);
     }
     printf("+");
-    rep(1);  /* make that 2 +'s */
-    rep(10); /* this should be ignored, since a control sequence precedes */
+    rep(1);     /* make that 2 +'s */
+    rep(10);    /* this should be ignored, since a control sequence precedes */
     println("");
   }
 
   vt_move(last, 1);
   for (n = 1; n <= min_cols; n++)
-    printf("%c", (n == last || n == last+1) ? '+' : '*');
-  vt_move(last+1, 1);
+    printf("%c", (n == last || n == last + 1) ? '+' : '*');
+  vt_move(last + 1, 1);
   println(the_title);
   println("There should be a diagonal of 2 +'s down to the row of *'s above this message.");
-  println("(The ++ in the row of *'s is the target)");
+  println("The ++ in the row of *'s is the target.  If there are 11 +'s, ECMA-48 does");
+  println("not prohibit this, but treats it as undefined behavior (still nonstandard).");
   return MENU_HOLD;
 }
 
@@ -216,7 +218,7 @@ tst_SD(MENU_ARGS)
     printf("*");
     sd(1);
   }
-  vt_move(last+1,1);
+  vt_move(last + 1, 1);
   vt_clear(0);
   println(the_title);
   println("There should be a horizontal row of *'s above, just above the message.");
@@ -236,11 +238,11 @@ tst_SL(MENU_ARGS)
   int last = max_lines - 3;
 
   for (n = 1; n < last; n++) {
-    cup(n, min_cols/2 + last - n);
+    cup(n, min_cols / 2 + last - n);
     printf("*");
     sl(1);
   }
-  vt_move(last,1);
+  vt_move(last, 1);
   vt_clear(0);
   println(the_title);
   println("There should be a vertical column of *'s centered above.");
@@ -260,11 +262,11 @@ tst_SR(MENU_ARGS)
   int last = max_lines - 3;
 
   for (n = 1; n < last; n++) {
-    cup(n, min_cols/2 - last + n);
+    cup(n, min_cols / 2 - last + n);
     printf("*");
     sr(1);
   }
-  vt_move(last,1);
+  vt_move(last, 1);
   vt_clear(0);
   println(the_title);
   println("There should be a vertical column of *'s centered above.");
@@ -286,54 +288,97 @@ tst_SU(MENU_ARGS)
     printf("*");
     su(1);
   }
-  vt_move(last+1,1);
+  vt_move(last + 1, 1);
   vt_clear(0);
   println(the_title);
   println("There should be a horizontal row of *'s above, on the top row.");
   return MENU_HOLD;
 }
 
+/******************************************************************************/
+
+static int erm_flag;
+
+static int
+toggle_ERM(MENU_ARGS)
+{
+  erm_flag = !erm_flag;
+  if (erm_flag)
+    sm("6");
+  else
+    rm("6");
+  return MENU_NOHOLD;
+}
+
 /*
- * Test SPA (set-protected area)
+ * Test SPA (set-protected area).
  */
 static int
 tst_SPA(MENU_ARGS)
 {
-  int i, j, pass;
+  int pass;
+  BOX box;
 
-  for (pass = 0; pass < 2; pass++) {
-    if (pass == 0) {
-      esc("V"); /* SPA */
-    }
-    /* make two passes so we can paint over the protected-chars in the second */
-    for (i = 5; i <= max_lines - 6; i++) {
-      cup(i, 20);
-      for (j = 20; j < min_cols - 20; j++) {
-        printf("*");
+  if (make_box_params(&box, 5, 20) == 0) {
+    for (pass = 0; pass < 2; pass++) {
+      if (pass == 0) {
+        esc("V");   /* SPA */
       }
-    }
-    if (pass == 0) {
-      esc("W"); /* EPA */
+      /* make two passes so we can paint over the protected-chars in the second */
+      draw_box_filled(&box, '*');
+      if (pass == 0) {
+        esc("W");   /* EPA */
 
-      cup(max_lines/2, min_cols/2);
-      ed(0); /* after the cursor */
-      ed(1); /* before the cursor */
-      ed(2); /* the whole display */
+        cup(max_lines / 2, min_cols / 2);
+        ed(0);  /* after the cursor */
+        ed(1);  /* before the cursor */
+        ed(2);  /* the whole display */
 
-      el(0); /* after the cursor */
-      el(1); /* before the cursor */
-      el(2); /* the whole line */
+        el(0);  /* after the cursor */
+        el(1);  /* before the cursor */
+        el(2);  /* the whole line */
 
-      ech(min_cols);
+        ech(min_cols);
 
-      cup(max_lines-4, 1);
-      println(the_title);
-      println("There should be an solid box made of *'s in the middle of the screen.");
-      holdit();
+        cup(1, 1) && println(the_title);
+        cup(max_lines - 4, 1);
+        printf("There %s be an solid box made of *'s in the middle of the screen.\n",
+               erm_flag
+               ? "may"
+               : "should");
+        println("note: DEC terminals do not implement ERM (erase mode).");
+        holdit();
+      }
     }
   }
   return MENU_NOHOLD;
 }
+
+static int
+tst_protected_area(MENU_ARGS)
+{
+  static char erm_mesg[80];
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { erm_mesg,                                            toggle_ERM },
+      { "Test Protected-Areas (SPA)",                        tst_SPA },
+      { "",                                                  0 },
+    };
+  /* *INDENT-ON* */
+
+  do {
+    vt_clear(2);
+    title(0) && printf("Protected-Areas Tests");
+    title(2) && println("Choose test type:");
+    sprintf(erm_mesg, "%s ERM (erase mode)", erm_flag ? "Disable" : "Enable");
+  } while (menu(my_menu));
+  if (erm_flag)
+    toggle_ERM(PASS_ARGS);
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
 
 /*
  * Kermit's documentation refers to this as CVA, ECMA-48 as VPA.
@@ -360,7 +405,7 @@ tst_VPA(MENU_ARGS)
     printf("*\b");
   }
 
-  vt_move(max_lines-3, 1);
+  vt_move(max_lines - 3, 1);
   println(the_title);
   println("There should be a box-outline made of *'s in the middle of the screen.");
   return MENU_HOLD;
@@ -371,6 +416,7 @@ tst_VPA(MENU_ARGS)
 static int
 tst_ecma48_curs(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test Character-Position-Absolute (HPA)",            tst_HPA },
@@ -382,11 +428,12 @@ tst_ecma48_curs(MENU_ARGS)
       { "Test Previous-Line (CPL)",                          tst_CPL },
       { "",                                                  0 }
     };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); printf("ISO-6429 (ECMA-48) Cursor-Movement");
-    title(2); println("Choose test type:");
+    title(0) && printf("ISO-6429 (ECMA-48) Cursor-Movement");
+    title(2) && println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -394,9 +441,10 @@ tst_ecma48_curs(MENU_ARGS)
 static int
 tst_ecma48_misc(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test Protected-Areas (SPA)",                        tst_SPA },
+      { "Protected-Area Tests",                              tst_protected_area },
       { "Test Repeat (REP)",                                 tst_REP },
       { "Test Scroll-Down (SD)",                             tst_SD },
       { "Test Scroll-Left (SL)",                             tst_SL },
@@ -404,11 +452,12 @@ tst_ecma48_misc(MENU_ARGS)
       { "Test Scroll-Up (SU)",                               tst_SU },
       { "",                                                  0 },
     };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); printf("Miscellaneous ISO-6429 (ECMA-48) Tests");
-    title(2); println("Choose test type:");
+    title(0) && printf("Miscellaneous ISO-6429 (ECMA-48) Tests");
+    title(2) && println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -417,9 +466,11 @@ tst_ecma48_misc(MENU_ARGS)
 int
 tst_nonvt100(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test of VT220/VT320 features",                      tst_vt220 },
+      { "Test of VT220 features",                            tst_vt220 },
+      { "Test of VT320 features",                            tst_vt320 },
       { "Test of VT420 features",                            tst_vt420 },
       { "Test ISO-6429 cursor-movement",                     tst_ecma48_curs },
       { "Test ISO-6429 colors",                              tst_colors },
@@ -427,11 +478,14 @@ tst_nonvt100(MENU_ARGS)
       { "Test XTERM special features",                       tst_xterm },
       { "",                                                  0 }
     };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); printf("Non-VT100 Tests");
-    title(2); println("Choose test type:");
+    title(0);
+    printf("Non-VT100 Tests");
+    title(2);
+    println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

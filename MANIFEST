@@ -1,4 +1,4 @@
-MANIFEST for vttest, version d20030301
+MANIFEST for vttest, version d20040804
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -12,9 +12,11 @@ config.hin                      template for config.h
 configure                       generated autoconf script
 configure.in                    template for configure script
 descrip.mms                     VAX MMS script for VTTEST
+draw.c                          utilities for drawing boxes and their contents
+draw.h                          interface of draw.c
 esc.c                           escape-sequence formatting & I/O
 esc.h                           interface of esc.c
-install.sh                      install script, needed for configure
+install-sh                      install script, needed for configure
 keyboard.c                      test keyboard functions
 main.c                          main-program & most tests, for VTTEST
 makefile.in                     template for makefile
@@ -36,6 +38,7 @@ unix_io.c                       UNIX-specific I/O support
 vms_io.c                        VMS I/O routines
 vmsbuild.com                    VMS DCL script for building VTTEST
 vt220.c                         vt220 tests
+vt320.c                         vt320 tests
 vt420.c                         vt420 tests
 vt52.c                          tests for VT52
 vttest.1                        manual-page for VTTEST
