@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.63 1999/10/08 01:36:41 tom Exp $ */
+/* $Id: esc.c,v 1.64 1999/10/14 09:31:51 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -734,7 +734,7 @@ mc_printer_controller(int flag) /* VT220: printer controller mode */
 void
 mc_print_page(void) /* VT220: print page */
 {
-  do_csi("?0i");
+  do_csi("i");
 }
 
 void
