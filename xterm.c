@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.3 1996/07/22 00:06:59 tom Exp $ */
+/* $Id: xterm.c,v 1.4 1996/08/02 23:39:38 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -217,6 +217,7 @@ tst_xterm(void)
 
   do {
     ed(2);
+    cup(5,10); println("XTERM special features");
     cup(7,10); println("Choose test type:");
     menuchoice = menu(colormenu);
     switch (menuchoice) {

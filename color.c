@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.9 1996/07/08 23:16:22 tom Exp $ */
+/* $Id: color.c,v 1.11 1996/08/03 19:05:31 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -519,6 +519,7 @@ tst_colors(void)
 
   do {
     ed(2);
+    cup(5,10); println("ISO 6429 colors");
     cup(7,10); println("Choose test type:");
     menuchoice = menu(colormenu);
     switch (menuchoice) {

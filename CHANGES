@@ -1,5 +1,17 @@
-$Id: CHANGES,v 1.12 1996/07/21 23:35:45 tom Exp $
+$Id: CHANGES,v 1.15 1996/08/03 19:20:22 tom Exp $
 -------------------------------------------------------------------------------
+
+VERSION 2.3
+
+960803
+	Implement tests for the following ISO 6429 controls:  CBT, CHA, CHT,
+	CNL, CPL, ECH, HPA, SL, SPA, SR, VPA.
+
+	Implement tests for DEC VT220 controls:  DECSCA, DECTCEM
+
+960802
+	Restructure non-VT100 menus, making them separate from the base VT100
+	tests.
 
 VERSION 2.2
 
