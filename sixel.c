@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.5 1996/09/11 01:56:39 tom Exp $ */
+/* $Id: sixel.c,v 1.6 1996/09/11 22:31:39 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -289,12 +289,13 @@ tst_softchars(MENU_ARGS)
       { "",                                                  0 }
     };
 
+  vt_move(1,1);
   if (font_string == 0 || *font_string == 0) {
     printf("You did not specify a font-file with the -f option\n");
     return MENU_HOLD;
   }
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf("Soft Character Sets");
     title(2); println("Choose test type:");
   } while (menu(my_menu));

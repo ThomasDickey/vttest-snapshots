@@ -1,4 +1,4 @@
-/* $Id: reset.c,v 1.2 1996/09/08 22:27:56 tom Exp $ */
+/* $Id: reset.c,v 1.3 1996/09/11 22:59:48 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -8,6 +8,9 @@ static int did_reset = FALSE;
 int
 tst_DECSTR(MENU_ARGS)
 {
+  vt_move(1,1);
+  println("The terminal will now soft-reset");
+  holdit();
   decstr();
   return MENU_HOLD;
 }

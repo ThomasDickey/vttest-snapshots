@@ -1,11 +1,12 @@
 Begin3
 Title:          vttest
 Version:        v2_6
-Entered-date:   11SEP96
+Entered-date:   12SEP96
 Description:    a program to test the compatibility (or to demonstrate the
                 non-compatibility) of so-called "VT100-compatible" terminals.
                 New version using configure script, in ANSI C, with tests for
-                ISO color, VT220, VT420.
+                ISO color, xterm, VT220 (complete except for keyboard) and
+                VT420.  Ported to VAX/VMS.
 Keywords:       VT100, VT220, VT420, ISO 6429, ECMA-48
 Author:         dickey@clark.net (Thomas E. Dickey)
 Primary-site:   sunsite.unc.edu /pub/Linux/apps/comm

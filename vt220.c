@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.7 1996/09/11 10:33:11 tom Exp $ */
+/* $Id: vt220.c,v 1.8 1996/09/11 22:39:46 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002)
@@ -375,6 +375,27 @@ tst_ECH(MENU_ARGS)
 /******************************************************************************/
 
 static int
+tst_device_status(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Keyboard Status",                              tst_DSR_keyboard },
+      { "Test Printer Status",                               tst_DSR_printer },
+      { "Test UDK Status",                                   tst_DSR_userkeys },
+      { "",                                                  0 }
+    };
+
+  do {
+    vt_clear(2);
+    title(0); printf("VT220 Device Status Reports");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+
+static int
 tst_terminal_modes(MENU_ARGS)
 {
   static MENU my_menu[] = {
@@ -400,15 +421,12 @@ tst_vt220(MENU_ARGS)
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test 8-bit controls (S7C1T/S8C1T)",                 tst_S8C1T },
+      { "Test Device Status Report (DSR)",                   tst_device_status },
       { "Test Erase Char (ECH)",                             tst_ECH },
-      { "Test Keyboard Status",                              tst_DSR_keyboard },
       { "Test Printer (MC)",                                 not_impl },
-      { "Test Printer Status",                               tst_DSR_printer },
       { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
       { "Test Soft Character Sets (DECDLD)",                 tst_softchars },
       { "Test Terminal Modes",                               tst_terminal_modes },
-      { "Test UDK Status",                                   tst_DSR_userkeys },
-      { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
       { "Test user-defined keys (DECUDK)",                   tst_DECUDK },
       { "",                                                  0 }
     };

@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.50 1996/09/10 00:04:21 tom Exp $ */
+/* $Id: esc.c,v 1.52 1996/09/12 20:10:08 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -333,6 +333,7 @@ void
 decbi(void) /* VT400: Back Index */
 {
   esc("6");
+  padding(40);
 }
 
 void
@@ -403,6 +404,7 @@ void
 decfi(void) /* VT400: Forward Index */
 {
   esc("9");
+  padding(40);
 }
 
 void
