@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.5 1996/08/03 19:09:45 tom Exp $ */
+/* $Id: esc.h,v 1.7 1996/08/06 09:51:59 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -10,6 +10,7 @@ void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
 void brc3(int pn1, int pn2, int pn3, int c);
 void brcstr(char *ps, int c);
+void c8c1t(int flag);
 void cbt(int pn);
 void cha(int pn);
 void cht(int pn);
@@ -59,10 +60,12 @@ void ri(void);
 void ris(void);
 void rm(char *ps);
 void scs(int g, int c);
+void sd(int pn);
 void sgr(char *ps);
 void sl(int pn);
 void sm(char *ps);
 void sr(int pn);
+void su(int pn);
 void tbc(int pn);
 void trmop(int fc, int arg);
 void ttybin(int bin);

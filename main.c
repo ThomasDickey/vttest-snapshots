@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.19 1996/08/02 23:40:18 tom Exp $ */
+/* $Id: main.c,v 1.23 1996/08/08 00:21:38 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1136,11 +1136,16 @@ tst_reports(void)
     { "\033[?4;7c",   "VT132 with GPO, AVO, and STP" },
     { "\033[?4;11c",  "VT132 with PP and AVO" },
     { "\033[?4;15c",  "VT132 with PP, GPO and AVO" },
+    { "\033[?6c",     "VT102" },
     { "\033[?7c",     "VT131" },
     { "\033[?12;5c",  "VT125" },           /* VT125 also has ROM version */
     { "\033[?12;7c",  "VT125 with AVO" },  /* number, so this won't work */
     { "\033[?5;0c",   "VK100 (GIGI)" },
     { "\033[?5c",     "VK100 (GIGI)" },
+    { "\033[?62;1;2;4;6;8;9;15c",       "VT220" },
+    { "\033[?63;1;2;8;9c",              "VT320" },
+    { "\033[?63;1;2;4;6;8;9;15c",       "VT320" },
+    { "\033[?63;1;3;4;6;8;9;15;16;29c", "DXterm" },
     { "", "" }
   };
 
@@ -1185,6 +1190,7 @@ tst_reports(void)
   set_tty_crmod(TRUE);
   holdit();
 
+  set_tty_raw(TRUE);
   ed(2);
   cup(1,1);
   printf("Test of Device Status Report 5 (report terminal status).");
@@ -1288,6 +1294,8 @@ tst_reports(void)
     else                         println(" -- Bad format");
   }
   cup(max_lines,1);
+  set_tty_raw(FALSE);
+  set_tty_crmod(TRUE);
   holdit();
   set_tty_echo(TRUE);
 }
@@ -1998,9 +2006,11 @@ chrprint (char *s)
   sgr("7");
   printf(" ");
   for (i = 0; s[i] != '\0'; i++) {
-    if (s[i] <= ' ' || s[i] == '\177')
-    printf("<%d> ", s[i]);
-    else printf("%c ", s[i]);
+    int c = (unsigned char)s[i];
+    if (c <= ' ' || c >= '\177')
+      printf("<%d> ", c);
+    else
+      printf("%c ", c);
   }
   sgr("");
 }

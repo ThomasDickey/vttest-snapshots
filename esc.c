@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.12 1996/08/03 19:03:10 tom Exp $ */
+/* $Id: esc.c,v 1.16 1996/08/08 00:31:17 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -10,7 +10,7 @@ static int ttymode;
 void
 println(char *s)
 {
-  printf("%s\n", s);
+  printf("%s\r\n", s);
 }
 
 void
@@ -41,6 +41,14 @@ void
 brc3(int pn1, int pn2, int pn3, int c)
 {
   printf("%c[%d;%d;%d%c", 27, pn1, pn2, pn3, c);
+}
+
+void c8c1t(int flag)
+{
+  if (flag)
+    esc(" G"); /* select 8-bit controls */
+  else
+    esc(" F"); /* select 7-bit controls */
 }
 
 void
@@ -168,24 +176,24 @@ void
 decsca(int pn1) /* VT200 select character attribute (protect) */
 {
   char temp[80];
-  sprintf(temp, "%d\"p", pn1);
-  esc(temp);
+  sprintf(temp, "%d\"", pn1);
+  brcstr(temp, 'q');
 }
 
 void
 decsed(int pn1) /* VT200 selective erase in display */
 {
   char temp[80];
-  sprintf(temp, "?%dJ", pn1);
-  esc(temp);
+  sprintf(temp, "?%d", pn1);
+  brcstr(temp, 'J');
 }
 
 void
 decsel(int pn1) /* VT200 selective erase in line */
 {
   char temp[80];
-  sprintf(temp, "?%dK", pn1);
-  esc(temp);
+  sprintf(temp, "?%d", pn1);
+  brcstr(temp, 'K');
 }
 
 void
@@ -289,6 +297,12 @@ scs(int g, int c)  /* Select character Set */
 }
 
 void
+sd(int pn)  /* Scroll Down */
+{
+  brc(pn, '^');
+}
+
+void
 sgr(char *ps)  /* Select Graphic Rendition */
 {
   brcstr(ps, 'm');
@@ -314,6 +328,12 @@ sr(int pn)  /* Scroll Right */
   char temp[80];
   sprintf(temp, "%d ", pn);
   brcstr(temp, 'A');
+}
+
+void
+su(int pn)  /* Scroll Up */
+{
+  brc(pn, 'S');
 }
 
 void

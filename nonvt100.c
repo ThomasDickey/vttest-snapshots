@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.2 1996/08/03 19:06:57 tom Exp $ */
+/* $Id: nonvt100.c,v 1.6 1996/08/07 10:51:34 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -8,8 +8,51 @@
 #include <vttest.h>
 #include <color.h>
 #include <xterm.h>
+#include <ttymodes.h>
 #include <nonvt100.h>
 #include <esc.h>
+
+static void report_ok(char *ref, char *tst)
+{
+  printf(" (%s)", !strcmp(ref, tst) ? "success" : "fail");
+}
+
+/* Kermit 3.13 and dtterm implement this; it's probably for VT320 */
+static void tst_C8C1T(void)
+{
+  static char *table[] = {
+    "\2331;1R",
+    "\033[1;1R",
+  };
+  char *report;
+
+  ed(2);
+  cup(5,1);
+  println("This tests the VT5xx control sequence to direct the terminal to emit 8-bit");
+  println("control-sequences instead of <esc> sequences.");
+
+  set_tty_raw(TRUE);
+  c8c1t(1); fflush(stdout);
+  cup(1,1); dsr(6);
+  report = instr();
+  cup(10,1);
+  printf("8-bit controls enabled: ");
+  chrprint(report);
+  report_ok(table[0], report);
+
+  c8c1t(0); fflush(stdout);
+  cup(1,1); dsr(6);
+  report = instr();
+  cup(12,1);
+  printf("8-bit controls disabled: ");
+  chrprint(report);
+  report_ok(table[1], report);
+
+  set_tty_raw(FALSE);
+  set_tty_crmod(TRUE);
+  cup(max_lines-1,1);
+  holdit();
+}
 
 static void tst_CBT(void)
 {
@@ -29,6 +72,7 @@ static void tst_CBT(void)
 }
 
 /* Note: CHA and HPA have identical descriptions in ECMA-48 */
+/* dtterm implements this (does VT320?) */
 static void tst_CHA(void)
 {
   int n;
@@ -61,15 +105,15 @@ static void tst_CHT(void)
     printf("*");
   }
 
-  cup(3,1);
+  cup(4,1);
   println("CHT with param != 1:");
   for (n = 0; n < last; n++) {
-    cup(4,1);
+    cup(5,1);
     cht(n);
-    printf("*");
+    printf("+");
   }
 
-  cup(6,1);
+  cup(7,1);
   println("Normal tabs:");
   for (n = 0; n < last; n++) {
     printf("\t*");
@@ -88,21 +132,33 @@ static void tst_CNL(void)
   ed(2);
   cup(1, 1);
   printf("1.");
-  for (n = 1; n < max_lines - 3; n++) {
+  for (n = 1; n <= max_lines - 3; n++) {
     cup(1, min_cols);
     cnl(n-1);
     printf("%d.", n);
   }
-  cup(max_lines-3, 1);
+  cup(max_lines-2, 1);
   ed(0);
   println("The lines above this should be numbered in sequence, from 1.");
   holdit();
+
+#if 0
+  decstbm(1, max_lines-3);
+  cup(max_lines-3, 1);
+  cnl(5);
+  decstbm(0, 0); /* No scroll region */
+
+  cup(max_lines-2, 1);
+  ed(0);
+  println("The numbered lines (if any) may be shifted up by 5.");
+  holdit();
+#endif
 }
 
 /*
  * There's a comment in the MS-DOS Kermit 3.13 documentation that implies CPL
  * is used to replace RI (reverse-index).  ECMA-48 doesn't specify scrolling
- * regions, DEC terminals do.
+ * regions, DEC terminals do apparently, so for CPL and CNL we'll test this.
  */
 static void tst_CPL(void)
 {
@@ -114,20 +170,22 @@ static void tst_CPL(void)
     cpl(1);
     printf("%d.", i);
   }
-  cup(max_lines-3, 1);
+  cup(max_lines-2, 1);
   ed(0);
   println("If your terminal supports CPL, the lines above this are numbered.");
   holdit();
 
+#if 0
   decstbm(1, max_lines-3);
   cup(1, 1);
   cpl(5);
   decstbm(0, 0); /* No scroll region */
 
-  cup(max_lines-3, 1);
+  cup(max_lines-2, 1);
   ed(0);
-  println("The numbered lines (if any) should be shifted down by 5.");
+  println("The numbered lines (if any) may be shifted down by 5.");
   holdit();
+#endif
 }
 
 /*
@@ -234,6 +292,30 @@ static void tst_HPA(void)
 }
 
 /*
+ * Test the SD (scroll-down) by forcing characters written in a diagonal into
+ * a horizontal row.
+ *
+ * dtterm uses the incorrect escape sequence (ending with 'T' instead of '^'),
+ * apparently someone misread 05/14 as 05/04.
+ */
+static void tst_SD(void)
+{
+  int n;
+  int last = max_lines - 3;
+
+  ed(2);
+  for (n = 1; n <= last; n++) {
+    cup(n, n);
+    printf("*");
+    sd(1); 
+  }
+  cup(last+1,1);
+  ed(0);
+  println("If your terminal supports SD, there is a horizontal row of *'s above.");
+  holdit();
+}
+
+/*
  * Test the SL (scroll-left) by forcing characters written in a diagonal into
  * a vertical line.
  */
@@ -272,6 +354,27 @@ static void tst_SR(void)
   cup(last,1);
   ed(0);
   println("If your terminal supports SR, there is a vertical column of *'s centered above.");
+  holdit();
+}
+
+/*
+ * Test the SU (scroll-up) by forcing characters written in a diagonal into
+ * a horizontal row.
+ */
+static void tst_SU(void)
+{
+  int n;
+  int last = max_lines - 3;
+
+  ed(2);
+  for (n = 1; n < last; n++) {
+    cup(last + 1 - n, n);
+    printf("*");
+    su(1); 
+  }
+  cup(last+1,1);
+  ed(0);
+  println("If your terminal supports SU, there is a horizontal row of *'s above.");
   holdit();
 }
 
@@ -360,6 +463,7 @@ void tst_vt220(void)
       "Test Protected-Areas (DECSCA)",
       "Test Protected-Areas (SPA)",
       "Test Visible/Invisible Cursor (DECTCEM)",
+      "Test 8-bit controls (C7C1T/C8C1T)",
       ""
     };
 
@@ -374,6 +478,7 @@ void tst_vt220(void)
       case 3: tst_DECSCA();      break;
       case 4: tst_SPA();         break;
       case 5: tst_DECTCEM();     break;
+      case 6: tst_C8C1T();       break;
     }
   } while (menuchoice);
 }
@@ -419,8 +524,10 @@ void tst_ecma48_misc(void)
 
   static char *my_menu[] = {
       "Exit",
+      "Test Scroll-Down (SD)",
       "Test Scroll-Left (SL)",
       "Test Scroll-Right (SR)",
+      "Test Scroll-Up (SU)",
       ""
     };
 
@@ -430,8 +537,10 @@ void tst_ecma48_misc(void)
     cup(7, 10); println("Choose test type:");
     menuchoice = menu(my_menu);
     switch (menuchoice) {
-      case 1: tst_SL();          break;
-      case 2: tst_SR();          break;
+      case 1: tst_SD();          break;
+      case 2: tst_SL();          break;
+      case 3: tst_SR();          break;
+      case 4: tst_SU();          break;
     }
   } while (menuchoice);
 }
