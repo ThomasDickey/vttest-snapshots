@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.21 1996/08/27 00:54:19 tom Exp $ */
+/* $Id: color.c,v 1.22 1996/09/27 10:58:18 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -26,6 +26,8 @@ static char     *colors[MAX_COLORS] =
   "white"        /* 37, 47 */
 };
 
+static int do_colors = TRUE;
+
 static int next_word(char *s);
 static void draw_box_caption(int x0, int y0, int x1, int y1, char **c);
 static void draw_box_outline(int x0, int y0, int x1, int y1, int c);
@@ -49,16 +51,16 @@ c_sgr(char *s)
     for (t = temp; *t != 0; t++) {
       if (((t[0] == '0')
         && (t == temp || t[-1] == ';')
-	&& (t[1] == 0 || t[1] == ';'))
+    && (t[1] == 0 || t[1] == ';'))
        || ((t[0] == ';')
         && (t[1] == ';'))) {
-	reset = TRUE;
-	break;
+    reset = TRUE;
+    break;
       }
     }
   }
 
-  if (reset) {
+  if (reset && do_colors) {
     sprintf(temp + strlen(temp), ";%d;%d", COLOR_YELLOW + 30, COLOR_BLUE + 40);
   }
   sgr(temp);
@@ -81,9 +83,9 @@ draw_box_caption(int x0, int y0, int x1, int y1, char ** c)
       }
       putchar(t); x++;
       if ((t == ' ') && (next_word(s) > (x1-x-2))) {
-	while (x < x1) {
-	  putchar(' '); x++;
-	}
+    while (x < x1) {
+      putchar(' '); x++;
+    }
       }
       if (x >= x1) {
         putchar(' ');
@@ -149,36 +151,43 @@ next_word(char *s)
 
 /*
  * Some terminals will reset colors with SGR-0; I've added the 39, 49 codes for
- * those that are ISO compliant.
+ * those that are ISO compliant.  (The black/white codes are for emulators
+ * written by people who don't bother reading standards).
  */
 static void
 reset_colors(void)
 {
-  sgr("0;39;49");
+  sgr("0;40;37;39;49");
 }
 
 static void
 set_background(int bg)
 {
-  char temp[80];
-  (void)sprintf(temp, "4%d", bg);
-  sgr(temp);
+  if (do_colors) {
+    char temp[80];
+    (void)sprintf(temp, "4%d", bg);
+    sgr(temp);
+  }
 }
 
 static void
 set_color_pair(int fg, int bg)
 {
-  char temp[80];
-  (void)sprintf(temp, "3%d;4%d", fg, bg);
-  sgr(temp);
+  if (do_colors) {
+    char temp[80];
+    (void)sprintf(temp, "3%d;4%d", fg, bg);
+    sgr(temp);
+  }
 }
 
 static void
 set_foreground(int fg)
 {
-  char temp[80];
-  (void)sprintf(temp, "3%d", fg);
-  sgr(temp);
+  if (do_colors) {
+    char temp[80];
+    (void)sprintf(temp, "3%d", fg);
+    sgr(temp);
+  }
 }
 
 static void
@@ -501,6 +510,47 @@ test_iso_6429_sgr(MENU_ARGS)
 }
 
 /*
+ */
+static int
+test_SGR_0(MENU_ARGS)
+{
+  vt_move(1,1);
+  reset_colors();
+  println("ECMA-48 states that SGR 0 \"cancels the effect of any preceding occurrence");
+  println("of SGR in the data stream regardless of the setting of the graphic rendition");
+  println("combination mode (GRCM)\".");
+  println("");
+  println("");
+
+  reset_colors();
+  printf("You should see nothing: ");
+  sgr("30;40");
+  printf("SGR 30 and SGR 40 don't work");
+  println("");
+
+  reset_colors();
+  printf("You should see text here: ");
+  sgr("30;40");
+  sgr("0");
+  printf("SGR 0 reset works");
+  println("");
+
+  reset_colors();
+  holdit();
+  return MENU_NOHOLD;
+}
+
+/*
+ * Allow user to test the same screens w/o colors.
+ */
+static int
+toggle_color_mode(MENU_ARGS)
+{
+  do_colors = !do_colors;
+  return MENU_NOHOLD;
+}
+
+/*
  * For terminals that support ANSI/ISO colors, work through a graduated
  * set of tests that first display colors (if the terminal does indeed
  * support them), then exercise the associated reset, clear operations.
@@ -508,9 +558,13 @@ test_iso_6429_sgr(MENU_ARGS)
 int
 tst_colors(MENU_ARGS)
 {
+  static char txt_override_color[80];
+
   static MENU colormenu[] = {
     { "Return to main menu",                                 0 },
+    { txt_override_color,                                    toggle_color_mode, },
     { "Display color test-pattern",                          show_test_pattern, },
+    { "Test SGR-0 color reset",                              test_SGR_0, },
     { "Test BCE-style clear line/display",                   simple_bce_test, },
     { "Test of VT102-style features with BCE (Insert/Delete Char/Line)", test_color_insdel, },
     { "Test of screen features with BCE",                    test_color_screen, },
@@ -519,7 +573,9 @@ tst_colors(MENU_ARGS)
   };
 
   do {
-    ed(2);
+    vt_clear(2);
+    sprintf(txt_override_color, "%sable color-switching",
+        do_colors ? "Dis" : "En");
     title(0); println("ISO 6429 colors");
     title(2); println("Choose test type:");
   } while (menu(colormenu));

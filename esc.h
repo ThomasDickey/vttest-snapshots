@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.34 1996/09/10 00:04:36 tom Exp $ */
+/* $Id: esc.h,v 1.35 1996/09/21 17:44:57 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -141,6 +141,7 @@ void put_char(FILE *fp, int c);
 void put_string(FILE *fp, char *s);
 void readnl(void);
 void reset_inchar(void);
+void rep(int pn);
 void ri(void);
 void ris(void);
 void rm(char *ps);

@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.6 1996/09/08 22:04:37 tom Exp $ */
+/* $Id: unix_io.c,v 1.7 1996/09/27 10:32:32 tom Exp $ */
 
 #include <stdarg.h>
 #include <vttest.h>
@@ -117,7 +117,9 @@ get_reply(void)
 void
 inputline(char *s)
 {
-  scanf("%s",s);
+  int len = gets(s) != 0 ? strlen(s) : 0;
+  if (len > 0 && s[len-1] == '\n')
+    s[--len] = '\0';
 }
 
 /*

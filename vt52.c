@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.2 1996/09/02 23:33:04 tom Exp $ */
+/* $Id: vt52.c,v 1.3 1996/09/21 11:45:25 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -115,9 +115,13 @@ tst_vt52(MENU_ARGS)
   esc("H");  /* Cursor home     */
   esc("J");  /* Erase to end of screen  */
   println("Test of terminal response to IDENTIFY command");
+
+  set_tty_raw(TRUE);
   esc("Z");     /* Identify     */
   response = get_reply();
   println("");
+  restore_ttymodes();
+
   printf("Response was");
   esc("<");  /* Enter ANSI mode (VT100 mode) */
   chrprint(response);

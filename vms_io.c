@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.16 1996/09/08 22:05:15 tom Exp $ */
+/* $Id: vms_io.c,v 1.17 1996/09/27 10:32:11 tom Exp $ */
 
 #define DEBUG
 
@@ -226,7 +226,9 @@ get_reply(void)
 void
 inputline(char *s)
 {
-  scanf("%s",s);
+  int len = gets(s) != 0 ? strlen(s) : 0;
+  if (len > 0 && s[len-1] == '\n')
+    s[--len] = '\0';
 }
 
 /*
