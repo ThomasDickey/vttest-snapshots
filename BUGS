@@ -1,4 +1,4 @@
--- $Id: BUGS,v 1.1 1996/09/10 00:43:53 tom Exp $
+-- $Id: BUGS,v 1.2 1996/09/11 11:00:18 tom Exp $
 
 Please report bugs to dickey@clark.net
 
@@ -13,3 +13,7 @@ This is a list of known problems with VTTEST:
     either 8-bit or 7-bit responses).
 
   + the keyboard test should allow 8-bit responses
+
+  + when I test the DECRQSS responses on a VT420, they usually come back
+    with a code '1' (according to my manual, that's invalid), though the
+    data looks correct otherwise.

@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.39 1996/09/09 18:52:16 tom Exp $ */
+/* $Id: vttest.h,v 1.40 1996/09/11 10:22:36 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -212,6 +212,7 @@ extern int tst_DSR_userkeys(MENU_ARGS);
 extern int tst_ECH(MENU_ARGS);
 extern int tst_S8C1T(MENU_ARGS);
 extern int tst_SD_DEC(MENU_ARGS);
+extern int tst_SRM(MENU_ARGS);
 extern int tst_SU(MENU_ARGS);
 extern int tst_bugs(MENU_ARGS);
 extern int tst_characters(MENU_ARGS);

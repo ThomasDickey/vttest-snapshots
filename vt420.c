@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.41 1996/09/09 23:19:47 tom Exp $ */
+/* $Id: vt420.c,v 1.45 1996/09/11 11:07:26 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -465,28 +465,37 @@ show_MultisessionStatus(char *report)
 
 /*
  * VT400 & up.
- * Back-Index
+ * DECBI - Back Index
+ * This control function moves the cursor backward one column.  If the cursor
+ * is at the left margin, then all screen data within the margin moves one
+ * column to the right.  The column that shifted past the right margin is lost.
+ * 
+ * Format:  ESC 6
+ * Description:
+ * DECBI adds a new column at the left margin with no visual attributes.  DECBI
+ * is not affected by the margins.  If the cursor is at the left border of the
+ * page when the terminal received DECBI, then the terminal ignores DECBI.
  */
 static int
 tst_DECBI(MENU_ARGS)
 {
-  int n;
-  int last = max_lines - 3;
+  int n, m;
+  int last = max_lines - 4;
+  int final = min_cols / 4;
 
   cup(1,1);
-  for (n = 1; n < last; n++)
-    printf("%d\n", n + 5);
-  cup(1,1);
-  for (n = 1; n <= 5; n++) {
-    decbi();
-    printf("%d\b", 6 - n);
+  for (n = final; n > 0; n--) {
+    for (m = 0; m < 4; m++)
+      decbi();
+    printf("%3d ", n);
   }
 
   vt_move(last,1);
   vt_clear(0);
 
-  println("If your terminal supports DECBI (backward index), then the lines above");
-  printf("should be numbered 1 through %d.\n", last-1);
+  println(the_title);
+  println("If your terminal supports DECBI (backward index), then the top row");
+  printf("should be numbered 1 through %d.\n", final);
   return MENU_HOLD;
 }
 
@@ -530,6 +539,7 @@ tst_DECBKM(MENU_ARGS)
 static int
 tst_DECCARA(MENU_ARGS)
 {
+  int last = max_lines - 4;
   int top = 5;
   int left = 5;
   int right = 45;
@@ -540,8 +550,9 @@ tst_DECCARA(MENU_ARGS)
   deccara(top, left, bottom, right, 7); /* invert a rectangle) */
   deccara(top+1, left+1, bottom-1, right-1, 0); /* invert a rectangle) */
 
-  vt_move(max_lines-2, 1);
+  vt_move(last, 1);
   vt_clear(0);
+  println(the_title);
   println("There should be an open rectangle formed by reverse-video E's");
   holdit();
 
@@ -550,8 +561,9 @@ tst_DECCARA(MENU_ARGS)
   deccara(top, left, bottom, right, 7); /* invert a rectangle) */
   deccara(top+1, left+1, bottom-1, right-1, 0); /* invert a rectangle) */
 
-  vt_move(max_lines-2, 1);
+  vt_move(last, 1);
   vt_clear(0);
+  println(the_title);
   println("There should be an open rectangle formed by reverse-video E's");
   println("combined with wrapping at the margins.");
   return MENU_HOLD;
@@ -673,29 +685,39 @@ tst_DECERA(MENU_ARGS)
 
 /*
  * VT400 & up.
- * Forward-Index
+ *
+ * DECFI - Forward Index
+ * This control function moves the column forward one column.  If the cursor is
+ * at the right margin, then all screen data within the margins moves one
+ * column to the left.  The column shifted past the left margin is lost.
+ * 
+ * Format: ESC 9
+ * Description:
+ * DECFI adds a new column at the right margin with no visual attributes. 
+ * DECFI is not affected by the margins.  If the cursor is at the right border
+ * of the page when the terminal receives DECFI, then the terminal ignores
+ * DECFI.
  */
 static int
 tst_DECFI(MENU_ARGS)
 {
-  int n;
-  int last = max_lines - 3;
+  int n, m;
+  int last = max_lines - 4;
+  int final = min_cols / 4;
 
-  cup(1,1);
-  for (n = 1; n <= max_lines; n++)
-    printf("%d\n", n-5);
-
-  cup(max_lines, 1);
-  for (n = 0; n <= 5; n++) {
-    decfi();
-    printf("%d", n + last - 1); /* only one line will be above message */
+  cup(1,min_cols-4);
+  for (n = 1; n <= final; n++) {
+    for (m = 0; m < 4; m++)
+      decfi();
+    printf("%3d ", n);
   }
 
   vt_move(last,1);
   vt_clear(0);
 
-  println("If your terminal supports DECFI (forward index), then the lines above");
-  printf("should be numbered 1 through %d.\n", last-1);
+  println(the_title);
+  println("If your terminal supports DECFI (forward index), then the top row");
+  printf("should be numbered 1 through %d.\n", final);
   return MENU_HOLD;
 }
 
@@ -813,6 +835,7 @@ tst_DECNKM(MENU_ARGS)
 static int
 tst_DECRARA(MENU_ARGS)
 {
+  int last = max_lines - 4;
   int top = 5;
   int left = 5;
   int right = 45;
@@ -823,8 +846,9 @@ tst_DECRARA(MENU_ARGS)
   decrara(top, left, bottom, right, 7); /* invert a rectangle) */
   decrara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
 
-  vt_move(max_lines-2, 1);
+  vt_move(last, 1);
   vt_clear(0);
+  println(the_title);
   println("There should be an open rectangle formed by reverse-video E's");
   holdit();
 
@@ -833,7 +857,7 @@ tst_DECRARA(MENU_ARGS)
   decrara(top, left, bottom, right, 7); /* invert a rectangle) */
   decrara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
 
-  vt_move(max_lines-2, 1);
+  vt_move(last+1, 1);
   vt_clear(0);
   println("There should be an open rectangle formed by reverse-video E's");
   println("combined with wrapping at the margins.");
@@ -1120,6 +1144,7 @@ tst_DECSERA(MENU_ARGS)
   int left = 5;
   int right = 45;
   int bottom = max_lines-10;
+  int last = max_lines - 3;
 
   decaln();
   decsca(1);
@@ -1127,8 +1152,9 @@ tst_DECSERA(MENU_ARGS)
   decsca(1);
   decsera(top, left, bottom, right); /* erase the inside */
 
-  vt_move(max_lines-2, 1);
+  vt_move(last, 1);
   vt_clear(0);
+  println(the_title);
   println("There should be an open rectangle formed by blanks on a background of E's");
 
   holdit();
@@ -1227,7 +1253,7 @@ tst_DSR_multisession(MENU_ARGS)
   return any_DSR(PASS_ARGS, "?85n", show_MultisessionStatus);
 }
 
-static int
+int
 tst_SRM(MENU_ARGS)
 {
   int oldc, newc;
@@ -1236,9 +1262,9 @@ tst_SRM(MENU_ARGS)
   println(the_title);
 
   set_tty_raw(TRUE);
-  set_tty_echo(FALSE);
 
-  srm(TRUE);
+  set_tty_echo(FALSE);
+  srm(FALSE);
 
   println("Local echo is enabled, remote echo disabled.  Press any keys, repeat to quit.");
   vt_move(3,10);

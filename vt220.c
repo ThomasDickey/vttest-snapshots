@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.5 1996/09/09 23:27:59 tom Exp $ */
+/* $Id: vt220.c,v 1.7 1996/09/11 10:33:11 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002)
@@ -310,7 +310,7 @@ tst_DECUDK(MENU_ARGS)
     if (*report == 'q')
       break;
     vt_move(5,10);
-    vt_clear(2);
+    vt_clear(0);
     chrprint(report);
   }
 
@@ -350,6 +350,7 @@ int
 tst_ECH(MENU_ARGS)
 {
   int i;
+  int last = max_lines - 4;
 
   decaln();
   for (i = 1; i <= max_lines; i++) {
@@ -361,14 +362,34 @@ tst_ECH(MENU_ARGS)
     printf("*"); /* this should be adjacent, in the upper-right corner */
   }
 
-  vt_move(max_lines-4, 1);
+  vt_move(last, 1);
   vt_clear(0);
 
-  vt_move(max_lines-4, min_cols - (max_lines + 6));
+  vt_move(last, min_cols - (last + 10));
   println("diagonal: ^^ (clear)");
   println("ECH test: there should be E's with a gap before diagonal of **'s");
   println("The lower-right diagonal region should be cleared.  Nothing else.");
   return MENU_HOLD;
+}
+
+/******************************************************************************/
+
+static int
+tst_terminal_modes(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Send/Receive mode (SRM)",                      tst_SRM },
+      { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
+      { "",                                                  0 }
+    };
+
+  do {
+    vt_clear(2);
+    title(0); printf("VT220 Terminal Mode Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
 }
 
 /******************************************************************************/
@@ -385,6 +406,7 @@ tst_vt220(MENU_ARGS)
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
       { "Test Soft Character Sets (DECDLD)",                 tst_softchars },
+      { "Test Terminal Modes",                               tst_terminal_modes },
       { "Test UDK Status",                                   tst_DSR_userkeys },
       { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
       { "Test user-defined keys (DECUDK)",                   tst_DECUDK },
