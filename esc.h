@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.53 2004/08/03 19:27:04 tom Exp $ */
+/* $Id: esc.h,v 1.54 2005/01/07 20:01:40 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -115,6 +115,7 @@ int cup(int pn1, int pn2);
 int decdc(int pn);
 int decic(int pn);
 int println(char *s);
+int tprintf(const char *fmt, ...);
 void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
 void brc3(int pn1, int pn2, int pn3, int c);

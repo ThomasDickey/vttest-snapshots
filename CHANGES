@@ -1,5 +1,11 @@
-$Id: CHANGES,v 1.100 2004/12/21 02:07:55 tom Exp $
+$Id: CHANGES,v 1.101 2005/01/08 01:14:25 tom Exp $
 -------------------------------------------------------------------------------
+
+20050107
+	improve test for vt220 locking shifts, showing GL/GR side-by-side to
+	demonstrate which are modified.
+
+	add logging for text which is part of test-screens
 
 20041220
 	modify configure script to work with Intel compiler.

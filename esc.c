@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.74 2004/08/03 19:29:38 tom Exp $ */
+/* $Id: esc.c,v 1.75 2005/01/08 01:15:16 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -132,6 +132,9 @@ int
 println(char *s)
 {
   printf("%s\r\n", s);
+  if (LOG_ENABLED) {
+    fprintf(log_fp, "Text: %s\n", s);
+  }
   return 1;
 }
 
@@ -157,7 +160,7 @@ put_string(FILE *fp, char *s)
 }
 
 static void
-va_out(FILE *fp, va_list ap, char *fmt)
+va_out(FILE *fp, va_list ap, const char *fmt)
 {
   char temp[10];
 
@@ -180,6 +183,25 @@ va_out(FILE *fp, va_list ap, char *fmt)
     }
     fmt++;
   }
+}
+
+int
+tprintf(const char *fmt,...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  va_out(stdout, ap, fmt);
+  va_end(ap);
+  FLUSH;
+
+  if (LOG_ENABLED) {
+    fputs("Text: ", log_fp);
+    va_start(ap, fmt);
+    va_out(log_fp, ap, fmt);
+    va_end(ap);
+    fputs("\n", log_fp);
+  }
+  return 1;
 }
 
 /* CSI xxx */
