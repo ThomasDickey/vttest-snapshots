@@ -1,9 +1,23 @@
-MANIFEST for vttest, version v9207xx
+MANIFEST for vttest, version v2_0
 --------------------------------------------------------------------------------
 MANIFEST                        this file
-Makefile                        original version of vttest posted to comp.sources.unix, volume 7
+CHANGES                         record of changes I've made to vttest
+COPYING                         copyright notice
 README                          original version of vttest posted to comp.sources.unix, volume 7
+color.c                         color tests
+color.h                         interface of color.c
+config.hin                      template for config.h
+configure.in                    template for configure script
 esc.c                           escape-sequence formatting & I/O
-header.h                        original version of vttest posted to comp.sources.unix, volume 7
+esc.h                           interface of esc.c
+install.sh                      install script, needed for configure
 main.c                          main-program & most tests, for VTTEST
+makefile.in                     template for makefile
+mkdirs.sh                       mkinstalldirs script, from X11
+patchlev.h                      patch-level of VTTEST
+sargasso.h                      split-out obsolete compiler defs from header.h
+ttymodes.c                      module for changing tty modes
+ttymodes.h                      interface of ttymodes.c
 vttest.1                        manual-page for VTTEST
+vttest.h                        renamed from header.h, common definitions of VTTEST
+vttest.lsm                      Linux Software Map description of VTTEST

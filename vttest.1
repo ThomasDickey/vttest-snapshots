@@ -1,8 +1,9 @@
+.\" $Id: vttest.1,v 1.3 1996/06/25 23:15:22 tom Exp $
 .TH VTTEST 1 "LOCAL"
 .SH NAME
 vttest \- test VT100-type terminal
 .SH SYNOPSIS
-.B vttest
+.B vttest \fI[24x80.132]
 .SH DESCRIPTION
 .I Vttest
 is a program designed to test the functionality of a VT100 terminal
@@ -11,3 +12,11 @@ It tests both display (escape sequence handling) and keyboard.
 .PP
 The program is menu\-driven and contains full on\-line operating
 instructions.
+.SH AUTHOR
+Per Lindberg
+(mcvax,seismo)!enea!suadb!lindberg
+sometime 1985.
+
+Modified by Thomas Dickey
+<dickey@clark.net>
+June 1996, to support nonstandard screen geometry and ISO color tests.

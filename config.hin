@@ -1,0 +1,37 @@
+/* $Id: config.hin,v 1.6 1996/06/21 21:50:08 tom Exp $ */
+
+/* define this if you have the alarm() function */
+#undef HAVE_ALARM
+
+/* define this if you have <ioctl.h> */
+#undef HAVE_IOCTL_H
+
+/* define this if you have <sgtty.h> */
+#define HAVE_SGTTY_H 1
+
+/* define this if you have <stdlib.h> */
+#undef HAVE_STDLIB_H
+
+/* define this if you have <string.h> */
+#undef HAVE_STRING_H
+
+/* define this if you have <sys/filio.h> */
+#undef HAVE_SYS_FILIO_H
+
+/* define this if you have <sys/ioctl.h> */
+#undef HAVE_SYS_IOCTL_H
+
+/* define this if you have the tcgetattr() function */
+#undef HAVE_TCGETATTR
+
+/* define this if you have <termio.h> */
+#undef HAVE_TERMIO_H
+
+/* define this if you have <termios.h> */
+#undef HAVE_TERMIOS_H
+
+/* define this if you have <unistd.h> */
+#undef HAVE_UNISTD_H
+
+/* define this to be the return-type of functions manipulated by 'signal()' */
+#define RETSIGTYPE void

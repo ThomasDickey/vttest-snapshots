@@ -1,3 +1,11 @@
+$Id: README,v 1.2 1996/06/24 00:02:34 tom Exp $
+
+I extended the original vttest program (I've found no modifications) with
+several new features listed in CHANGES - Thomas E. Dickey <dickey@clark.net>
+
+--------------------------------------------------------------------------------
+The remainder of this file is the original README:
+--------------------------------------------------------------------------------
 NOTES FROM THE MOD.SOURCES MODERATOR:
 I split the source up into the three separate pieces it now is.
 In doing this, I put lines like "int reading;" in a header file

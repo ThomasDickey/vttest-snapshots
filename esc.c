@@ -1,136 +1,272 @@
-#include "header.h"
+/* $Id: esc.c,v 1.9 1996/06/23 19:20:32 tom Exp $ */
 
-println(s) char *s; {
+#include <vttest.h>
+#include <esc.h>
+
+#if defined(SARG10) || defined(SARG20)
+static int ttymode;
+#endif
+
+void
+println(char *s)
+{
   printf("%s\n", s);
 }
 
-esc(s) char *s; {
+void
+esc(char *s)
+{
   printf("%c%s", 27, s);
 }
 
-esc2(s1, s2) char s1, s2; {
-  printf("%c%s%s", 27, s1, s2);
-}
-
-brcstr(ps, c) char *ps, c; {
+void
+brcstr(char *ps, int c)
+{
   printf("%c[%s%c", 27, ps, c);
 }
 
-brc(pn,c) int pn; char c; {
+void
+brc(int pn, int c)
+{
   printf("%c[%d%c", 27, pn, c);
 }
 
-brc2(pn1, pn2 ,c) int pn1, pn2; char c; {
+void
+brc2(int pn1, int pn2, int c)
+{
   printf("%c[%d;%d%c", 27, pn1, pn2, c);
 }
 
-cub(pn) int pn; {  /* Cursor Backward */
+void
+cub(int pn)  /* Cursor Backward */
+{
   brc(pn,'D');
 }
-cud(pn) int pn; {  /* Cursor Down */
+
+void
+cud(int pn)  /* Cursor Down */
+{
   brc(pn,'B');
 }
-cuf(pn) int pn; {  /* Cursor Forward */
+
+void
+cuf(int pn)  /* Cursor Forward */
+{
   brc(pn,'C');
 }
-cup(pn1, pn2) int pn1, pn2; {  /* Cursor Position */
+
+void
+cup(int pn1, int pn2)  /* Cursor Position */
+{
   brc2(pn1, pn2, 'H');
 }
-cuu(pn) int pn; {  /* Cursor Up */
+
+void
+cuu(int pn)  /* Cursor Up */
+{
   brc(pn,'A');
 }
-da() {  /* Device Attributes */
+
+void
+da(void)  /* Device Attributes */
+{
   brc(0,'c');
 }
-decaln() {  /* Screen Alignment Display */
+
+void
+decaln(void)  /* Screen Alignment Display */
+{
   esc("#8");
 }
-decdhl(lower) int lower; {  /* Double Height Line (also double width) */
+
+void
+decdhl(int lower)  /* Double Height Line (also double width) */
+{
   if (lower) esc("#4");
   else       esc("#3");
 }
-decdwl() {  /* Double Wide Line */
+
+void
+decdwl(void)  /* Double Wide Line */
+{
   esc("#6");
 }
-deckpam() {  /* Keypad Application Mode */
+
+void
+deckpam(void)  /* Keypad Application Mode */
+{
   esc("=");
 }
-deckpnm() {  /* Keypad Numeric Mode */
+
+void
+deckpnm(void)  /* Keypad Numeric Mode */
+{
   esc(">");
 }
-decll(ps) char *ps; {  /* Load LEDs */
+
+void
+decll(char *ps)  /* Load LEDs */
+{
   brcstr(ps, 'q');
 }
-decrc() {  /* Restore Cursor */
+
+void
+decrc(void)  /* Restore Cursor */
+{
   esc("8");
 }
-decreqtparm(pn) int pn; {  /* Request Terminal Parameters */
+
+void
+decreqtparm(int pn)  /* Request Terminal Parameters */
+{
   brc(pn,'x');
 }
-decsc() {  /* Save Cursor */
+
+void
+decsc(void)  /* Save Cursor */
+{
   esc("7");
 }
-decstbm(pn1, pn2) int pn1, pn2; {  /* Set Top and Bottom Margins */
+
+void
+decstbm(int pn1, int pn2)  /* Set Top and Bottom Margins */
+{
   if (pn1 || pn2) brc2(pn1, pn2, 'r');
   else            esc("[r");
   /* Good for >24-line terminals */
 }
-decswl() {  /* Single With Line */
+
+void
+decswl(void)  /* Single Width Line */
+{
   esc("#5");
 }
-dectst(pn) int pn; {  /* Invoke Confidence Test */
+
+void
+dectst(int pn)  /* Invoke Confidence Test */
+{
   brc2(2, pn, 'y');
 }
-dsr(pn) int pn; {  /* Device Status Report */
+
+void
+dsr(int pn)  /* Device Status Report */
+{
   brc(pn, 'n');
 }
-ed(pn) int pn; {  /* Erase in Display */
+
+void
+ed(int pn)  /* Erase in Display */
+{
   brc(pn, 'J');
 }
-el(pn) int pn; {  /* Erase in Line */
+
+void
+el(int pn)  /* Erase in Line */
+{
   brc(pn,'K');
 }
-hts() {  /* Horizontal Tabulation Set */
+
+void
+hts(void)  /* Horizontal Tabulation Set */
+{
   esc("H");
 }
-hvp(pn1, pn2) int pn1, pn2; {  /* Horizontal and Vertical Position */
+
+void
+hvp(int pn1, int pn2)  /* Horizontal and Vertical Position */
+{
   brc2(pn1, pn2, 'f');
 }
-ind() {  /* Index */
+
+void
+ind(void)  /* Index */
+{
   esc("D");
 }
-nel() {  /* Next Line */
+
+void
+nel(void)  /* Next Line */
+{
   esc("E");
 }
-ri() {  /* Reverse Index */
+
+void
+ri(void)  /* Reverse Index */
+{
   esc("M");
 }
-ris() { /*  Reset to Initial State */
+
+void
+ris(void) /*  Reset to Initial State */
+{
   esc("c");
 }
-rm(ps) char *ps; {  /* Reset Mode */
+
+void
+rm(char *ps)  /* Reset Mode */
+{
   brcstr(ps, 'l');
 }
-scs(g,c) int g; char c; {  /* Select character Set */
+
+void
+scs(int g, int c)  /* Select character Set */
+{
   printf("%c%c%c%c%c%c%c", 27, g ? ')' : '(', c,
                            27, g ? '(' : ')', 'B',
 			   g ? 14 : 15);
 }
-sgr(ps) char *ps; {  /* Select Graphic Rendition */
+
+void
+sgr(char *ps)  /* Select Graphic Rendition */
+{
   brcstr(ps, 'm');
 }
-sm(ps) char *ps; {  /* Set Mode */
+
+void
+sm(char *ps)  /* Set Mode */
+{
   brcstr(ps, 'h');
 }
-tbc(pn) int pn; {  /* Tabulation Clear */
+
+void
+tbc(int pn)  /* Tabulation Clear */
+{
   brc(pn, 'g');
 }
 
-vt52cup(l,c) int l,c; {
+void
+dch(int pn) /* Delete character */
+{
+  brc(pn, 'P');
+}
+
+void
+ich(int pn) /* Insert character -- not in VT102 */
+{
+  brc(pn, '@');
+}
+
+void
+dl(int pn) /* Delete line */
+{
+  brc(pn, 'M');
+}
+
+void
+il(int pn) /* Insert line */
+{
+  brc(pn, 'L');
+}
+
+void
+vt52cup(int l, int c)
+{
   printf("%cY%c%c", 27, l + 31, c + 31);
 }
 
-char inchar() {
+char
+inchar(void)
+{
 
   /*
    *   Wait until a character is typed on the terminal
@@ -138,14 +274,29 @@ char inchar() {
    */
 
 #ifdef UNIX
-  int lval, waittime, getpid(); static int val; char ch;
+  int lval; static int val; char ch;
 
   fflush(stdout);
   lval = val;
-  brkrd = 0;
-  reading = 1;
+  brkrd = FALSE;
+  reading = TRUE;
+#if HAVE_ALARM
+  alarm(60);	/* timeout after 1 minute, in case user's keyboard is hung */
+#endif
   read(0,&ch,1);
-  reading = 0;
+#if HAVE_ALARM
+  alarm(0);
+#endif
+  reading = FALSE;
+#ifdef DEBUG
+  {
+    FILE *fp = fopen("ttymodes.log","a");
+    if (fp != 0) {
+      fprintf(fp, "%d>%#x\n", brkrd, ch);
+      fclose(fp);
+    }
+  }
+#endif
   if (brkrd)
     val = 0177;
   else
@@ -178,7 +329,8 @@ char inchar() {
   return(val);
 }
 
-char *instr() {
+char *instr(void)
+{
 
   /*
    *   Get an unfinished string from the terminal:
@@ -186,9 +338,11 @@ char *instr() {
    *   then read it, and all other available characters.
    *   Return a pointer to that string.
    */
+#ifdef SARG10
+  int val, crflag;
+#endif
 
-
-  int i, val, crflag; long l1; char ch;
+  int i; long l1;
   static char result[80];
 
   i = 0;
@@ -208,7 +362,7 @@ char *instr() {
     if (i++ == 78) break;
   }
 #else
-#ifdef SIII
+#if USE_FCNTL
   while(read(2,result+i,1) == 1)
     if (i++ == 78) break;
 #else
@@ -243,7 +397,9 @@ out1:
   return(result);
 }
 
-ttybin(bin) int bin; {
+void
+ttybin(int bin)
+{
 #ifdef SARG10
   #define OPEN 050
   #define IO_MOD 0000017
@@ -291,7 +447,8 @@ ttybin(bin) int bin; {
  *	Beware where and how you use it !!!!!!!
  */
 
-superbin(bin) int bin; {
+superbin(int bin)
+{
   int v;
 
   v = ejsys(STIW,(0//-5), bin ? 0 : -1);
@@ -304,7 +461,8 @@ superbin(bin) int bin; {
  *	Set bit 34 to turn it on. Clear it for off.
  */
 
-page(bin) int bin; {
+page(bin) int bin;
+{
   int v;
 
   #define TT_PGM 0000002
@@ -315,7 +473,9 @@ page(bin) int bin; {
 }
 #endif
 
-trmop(fc,arg) int fc, arg; {
+void
+trmop(int fc, int arg)
+{
 #ifdef SARG10
   int retvalp;
   int arglst[3];
@@ -338,7 +498,9 @@ trmop(fc,arg) int fc, arg; {
 #endif
 }
 
-inputline(s) char *s; {
+void
+inputline(char *s)
+{
   scanf("%s",s);
 #ifdef SARG10
   readnl();
@@ -348,7 +510,9 @@ inputline(s) char *s; {
 #endif
 }
 
-inflush() {
+void
+inflush(void)
+{
 
   /*
    *   Flush input buffer, make sure no pending input character
@@ -358,14 +522,17 @@ inflush() {
 
 #ifdef UNIX
 #ifdef XENIX
-  while(rdchk(0)) read(0,&val,1);
+  while(rdchk(0))
+    read(0,&val,1);
 #else
-#ifdef SIII
-  while(read(2,&val,1));
+#if USE_FCNTL
+  while(read(2,&val,1) > 0)
+    ;
 #else
   long l1;
   ioctl (0, FIONREAD, &l1);
-  while(l1-- > 0L) read(0,&val,1);
+  while(l1-- > 0L)
+    read(0,&val,1);
 #endif
 #endif
 #endif
@@ -378,7 +545,40 @@ inflush() {
 #endif
 }
 
-zleep(t) int t; {
+void
+holdit(void)
+{
+  inflush();
+  printf("Push <RETURN>");
+  readnl();
+}
+
+void
+readnl(void)
+{
+#ifdef UNIX
+  char ch;
+  fflush(stdout);
+  brkrd = FALSE;
+  reading = TRUE;
+  do { read(0,&ch,1); } while(ch != '\n' && !brkrd);
+  if (brkrd)
+    kill(getpid(), SIGTERM);
+  reading = FALSE;
+#endif
+#ifdef SARG10
+ while (getchar() != '\n')
+   ;
+#endif
+#ifdef SARG20
+ while (getchar() != '\n')
+   ;
+#endif
+}
+
+void
+zleep(int t)
+{
 
 /*
  *    Sleep and do nothing (don't waste CPU) for t milliseconds
@@ -392,7 +592,7 @@ zleep(t) int t; {
 #endif
 #ifdef UNIX
   t = t / 1000;
-  if (t == 0) t = 1;
-  sleep(t);		/* UNIX can only sleep whole seconds */
+  if (t <= 0) t = 1;
+  sleep((unsigned)t);	/* UNIX can only sleep whole seconds */
 #endif
 }
