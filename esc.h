@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.42 1999/07/12 10:46:31 tom Exp $ */
+/* $Id: esc.h,v 1.45 1999/10/08 00:24:34 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -90,11 +90,13 @@ void deccra(int Pts, int Pl, int Pbs, int Prs, int Pps, int Ptd, int Pld, int Pp
 void decdc(int pn);
 void decdhl(int lower);
 void decdwl(void);
+void decefr(int top, int left, int bottom, int right);
+void decelr(int all_or_one, int pixels_or_cells);
 void decera(int top, int left, int bottom, int right);
 void decfi(void);
 void decfra(int c, int top, int left, int bottom, int right);
-void decid(void);
 void decic(int pn);
+void decid(void);
 void deckbum(int flag);
 void deckpam(void);
 void deckpm(int flag);
@@ -102,9 +104,12 @@ void deckpnm(void);
 void decll(char *ps);
 void decnkm(int flag);
 void decnrcm(int flag);
+void decpex(int flag);
+void decpff(int flag);
 void decrara(int top, int left, int bottom, int right, int attr);
 void decrc(void);
 void decreqtparm(int pn);
+void decrqlp(int mode);
 void decrqss(char *pn);
 void decsace(int flag);
 void decsasd(int pn);
@@ -115,6 +120,7 @@ void decscnm(int flag);
 void decsed(int pn1);
 void decsel(int pn1);
 void decsera(int top, int left, int bottom, int right);
+void decsle(int mode);
 void decsnls(int pn);
 void decssdt(int pn);
 void decstbm(int pn1, int pn2);
@@ -140,6 +146,14 @@ void il(int pn);
 void ind(void);
 void inflush(void);
 void inputline(char *s);
+void mc_autoprint(int flag);
+void mc_print_all_pages(void);
+void mc_print_composed(void);
+void mc_print_cursor_line(void);
+void mc_print_page(void);
+void mc_printer_assign(int flag);
+void mc_printer_controller(int flag);
+void mc_printer_start(int flag);
 void nel(void);
 void padding(int msecs);
 void println(char *s);

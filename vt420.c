@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.53 1999/07/12 10:47:14 tom Exp $ */
+/* $Id: vt420.c,v 1.55 1999/10/08 00:06:58 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -1439,38 +1439,6 @@ tst_VT420_keyboard_ctl(MENU_ARGS)
 
 /******************************************************************************/
 
-static int
-tst_VT420_printing(MENU_ARGS)
-{
-  static MENU my_menu[] = {
-      { "Exit",                                              0 },
-      { "Test Printer-Extent mode (DECPEX)",                 not_impl },
-      { "Test Print form-feed mode (DECPFF)",                not_impl },
-      { "Test Auto-print mode (MC - DEC private mode)",      not_impl },
-      { "Test Printer-controller mode (MC)",                 not_impl },
-      { "Test Print-page (MC)",                              not_impl },
-      { "Test Print composed main-display (MC)",             not_impl },
-      { "Test Print all pages (MC)",                         not_impl },
-      { "Test Print cursor line (MC)",                       not_impl },
-      { "Test Assign/Release-printer (MC)",                  not_impl },
-      { "Test Start/Stop-printer (MC)",                      not_impl },
-#if 0 /* FIXME: does this imply that when printing, the printer gets SGR's ? */
-      { "Test Send Line-Attributes (MC)",                    not_impl },
-      { "Test Send Visual Character-Attributes (MC)",        not_impl },
-#endif
-      { "",                                                  0 }
-    };
-
-  do {
-    vt_clear(2);
-    title(0); printf("VT420 Printing-Control Tests");
-    title(2); println("Choose test type:");
-  } while (menu(my_menu));
-  return MENU_NOHOLD;
-}
-
-/******************************************************************************/
-
 /*
  * These apply only to VT400's & above
  */
@@ -1509,6 +1477,7 @@ tst_VT420_report_device(MENU_ARGS)
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
       { "Test Keyboard Status",                              tst_DSR_keyboard },
+      { "Test Locator Status",                               tst_DSR_locator },
       { "Test Macro Space",                                  tst_DSR_macrospace },
       { "Test Memory Checksum",                              tst_DSR_memory_sum },
       { "Test Data Integrity",                               tst_DSR_data_ok },
@@ -1628,7 +1597,7 @@ tst_vt420(MENU_ARGS)
       { "Test macro-definition (DECDMAC)",                   not_impl },
       { "Test page-format controls",                         tst_PageFormat },
       { "Test page-movement controls",                       tst_PageMovement },
-      { "Test printing functions",                           tst_VT420_printing },
+      { "Test printing functions",                           tst_printing },
       { "Test rectangular area functions",                   tst_VT420_rectangle },
       { "Test reporting functions",                          tst_VT420_reports },
       { "Test screen-display functions",                     tst_VT420_screen },

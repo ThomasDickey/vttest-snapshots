@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.12 1996/11/14 00:48:53 tom Exp $ */
+/* $Id: vt52.c,v 1.13 1999/10/05 21:34:55 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -26,7 +26,12 @@ tst_vt52(MENU_ARGS)
       char *rcode;
       char *rmsg;
   } resptable[] = {
+      { "\033/A", " -- OK (VT50)" },
+      { "\033/C", " -- OK (VT55)" },
+      { "\033/H", " -- OK (VT50H without copier)" },
+      { "\033/J", " -- OK (VT50H with copier)" },
       { "\033/K", " -- OK (means Standard VT52)" },
+      { "\033/L", " -- OK (VT52 with copier)" },
       { "\033/Z", " -- OK (means VT100 emulating VT52)" },
       { "",       " -- Unknown response"}
   };

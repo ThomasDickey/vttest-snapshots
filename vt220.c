@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.9 1996/11/25 11:17:43 tom Exp $ */
+/* $Id: vt220.c,v 1.11 1999/10/08 00:26:40 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002)
@@ -104,6 +104,22 @@ show_KeyboardStatus(char *report)
     }
     show_result(show);
   }
+}
+
+static void
+show_Locator_Status(char *report)
+{
+  int pos = 0;
+  int code = scanto(report, &pos, 'n');
+  char *show;
+
+  switch(code) {
+  case 53: show = "No locator"; break;
+  case 50: show = "Locator ready"; break;
+  case 58: show = "Locator busy"; break;
+  default: show = SHOW_FAILURE;
+  }
+  show_result(show);
 }
 
 static void
@@ -328,6 +344,12 @@ tst_DSR_keyboard(MENU_ARGS)
 }
 
 int
+tst_DSR_locator(MENU_ARGS)
+{
+  return any_DSR(PASS_ARGS, "?53n", show_Locator_Status);
+}
+
+int
 tst_DSR_printer(MENU_ARGS)
 {
   return any_DSR(PASS_ARGS, "?15n", show_PrinterStatus);
@@ -382,6 +404,7 @@ tst_device_status(MENU_ARGS)
       { "Test Keyboard Status",                              tst_DSR_keyboard },
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
+      { "Test Locator Status",                               tst_DSR_locator },
       { "",                                                  0 }
     };
 
@@ -423,7 +446,7 @@ tst_vt220(MENU_ARGS)
       { "Test 8-bit controls (S7C1T/S8C1T)",                 tst_S8C1T },
       { "Test Device Status Report (DSR)",                   tst_device_status },
       { "Test Erase Char (ECH)",                             tst_ECH },
-      { "Test Printer (MC)",                                 not_impl },
+      { "Test Printer (MC)",                                 tst_printing },
       { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
       { "Test Soft Character Sets (DECDLD)",                 tst_softchars },
       { "Test Terminal Modes",                               tst_terminal_modes },

@@ -1,5 +1,13 @@
-$Id: CHANGES,v 1.75 1999/07/12 10:58:33 tom Exp $
+$Id: CHANGES,v 1.78 1999/10/08 01:40:46 tom Exp $
 -------------------------------------------------------------------------------
+
+991007
+	implement tests for Media Copy, e.g., transparent printing.
+
+	add examples for DEC locator events and DSR responses.
+
+	add DA responses for VT50 and VT55 (I'd forgotten that I once bought a
+	DECscope booklet).
 
 990712
 	modify menu 3.12 (non-vt100 "Test Keyboard Layout with G0 Selection")
