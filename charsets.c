@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.20 1999/01/21 01:49:03 tom Exp $ */
+/* $Id: charsets.c,v 1.21 1999/07/12 10:44:34 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -453,7 +453,7 @@ tst_characters(MENU_ARGS)
       { "Test VT220 Locking Shifts",                         tst_vt220_locking },
       { "Test VT220 Single Shifts",                          tst_vt220_single },
       { "Test Soft Character Sets",                          not_impl },
-      { "Test KeyBoard Layout with G0 selection",            tst_layout },
+      { "Test Keyboard Layout with G0 Selection",            tst_layout },
       { "",                                                  0 }
   };
   int n;

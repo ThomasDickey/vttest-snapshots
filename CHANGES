@@ -1,5 +1,13 @@
-$Id: CHANGES,v 1.74 1999/01/21 02:33:51 tom Exp $
+$Id: CHANGES,v 1.75 1999/07/12 10:58:33 tom Exp $
 -------------------------------------------------------------------------------
+
+990712
+	modify menu 3.12 (non-vt100 "Test Keyboard Layout with G0 Selection")
+	to show numeric codes as well as the actual character.
+
+	remove spurious test for SD which indicated that ISO's coding differed
+	from DEC's.  The difference was a typographical error in ECMA-48
+	(reported by Paul Williams <paul@celigne.co.uk>).
 
 990120
 	correct initialization of G0, for character-set shift-in/shift-out test.

@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.26 1999/01/20 23:49:00 tom Exp $ */
+/* $Id: keyboard.c,v 1.27 1999/07/12 09:46:52 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -1032,6 +1032,8 @@ tst_keyboard_layout(char *scs_params)
       vt_hilite(TRUE);
       esc(scs_params);
       printf(" %c ", kbdc);
+      scs(0, 'B');
+      printf("= %d ", kbdc);
       scs(0, 'B');
       vt_hilite(FALSE);
     } else {

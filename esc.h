@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.41 1998/03/26 00:31:37 tom Exp $ */
+/* $Id: esc.h,v 1.42 1999/07/12 10:46:31 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -153,8 +153,7 @@ void ris(void);
 void rm(char *ps);
 void s8c1t(int flag);
 void scs(int g, int c);
-void sd_dec(int pn);
-void sd_iso(int pn);
+void sd(int pn);
 void sgr(char *ps);
 void sl(int pn);
 void sm(char *ps);

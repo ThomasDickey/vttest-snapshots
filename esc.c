@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.58 1998/03/26 01:31:28 tom Exp $ */
+/* $Id: esc.c,v 1.59 1999/07/12 10:46:41 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -729,15 +729,9 @@ scs(int g, int c)  /* Select character Set */
 }
 
 void
-sd_dec(int pn)  /* Scroll Down */
+sd(int pn)  /* Scroll Down */
 {
   brc(pn, 'T');
-}
-
-void
-sd_iso(int pn)  /* Scroll Down */
-{
-  brc(pn, '^');
 }
 
 void
