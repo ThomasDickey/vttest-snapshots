@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.29 1996/09/10 00:30:31 tom Exp $ */
+/* $Id: nonvt100.c,v 1.30 1996/09/21 17:56:30 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -163,6 +163,38 @@ tst_HPA(MENU_ARGS)
   println(the_title);
   println("There should be a diagonal of +'s down to the row of *'s above this message.");
   println("(The + in the row of *'s is the target)");
+  return MENU_HOLD;
+}
+
+/*
+ * Neither VT420 nor VT510.
+ */
+static int
+tst_REP(MENU_ARGS)
+{
+  int n;
+  int last = max_lines-4;
+
+  vt_move(1,1);
+  for (n = 1; n < last; n++) {
+    if (n > 1) {
+      printf(" ");
+      if (n > 2)
+        rep(n-2);
+    }
+    printf("+");
+    rep(1);  /* make that 2 +'s */
+    rep(10); /* this should be ignored, since a control sequence precedes */
+    println("");
+  }
+
+  vt_move(last, 1);
+  for (n = 1; n <= min_cols; n++)
+    printf("%c", (n == last || n == last+1) ? '+' : '*');
+  vt_move(last+1, 1);
+  println(the_title);
+  println("There should be a diagonal of 2 +'s down to the row of *'s above this message.");
+  println("(The ++ in the row of *'s is the target)");
   return MENU_HOLD;
 }
 
@@ -383,6 +415,7 @@ tst_ecma48_misc(MENU_ARGS)
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test Protected-Areas (SPA)",                        tst_SPA },
+      { "Test Repeat (REP)",                                 tst_REP },
       { "Test Scroll-Down (SD)",                             tst_SD_ISO },
       { "Test Scroll-Left (SL)",                             tst_SL },
       { "Test Scroll-Right (SR)",                            tst_SR },

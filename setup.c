@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.19 1996/09/11 01:54:25 tom Exp $ */
+/* $Id: setup.c,v 1.20 1996/09/27 10:52:31 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -37,7 +37,10 @@ find_levels(void)
 
   da();
   report = get_reply();
-  if ((report = skip_csi(report)) == 0
+  if (!strcmp(report, "\033/Z")) {
+    cur_level =
+    max_level = 0; /* must be a VT52 */
+  } else if ((report = skip_csi(report)) == 0
    || strncmp(report, "?6", 2)
    || !isdigit(report[2])
    || report[3] != ';') {
@@ -70,9 +73,9 @@ find_levels(void)
 static int
 toggle_DECSCL(MENU_ARGS)
 {
-  if (max_level == 1) {
+  if (max_level <= 1) {
     vt_move(1,1);
-    printf("Sorry, terminal supports only VT100");
+    printf("Sorry, terminal supports only %s", max_level ? "VT100" : "VT52");
     vt_move(max_lines-1,1);
     return MENU_HOLD;
   }
@@ -181,8 +184,8 @@ tst_setup(MENU_ARGS)
   do {
     sprintf(txt_output, "Send %d-bit controls", output_8bits ? 8 : 7);
     sprintf(txt_input8, "Receive %d-bit controls", input_8bits ? 8 : 7);
-    sprintf(txt_DECSCL, "Operating level %d (VT%d00)",
-        cur_level, cur_level);
+    sprintf(txt_DECSCL, "Operating level %d (VT%d)",
+        cur_level, cur_level ? cur_level * 100 : 52);
     sprintf(txt_logging, "Logging %s", LOG_ENABLED ? "enabled" : "disabled");
     sprintf(txt_padded, "Padding %s", use_padding ? "enabled" : "disabled");
 

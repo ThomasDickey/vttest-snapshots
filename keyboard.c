@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.13 1996/09/08 22:17:09 tom Exp $ */
+/* $Id: keyboard.c,v 1.14 1996/09/21 12:11:00 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -514,13 +514,13 @@ tst_FunctionKeys(MENU_ARGS)
   vt_clear(2);
   show_keyboard(0);
   show_cursor_keys(0);
-  show_keypad(1);
   vt_move(max_lines-2,1);
 
   set_tty_crmod(FALSE);
   set_tty_echo(FALSE);
 
   for (fkeymode = 0; fkeymode <= 3; fkeymode++) {
+    show_keypad(1);
     vt_move(20,1); printf("<%s>%20s", fnkeymodes[fkeymode], "");
     vt_move(max_lines-2,1); vt_el(0);
     vt_move(max_lines-2,1); printf("%s", "Press each function key. Finish with TAB.");

@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.52 1996/09/12 20:10:08 tom Exp $ */
+/* $Id: esc.c,v 1.53 1996/09/21 17:49:55 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -647,6 +647,12 @@ void
 nel(void)  /* Next Line */
 {
   esc("E");
+}
+
+void
+rep(int pn) /* Repeat */
+{
+  do_csi("%db", pn);
 }
 
 void

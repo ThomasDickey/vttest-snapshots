@@ -1,5 +1,25 @@
-$Id: CHANGES,v 1.42 1996/09/12 23:53:42 tom Exp $
+$Id: CHANGES,v 1.44 1996/09/27 10:50:55 tom Exp $
 -------------------------------------------------------------------------------
+
+960927
+	modified scan_chr (used in DECCIR test) to properly diagnose Pericom's
+	3.2 emulator.
+
+	check in setup-menu for VT52.
+
+	modify inputline to retain whitespace
+
+	modify 'reset_colors()' to accommodate grossly-nonstandard emulators
+	that don't reset colors with SGR 0.
+
+	added test for SGR 0
+
+960921
+	implement REP test
+
+	corrected highlighting refresh in function-key test
+
+	use raw-mode for VT52 DECID test.
 
 VERSION 2.6
 
@@ -9,7 +29,7 @@ VERSION 2.6
 
 960908
 	implement DECDLD tests. Tested with fonts from "The VT200 TOOLKIT" by
-	Tabik & DiGiantomasso, Professional Software (availble via DECUS).
+	Tabik & DiGiantomasso, Professional Software (available via DECUS).
 
 960905
 	implement DECCARA, DECRARA, DECSACE, DECSERA tests.

@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.48 1996/09/12 20:12:36 tom Exp $ */
+/* $Id: vt420.c,v 1.49 1996/09/27 10:17:58 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -189,15 +189,23 @@ rpt_DECSMKR(MENU_ARGS)
 
 /******************************************************************************/
 
+/*
+ * DECCIR returns single characters separated by semicolons.  It's not clear
+ * (unless you test on a DEC terminal) from the documentation, which only cites
+ * their values.  This function returns an equivalent-value, recovering from
+ * the bogus implementations that return a decimal number.
+ */
 static int
 scan_chr(char *str, int *pos, int toc)
 {
-  int value = str[*pos];
-  if (str[(*pos)+1] == toc) {
-    *pos += 2;
-    return value;
+  int value = 0;
+  while (str[*pos] != '\0' && str[*pos] != toc) {
+    value = (value * 256) + (unsigned char)str[*pos];
+    *pos += 1;
   }
-  return 0;
+  if (str[*pos] == toc)
+    *pos += 1;
+  return value;
 }
 
 static void
