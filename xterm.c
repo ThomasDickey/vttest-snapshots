@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.26 1999/10/08 01:38:50 tom Exp $ */
+/* $Id: xterm.c,v 1.27 1999/10/26 00:09:33 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -176,11 +176,24 @@ show_mouse_tracking(MENU_ARGS, char *the_mode)
       int b = MCHR(report[1]);
       vt_move(4,10); vt_el(2);
       show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
+      if (b & ~3) {
+        if (b & 4)
+          printf(" shift");
+        if (b & 8)
+          printf(" meta");
+        if (b & 16)
+          printf(" control");
+        if (b & 32)
+          printf(" motion");
+      }
       b &= 3;
-      if (b != 3)
+      if (b != 3) {
+        printf(" button %d", b + 1);
         show_click(MCHR(report[3]), MCHR(report[2]), b + 1 + '0');
-      else if (MCHR(report[2]) != x || MCHR(report[3]) != y)
+      } else if (MCHR(report[2]) != x || MCHR(report[3]) != y) {
+        printf(" release");
         show_click(MCHR(report[3]), MCHR(report[2]), '*');
+      }
       x = MCHR(report[2]);
       y = MCHR(report[3]);
       report += 4;

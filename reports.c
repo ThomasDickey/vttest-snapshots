@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.26 1999/01/19 10:38:29 tom Exp $ */
+/* $Id: reports.c,v 1.27 1999/10/25 23:54:31 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -490,15 +490,15 @@ int
 tst_reports(MENU_ARGS)
 {
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
-      { "<ENQ> (AnswerBack Message)",                        tst_ENQ },
-      { "SM RM (Set/Reset Mode) - LineFeed / Newline",       tst_NLM },
-      { "DSR (Device Status Report)",                        tst_DSR },
-      { "Primary Device Attributes (DA)",                    tst_DA },
-      { "Secondary Device Attributes (DA)",                  tst_DA_2 },
-      { "Tertiary Device Attributes (DA)",                   tst_DA_3 },
-      { "Request Terminal Parameters (DECREQTPARM)",         tst_DECREQTPARM },
-      { "",                                                  0 }
+      { "Exit",                                                   0 },
+      { "<ENQ> (AnswerBack Message)",                             tst_ENQ },
+      { "Set/Reset Mode - LineFeed / Newline",                    tst_NLM },
+      { "Device Status Report (DSR)                 VT100 & up",  tst_DSR },
+      { "Primary Device Attributes (DA)             VT100 & up",  tst_DA },
+      { "Secondary Device Attributes (DA)           VT220 & up",  tst_DA_2 },
+      { "Tertiary Device Attributes (DA)            VT420",       tst_DA_3 },
+      { "Request Terminal Parameters (DECREQTPARM)  VT100",       tst_DECREQTPARM },
+      { "",                                                       0 }
     };
 
   do {
