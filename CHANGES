@@ -1,10 +1,47 @@
-$Id: CHANGES,v 1.25 1996/08/19 03:00:42 tom Exp $
+$Id: CHANGES,v 1.36 1996/09/05 10:58:51 tom Exp $
 -------------------------------------------------------------------------------
+
+960905
+	implement DECCARA, DECRARA tests.
+
+960901
+	implement DECBKM, DECCRA, DECERA, DECFRA, DECKBUM, DECKPM, DECNKM,
+	SRM tests
+
+960830
+	implement 2nd, 3rd DA, DECFI, DECBI, DECSNLS, DECRQTSR tests.
+
+960828
+	provide analysis of DECCIR
+
+	implement tests for DECSASD, DECSSDT
+
+960825
+	corrected error (I) introduced in tst_movements (main.c 1.6) that broke
+	test of cursor-control characters inside ESC sequences (reported by
+	Albert D. Cahalan).
+
+	implement DECDC, DECIC tests.
+
+960825
+	added -l (logging) option.
+
+	added -p (padding) option.
+
+	port to VAX/VMS, for testing VT420
+
+960821
+	Corrected test for DECUDK, omitted lock-parameter caused keys to be
+	locked, so that only the first key definition was used (reported by
+	Jeffrey Altman).
+
+	Corrected test for DECRPM, missing '?' (reported by Jeffrey Altman
+	<jaltman@watsun.cc.columbia.edu>).
 
 VERSION 2.5
 
 960818
-	implements most VT420 report-tests
+	implements most VT420 report-tests.
 
 	make menu-skeleton for VT420 tests (some are needed for xterm tests),
 	marking the non-implemented entries with an '*'.
@@ -42,6 +79,11 @@ VERSION 2.4
 
 	corrected some typos in DECSCA test.
 
+960806
+	Testing by Albert D. Cahalan <acahalan@cs.uml.edu> with VT510,
+	suggested initializing with the 80/132 mode enabled.  Says real
+	terminals need padding...
+
 960804
 	Implement tests for: SL, SD, SU, SR
 
@@ -64,6 +106,9 @@ VERSION 2.2
 
 960721
 	Initialize terminal with 80/132 switching enabled
+
+	Casper Dik <casper@holland.Sun.COM> explained why tests fail on Solaris
+	2.5 (can workaround with lots of fflush calls ;-)
 
 960716
 	Add tests for CDE-compatible xterm

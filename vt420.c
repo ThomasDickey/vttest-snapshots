@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.9 1996/08/19 02:42:21 tom Exp $ */
+/* $Id: vt420.c,v 1.35 1996/09/05 11:00:46 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -9,6 +9,9 @@ typedef struct {
   char *name;
   } MODES;
 
+static void show_DECCIR(char *report);
+static void show_DECTABSR(char *report);
+
 /******************************************************************************/
 
 static int
@@ -17,28 +20,33 @@ any_decrqpsr(MENU_ARGS, int Ps)
   char *report;
 
   cup(1,1);
-  printf("Testing DECRQPSR: %s\r\n", the_title);
+  printf("Testing DECRQPSR: %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
   do_csi("%d$w", Ps);
-  report = instr();
+  report = get_reply();
   cup(3,10);
   chrprint(report);
-  if ((report = skip_prefix(dcs_input(), report)) != 0) {
-    char *st = st_input();
-    int len = strlen(report) - (3 + strlen(st));
-    if (len > 0
+  if ((report = skip_dcs(report)) != 0) {
+    if (strip_terminator(report)
      && *report == Ps + '0'
-     && !strncmp(report+1, "$u", 2)
-     && !strcmp(report + strlen(report) - strlen(st), st)) {
-      printf(" ok (valid request)");
+     && !strncmp(report+1, "$u", 2)) {
+      show_result("%s (valid request)", SHOW_SUCCESS);
+      switch (Ps) {
+      case 1:
+        show_DECCIR(report);
+        break;
+      case 2:
+        show_DECTABSR(report);
+        break;
+      }
     } else {
-      printf(" failed");
+      show_result(SHOW_FAILURE);
     }
   } else {
-    printf(" failed");
+    show_result(SHOW_FAILURE);
   }
 
   restore_ttymodes();
@@ -50,34 +58,31 @@ static int
 any_decrqss(char *msg, char *func)
 {
   char *report;
+  char *show;
 
   cup(1,1);
-  printf("Testing DECRQSS: %s\r\n", msg);
+  printf("Testing DECRQSS: %s\n", msg);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
   decrqss(func);
-  report = instr();
+  report = get_reply();
   cup(3,10);
   chrprint(report);
-  if ((report = skip_prefix(dcs_input(), report)) != 0) {
-    char *st = st_input();
-    int len = strlen(report) - (3 + strlen(st));
-    if (len > 0
-     && !strncmp(report, "0$r", 3)
-     && !strcmp(report + strlen(report) - strlen(st), st)) {
-      printf(" ok (valid request)");
-    } else if (len >= 0
-     && !strncmp(report, "1$r", 3)
-     && !strcmp(report + strlen(report) - strlen(st), st)) {
-      printf(" invalid request");
-    } else {
-      printf(" failed");
-    }
+  if ((report = skip_dcs(report)) != 0
+   && strip_terminator(report)
+   && strip_suffix(report, func)) {
+    if (!strncmp(report, "0$r", 3))
+      show = "ok (valid request)";
+    else if (!strncmp(report, "1$r", 3))
+      show = "invalid request";
+    else
+      show = SHOW_FAILURE;
   } else {
-    printf(" failed");
+    show = SHOW_FAILURE;
   }
+  show_result(show);
 
   restore_ttymodes();
   cup(max_lines-1, 1);
@@ -85,25 +90,29 @@ any_decrqss(char *msg, char *func)
 }
 
 static int
-any_DSR(MENU_ARGS, char *text)
+any_DSR(MENU_ARGS, char *text, void (*explain)(char *report))
 {
   char *report;
 
   cup(1,1);
-  printf("Testing DSR: %s\r\n", the_title);
+  printf("Testing DSR: %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
   do_csi("%s", text);
-  report = instr();
+  report = get_reply();
   cup(3,10);
   chrprint(report);
-  if ((report = skip_prefix(csi_input(), report)) != 0
-   && strlen(report) > 1) {
-    printf(" ok"); /* FIXME: should validate parameters */
+  if ((report = skip_csi(report)) != 0
+   && strlen(report) > 2
+   && *report++ == '?') {
+    if (explain != 0)
+      (*explain)(report);
+    else
+      show_result(SHOW_SUCCESS);
   } else {
-    printf(" failed");
+    show_result(SHOW_FAILURE);
   }
 
   restore_ttymodes();
@@ -185,10 +194,14 @@ rpt_DECELF(MENU_ARGS)
   return any_decrqss(the_title, "+q");
 }
 
+/*
+ * VT420 manual shows "=}", but the terminal returns an error.  VT510 sequences
+ * show "*}".
+ */
 static int
 rpt_DECLFKC(MENU_ARGS)
 {
-  return any_decrqss(the_title, "=}");
+  return any_decrqss(the_title, "*}");
 }
 
 static int
@@ -200,9 +213,736 @@ rpt_DECSMKR(MENU_ARGS)
 /******************************************************************************/
 
 static int
+scan_any(char *str, int *pos, int toc)
+{
+  int save = *pos;
+  int value = scanto(str, pos, ';');
+  if (value == 0) {
+    *pos = save;
+    value = scanto(str, pos, toc);
+    if (str[*pos] != '\0')
+      value = 0;
+  }
+  return value;
+}
+
+static int
+scan_chr(char *str, int *pos, int toc)
+{
+  int value = str[*pos];
+  if (str[(*pos)+1] == toc) {
+    *pos += 2;
+    return value;
+  }
+  return 0;
+}
+
+static void
+show_DataIntegrity(char *report)
+{
+  int pos = 0;
+  int code = scanto(report, &pos, 'n');
+  char *show;
+
+  switch(code) {
+  case 70: show = "No communication errors"; break;
+  case 71: show = "Communication errors"; break;
+  case 73: show = "Not reported since last power-up or RIS"; break;
+  default: show = SHOW_FAILURE;
+  }
+  show_result(show);
+}
+
+/*
+ * From Kermit 3.13
+ *
+ * Request  CSI 1 $ w             cursor information report
+ * Response DCS 1 $ u Pr; Pc; Pp; Srend; Satt; Sflag; Pgl; Pgr; Scss; Sdesig ST
+ *        where   Pr is cursor row (counted from origin as 1,1)
+ *                Pc is cursor column
+ *                Pp is 1, video page, a constant for VT320s
+ *                Srend = 40h + 8 (rev video on) + 4 (blinking on)
+ *                                 + 2 (underline on) + 1 (bold on)
+ *                Satt = 40h + 1  (selective erase on)
+ *                Sflag = 40h + 8 (autowrap pending) + 4 (SS3 pending)
+ *                                + 2 (SS2 pending) + 1 (Origin mode on)
+ *                Pgl = char set in GL (0 = G0, 1 = G1, 2 = G2, 3 = G3)
+ *                Pgr = char set in GR (same as for Pgl)
+ *                Scss = 40h + 8 (G3 is 96 char) + 4 (G2 is 96 char)
+ *                                + 2 (G1 is 96 char) + 1 (G0 is 96 char)
+ *                Sdesig is string of character idents for sets G0...G3, with
+ *                                no separators between set idents.
+ *                If NRCs are active the set idents (all 94 byte types) are:
+ *                British         A       Italian         Y
+ *                Dutch           4       Norwegian/Danish ' (hex 60) or E or 6
+ *                Finnish         5 or C  Portuguese      %6 or g or L
+ *                French          R or f  Spanish         Z
+ *                French Canadian 9 or Q  Swedish         7 or H
+ *                German          K       Swiss           =
+ *                Hebrew          %=
+ *                (MS Kermit uses any choice when there are multiple)
+ */
+
+#define show_DECCIR_flag(value, mask, string) \
+  if (value & mask) { value &= ~mask; show_result(string); }
+
+static void
+show_DECCIR(char *report)
+{
+  int Pr, Pc, Pp, Srend, Satt, Sflag, Pgl, Pgr, Scss, Sdesig;
+  int pos = 3;  /* skip "1$u" */
+  int n;
+
+  Pr    = scanto(report, &pos, ';');
+  Pc    = scanto(report, &pos, ';');
+  Pp    = scanto(report, &pos, ';');
+  cup(5,10); show_result("Cursor (%d,%d), page %d", Pr, Pc, Pp);
+
+  Srend = scan_chr(report, &pos, ';');
+  cup(6,10);
+  if (Srend & 0x40) {
+    show_DECCIR_flag(Srend, 0x40, "Rendition:");
+    if (Srend == 0) show_result(" normal");
+    show_DECCIR_flag(Srend, 0x08, " reverse");
+    show_DECCIR_flag(Srend, 0x04, " blinking");
+    show_DECCIR_flag(Srend, 0x02, " underline");
+    show_DECCIR_flag(Srend, 0x01, " bold");
+  }
+  if (Srend) show_result(" -> unknown rendition (0x%x)", Srend);
+
+  Satt  = scan_chr(report, &pos, ';');
+  cup(7,10);
+  switch(Satt) {
+  case 0x40: show_result("Selective erase: off"); break;
+  case 0x41: show_result("Selective erase: ON"); break;
+  default:   show_result("Selective erase: unknown (0x%x)", Satt);
+  }
+
+  Sflag = scan_chr(report, &pos, ';');
+  cup(8,10);
+  if (Sflag & 0x40) {
+    show_DECCIR_flag(Sflag, 0x40, "Flags:");
+    show_DECCIR_flag(Sflag, 0x08, " autowrap pending");
+    show_DECCIR_flag(Sflag, 0x04, " SS3 pending");
+    show_DECCIR_flag(Sflag, 0x02, " SS2 pending");
+    show_DECCIR_flag(Sflag, 0x01, " origin-mode on");
+  } else {
+    show_result(" -> unknown flag (0x%x)", Sflag);
+  }
+
+  Pgl   = scanto(report, &pos, ';');
+  Pgr   = scanto(report, &pos, ';');
+  cup(9,10);
+  show_result("Char set in GL: G%d, Char set in GR: G%d", Pgl, Pgr);
+
+  Scss  = scanto(report, &pos, ';');
+  cup(10,10);
+  if (Scss & 0x40) {
+    show_DECCIR_flag(Scss, 0x40, "Char set sizes:");
+    show_DECCIR_flag(Scss, 0x08, " G3 is 96 char");
+    show_DECCIR_flag(Scss, 0x04, " G2 is 96 char");
+    show_DECCIR_flag(Scss, 0x02, " G1 is 96 char");
+    show_DECCIR_flag(Scss, 0x01, " G0 is 96 char");
+  } else {
+    show_result(" -> unknown char set size (0x%x)", Scss);
+  }
+
+  n = 11;
+  cup(n, 10);
+  show_result("Character set idents for G0...G3: ");
+  while ((Sdesig = report[pos]) != '\0') {
+    cup(++n, 12);
+    ++pos;
+    switch (Sdesig) {
+    case 'A': show_result("British");
+      break;
+    case 'Y': show_result("Italian");
+      break;
+    case '4': show_result("Dutch");
+      break;
+    case '\'':
+    case 'E':
+    case '6': show_result("Norwegian/Danish");
+      break;
+    case '5':
+    case '?': show_result("Finnish");
+      break;
+    case 'g':
+    case 'L': show_result("Portuguese");
+      break;
+    case 'R':
+    case 'f': show_result("French");
+    case 'Z': show_result("Spanish");
+      break;
+    case '9':
+    case 'Q': show_result("French Canadian");
+      break;
+    case '7':
+    case 'H': show_result("Swedish");
+      break;
+    case 'K': show_result("German");
+      break;
+    case '=': show_result("Swiss");
+      break;
+    case '%':
+      if ((Sdesig = report[pos]) != '\0') {
+        ++pos;
+        switch(Sdesig) {
+        case '=':
+          show_result("Hebrew");
+          break;
+        case '6':
+          show_result("Portuguese");
+          break;
+        default:  show_result(" unknown (0x%x)", Sdesig);
+        }
+      }
+      break;
+    default:  show_result(" unknown (0x%x)", Sdesig);
+    }
+  }
+}
+
+/*
+ * Request  CSI 2 $ w             tab stop report
+ * Response DCS 2 $ u Pc/Pc/...Pc ST
+ *        Pc are column numbers (from 1) where tab stops occur. Note the
+ *        separator "/" occurs in a real VT320 but should have been ";".
+ */
+static void
+show_DECTABSR(char *report)
+{
+  int pos = 3;  /* skip "2$u" */
+  int stop;
+  char *buffer = malloc(strlen(report));
+
+  *buffer = '\0';
+  strcat(report, "/"); /* simplify scanning */
+  while ((stop = scanto(report, &pos, '/')) != 0) {
+    sprintf(buffer + strlen(buffer), " %d", stop);
+  }
+  show_result("Tab stops:%s", buffer);
+  free(buffer);
+}
+
+static void
+show_ExtendedCursorPosition(char *report)
+{
+  int pos = 0;
+  int Pl = scan_any(report, &pos, 'R');
+  int Pc = scan_any(report, &pos, 'R');
+  int Pp = scan_any(report, &pos, 'R');
+
+  if (Pl != 0 && Pc != 0) {
+    if (Pp != 0)
+      show_result("Line %d, Column %d, Page %d", Pl, Pc, Pp);
+    else
+      show_result("Line %d, Column %d (Page?)", Pl, Pc);
+  } else
+    show_result(SHOW_FAILURE);
+}
+
+/*
+ * From Kermit 3.13
+ * Request  CSI ? 26 n            keyboard dialect
+ * Response CSI ? 27; Ps n
+ */
+static void
+show_KeyboardStatus(char *report)
+{
+  int pos = 0;
+  int code;
+  int save;
+  char *show = SHOW_FAILURE;
+
+  if ((code = scanto(report, &pos, ';')) == 27
+   && (code = scan_any(report, &pos, 'n')) != 0) {
+    switch(code) {
+    case  1:  show = "North American/ASCII"; break;
+    case  2:  show = "British";              break;
+    case  4:  show = "French Canadian";      break;
+    case  6:  show = "Finnish";              break;
+    case  7:  show = "German";               break;
+    case  8:  show = "Dutch";                break;
+    case  9:  show = "Italian";              break;
+    case 11:  show = "Swiss (German)";       break;
+    case 12:  show = "Swedish";              break;
+    case 13:  show = "Norwegian/Danish";     break;
+    case 14:  show = "French";               break;
+    case 15:  show = "Spanish";              break;
+    case 16:  show = "Portugese";            break;
+    case 17:  show = "Hebrew";               break; /* FIXME: kermit says 14 */
+    default:  show = "unknown";
+    }
+  }
+  show_result(show);
+
+  save = pos;
+  code = scan_any(report, &pos, 'n');
+  if (save != pos) {
+    cup(5,10);
+    switch(code) {
+    case 0: show = "keyboard ready"; break;
+    case 3: show = "no keyboard"; break;
+    case 8: show = "keyboard busy"; break;
+    default: show = "unknown keyboard status";
+    }
+    show_result(show);
+
+    cup(6,10);
+    switch (code = scan_any(report, &pos, 'n')) {
+    case 0:  show = "LK201"; break;
+    case 1:  show = "LK401"; break;
+    default: show = "unknown keyboard type";
+    }
+    show_result(show);
+  }
+}
+
+static void
+show_MultisessionStatus(char *report)
+{
+  int pos = 0;
+  int Ps1 = scan_any(report, &pos, 'n');
+  int Ps2 = scanto(report, &pos, 'n');
+  char *show;
+
+  switch (Ps1) {
+  case 80: show = "SSU sessions enabled (%d max)";               break;
+  case 81: show = "SSU sessions available but pending (%d max)"; break;
+  case 83: show = "SSU sessions not ready";                      break;
+  case 87: show = "Sessions on separate lines";                  break;
+  default: show = SHOW_FAILURE;
+  }
+  show_result(show, Ps2);
+}
+
+static void
+show_PrinterStatus(char *report)
+{
+  int pos = 0;
+  int code = scanto(report, &pos, 'n');
+  char *show;
+
+  switch (code) {
+  case 13: show = "No printer"; break;
+  case 10: show = "Printer ready"; break;
+  case 11: show = "Printer not ready"; break;
+  case 18: show = "Printer busy"; break;
+  case 19: show = "Printer assigned to other session"; break;
+  default: show = SHOW_FAILURE;
+  }
+  show_result(show);
+}
+
+static void
+show_UDK_Status(char *report)
+{
+  int pos = 0;
+  int code = scanto(report, &pos, 'n');
+  char *show;
+
+  switch(code) {
+  case 20: show = "UDKs unlocked"; break;
+  case 21: show = "UDKs locked";   break;
+  default: show = SHOW_FAILURE;
+  }
+  show_result(show);
+}
+
+/******************************************************************************/
+
+/*
+ * VT400 & up.
+ * Back-Index
+ */
+static int
+tst_DECBI(MENU_ARGS)
+{
+  int n;
+  int last = max_lines - 3;
+
+  cup(1,1);
+  for (n = 1; n < last; n++)
+    printf("%d\n", n + 5);
+  cup(1,1);
+  for (n = 1; n <= 5; n++) {
+    decbi();
+    printf("%d\b", 6 - n);
+  }
+
+  cup(last,1);
+  ed(0);
+
+  println("If your terminal supports DECBI (backward index), then the lines above");
+  printf("should be numbered 1 through %d.\n", last-1);
+  return MENU_HOLD;
+}
+
+static int
+tst_DECBKM(MENU_ARGS)
+{
+  char *report;
+
+  ed(2);
+  cup(1,1);
+  println(the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  reset_inchar();
+  decbkm(TRUE);
+  println("Press the backspace key");
+  cup(3,10);
+  report = instr();
+  chrprint(report);
+  show_result(!strcmp(report, "\010") ? SHOW_SUCCESS : SHOW_FAILURE);
+
+  reset_inchar();
+  cup(5,1);
+  decbkm(FALSE);
+  println("Press the backspace key again");
+  cup(6,10);
+  report = instr();
+  chrprint(report);
+  show_result(!strcmp(report, "\177") ? SHOW_SUCCESS : SHOW_FAILURE);
+
+  cup(max_lines-1,1);
+  restore_ttymodes();
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 & up
+ * Change Attributes in Rectangular Area
+ */
+static int
+tst_DECCARA(MENU_ARGS)
+{
+  int top = 5;
+  int left = 5;
+  int right = 45;
+  int bottom = max_lines-10;
+
+  decaln(); /* fill the screen */
+  deccara(top, left, bottom, right, 7); /* invert a rectangle) */
+  deccara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
+
+  cup(max_lines-2, 1);
+  ed(0);
+  println("There should be an open rectangle formed by reverse-video E's");
+  return MENU_HOLD;
+}
+
+static int
 tst_DECCIR(MENU_ARGS)
 {
   return any_decrqpsr(PASS_ARGS, 1);
+}
+
+static int
+tst_DECCKSR(MENU_ARGS, int Pid, char *the_csi)
+{
+  char *report;
+  int pos = 0;
+
+  cup(1,1);
+  printf("Testing DECCKSR: %s\n", the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  do_csi("%s", the_csi);
+  report = get_reply();
+  cup(3,10);
+  chrprint(report);
+  if ((report = skip_dcs(report)) != 0
+   && strip_terminator(report)
+   && strlen(report) > 1
+   && scanto(report, &pos, '!') == Pid
+   && report[pos++] == '~'
+   && (report = skip_digits(report+pos+1)) != 0
+   && *report == '\0') {
+    show_result(SHOW_SUCCESS);
+  } else {
+    show_result(SHOW_FAILURE);
+  }
+
+  restore_ttymodes();
+  cup(max_lines-1, 1);
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 & up.
+ * Copy Rectangular area
+ */
+static int
+tst_DECCRA(MENU_ARGS)
+{
+  int j;
+  int top = 5;
+  int left = 5;
+  int right = 45;
+  int bottom = max_lines-10;
+
+  ed(2);
+  for (j = top; j < bottom; j++) {
+    cup(j, left);  printf("*");
+    cup(j, right); printf("*");
+  }
+  cup(top,left);
+  for (j = left; j <= right; j++)
+    printf("*");
+  cup(bottom,left);
+  for (j = left; j <= right; j++)
+    printf("*");
+
+  cup(max_lines-3,1);
+  println(the_title);
+  println("The box of *'s will be copied");
+  holdit();
+
+  deccra(top, left, bottom, right,  1, top+3, left + 4, 1);
+  cup(max_lines-2, 1);
+  ed(0);
+  println("The box should be copied, overlapping");
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 & up.
+ * Delete column.
+ */
+static int
+tst_DECDC(MENU_ARGS)
+{
+  int n;
+  int last = max_lines - 3;
+
+  for (n = 1; n < last; n++) {
+    cup(n, last - n + 22); printf("*");
+    cup(1,1); decdc(1);
+  }
+  cup(1,1); decdc(20);
+
+  cup(last+1,1);
+  println("If your terminal supports DECDC, there will be a column of *'s on the left");
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 & up
+ * Erase Rectangular area
+ */
+static int
+tst_DECERA(MENU_ARGS)
+{
+  decaln();
+  decera(5,5, max_lines-10, min_cols-5);
+
+  cup(max_lines-3,1);
+  ed(0);
+  println(the_title);
+  println("There should be a rectangle cleared in the middle of the screen.");
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 & up.
+ * Forward-Index
+ */
+static int
+tst_DECFI(MENU_ARGS)
+{
+  int n;
+  int last = max_lines - 3;
+
+  cup(1,1);
+  for (n = 1; n <= max_lines; n++)
+    printf("%d\n", n-5);
+
+  cup(max_lines, 1);
+  for (n = 0; n <= 5; n++) {
+    decfi();
+    printf("%d", n + last - 1); /* only one line will be above message */
+  }
+
+  cup(last,1);
+  ed(0);
+
+  println("If your terminal supports DECFI (forward index), then the lines above");
+  printf("should be numbered 1 through %d.\n", last-1);
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 & up
+ * Fill Rectangular area
+ */
+static int
+tst_DECFRA(MENU_ARGS)
+{
+  ed(2);
+  decfra('*', 5,5, max_lines-10, min_cols-5);
+
+  cup(max_lines-3,1);
+  ed(0);
+  println(the_title);
+  println("There should be a rectangle filled in the middle of the screen.");
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 & up.
+ * Insert column.
+ */
+static int
+tst_DECIC(MENU_ARGS)
+{
+  int n;
+  int last = max_lines - 3;
+
+  for (n = 1; n < last; n++) {
+    cup(n, min_cols - 22 - last + n); printf("*");
+    cup(1,1); decic(1);
+  }
+  decic(20);
+
+  cup(last+1,1);
+  println("If your terminal supports DECIC, there will be a column of *'s on the right");
+  return MENU_HOLD;
+}
+
+static int
+tst_DECKBUM(MENU_ARGS)
+{
+  char *report;
+
+  ed(2);
+  cup(1,1);
+  println(the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  deckbum(TRUE);
+  println("The keyboard is set for data processing.  Press 'q' to quit.");
+  while (*(report = instr()) != 'q' && *report != 'Q') {
+    cup(3,10);
+    ed(0);
+    chrprint(report);
+  }
+
+  cup(5,1);
+  deckbum(FALSE);
+  println("The keyboard is set for normal (typewriter) processing.  Press 'q' to quit.");
+  while (*(report = instr()) != 'q' && *report != 'Q') {
+    cup(6,10);
+    ed(0);
+    chrprint(report);
+  }
+
+  restore_ttymodes();
+  cup(max_lines-1,1);
+  return MENU_HOLD;
+}
+
+static int
+tst_DECKPM(MENU_ARGS)
+{
+  char *report;
+  char last[BUFSIZ];
+
+  ed(2);
+  cup(1,1);
+  println(the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  last[0] = '\0';
+  deckpm(TRUE);
+  println("The keyboard is set for position reports.  Press a key twice to quit.");
+  while (strcmp(report = instr(), last)) {
+    cup(3,10);
+    ed(0);
+    chrprint(report);
+    strcpy(last, report);
+  }
+
+  cup(5,1);
+  deckpm(FALSE);
+  println("The keyboard is set for character codes.  Press 'q' to quit.");
+  while (*(report = instr()) != 'q' && *report != 'Q') {
+    cup(6,10);
+    ed(0);
+    chrprint(report);
+  }
+
+  restore_ttymodes();
+  cup(max_lines-1,1);
+  return MENU_HOLD;
+}
+
+static int
+tst_DECNKM(MENU_ARGS)
+{
+  char *report;
+
+  ed(2);
+  cup(1,1);
+  println(the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  decnkm(FALSE);
+  println("Press one or more keys on the keypad.  They should generate numeric codes.");
+  println("When you are done, press 'q' to quit.");
+  while (*(report = instr()) != 'q' && *report != 'Q') {
+    cup(5,10);
+    ed(0);
+    chrprint(report);
+  }
+
+  cup(10,1);
+  decnkm(TRUE);
+  println("Press one or more keys on the keypad.  They should generate control codes.");
+  println("When you are done, press 'q' to quit.");
+  while (*(report = instr()) != 'q' && *report != 'Q') {
+    cup(12,10);
+    ed(0);
+    chrprint(report);
+  }
+
+  decnkm(FALSE);
+  cup(max_lines-1,1);
+  restore_ttymodes();
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 & up
+ * Reverse Attributes in Rectangular Area
+ */
+static int
+tst_DECRARA(MENU_ARGS)
+{
+  int top = 5;
+  int left = 5;
+  int right = 45;
+  int bottom = max_lines-10;
+
+  decaln(); /* fill the screen */
+  decrara(top, left, bottom, right, 7); /* invert a rectangle) */
+  decrara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
+
+  cup(max_lines-2, 1);
+  ed(0);
+  println("There should be an open rectangle formed by reverse-video E's");
+  return MENU_HOLD;
 }
 
 static int
@@ -235,7 +975,7 @@ tst_ISO_DECRPM(MENU_ARGS)
     { LNM,  "LNM"  } };
 
   cup(1,1);
-  printf("Testing %s\r\n", the_title);
+  printf("Testing %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -245,21 +985,23 @@ tst_ISO_DECRPM(MENU_ARGS)
     report = instr();
     cup(mode+2,10);
     printf("%8s", ansi_modes[mode].name);
+    if (log_fp != 0)
+      fprintf(log_fp, "Testing %8s\n", ansi_modes[mode].name);
     chrprint(report);
-    if ((report = skip_prefix(csi_input(), report)) != 0
+    if ((report = skip_csi(report)) != 0
      && sscanf(report, "%d;%d$%c", &Pa, &Ps, &chr) == 3
      && Pa == ansi_modes[mode].mode
      && chr == 'y') {
       switch(Ps) {
-      case 0:  printf(" unknown");           break;
-      case 1:  printf(" set");               break;
-      case 2:  printf(" reset");             break;
-      case 3:  printf(" permanently set");   break;
-      case 4:  printf(" permanently reset"); break;
-      default: printf(" ?");                 break;
+      case 0:  show_result(" unknown");           break;
+      case 1:  show_result(" set");               break;
+      case 2:  show_result(" reset");             break;
+      case 3:  show_result(" permanently set");   break;
+      case 4:  show_result(" permanently reset"); break;
+      default: show_result(" ?");                 break;
       }
     } else {
-      printf(" -- failed");
+      show_result(SHOW_FAILURE);
       break;
     }
   }
@@ -275,6 +1017,7 @@ tst_DEC_DECRPM(MENU_ARGS)
   int mode, Pa, Ps;
   char chr;
   char *report;
+  char *show;
 
   static struct {
     int mode;
@@ -303,7 +1046,7 @@ tst_DEC_DECRPM(MENU_ARGS)
     { DECKPM,  "DECKPM"  } };
 
   cup(1,1);
-  printf("Testing %s\r\n", the_title);
+  printf("Testing %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -313,23 +1056,26 @@ tst_DEC_DECRPM(MENU_ARGS)
     report = instr();
     cup(mode+2,10);
     printf("%8s", dec_modes[mode].name);
+    if (log_fp != 0)
+      fprintf(log_fp, "Testing %8s\n", dec_modes[mode].name);
     chrprint(report);
-    if ((report = skip_prefix(csi_input(), report)) != 0
-     && sscanf(report, "%d;%d$%c", &Pa, &Ps, &chr) == 3
+    if ((report = skip_csi(report)) != 0
+     && sscanf(report, "?%d;%d$%c", &Pa, &Ps, &chr) == 3
      && Pa == dec_modes[mode].mode
      && chr == 'y') {
       switch(Ps) {
-      case 0:  printf(" unknown");           break;
-      case 1:  printf(" set");               break;
-      case 2:  printf(" reset");             break;
-      case 3:  printf(" permanently set");   break;
-      case 4:  printf(" permanently reset"); break;
-      default: printf(" ?");                 break;
+      case 0:  show = "unknown";           break;
+      case 1:  show = "set";               break;
+      case 2:  show = "reset";             break;
+      case 3:  show = "permanently set";   break;
+      case 4:  show = "permanently reset"; break;
+      default: show = "?";                 break;
       }
     } else {
-      printf(" -- failed");
+      show = SHOW_FAILURE;
       break;
     }
+    show_result(show);
   }
 
   restore_ttymodes();
@@ -345,7 +1091,6 @@ tst_DECRQDE(MENU_ARGS)
   char chr;
   int Ph, Pw, Pml, Pmt, Pmp;
 
-  ed(2);
   cup(1,1);
   println("Testing DECRQDE/DECRPDE Window Report");
 
@@ -353,19 +1098,19 @@ tst_DECRQDE(MENU_ARGS)
   set_tty_echo(FALSE);
 
   do_csi("\"v");
-  report = instr();
+  report = get_reply();
   cup(3,10);
   chrprint(report);
 
-  if ((report = skip_prefix(csi_input(), report)) != 0
+  if ((report = skip_csi(report)) != 0
    && sscanf(report, "%d;%d;%d;%d;%d\"%c",
       &Ph, &Pw, &Pml, &Pmt, &Pmp, &chr) == 6
    && chr == 'w') {
     cup(5, 10);
-    printf("lines:%d, cols:%d, left col:%d, top line:%d, page %d",
+    show_result("lines:%d, cols:%d, left col:%d, top line:%d, page %d",
       Ph, Pw, Pml, Pmt, Pmp);
   } else {
-    printf(" failed");
+    show_result(SHOW_FAILURE);
   }
 
   restore_ttymodes();
@@ -374,7 +1119,7 @@ tst_DECRQDE(MENU_ARGS)
 }
 
 static int
-tst_DECRPSS(MENU_ARGS)
+tst_DECRQSS(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
@@ -403,41 +1148,96 @@ tst_DECRPSS(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
+/* Request Terminal State Report */
+static int
+tst_DECRQTSR(MENU_ARGS)
+{
+  char *report;
+  char *show;
+
+  cup(1,1); println("Testing Terminal State Reports (DECRQTSR/DECTSR)");
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  do_csi("1$u");
+  report = get_reply();
+
+  cup(3,10);
+  chrprint(report);
+
+  if ((report = skip_dcs(report)) != 0
+   && strip_terminator(report)
+   && !strncmp(report, "1$s", 3)) {
+    show = SHOW_SUCCESS;
+  } else {
+    show = SHOW_FAILURE;
+  }
+  show_result(show);
+
+  restore_ttymodes();
+  cup(max_lines-1,1);
+  return MENU_HOLD;
+}
+
 /* Test User-Preferred Supplemental Set - VT400 */
 static int
 tst_DECRQUPSS(MENU_ARGS)
 {
   char *report;
+  char *show;
 
-  ed(2);
   cup(1,1);
-  println("Testing DECRQDE/DECRPDE Window Report");
+  println("Testing DECRQUPSS/DECAUPSS Window Report");
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
   do_csi("&u");
-  report = instr();
+  report = get_reply();
   cup(3,10);
   chrprint(report);
-  if ((report = skip_prefix(csi_input(), report)) != 0) {
-    if (strlen(report) > 4
-     && !strncmp(report, "!u%5", 4)
-     && !strcmp(report+4, st_input()))
-      printf("DEC Supplemental Graphic");
-    else if (strlen(report) > 3
-     && !strncmp(report, "!uA", 3)
-     && !strcmp(report+3, st_input()))
-      printf("ISO Latin-1 supplemental");
+  if ((report = skip_dcs(report)) != 0
+   && strip_terminator(report)) {
+    if (!strcmp(report, "0!u%5"))
+      show = "DEC Supplemental Graphic";
+    else if (!strcmp(report, "1!uA"))
+      show = "ISO Latin-1 supplemental";
     else
-      printf(" unknown");
+      show = "unknown";
   } else {
-    printf(" failed");
+    show = SHOW_FAILURE;
   }
+  show_result(show);
 
   restore_ttymodes();
   cup(max_lines-1,1);
   return MENU_HOLD;
+}
+
+/* FIXME: use DECRQSS to get reports */
+static int
+tst_DECSNLS(MENU_ARGS)
+{
+  int rows;
+
+  cup(1,1); println("Testing Select Number of Lines per Screen (DECSNLS)");
+
+  for (rows = 48; rows >= 24; rows -= 12) {
+    set_tty_raw(TRUE);
+    set_tty_echo(FALSE);
+
+    printf("%d Lines/Screen: ", rows);
+    decsnls(rows);
+    decrqss("*|");
+    chrprint(instr());
+    println("");
+
+    restore_ttymodes();
+    holdit();
+  }
+
+  return MENU_NOHOLD;
 }
 
 /* Test soft terminal-reset - Vt400 */
@@ -450,7 +1250,7 @@ tst_DECSTR(MENU_ARGS)
 static int
 tst_DECTABSR(MENU_ARGS)
 {
-  return any_decrqpsr(PASS_ARGS, 1);
+  return any_decrqpsr(PASS_ARGS, 2);
 }
 
 static int
@@ -491,12 +1291,13 @@ tst_DECUDK(MENU_ARGS)
     temp[0] = '\0';
     for (s = keytable[key].name; *s; s++)
       sprintf(temp + strlen(temp), "%02x", *s & 0xff);
-    do_dcs("1|%d/%s", keytable[key].code, temp);
+    do_dcs("1;1|%d/%s", keytable[key].code, temp);
   }
 
   cup(1,1);
   println(the_title);
   println("Press 'q' to quit.  Function keys should echo their labels.");
+  println("(On a DEC terminal you must press SHIFT as well).");
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -505,7 +1306,7 @@ tst_DECUDK(MENU_ARGS)
     char *report = instr();
     if (*report == 'q')
       break;
-    cup(4,10);
+    cup(5,10);
     el(2);
     chrprint(report);
   }
@@ -518,27 +1319,115 @@ tst_DECUDK(MENU_ARGS)
 }
 
 static int
+tst_DSR_area_sum(MENU_ARGS)
+{
+  return tst_DECCKSR(PASS_ARGS, 1, "1;1;10;10;20;20*y");
+}
+
+static int
 tst_DSR_cursor(MENU_ARGS)
 {
-  return any_DSR(PASS_ARGS, "?6n");
+  return any_DSR(PASS_ARGS, "?6n", show_ExtendedCursorPosition);
+}
+
+static int
+tst_DSR_data_ok(MENU_ARGS)
+{
+  return any_DSR(PASS_ARGS, "?75n", show_DataIntegrity);
 }
 
 static int
 tst_DSR_keyboard(MENU_ARGS)
 {
-  return any_DSR(PASS_ARGS, "?26n");
+  return any_DSR(PASS_ARGS, "?26n", show_KeyboardStatus);
+}
+
+static int
+tst_DSR_macrospace(MENU_ARGS)
+{
+  char *report;
+  char *show;
+
+  cup(1,1);
+  printf("Testing DECMSR: %s\n", the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  do_csi("?62n");
+  report = instr();
+  cup(3,10);
+  chrprint(report);
+  if ((report = skip_csi(report)) != 0
+   && (report = skip_digits(report)) != 0
+   && !strcmp(report, "*{")) {
+    show = SHOW_SUCCESS;
+  } else {
+    show = SHOW_FAILURE;
+  }
+  show_result(show);
+
+  restore_ttymodes();
+  cup(max_lines-1, 1);
+  return MENU_HOLD;
+}
+
+static int
+tst_DSR_memory_sum(MENU_ARGS)
+{
+  return tst_DECCKSR(PASS_ARGS, 1, "?63;1n");
+}
+
+static int
+tst_DSR_multisession(MENU_ARGS)
+{
+  return any_DSR(PASS_ARGS, "?85n", show_MultisessionStatus);
 }
 
 static int
 tst_DSR_printer(MENU_ARGS)
 {
-  return any_DSR(PASS_ARGS, "?15n");
+  return any_DSR(PASS_ARGS, "?15n", show_PrinterStatus);
 }
 
 static int
 tst_DSR_userkeys(MENU_ARGS)
 {
-  return any_DSR(PASS_ARGS, "?25n");
+  return any_DSR(PASS_ARGS, "?25n", show_UDK_Status);
+}
+
+static int
+tst_SRM(MENU_ARGS)
+{
+  int oldc, newc;
+
+  ed(2);
+  cup(1,1);
+
+  println(the_title);
+
+  set_tty_raw(TRUE);
+
+  set_tty_echo(FALSE);
+  srm(TRUE);
+
+  println("Local echo is enabled, remote echo disabled.  Press any keys, repeat to quit.");
+  oldc = -1;
+  while ((newc = inchar()) != oldc)
+    oldc = newc;
+
+  println("");
+  set_tty_echo(TRUE);
+  srm(TRUE);
+
+  println("Local echo is disabled, remote echo enabled.  Press any keys, repeat to quit.");
+  oldc = -1;
+  while ((newc = inchar()) != oldc)
+    oldc = newc;
+
+  cup(max_lines-1,1);
+  restore_ttymodes();
+  return MENU_HOLD;
 }
 
 /******************************************************************************/
@@ -551,8 +1440,8 @@ tst_VT420_cursor(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test Back Index (DECBI)",                           not_impl },
-      { "Test Forward Index (DECFI)",                        not_impl },
+      { "Test Back Index (DECBI)",                           tst_DECBI },
+      { "Test Forward Index (DECFI)",                        tst_DECFI },
       { "Test Pan down (SU)",                                tst_SU },
       { "Test Pan up (SD)",                                  tst_SD_DEC },
       { "Test Vertical Cursor Coupling (DECVCCM)",           not_impl },
@@ -571,6 +1460,31 @@ tst_VT420_cursor(MENU_ARGS)
 /******************************************************************************/
 
 /*
+ * The main vt100 module tests IRM, DL, IL, DCH, ICH, ED, EL
+ */
+static int
+tst_VT420_editing(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Delete Column (DECDC)",                        tst_DECDC },
+      { "Erase Character",                                   tst_ECH },
+      { "Test Insert Column (DECIC)",                        tst_DECIC },
+      { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
+      { "",                                                  0 }
+    };
+
+  do {
+    ed(2);
+    title(0); printf("VT420 Editing Sequence Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+
+/*
  * The main vt100 module tests AM, LNM, DECKPAM, DECARM, DECAWM
  */
 static int
@@ -578,10 +1492,10 @@ tst_VT420_keyboard_ctl(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test Backarrow key (DECBKM)",                       not_impl },
-      { "Test Numeric keypad (DECNKM)",                      not_impl },
-      { "Test Keyboard usage (DECKBUM)",                     not_impl },
-      { "Test Key position (DECKPM)",                        not_impl },
+      { "Test Backarrow key (DECBKM)",                       tst_DECBKM },
+      { "Test Numeric keypad (DECNKM)",                      tst_DECNKM },
+      { "Test Keyboard usage (DECKBUM)",                     tst_DECKBUM },
+      { "Test Key position (DECKPM)",                        tst_DECKPM },
       { "Test Enable Local Functions (DECELF)",              not_impl },
       { "Test Local Function-Key Control (DECLFKC)",         not_impl },
       { "Test Select Modifier-Key Reporting (DECSMKR)",      not_impl }, /* DECEKBD */
@@ -631,18 +1545,18 @@ tst_VT420_printing(MENU_ARGS)
 /******************************************************************************/
 
 /*
- * These apply only to VT400's
+ * These apply only to VT400's & above
  */
 static int
 tst_VT420_rectangle(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test Change-Attributes in Rectangular Area (DECCARA)", not_impl },
-      { "Test Copy Rectangular area (DECCRA)",               not_impl },
-      { "Test Erase Rectangular area (DECERA)",              not_impl },
-      { "Test Fill Rectangular area (DECFRA)",               not_impl },
-      { "Test Reverse-Attributes in Rectangular Area (DECRARA)", not_impl },
+      { "Test Change-Attributes in Rectangular Area (DECCARA)", tst_DECCARA },
+      { "Test Copy Rectangular area (DECCRA)",               tst_DECCRA },
+      { "Test Erase Rectangular area (DECERA)",              tst_DECERA },
+      { "Test Fill Rectangular area (DECFRA)",               tst_DECFRA },
+      { "Test Reverse-Attributes in Rectangular Area (DECRARA)", tst_DECRARA },
       { "Test Selective-Attribute Change Extent (DECSACE)",  not_impl },
       { "Test Selective-Erase Rectangular area (DECSERA)",   not_impl },
       { "",                                                  0 }
@@ -669,11 +1583,11 @@ tst_VT420_report_device(MENU_ARGS)
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
       { "Test Keyboard Status",                              tst_DSR_keyboard },
-      { "Test Macro Space",                                  not_impl },
-      { "Test Memory Checksum",                              not_impl },
-      { "Test Data Integrity",                               not_impl },
-      { "Test Multiple Session Status",                      not_impl },
-      { "Test Checksum of Rectangular Area",                 not_impl },
+      { "Test Macro Space",                                  tst_DSR_macrospace },
+      { "Test Memory Checksum",                              tst_DSR_memory_sum },
+      { "Test Data Integrity",                               tst_DSR_data_ok },
+      { "Test Multiple Session Status",                      tst_DSR_multisession },
+      { "Test Checksum of Rectangular Area",                 tst_DSR_area_sum },
       { "",                                                  0 }
     };
 
@@ -696,7 +1610,8 @@ tst_VT420_report_presentation(MENU_ARGS)
       { "Tab Stop Report (DECTABSR)",                        tst_DECTABSR },
       { "ANSI Mode Report (DECRPM)",                         tst_ISO_DECRPM },
       { "DEC Mode Report (DECRPM)",                          tst_DEC_DECRPM },
-      { "Status-String Report (DECRPSS)",                    tst_DECRPSS },
+      { "Restore Presentation State (DECRSPS)",              not_impl },
+      { "Status-String Report (DECRQSS)",                    tst_DECRQSS },
       { "",                                                  0 }
     };
 
@@ -711,13 +1626,33 @@ tst_VT420_report_presentation(MENU_ARGS)
 /******************************************************************************/
 
 static int
+tst_VT420_report_terminal(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Restore Terminal State (DECRSTS)",                  not_impl },
+      { "Terminal State Report (DECRQTS/DECTSR)",            tst_DECRQTSR },
+      { "",                                                  0 }
+    };
+
+  do {
+    ed(2);
+    title(0); printf("VT420 Terminal State Reports");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+
+static int
 tst_VT420_reports(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test Device Status Reports",                        tst_VT420_report_device },
-      { "Test Terminal State Reports",                       not_impl },
       { "Test Presentation State Reports",                   tst_VT420_report_presentation },
+      { "Test Terminal State Reports",                       tst_VT420_report_terminal },
       { "Test Window Report (DECRPDE)",                      tst_DECRQDE },
       { "Test User-Preferred Supplemental Set (DECAUPSS)",   tst_DECRQUPSS },
       { "",                                                  0 }
@@ -739,10 +1674,9 @@ tst_VT420_screen(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test Send/Receive mode (SRM)",                      not_impl },
-      { "Test Select Number of Lines per Screen (DECSNLS)",  not_impl }, /* FIXME: xterm */
-      { "Test Select Active Status Display (DECSASD)",       not_impl },
-      { "Test Select Status line type (DECSSDT)",            not_impl },
+      { "Test Send/Receive mode (SRM)",                      tst_SRM },
+      { "Test Select Number of Lines per Screen (DECSNLS)",  tst_DECSNLS },
+      { "Test Status line (DECSASD/DECSSDT)",                tst_statusline },
       { "",                                                  0 }
     };
 
@@ -763,6 +1697,7 @@ tst_vt420(MENU_ARGS)
       { "Exit",                                              0 },
       { "Test cursor-movement",                              tst_VT420_cursor },
       { "Test downloading soft-chars (DECDLD)",              not_impl },
+      { "Test editing sequences",                            tst_VT420_editing },
       { "Test keyboard-control",                             tst_VT420_keyboard_ctl },
       { "Test macro-definition (DECDMAC)",                   not_impl },
       { "Test printing functions",                           tst_VT420_printing },

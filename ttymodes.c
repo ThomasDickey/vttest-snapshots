@@ -1,10 +1,50 @@
-/* $Id: ttymodes.c,v 1.8 1996/08/16 10:50:56 tom Exp $ */
+/* $Id: ttymodes.c,v 1.10 1996/08/25 18:56:14 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
 #include <esc.h>	/* inflush() */
 
 static TTY old_modes, new_modes;
+
+static struct {
+  int name;
+  int code;
+} speeds[] = {
+  {B0,           0},
+  {B50,         50},
+  {B75,         75},
+  {B110,       110},
+  {B134,       134},
+  {B150,       150},
+  {B200,       200},
+  {B300,       300},
+  {B600,       600},
+  {B1200,     1200},
+  {B1800,     1800},
+  {B2400,     2400},
+  {B4800,     4800},
+  {B9600,     9600},
+#ifdef B19200
+  {B19200,   19200},
+#else
+#ifdef EXTA
+  {EXTA,     19200},
+#endif
+#endif
+#ifdef B38400
+  {B38400,   38400},
+#else
+#ifdef EXTB
+  {EXTB,     38400},
+#endif
+#endif
+#ifdef B57600
+  {B57600,   57600},
+#endif
+#ifdef B115200
+  {B115200, 115200},
+#endif
+};
 
 #if !USE_POSIX_TERMIOS && !USE_TERMIO && USE_SGTTY
 static struct tchars  old_tchars;
@@ -103,22 +143,38 @@ void dump_ttymodes(char *tag, int flag)
 }
 #endif
 
+void
+close_tty(void)
+{
+  restore_ttymodes();
+}
+
 void init_ttymodes(int pn)
 {
+  int speed_code, n;
+
   dump_ttymodes("init_ttymode", pn);
 #ifdef UNIX
   if (pn==0) {
     fflush(stdout);
 # if USE_POSIX_TERMIOS || USE_TERMIO
     tcgetattr(0, &old_modes);
+    speed_code = cfgetospeed(&old_modes);
 # else
 #   if USE_SGTTY
       gtty(0, &old_modes);
       ioctl(0, TIOCGETC, &old_tchars);
       ioctl(0, TIOCGLTC, &old_ltchars);
+      speed_code = old_modes.sg_ospeed;
 #   endif
 # endif
     new_modes = old_modes;
+    for (n = 0; n < sizeof(speeds)/sizeof(speeds[0]); n++) {
+      if (speeds[n].name == speed_code) {
+	tty_speed = speeds[n].code;
+	break;
+      }
+    }
   } else {
     fflush(stdout);
     inflush();

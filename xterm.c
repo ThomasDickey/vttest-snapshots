@@ -1,10 +1,12 @@
-/* $Id: xterm.c,v 1.11 1996/08/19 00:17:45 tom Exp $ */
+/* $Id: xterm.c,v 1.13 1996/09/02 13:13:46 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
 
 #define MCHR(c) (c - ' ')
+
+#define isQuit(c) (((c) == 'q') || ((c) == 'Q'))
 
 static void
 show_click(int y, int x, int c)
@@ -27,11 +29,11 @@ test_modify_ops(MENU_ARGS)
   cup(1,1);
   println("Test of Window modifying.");
 
-  brc(2, 't');	/* iconify window */
+  brc(2, 't'); /* iconify window */
   println("Iconify");
   fflush(stdout); sleep(2);
 
-  brc(1, 't');	/* de-iconify window */
+  brc(1, 't'); /* de-iconify window */
   println("De-Iconify");
   fflush(stdout); sleep(1);
 
@@ -39,7 +41,7 @@ test_modify_ops(MENU_ARGS)
   for (n = 0; n <= 200; n += 5) {
     sprintf(temp, "Position (%d,%d)", n, n*2);
     println(temp);
-    esc("K");		/* Erase to end of line	*/
+    esc("K"); /* Erase to end of line */
     brc3(3, n, n*2, 't');
     fflush(stdout);
   }
@@ -107,7 +109,7 @@ test_modify_ops(MENU_ARGS)
     brc3(8, high, wide, 't');
     sprintf(temp, "%d x %d chars", high, wide);
     while (strlen(temp) < wide - 1)
-    	strcat(temp, ".");
+      strcat(temp, ".");
     println(temp);
     fflush(stdout);
   }
@@ -164,50 +166,50 @@ test_mouse_hilite(MENU_ARGS)
   printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
   for(;;) {
     char *report = instr();
-    if (*report == 'q')
+    if (isQuit(*report))
       break;
     cup(3,10); el(2); chrprint(report);
-    if ((report = skip_prefix(csi_input(), report)) != 0) {
+    if ((report = skip_csi(report)) != 0) {
       if (*report == 'M'
        && strlen(report) == 4) {
-	int b = MCHR(report[1]);
-	b &= 3;
-	x = MCHR(report[2]);
-	y = MCHR(report[3]);
-	if (b != 3) {
-	  /* send the xterm the highlighting range (it MUST be done first) */
-	  do_csi("1;%d;%d;%d;%d;T", x, y, 10, 20);
-	  /* now, show the mouse-click */
-	  show_click(y, x, b + 1 + '0');
-	}
-	/* interpret the event */
-	cup(4,10); el(2);
-	printf("tracking: code %#x (%d,%d)", MCHR(report[1]), y, x);
-	fflush(stdout);
+        int b = MCHR(report[1]);
+        b &= 3;
+        x = MCHR(report[2]);
+        y = MCHR(report[3]);
+        if (b != 3) {
+          /* send the xterm the highlighting range (it MUST be done first) */
+          do_csi("1;%d;%d;%d;%d;T", x, y, 10, 20);
+          /* now, show the mouse-click */
+          show_click(y, x, b + 1 + '0');
+        }
+        /* interpret the event */
+        cup(4,10); el(2);
+        printf("tracking: code %#x (%d,%d)", MCHR(report[1]), y, x);
+        fflush(stdout);
       } else if (*report == 'T' && strlen(report) == 7) {
-	/* interpret the event */
-	cup(4,10); el(2);
-	printf("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
-	  MCHR(report[2]), MCHR(report[1]),
-	  MCHR(report[4]), MCHR(report[3]),
-	  MCHR(report[6]), MCHR(report[5]));
-	if (MCHR(report[2]) != y
-	 || MCHR(report[1]) != x)
-	  show_click(MCHR(report[2]), MCHR(report[1]), 's');
-	if (MCHR(report[4]) != y
-	 || MCHR(report[3]) != x)
-	  show_click(MCHR(report[4]), MCHR(report[3]), 'e');
-	if (MCHR(report[6]) != y
-	 || MCHR(report[5]) != x)
-	  show_click(MCHR(report[6]), MCHR(report[5]), 'm');
+        /* interpret the event */
+        cup(4,10); el(2);
+        printf("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
+          MCHR(report[2]), MCHR(report[1]),
+          MCHR(report[4]), MCHR(report[3]),
+          MCHR(report[6]), MCHR(report[5]));
+        if (MCHR(report[2]) != y
+         || MCHR(report[1]) != x)
+          show_click(MCHR(report[2]), MCHR(report[1]), 's');
+        if (MCHR(report[4]) != y
+         || MCHR(report[3]) != x)
+          show_click(MCHR(report[4]), MCHR(report[3]), 'e');
+        if (MCHR(report[6]) != y
+         || MCHR(report[5]) != x)
+          show_click(MCHR(report[6]), MCHR(report[5]), 'm');
       } else if (*report == 't' && strlen(report) == 3) {
-	/* interpret the event */
-	cup(4,10); el(2);
-	printf("done: end(%d,%d)",
-	  MCHR(report[2]), MCHR(report[1]));
-	if (MCHR(report[2]) != y
-	 || MCHR(report[1]) != x)
-	  show_click(MCHR(report[2]), MCHR(report[1]), 'e');
+        /* interpret the event */
+        cup(4,10); el(2);
+        printf("done: end(%d,%d)",
+          MCHR(report[2]), MCHR(report[1]));
+        if (MCHR(report[2]) != y
+         || MCHR(report[1]) != x)
+          show_click(MCHR(report[2]), MCHR(report[1]), 'e');
       }
     }
   }
@@ -235,10 +237,10 @@ test_mouse_normal(MENU_ARGS)
   printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
   for(;;) {
     char *report = instr();
-    if (*report == 'q')
+    if (isQuit(*report))
       break;
     cup(3,10); el(2); chrprint(report);
-    if ((report = skip_prefix(csi_input(), report)) != 0
+    if ((report = skip_csi(report)) != 0
      && *report == 'M'
      && strlen(report) == 4) {
       int b = MCHR(report[1]);
@@ -276,42 +278,42 @@ test_report_ops(MENU_ARGS)
   cup(3,1);
   println("Report icon label:");
   cup(4,10);
-  brc(20, 't');	/* report icon label */
+  brc(20, 't'); /* report icon label */
   report = instr();
   chrprint(report);
 
   cup(5,1);
   println("Report window label:");
   cup(6,10);
-  brc(21, 't');	/* report window label */
+  brc(21, 't'); /* report window label */
   report = instr();
   chrprint(report);
 
   cup(7,1);
   println("Report size of window (chars):");
   cup(8,10);
-  brc(18, 't');	/* report window's text-size */
+  brc(18, 't'); /* report window's text-size */
   report = instr();
   chrprint(report);
 
   cup(9,1);
   println("Report size of window (pixels):");
   cup(10,10);
-  brc(14, 't');	/* report window's pixel-size */
+  brc(14, 't'); /* report window's pixel-size */
   report = instr();
   chrprint(report);
 
   cup(11,1);
   println("Report position of window (pixels):");
   cup(12,10);
-  brc(13, 't');	/* report window's pixel-size */
+  brc(13, 't'); /* report window's pixel-size */
   report = instr();
   chrprint(report);
 
   cup(13,1);
   println("Report state of window (normal/iconified):");
   cup(14,10);
-  brc(11, 't');	/* report window's pixel-size */
+  brc(11, 't'); /* report window's pixel-size */
   report = instr();
   chrprint(report);
 
@@ -341,10 +343,10 @@ test_X10_mouse(MENU_ARGS)
   printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
   for(;;) {
     char *report = instr();
-    if (*report == 'q')
+    if (isQuit(*report))
       break;
     cup(3,10); el(2); chrprint(report);
-    if ((report = skip_prefix(csi_input(), report)) != 0
+    if ((report = skip_csi(report)) != 0
      && *report == 'M'
      && strlen(report) == 4) {
       int x = report[2] - ' ';

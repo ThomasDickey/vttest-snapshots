@@ -1,11 +1,12 @@
-/* $Id: esc.c,v 1.25 1996/08/18 22:25:46 tom Exp $ */
+/* $Id: esc.c,v 1.45 1996/09/05 10:57:28 tom Exp $ */
 
-#include <stdarg.h>
 #include <vttest.h>
 #include <esc.h>
 
 /* FIXME: for Solaris 2.5, which is broken */
 #define FLUSH fflush(stdout)
+
+static int soft_scroll;
 
 /******************************************************************************/
 
@@ -60,30 +61,75 @@ st_output(void)
 
 /******************************************************************************/
 
+/*
+ * The actual number of nulls for padding is an estimate; it's working at
+ * 9600bd.
+ */
+void
+padding(int msecs)
+{
+  if (use_padding) {
+    int count = (3 * msecs * tty_speed + DEFAULT_SPEED - 1) / DEFAULT_SPEED;
+    while (count-- > 0)
+      putchar(0);
+  }
+}
+
+void
+extra_padding(int msecs)
+{
+  if (use_padding)
+    padding (soft_scroll ? (msecs * 4) : msecs);
+}
+
 void
 println(char *s)
 {
   printf("%s\r\n", s);
 }
 
-static void
-va_out(va_list ap, char *fmt)
+void
+put_char(FILE *fp, int c)
 {
+  if (fp == stdout)
+    putchar(c);
+  else {
+    c &= 0xff;
+    if (c <= ' ' || c >= '\177')
+      fprintf(fp, "<%d> ", c);
+    else
+      fprintf(fp, "%c ", c);
+  }
+}
+
+void
+put_string(FILE *fp, char *s)
+{
+  while (*s != '\0')
+    put_char(fp, *s++);
+}
+
+static void
+va_out(FILE *fp, va_list ap, char *fmt)
+{
+  char temp[10];
+
   while (*fmt != '\0') {
     if (*fmt == '%') {
       switch(*++fmt) {
       case 'c':
-	printf("%c", va_arg(ap, int));
+	put_char(fp, va_arg(ap, int));
 	break;
       case 'd':
-	printf("%d", va_arg(ap, int));
+	sprintf(temp, "%d", va_arg(ap, int));
+	put_string(fp, temp);
 	break;
       case 's':
-	printf("%s", va_arg(ap, char *));
+	put_string(fp, va_arg(ap, char *));
 	break;
       }
     } else {
-      putchar(*fmt);
+      put_char(fp, *fmt);
     }
     fmt++;
   }
@@ -95,10 +141,19 @@ do_csi(char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
-  printf("%s", csi_output());
-  va_out(ap, fmt);
+  fputs(csi_output(), stdout);
+  va_out(stdout, ap, fmt);
   va_end(ap);
   FLUSH;
+
+  if (log_fp != 0) {
+    fputs("Send: ", log_fp);
+    put_string(log_fp, csi_output());
+    va_start(ap, fmt);
+    va_out(log_fp, ap, fmt);
+    va_end(ap);
+    fputs("\n", log_fp);
+  }
 }
 
 /* DCS xxx ST */
@@ -107,35 +162,52 @@ do_dcs(char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
-  printf("%s", dcs_output());
-  va_out(ap, fmt);
+  fputs(dcs_output(), stdout);
+  va_out(stdout, ap, fmt);
   va_end(ap);
-  puts(st_output());
+  fputs(st_output(), stdout);
   FLUSH;
+
+  if (log_fp != 0) {
+    va_start(ap, fmt);
+    fputs("Send: ", log_fp);
+    put_string(log_fp, dcs_output());
+    va_out(log_fp, ap, fmt);
+    va_end(ap);
+    put_string(log_fp, st_output());
+    fputs("\n", log_fp);
+  }
 }
 
 void
 esc(char *s)
 {
   printf("%c%s", ESC, s);
+
+  if (log_fp != 0) {
+    fprintf(log_fp, "Send: ");
+    put_char(log_fp, ESC);
+    put_string(log_fp, s);
+    fputs("\n", log_fp);
+  }
 }
 
 void
 brc(int pn, int c)
 {
-  printf("%s%d%c", csi_output(), pn, c);
+  do_csi("%d%c", pn, c);
 }
 
 void
 brc2(int pn1, int pn2, int c)
 {
-  printf("%s%d;%d%c", csi_output(), pn1, pn2, c);
+  do_csi("%d;%d%c", pn1, pn2, c);
 }
 
 void
 brc3(int pn1, int pn2, int pn3, int c)
 {
-  printf("%s%d;%d;%d%c", csi_output(), pn1, pn2, pn3, c);
+  do_csi("%d;%d;%d%c", pn1, pn2, pn3, c);
 }
 
 /******************************************************************************/
@@ -174,30 +246,35 @@ void
 cub(int pn)  /* Cursor Backward */
 {
   brc(pn,'D');
+  padding(2);
 }
 
 void
 cud(int pn)  /* Cursor Down */
 {
   brc(pn,'B');
+  extra_padding(2);
 }
 
 void
 cuf(int pn)  /* Cursor Forward */
 {
   brc(pn,'C');
+  padding(2);
 }
 
 void
 cup(int pn1, int pn2)  /* Cursor Position */
 {
   brc2(pn1, pn2, 'H');
+  padding(5); /* 10 for vt220 */
 }
 
 void
 cuu(int pn)  /* Cursor Up */
 {
   brc(pn,'A');
+  extra_padding(2);
 }
 
 void
@@ -210,6 +287,63 @@ void
 decaln(void)  /* Screen Alignment Display */
 {
   esc("#8");
+}
+
+void
+decbi(void) /* VT400: Back Index */
+{
+  esc("6");
+}
+
+void
+decbkm(int flag) /* VT400: Backarrow key */
+{
+  if (flag)
+    sm("?67"); /* backspace */
+  else
+    rm("?67"); /* delete */
+}
+
+void
+deccara(int top, int left, int bottom, int right, int attr)
+{
+  do_csi("%d;%d;%d;%d;%d$r", top, left, bottom, right, attr);
+}
+
+void
+deccolm(int flag) /* 80/132 Columns */
+{
+  if (flag)
+    sm("?3"); /* 132 columns */
+  else
+    rm("?3"); /* 80 columns */
+}
+
+void
+deccra(int Pts, int Pl, int Pbs, int Prs, int Pps, int Ptd, int Pld, int Ppd)
+{
+  do_csi("%d;%d;%d;%d;%d;%d;%d;%d;$v",
+    Pts,  /* top-line border */
+    Pl,   /* left-line border */
+    Pbs,  /* bottom-line border */
+    Prs,  /* right-line border */
+    Pps,  /* source page number */
+    Ptd,  /* destination top-line border */
+    Pld,  /* destination left-line border */
+    Ppd); /* destination page number */
+}
+
+void
+decdc(int pn) /* VT400 Delete Column */
+{
+  do_csi("%d'~", pn);
+  padding(10 * pn);
+}
+
+void
+decera(int top, int left, int bottom, int right) /* VT400 Erase Rectangular area */
+{
+  do_csi("%d;%d;%d;%d$z", top, left, bottom, right);
 }
 
 void
@@ -226,9 +360,46 @@ decdwl(void)  /* Double Wide Line */
 }
 
 void
+decfi(void) /* VT400: Forward Index */
+{
+  esc("9");
+}
+
+void
+decfra(int c, int top, int left, int bottom, int right) /* VT400 Fill Rectangular area */
+{
+  do_csi("%d;%d;%d;%d;%d$x", c, top, left, bottom, right);
+}
+
+void
+decic(int pn) /* VT400 Insert Column */
+{
+  do_csi("%d'}", pn);
+  padding(10 * pn);
+}
+
+void
+deckbum(int flag) /* VT400: Keyboard Usage */
+{
+  if (flag)
+    sm("?68"); /* data processing */
+  else
+    rm("?68"); /* typewriter */
+}
+
+void
 deckpam(void)  /* Keypad Application Mode */
 {
   esc("=");
+}
+
+void
+deckpm(int flag) /* VT400: Keyboard Position */
+{
+  if (flag)
+    sm("?81"); /* position reports */
+  else
+    rm("?81"); /* character codes */
 }
 
 void
@@ -244,6 +415,21 @@ decll(char *ps)  /* Load LEDs */
 }
 
 void
+decnkm(int flag) /* VT400: Numeric Keypad */
+{
+  if (flag)
+    sm("?66"); /* application */
+  else
+    rm("?66"); /* numeric */
+}
+
+void
+decrara(int top, int left, int bottom, int right, int attr)
+{
+  do_csi("%d;%d;%d;%d;%d$t", top, left, bottom, right, attr);
+}
+
+void
 decrc(void)  /* Restore Cursor */
 {
   esc("8");
@@ -256,9 +442,15 @@ decreqtparm(int pn)  /* Request Terminal Parameters */
 }
 
 void
-decrqss(char *pn) /* Request Status-String */
+decrqss(char *pn) /* VT200 Request Status-String */
 {
   do_dcs("$q%s", pn);
+}
+
+void
+decsasd(int pn) /* VT200 Select active status display */
+{
+  do_csi("%d$}", pn);
 }
 
 void
@@ -274,6 +466,26 @@ decsca(int pn1) /* VT200 select character attribute (protect) */
 }
 
 void
+decsclm(int flag) /* Scrolling mode (smooth/jump) */
+{
+  if (flag)
+    sm("?4"); /* smooth scrolling */
+  else
+    rm("?4"); /* jump-scrolling scrolling */
+  soft_scroll = flag;
+}
+
+void
+decscnm(int flag) /* Screen mode (inverse-video) */
+{
+  if (flag)
+    sm("?5"); /* inverse video */
+  else
+    rm("?5"); /* normal video */
+  padding(200);
+}
+
+void
 decsed(int pn1) /* VT200 selective erase in display */
 {
   do_csi("?%dJ", pn1);
@@ -283,6 +495,18 @@ void
 decsel(int pn1) /* VT200 selective erase in line */
 {
   do_csi("?%dK", pn1);
+}
+
+void
+decsnls(int pn) /* VT400 Select number of lines per screen */
+{
+  do_csi("%d*|", pn);
+}
+
+void
+decssdt(int pn) /* VT200 Select status line type */
+{
+  do_csi("%d$~", pn);
 }
 
 void
@@ -318,12 +542,14 @@ void
 ed(int pn)  /* Erase in Display */
 {
   brc(pn, 'J');
+  padding(50);
 }
 
 void
 el(int pn)  /* Erase in Line */
 {
   brc(pn,'K');
+  padding(3); /* 4 for vt400 */
 }
 
 void
@@ -354,6 +580,7 @@ void
 ind(void)  /* Index */
 {
   esc("D");
+  padding(20); /* vt220 */
 }
 
 void
@@ -366,6 +593,7 @@ void
 ri(void)  /* Reverse Index */
 {
   esc("M");
+  extra_padding(5); /* 14 on vt220 */
 }
 
 void
@@ -385,7 +613,7 @@ rm(char *ps)  /* Reset Mode */
 
 void s8c1t(int flag) /* Tell terminal to respond with 7-bit or 8-bit controls */
 {
-  if ((input_8bits = flag) != 0)
+  if ((input_8bits = flag) != FALSE)
     esc(" G"); /* select 8-bit controls */
   else
     esc(" F"); /* select 7-bit controls */
@@ -399,6 +627,7 @@ scs(int g, int c)  /* Select character Set */
   printf("%c%c%c%c%c%c%c", ESC, g ? ')' : '(', c,
                            ESC, g ? '(' : ')', 'B',
 			   g ? 14 : 15);
+  padding(4);
 }
 
 void
@@ -417,6 +646,7 @@ void
 sgr(char *ps)  /* Select Graphic Rendition */
 {
   do_csi("%sm", ps);
+  padding(2);
 }
 
 void
@@ -438,9 +668,19 @@ sr(int pn)  /* Scroll Right */
 }
 
 void
+srm(int flag) /* VT400: Send/Receive mode */
+{
+  if (flag)
+    sm("12"); /* local echo off */
+  else
+    rm("12"); /* local echo on */
+}
+
+void
 su(int pn)  /* Scroll Up */
 {
   brc(pn, 'S');
+  extra_padding(5);
 }
 
 void
@@ -483,166 +723,4 @@ void
 vt52cup(int l, int c)
 {
   printf("%cY%c%c", ESC, l + 31, c + 31);
-}
-
-char
-inchar(void)
-{
-
-  /*
-   *   Wait until a character is typed on the terminal
-   *   then read it, without waiting for CR.
-   */
-
-#ifdef UNIX
-  int lval; static int val; char ch;
-
-  fflush(stdout);
-  lval = val;
-  brkrd = FALSE;
-  reading = TRUE;
-#if HAVE_ALARM
-  alarm(60);	/* timeout after 1 minute, in case user's keyboard is hung */
-#endif
-  read(0,&ch,1);
-#if HAVE_ALARM
-  alarm(0);
-#endif
-  reading = FALSE;
-#ifdef DEBUG
-  {
-    FILE *fp = fopen("ttymodes.log","a");
-    if (fp != 0) {
-      fprintf(fp, "%d>%#x\n", brkrd, ch);
-      fclose(fp);
-    }
-  }
-#endif
-  if (brkrd)
-    val = 0177;
-  else
-    val = ch;
-  if ((val==0177) && (val==lval))
-    kill(getpid(), (int) SIGTERM);
-#endif
-  return(val);
-}
-
-char *instr(void)
-{
-
-  /*
-   *   Get an unfinished string from the terminal:
-   *   wait until a character is typed on the terminal,
-   *   then read it, and all other available characters.
-   *   Return a pointer to that string.
-   */
-  int i; long l1;
-  static char result[80];
-
-  i = 0;
-  result[i++] = inchar();
-/* Wait 0.1 seconds (1 second in vanilla UNIX) */
-  zleep(100);
-#ifdef UNIX
-  fflush(stdout);
-#if HAVE_RDCHK
-  while(rdchk(0)) {
-    read(0,result+i,1);
-    if (i++ == 78) break;
-  }
-#else
-#if USE_FCNTL
-  while(read(2,result+i,1) == 1)
-    if (i++ == 78) break;
-#else
-  while(ioctl(0,FIONREAD,&l1), l1 > 0L) {
-    while(l1-- > 0L) {
-      read(0,result+i,1);
-      if (i++ == 78) goto out1;
-    }
-  }
-out1:
-#endif
-#endif
-#endif
-  result[i] = '\0';
-  return(result);
-}
-
-void
-inputline(char *s)
-{
-  scanf("%s",s);
-}
-
-void
-inflush(void)
-{
-
-  /*
-   *   Flush input buffer, make sure no pending input character
-   */
-
-  int val;
-
-#ifdef UNIX
-#if HAVE_RDCHK
-  while(rdchk(0))
-    read(0,&val,1);
-#else
-#if USE_FCNTL
-  while(read(2,&val,1) > 0)
-    ;
-#else
-  long l1;
-  ioctl (0, FIONREAD, &l1);
-  while(l1-- > 0L)
-    read(0,&val,1);
-#endif
-#endif
-#endif
-}
-
-void
-holdit(void)
-{
-  inflush();
-  printf("Push <RETURN>");
-  readnl();
-}
-
-void
-readnl(void)
-{
-#ifdef UNIX
-  char ch;
-  fflush(stdout);
-  brkrd = FALSE;
-  reading = TRUE;
-  do { read(0,&ch,1); } while(ch != '\n' && !brkrd);
-  if (brkrd)
-    kill(getpid(), SIGTERM);
-  reading = FALSE;
-#endif
-}
-
-void
-zleep(int t)
-{
-
-/*
- *    Sleep and do nothing (don't waste CPU) for t milliseconds
- */
-
-#ifdef UNIX
-#if HAVE_USLEEP
-  unsigned msecs = t * 1000;
-  usleep(msecs);
-#else
-  unsigned secs = t / 1000;
-  if (secs == 0) secs = 1;
-  sleep(secs);	/* UNIX can only sleep whole seconds */
-#endif
-#endif
 }
