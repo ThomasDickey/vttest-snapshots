@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.27 1996/09/05 22:57:58 tom Exp $ */
+/* $Id: nonvt100.c,v 1.29 1996/09/10 00:30:31 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -12,9 +12,9 @@
 int
 not_impl(MENU_ARGS)
 {
-  cup(1,1);
+  vt_move(1,1);
   printf("Sorry, test not implemented:\r\n\r\n  %s", the_title);
-  cup(max_lines-1,1);
+  vt_move(max_lines-1,1);
   return MENU_HOLD;
 }
 
@@ -25,15 +25,15 @@ tst_CBT(MENU_ARGS)
   int n;
   int last = (min_cols + 7) / 8;
 
-  ed(2);
   for (n = 1; n <= last; n++) {
     cup(1,min_cols);
     cbt(n);
     printf("%d", last + 1 - n);
   }
-  cup(max_lines-3,1);
-  ed(0);
-  println("If your terminal supports CBT, the tab-stops are numbered starting at 1.");
+  vt_move(max_lines-3,1);
+  vt_clear(0);
+  println(the_title);
+  println("The tab-stops should be numbered consecutively starting at 1.");
   return MENU_HOLD;
 }
 
@@ -44,16 +44,16 @@ tst_CHA(MENU_ARGS)
 {
   int n;
 
-  ed(2);
   for (n = 1; n < max_lines-3; n++) {
     cup(n, min_cols - n);
     cha(n);
     printf("+");
   }
-  cup(max_lines-3, 1);
+  vt_move(max_lines-3, 1);
   for (n = 1; n <= min_cols; n++)
     printf("%c", n == max_lines-3 ? '+' : '*');
-  cup(max_lines-2, 1);
+  vt_move(max_lines-2, 1);
+  println(the_title);
   println("There should be a diagonal of +'s down to the row of *'s above this message");
   return MENU_HOLD;
 }
@@ -69,15 +69,14 @@ tst_CHT(MENU_ARGS)
   int n;
   int last = (min_cols * 2 + 7) / 8;
 
-  ed(2);
-  cup(1,1);
+  vt_move(1,1);
   println("CHT with param == 1:");
   for (n = 0; n < last; n++) {
     cht(1);
     printf("*");
   }
 
-  cup(4,1);
+  vt_move(4,1);
   println("CHT with param != 1:");
   for (n = 0; n < last; n++) {
     cup(5,1);
@@ -85,15 +84,16 @@ tst_CHT(MENU_ARGS)
     printf("+");
   }
 
-  cup(7,1);
+  vt_move(7,1);
   println("Normal tabs:");
   for (n = 0; n < last; n++) {
     printf("\t*");
   }
 
-  cup(max_lines-3, 1);
-  println("If your terminal supports CHT, the lines with *'s above will look the same.");
-  println("The lines are designed to wrap-around once.");
+  vt_move(max_lines-3, 1);
+  println(the_title);
+  println("The lines with *'s above should look the same (they're designed to");
+  println("wrap-around once).");
   return MENU_HOLD;
 }
 
@@ -103,16 +103,17 @@ tst_CNL(MENU_ARGS)
 {
   int n;
 
-  ed(2);
-  cup(1, 1);
+  vt_move(1, 1);
   printf("1.");
   for (n = 1; n <= max_lines - 3; n++) {
     cup(1, min_cols);
     cnl(n-1);
     printf("%d.", n);
   }
-  cup(max_lines-2, 1);
-  ed(0);
+
+  vt_move(max_lines-3, 1);
+  vt_clear(0);
+  println(the_title);
   println("The lines above this should be numbered in sequence, from 1.");
   return MENU_HOLD;
 }
@@ -129,15 +130,16 @@ tst_CPL(MENU_ARGS)
 {
   int i;
 
-  ed(2);
-  cup(max_lines, 1);
+  vt_move(max_lines, 1);
   for (i = max_lines-1; i > 0; i--) {
     cpl(1);
     printf("%d.", i);
   }
-  cup(max_lines-2, 1);
-  ed(0);
-  println("If your terminal supports CPL, the lines above this are numbered.");
+
+  vt_move(max_lines-3, 1);
+  vt_clear(0);
+  println(the_title);
+  println("The lines above this should be numbered in sequence, from 1.");
   return MENU_HOLD;
 }
 
@@ -148,16 +150,17 @@ tst_HPA(MENU_ARGS)
   int n;
   int last = max_lines-4;
 
-  ed(2);
   for (n = 1; n < last; n++) {
     cup(n, min_cols - n);
     hpa(n);
     printf("+");
   }
-  cup(last, 1);
+
+  vt_move(last, 1);
   for (n = 1; n <= min_cols; n++)
     printf("%c", n == last ? '+' : '*');
-  cup(last+1, 1);
+  vt_move(last+1, 1);
+  println(the_title);
   println("There should be a diagonal of +'s down to the row of *'s above this message.");
   println("(The + in the row of *'s is the target)");
   return MENU_HOLD;
@@ -176,15 +179,15 @@ tst_SD_DEC(MENU_ARGS)
   int n;
   int last = max_lines - 3;
 
-  ed(2);
   for (n = 1; n < last; n++) {
     cup(n, n);
     printf("*");
     sd_dec(1);
   }
-  cup(last+1,1);
-  ed(0);
-  println("If your terminal supports SD, there is a horizontal row of *'s above.");
+  vt_move(last+1,1);
+  vt_clear(0);
+  println(the_title);
+  println("There should be a horizontal row of *'s above.");
   return MENU_HOLD;
 }
 
@@ -194,15 +197,15 @@ tst_SD_ISO(MENU_ARGS)
   int n;
   int last = max_lines - 3;
 
-  ed(2);
   for (n = 1; n < last; n++) {
     cup(n, n);
     printf("*");
     sd_iso(1);
   }
-  cup(last+1,1);
-  ed(0);
-  println("If your terminal supports SD, there is a horizontal row of *'s above.");
+  vt_move(last+1,1);
+  vt_clear(0);
+  println(the_title);
+  println("There should be a horizontal row of *'s above, just above the message.");
   return MENU_HOLD;
 }
 
@@ -218,15 +221,15 @@ tst_SL(MENU_ARGS)
   int n;
   int last = max_lines - 3;
 
-  ed(2);
   for (n = 1; n < last; n++) {
     cup(n, min_cols/2 + last - n);
     printf("*");
     sl(1);
   }
-  cup(last,1);
-  ed(0);
-  println("If your terminal supports SL, there is a vertical column of *'s centered above.");
+  vt_move(last,1);
+  vt_clear(0);
+  println(the_title);
+  println("There should be a vertical column of *'s centered above.");
   return MENU_HOLD;
 }
 
@@ -242,15 +245,15 @@ tst_SR(MENU_ARGS)
   int n;
   int last = max_lines - 3;
 
-  ed(2);
   for (n = 1; n < last; n++) {
     cup(n, min_cols/2 - last + n);
     printf("*");
     sr(1);
   }
-  cup(last,1);
-  ed(0);
-  println("If your terminal supports SR, there is a vertical column of *'s centered above.");
+  vt_move(last,1);
+  vt_clear(0);
+  println(the_title);
+  println("There should be a vertical column of *'s centered above.");
   return MENU_HOLD;
 }
 
@@ -264,15 +267,15 @@ tst_SU(MENU_ARGS)
   int n;
   int last = max_lines - 3;
 
-  ed(2);
   for (n = 1; n < last; n++) {
     cup(last + 1 - n, n);
     printf("*");
     su(1);
   }
-  cup(last+1,1);
-  ed(0);
-  println("If your terminal supports SU, there is a horizontal row of *'s above.");
+  vt_move(last+1,1);
+  vt_clear(0);
+  println(the_title);
+  println("There should be a horizontal row of *'s above, on the top row.");
   return MENU_HOLD;
 }
 
@@ -284,14 +287,11 @@ tst_SPA(MENU_ARGS)
 {
   int i, j, pass;
 
-  ed(2);
-
   for (pass = 0; pass < 2; pass++) {
     if (pass == 0) {
       esc("V"); /* SPA */
     }
     /* make two passes so we can paint over the protected-chars in the second */
-    cup(5, 20);
     for (i = 5; i <= max_lines - 6; i++) {
       cup(i, 20);
       for (j = 20; j < min_cols - 20; j++) {
@@ -312,9 +312,9 @@ tst_SPA(MENU_ARGS)
 
       ech(min_cols);
 
-      cup(max_lines-3, 1);
-      println("If your terminal supports protected areas, there will be an solid box made of");
-      println("*'s in the middle of the screen.  (VT420 does not implement this)");
+      cup(max_lines-4, 1);
+      println(the_title);
+      println("There should be an solid box made of *'s in the middle of the screen.");
       holdit();
     }
   }
@@ -332,8 +332,7 @@ tst_VPA(MENU_ARGS)
 {
   int n;
 
-  ed(2);
-  cup(5, 20);
+  vt_move(5, 20);
   for (n = 20; n <= min_cols - 20; n++)
     printf("*");
   for (n = 5; n < max_lines - 6; n++) {
@@ -347,7 +346,8 @@ tst_VPA(MENU_ARGS)
     printf("*\b");
   }
 
-  cup(max_lines-3, 1);
+  vt_move(max_lines-3, 1);
+  println(the_title);
   println("There should be a box-outline made of *'s in the middle of the screen.");
   return MENU_HOLD;
 }
@@ -370,7 +370,7 @@ tst_ecma48_curs(MENU_ARGS)
     };
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf("ISO-6429 (ECMA-48) Cursor-Movement");
     title(2); println("Choose test type:");
   } while (menu(my_menu));
@@ -391,7 +391,7 @@ tst_ecma48_misc(MENU_ARGS)
     };
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf("Miscellaneous ISO-6429 (ECMA-48) Tests");
     title(2); println("Choose test type:");
   } while (menu(my_menu));
@@ -414,7 +414,7 @@ tst_nonvt100(MENU_ARGS)
     };
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf("Non-VT100 Tests");
     title(2); println("Choose test type:");
   } while (menu(my_menu));

@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.17 1996/09/08 22:45:55 tom Exp $ */
+/* $Id: setup.c,v 1.18 1996/09/09 19:51:52 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -46,15 +46,17 @@ find_levels(void)
   } else { /* "CSI ? 6 x ; ..." */
     cur_level =
     max_level = report[2] - '0'; /* VT220=2, VT320=3, VT420=4 */
-    decrqss("\"p");
-    report = get_reply();
-    if ((report = skip_dcs(report)) != 0
-     && isdigit(*report++) /* 0 or 1 (by observation, though 1 is an err) */
-     && *report++ == '$'
-     && *report++ == 'r'
-     && *report++ == '6'
-     && isdigit(*report))
-        cur_level = *report - '0';
+    if (max_level >= 4) {
+      decrqss("\"p");
+      report = get_reply();
+      if ((report = skip_dcs(report)) != 0
+       && isdigit(*report++) /* 0 or 1 (by observation, though 1 is an err) */
+       && *report++ == '$'
+       && *report++ == 'r'
+       && *report++ == '6'
+       && isdigit(*report))
+          cur_level = *report - '0';
+    }
   }
 
   if (LOG_ENABLED) {

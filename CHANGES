@@ -1,8 +1,10 @@
-$Id: CHANGES,v 1.38 1996/09/09 01:27:39 tom Exp $
+$Id: CHANGES,v 1.39 1996/09/10 00:36:07 tom Exp $
 -------------------------------------------------------------------------------
 
+VERSION 2.6
+
 960908
-        implement DECDLD tests.
+	implement DECDLD tests.
 
 960905
 	implement DECCARA, DECRARA, DECSACE, DECSERA tests.

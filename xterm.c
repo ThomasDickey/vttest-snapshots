@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.13 1996/09/02 13:13:46 tom Exp $ */
+/* $Id: xterm.c,v 1.14 1996/09/10 00:05:45 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -13,7 +13,7 @@ show_click(int y, int x, int c)
 {
   cup(y,x);
   putchar(c);
-  cup(y,x);
+  vt_move(y,x);
   fflush(stdout);
 }
 
@@ -24,9 +24,7 @@ test_modify_ops(MENU_ARGS)
   int wide, high;
   char temp[100];
 
-  ed(2);
-
-  cup(1,1);
+  vt_move(1,1);
   println("Test of Window modifying.");
 
   brc(2, 't'); /* iconify window */
@@ -156,19 +154,19 @@ test_mouse_hilite(MENU_ARGS)
 {
   int y = 0, x = 0;
 
-  ed(2);
-  cup(1,1);
+  vt_move(1,1);
+  println(the_title);
+  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
 
   sm("?1001");
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
   for(;;) {
     char *report = instr();
     if (isQuit(*report))
       break;
-    cup(3,10); el(2); chrprint(report);
+    vt_move(3,10); vt_el(2); chrprint(report);
     if ((report = skip_csi(report)) != 0) {
       if (*report == 'M'
        && strlen(report) == 4) {
@@ -183,13 +181,13 @@ test_mouse_hilite(MENU_ARGS)
           show_click(y, x, b + 1 + '0');
         }
         /* interpret the event */
-        cup(4,10); el(2);
-        printf("tracking: code %#x (%d,%d)", MCHR(report[1]), y, x);
+        vt_move(4,10); vt_el(2);
+        show_result("tracking: code 0x%x (%d,%d)", MCHR(report[1]), y, x);
         fflush(stdout);
       } else if (*report == 'T' && strlen(report) == 7) {
         /* interpret the event */
-        cup(4,10); el(2);
-        printf("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
+        vt_move(4,10); vt_el(2);
+        show_result("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
           MCHR(report[2]), MCHR(report[1]),
           MCHR(report[4]), MCHR(report[3]),
           MCHR(report[6]), MCHR(report[5]));
@@ -204,8 +202,8 @@ test_mouse_hilite(MENU_ARGS)
           show_click(MCHR(report[6]), MCHR(report[5]), 'm');
       } else if (*report == 't' && strlen(report) == 3) {
         /* interpret the event */
-        cup(4,10); el(2);
-        printf("done: end(%d,%d)",
+        vt_move(4,10); vt_el(2);
+        show_result("done: end(%d,%d)",
           MCHR(report[2]), MCHR(report[1]));
         if (MCHR(report[2]) != y
          || MCHR(report[1]) != x)
@@ -217,7 +215,7 @@ test_mouse_hilite(MENU_ARGS)
   rm("?1001");
   restore_ttymodes();
 
-  cup(max_lines-2,1);
+  vt_move(max_lines-2,1);
   return MENU_HOLD;
 }
 
@@ -227,25 +225,25 @@ test_mouse_normal(MENU_ARGS)
 {
   int y = 0, x = 0;
 
-  ed(2);
-  cup(1,1);
+  vt_move(1,1);
+  println(the_title);
+  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
 
   sm("?1000");
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
   for(;;) {
     char *report = instr();
     if (isQuit(*report))
       break;
-    cup(3,10); el(2); chrprint(report);
+    vt_move(3,10); vt_el(2); chrprint(report);
     if ((report = skip_csi(report)) != 0
      && *report == 'M'
      && strlen(report) == 4) {
       int b = MCHR(report[1]);
-      cup(4,10); el(2);
-      printf("code %#x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
+      vt_move(4,10); vt_el(2);
+      show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
       b &= 3;
       if (b != 3)
         show_click(MCHR(report[3]), MCHR(report[2]), b + 1 + '0');
@@ -259,7 +257,7 @@ test_mouse_normal(MENU_ARGS)
   rm("?1000");
   restore_ttymodes();
 
-  cup(max_lines-2,1);
+  vt_move(max_lines-2,1);
   return MENU_HOLD;
 }
 
@@ -268,56 +266,54 @@ test_report_ops(MENU_ARGS)
 {
   char *report;
 
-  ed(2);
-
-  cup(1,1);
+  vt_move(1,1);
   println("Test of Window reporting.");
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  cup(3,1);
+  vt_move(3,1);
   println("Report icon label:");
-  cup(4,10);
+  vt_move(4,10);
   brc(20, 't'); /* report icon label */
   report = instr();
   chrprint(report);
 
-  cup(5,1);
+  vt_move(5,1);
   println("Report window label:");
-  cup(6,10);
+  vt_move(6,10);
   brc(21, 't'); /* report window label */
   report = instr();
   chrprint(report);
 
-  cup(7,1);
+  vt_move(7,1);
   println("Report size of window (chars):");
-  cup(8,10);
+  vt_move(8,10);
   brc(18, 't'); /* report window's text-size */
   report = instr();
   chrprint(report);
 
-  cup(9,1);
+  vt_move(9,1);
   println("Report size of window (pixels):");
-  cup(10,10);
+  vt_move(10,10);
   brc(14, 't'); /* report window's pixel-size */
   report = instr();
   chrprint(report);
 
-  cup(11,1);
+  vt_move(11,1);
   println("Report position of window (pixels):");
-  cup(12,10);
+  vt_move(12,10);
   brc(13, 't'); /* report window's pixel-size */
   report = instr();
   chrprint(report);
 
-  cup(13,1);
+  vt_move(13,1);
   println("Report state of window (normal/iconified):");
-  cup(14,10);
+  vt_move(14,10);
   brc(11, 't'); /* report window's pixel-size */
   report = instr();
   chrprint(report);
 
-  cup(20,1);
+  vt_move(20,1);
   restore_ttymodes();
   return MENU_HOLD;
 }
@@ -326,26 +322,32 @@ test_report_ops(MENU_ARGS)
 static int
 test_window_name(MENU_ARGS)
 {
-  return not_impl(PASS_ARGS);
+  char temp[BUFSIZ];
+
+  vt_move(1,1);
+  println("Please enter the new window name.  Newer xterms may beep when setting the title.");
+  inputline(temp);
+  do_osc("0;%s\007", temp);
+  return MENU_NOHOLD;
 }
 
 /* X10 Mouse Compatibility */
 static int
 test_X10_mouse(MENU_ARGS)
 {
-  ed(2);
-  cup(1,1);
+  vt_move(1,1);
+  println(the_title);
+  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
 
   sm("?9");
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
   for(;;) {
     char *report = instr();
     if (isQuit(*report))
       break;
-    cup(3,10); el(2); chrprint(report);
+    vt_move(3,10); vt_el(2); chrprint(report);
     if ((report = skip_csi(report)) != 0
      && *report == 'M'
      && strlen(report) == 4) {
@@ -353,7 +355,7 @@ test_X10_mouse(MENU_ARGS)
       int y = report[3] - ' ';
       cup(y,x);
       printf("%d", report[1] - ' ' + 1);
-      cup(y,x);
+      vt_move(y,x);
       fflush(stdout);
     }
   }
@@ -361,7 +363,7 @@ test_X10_mouse(MENU_ARGS)
   rm("?9");
   restore_ttymodes();
 
-  cup(max_lines-2,1);
+  vt_move(max_lines-2,1);
   return MENU_HOLD;
 }
 
@@ -385,7 +387,7 @@ tst_xterm(MENU_ARGS)
   };
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); println("XTERM special features");
     title(2); println("Choose test type:");
   } while (menu(my_menu));

@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.21 1996/09/05 10:47:40 tom Exp $ */
+/* $Id: reports.c,v 1.22 1996/09/09 23:36:08 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -142,14 +142,14 @@ tst_DA(MENU_ARGS)
     { "", "" }
   };
 
-  cup(1,1);
+  vt_move(1,1);
   println("Test of Device Attributes report (what are you)");
 
   set_tty_raw(TRUE);
   da();
   report = get_reply();
-  cup(3,1);
-  el(0);
+  vt_move(3,1);
+  vt_el(0);
   printf("Report is: ");
   chrprint(report);
 
@@ -187,7 +187,7 @@ tst_DA(MENU_ARGS)
     show_result(" -- Unknown response, refer to the manual");
 
   restore_ttymodes();
-  cup(max_lines-1,1);
+  vt_move(max_lines-1,1);
   return MENU_HOLD;
 }
 
@@ -204,16 +204,16 @@ tst_DA_2(MENU_ARGS)
 {
   char *report;
 
-  cup(1,1); println("Testing Secondary Device Attributes (Firmware version)");
+  vt_move(1,1); println("Testing Secondary Device Attributes (Firmware version)");
 
   set_tty_raw(TRUE);
   do_csi(">c"); /* or "CSI > 0 c" */
   report = get_reply();
-  cup(3,10);
+  vt_move(3,10);
   chrprint(report);
 
   restore_ttymodes();
-  cup(max_lines-1,1);
+  vt_move(max_lines-1,1);
   return MENU_HOLD;
 }
 
@@ -226,12 +226,12 @@ tst_DA_3(MENU_ARGS)
   char *report;
   char *show;
 
-  cup(1,1); println("Testing Tertiary Device Attributes (unit ID)");
+  vt_move(1,1); println("Testing Tertiary Device Attributes (unit ID)");
 
   set_tty_raw(TRUE);
   do_csi("=c"); /* or "CSI = 0 c" */
   report = get_reply();
-  cup(3,10);
+  vt_move(3,10);
   chrprint(report);
   if ((report = skip_dcs(report)) != 0
    && strip_terminator(report) != 0
@@ -245,7 +245,7 @@ tst_DA_3(MENU_ARGS)
   show_result(show);
 
   restore_ttymodes();
-  cup(max_lines-1,1);
+  vt_move(max_lines-1,1);
   return MENU_HOLD;
 }
 
@@ -258,13 +258,13 @@ tst_DECREQTPARM(MENU_ARGS)
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
-  cup(2,1);
+  vt_move(2,1);
   println("Test of the \"Request Terminal Parameters\" feature, argument 0.");
-  cup(3,1);
+  vt_move(3,1);
   decreqtparm(0);
   report = get_reply();
-  cup(5,1);
-  el(0);
+  vt_move(5,1);
+  vt_el(0);
   printf("Report is: ");
   chrprint(report);
 
@@ -296,13 +296,13 @@ tst_DECREQTPARM(MENU_ARGS)
     show_result("(CLoCk MULtiplier = %d, STP option flags = %d)\n", clkmul, flags);
   }
 
-  cup(10,1);
+  vt_move(10,1);
   println("Test of the \"Request Terminal Parameters\" feature, argument 1.");
-  cup(11,1);
+  vt_move(11,1);
   decreqtparm(1);       /* Does the same as decreqtparm(0), reports "3" */
   report2 = get_reply();
-  cup(13,1);
-  el(0);
+  vt_move(13,1);
+  vt_el(0);
   printf("Report is: ");
   chrprint(report2);
 
@@ -317,7 +317,7 @@ tst_DECREQTPARM(MENU_ARGS)
     if (!strcmp(report,report2)) println(" -- OK");
     else                         println(" -- Bad format");
   }
-  cup(max_lines,1);
+  vt_move(max_lines,1);
 
   restore_ttymodes();
   return MENU_HOLD;
@@ -330,13 +330,13 @@ tst_DSR(MENU_ARGS)
   char *report, *cmp;
 
   set_tty_raw(TRUE);
-  cup(1,1);
+  vt_move(1,1);
   printf("Test of Device Status Report 5 (report terminal status).");
-  cup(2,1);
+  vt_move(2,1);
   dsr(5);
   report = get_reply();
-  cup(2,1);
-  el(0);
+  vt_move(2,1);
+  vt_el(0);
   printf("Report is: ");
   chrprint(report);
 
@@ -350,13 +350,13 @@ tst_DSR(MENU_ARGS)
   else
     show_result(" -- Unknown response!");
 
-  cup(4,1);
+  vt_move(4,1);
   println("Test of Device Status Report 6 (report cursor position).");
-  cup(5,1);
+  vt_move(5,1);
   dsr(6);
   report = get_reply();
-  cup(5,1);
-  el(0);
+  vt_move(5,1);
+  vt_el(0);
   printf("Report is: ");
   chrprint(report);
 
@@ -370,7 +370,7 @@ tst_DSR(MENU_ARGS)
   else
     show_result(" -- Unknown response!");
 
-  cup(max_lines-1,1);
+  vt_move(max_lines-1,1);
   restore_ttymodes();
   return MENU_HOLD;
 }
@@ -380,21 +380,21 @@ tst_ENQ(MENU_ARGS)
 {
   char *report;
 
-  cup(5,1);
+  vt_move(5,1);
   println("This is a test of the ANSWERBACK MESSAGE. (To load the A.B.M.");
   println("see the TEST KEYBOARD part of this program). Below here, the");
   println("current answerback message in your terminal should be");
   println("displayed. Finish this test with RETURN.");
-  cup(10,1);
+  vt_move(10,1);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
   inflush();
   printf("%c", 5); /* ENQ */
   report = get_reply();
-  cup(10,1);
+  vt_move(10,1);
   chrprint(report);
-  cup(12,1);
+  vt_move(12,1);
 
   restore_ttymodes();
   return MENU_HOLD;
@@ -405,28 +405,28 @@ tst_NLM(MENU_ARGS)
 {
   char *report;
 
-  cup(1,1);
+  vt_move(1,1);
   println("Test of LineFeed/NewLine mode.");
-  cup(3,1);
+  vt_move(3,1);
   sm("20");
   set_tty_crmod(FALSE);
   printf("NewLine mode set. Push the RETURN key: ");
   report = instr();
-  cup(4,1);
-  el(0);
+  vt_move(4,1);
+  vt_el(0);
   chrprint(report);
   if (!strcmp(report, "\015\012")) show_result(" -- OK");
   else                             show_result(" -- Not expected");
-  cup(6,1);
+  vt_move(6,1);
   rm("20");
   printf("NewLine mode reset. Push the RETURN key: ");
   report = instr();
-  cup(7,1);
-  el(0);
+  vt_move(7,1);
+  vt_el(0);
   chrprint(report);
   if (!strcmp(report, "\015")) show_result(" -- OK");
   else                         show_result(" -- Not expected");
-  cup(9,1);
+  vt_move(9,1);
 
   restore_ttymodes();
   return MENU_HOLD;
@@ -449,7 +449,7 @@ tst_reports(MENU_ARGS)
     };
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf("Terminal Reports/Responses");
     title(2); println("Choose test type:");
   } while (menu(my_menu));

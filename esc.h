@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.33 1996/09/08 21:54:10 tom Exp $ */
+/* $Id: esc.h,v 1.34 1996/09/10 00:04:36 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -55,6 +55,8 @@ char *csi_input(void);
 char *csi_output(void);
 char *dcs_input(void);
 char *dcs_output(void);
+char *osc_input(void);
+char *osc_output(void);
 char *get_reply(void);
 char *instr(void);
 char *st_input(void);
@@ -116,6 +118,7 @@ void dectst(int pn);
 void dl(int pn);
 void do_csi(char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void do_dcs(char *fmt, ...) GCC_PRINTFLIKE(1,2);
+void do_osc(char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void dsr(int pn);
 void ech(int pn);
 void ed(int pn);

@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.4 1996/09/08 22:30:07 tom Exp $ */
+/* $Id: vt220.c,v 1.5 1996/09/09 23:27:59 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002)
@@ -12,7 +12,7 @@ any_DSR(MENU_ARGS, char *text, void (*explain)(char *report))
 {
   char *report;
 
-  cup(1,1);
+  vt_move(1,1);
   printf("Testing DSR: %s\n", the_title);
 
   set_tty_raw(TRUE);
@@ -20,7 +20,7 @@ any_DSR(MENU_ARGS, char *text, void (*explain)(char *report))
 
   do_csi("%s", text);
   report = get_reply();
-  cup(3,10);
+  vt_move(3,10);
   chrprint(report);
   if ((report = skip_csi(report)) != 0
    && strlen(report) > 2
@@ -34,7 +34,7 @@ any_DSR(MENU_ARGS, char *text, void (*explain)(char *report))
   }
 
   restore_ttymodes();
-  cup(max_lines-1, 1);
+  vt_move(max_lines-1, 1);
   return MENU_HOLD;
 }
 
@@ -87,7 +87,7 @@ show_KeyboardStatus(char *report)
   save = pos;
   code = scan_any(report, &pos, 'n');
   if (save != pos) {
-    cup(5,10);
+    vt_move(5,10);
     switch(code) {
     case 0: show = "keyboard ready"; break;
     case 3: show = "no keyboard"; break;
@@ -96,7 +96,7 @@ show_KeyboardStatus(char *report)
     }
     show_result(show);
 
-    cup(6,10);
+    vt_move(6,10);
     switch (code = scan_any(report, &pos, 'n')) {
     case 0:  show = "LK201"; break;
     case 1:  show = "LK401"; break;
@@ -148,10 +148,10 @@ tst_S8C1T(MENU_ARGS)
   int flag = input_8bits;
   int pass;
 
-  ed(2);
+  vt_move(1,1);
   println(the_title);
 
-  cup(5,1);
+  vt_move(5,1);
   println("This tests the VT200+ control sequence to direct the terminal to emit 8-bit");
   println("control-sequences instead of <esc> sequences.");
 
@@ -163,14 +163,14 @@ tst_S8C1T(MENU_ARGS)
     s8c1t(flag);
     cup(1,1); dsr(6);
     report = instr();
-    cup(10 + pass * 3, 1);
+    vt_move(10 + pass * 3, 1);
     printf("8-bit controls %s: ", flag ? "enabled" : "disabled");
     chrprint(report);
     report_ok("1;1R", report);
   }
 
   restore_ttymodes();
-  cup(max_lines-1,1);
+  vt_move(max_lines-1,1);
   return MENU_HOLD;
 }
 
@@ -186,8 +186,6 @@ tst_DECSCA(MENU_ARGS)
   int bmar = max_lines - 8;
   int lmar = 20;
   int rmar = min_cols - lmar;
-
-  ed(2);
 
   for (pass = 0; pass < 2; pass++) {
     if (pass == 0)
@@ -231,8 +229,8 @@ tst_DECSCA(MENU_ARGS)
       cup(tmar, min_cols/2);
       decsel(2); /* the whole line */
 
-      cup(max_lines-3, 1);
-      ed(0);
+      vt_move(max_lines-3, 1);
+      vt_clear(0);
       println("If your terminal supports DEC protected areas (DECSCA, DECSED, DECSEL),");
       println("there will be an solid box made of *'s in the middle of the screen.");
       holdit();
@@ -249,8 +247,7 @@ tst_DECSCA(MENU_ARGS)
 int
 tst_DECTCEM(MENU_ARGS)
 {
-  ed(2);
-  cup(1,1);
+  vt_move(1,1);
   rm("?25");
   println("The cursor should be invisible");
   holdit();
@@ -300,7 +297,7 @@ tst_DECUDK(MENU_ARGS)
     do_dcs("1;1|%d/%s", keytable[key].code, temp);
   }
 
-  cup(1,1);
+  vt_move(1,1);
   println(the_title);
   println("Press 'q' to quit.  Function keys should echo their labels.");
   println("(On a DEC terminal you must press SHIFT as well).");
@@ -312,15 +309,15 @@ tst_DECUDK(MENU_ARGS)
     char *report = instr();
     if (*report == 'q')
       break;
-    cup(5,10);
-    el(2);
+    vt_move(5,10);
+    vt_clear(2);
     chrprint(report);
   }
 
   do_dcs("0"); /* clear all keys */
 
   restore_ttymodes();
-  cup(max_lines-1,1);
+  vt_move(max_lines-1,1);
   return MENU_HOLD;
 }
 
@@ -354,7 +351,6 @@ tst_ECH(MENU_ARGS)
 {
   int i;
 
-  ed(2);
   decaln();
   for (i = 1; i <= max_lines; i++) {
     cup(i, min_cols - i - 2);
@@ -365,10 +361,10 @@ tst_ECH(MENU_ARGS)
     printf("*"); /* this should be adjacent, in the upper-right corner */
   }
 
-  cup(max_lines-4, 1);
-  ed(0);
+  vt_move(max_lines-4, 1);
+  vt_clear(0);
 
-  cup(max_lines-4, min_cols - (max_lines + 6));
+  vt_move(max_lines-4, min_cols - (max_lines + 6));
   println("diagonal: ^^ (clear)");
   println("ECH test: there should be E's with a gap before diagonal of **'s");
   println("The lower-right diagonal region should be cleared.  Nothing else.");
@@ -396,7 +392,7 @@ tst_vt220(MENU_ARGS)
     };
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf("VT220/VT320 Tests");
     title(2); println("Choose test type:");
   } while (menu(my_menu));

@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.38 1996/09/08 22:41:46 tom Exp $ */
+/* $Id: vttest.h,v 1.39 1996/09/09 18:52:16 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -148,12 +148,19 @@ extern jmp_buf intrenv;
 
 /* my SunOS 4.1.x doesn't have prototyped headers */
 #if defined(__GNUC__) && defined(sun) && !defined(__SVR4)
-extern int fclose(FILE *);
-extern int fflush(FILE *);
-extern int fprintf(FILE *, const char *fmt, ...);
-extern int ioctl(int, unsigned long, void *);
+extern void perror(const char *s);
+extern int _flsbuf(int c, FILE *s);
+extern int fclose(FILE *s);
+extern int fflush(FILE *s);
+extern int fprintf(FILE *s, const char *fmt, ...);
+extern int fgetc(FILE *s);
+extern int fputc(int c, FILE *s);
+extern int fputs(char *p, FILE *s);
+extern int ioctl(int fd, unsigned long mask, void *p);
 extern int printf(const char *fmt, ...);
 extern int scanf(const char *fmt, ...);
+extern int sscanf(const char *src, const char *fmt, ...);
+extern long strtol(const char *src, char **dst, int base);
 #endif
 
 #define MENU_ARGS    char *   the_title

@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.49 1996/09/08 21:54:19 tom Exp $ */
+/* $Id: esc.c,v 1.50 1996/09/10 00:04:21 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -40,6 +40,23 @@ char *
 dcs_output(void)
 {
   return output_8bits ? (char *)dcs_8 : dcs_7;
+}
+
+/******************************************************************************/
+
+static char osc_7[] = { ESC, ']', 0 };
+static unsigned char osc_8[] = { 0x9d, 0 };
+
+char *
+osc_input(void)
+{
+  return input_8bits ? (char *)osc_8 : osc_7;
+}
+
+char *
+osc_output(void)
+{
+  return output_8bits ? (char *)osc_8 : osc_7;
 }
 
 /******************************************************************************/
@@ -172,6 +189,29 @@ do_dcs(char *fmt, ...)
     va_start(ap, fmt);
     fputs("Send: ", log_fp);
     put_string(log_fp, dcs_output());
+    va_out(log_fp, ap, fmt);
+    va_end(ap);
+    put_string(log_fp, st_output());
+    fputs("\n", log_fp);
+  }
+}
+
+/* DCS xxx ST */
+void
+do_osc(char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  fputs(osc_output(), stdout);
+  va_out(stdout, ap, fmt);
+  va_end(ap);
+  fputs(st_output(), stdout);
+  FLUSH;
+
+  if (LOG_ENABLED) {
+    va_start(ap, fmt);
+    fputs("Send: ", log_fp);
+    put_string(log_fp, osc_output());
     va_out(log_fp, ap, fmt);
     va_end(ap);
     put_string(log_fp, st_output());
