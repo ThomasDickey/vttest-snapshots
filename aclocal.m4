@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.3 2002/04/22 22:35:29 tom Exp $
+dnl $Id: aclocal.m4,v 1.4 2002/12/08 23:11:57 tom Exp $
 dnl ---------------------------------------------------------------------------
 dnl ---------------------------------------------------------------------------
 dnl Test if we have a usable ioctl with FIONREAD, or if fcntl.h is preferred.
@@ -32,7 +32,7 @@ dnl	-pedantic
 dnl
 AC_DEFUN([CF_GCC_WARNINGS],
 [
-if test "$GCC" = yes
+if ( test "$GCC" = yes || test "$GXX" = yes )
 then
 	cat > conftest.$ac_ext <<EOF
 #line __oline__ "configure"
@@ -53,7 +53,8 @@ EOF
 		Wnested-externs \
 		Wpointer-arith \
 		Wshadow \
-		Wstrict-prototypes $cf_warn_CONST
+		Wstrict-prototypes \
+		Wundef $cf_warn_CONST
 	do
 		CFLAGS="$cf_save_CFLAGS $EXTRA_CFLAGS -$cf_opt"
 		if AC_TRY_EVAL(ac_compile); then
