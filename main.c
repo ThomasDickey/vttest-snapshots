@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.18 1996/07/21 22:17:11 tom Exp $ */
+/* $Id: main.c,v 1.19 1996/08/02 23:40:18 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -20,8 +20,7 @@ choice to the address below.
 #include <vttest.h>
 #include <ttymodes.h>
 #include <esc.h>
-#include <color.h>
-#include <xterm.h>
+#include <nonvt100.h>
 
 struct table {
     int key;
@@ -82,8 +81,7 @@ main(int argc, char *argv[])
       "Test of VT102 features (Insert/Delete Char/Line)",
       "Test of known bugs",
       "Test of reset and self-test",
-      "Test ANSI colors",
-      "Test XTERM special features",
+      "Test non-VT100 (e.g., VT220, XTERM) terminals",
       ""
     };
 
@@ -154,8 +152,7 @@ main(int argc, char *argv[])
       case 8:  tst_insdel();      break;
       case 9:  tst_bugs();        break;
       case 10: tst_rst();         break;
-      case 11: tst_colors();      break;
-      case 12: tst_xterm();       break;
+      case 11: tst_nonvt100();    break;
     }
   } while (menuchoice);
   bye();

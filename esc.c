@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.10 1996/07/16 23:07:56 tom Exp $ */
+/* $Id: esc.c,v 1.12 1996/08/03 19:03:10 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -41,6 +41,36 @@ void
 brc3(int pn1, int pn2, int pn3, int c)
 {
   printf("%c[%d;%d;%d%c", 27, pn1, pn2, pn3, c);
+}
+
+void
+cbt(int pn) /* Cursor Back Tab */
+{
+  brc(pn, 'Z');
+}
+
+void
+cha(int pn) /* Cursor Character Absolute */
+{
+  brc(pn, 'G');
+}
+
+void
+cht(int pn) /* Cursor Forward Tabulation */
+{
+  brc(pn, 'I');
+}
+
+void
+cnl(int pn) /* Cursor Next Line */
+{
+  brc(pn,'E');
+}
+
+void
+cpl(int pn) /* Cursor Previous Line */
+{
+  brc(pn,'F');
 }
 
 void
@@ -135,6 +165,30 @@ decsc(void)  /* Save Cursor */
 }
 
 void
+decsca(int pn1) /* VT200 select character attribute (protect) */
+{
+  char temp[80];
+  sprintf(temp, "%d\"p", pn1);
+  esc(temp);
+}
+
+void
+decsed(int pn1) /* VT200 selective erase in display */
+{
+  char temp[80];
+  sprintf(temp, "?%dJ", pn1);
+  esc(temp);
+}
+
+void
+decsel(int pn1) /* VT200 selective erase in line */
+{
+  char temp[80];
+  sprintf(temp, "?%dK", pn1);
+  esc(temp);
+}
+
+void
 decstbm(int pn1, int pn2)  /* Set Top and Bottom Margins */
 {
   if (pn1 || pn2) brc2(pn1, pn2, 'r');
@@ -170,6 +224,18 @@ void
 el(int pn)  /* Erase in Line */
 {
   brc(pn,'K');
+}
+
+void
+ech(int pn) /* Erase character(s) */
+{
+  brc(pn,'X');
+}
+
+void
+hpa(int pn) /* Character Position Absolute */
+{
+  brc(pn, '`');
 }
 
 void
@@ -229,9 +295,25 @@ sgr(char *ps)  /* Select Graphic Rendition */
 }
 
 void
+sl(int pn)  /* Scroll Left */
+{
+  char temp[80];
+  sprintf(temp, "%d ", pn);
+  brcstr(temp, '@');
+}
+
+void
 sm(char *ps)  /* Set Mode */
 {
   brcstr(ps, 'h');
+}
+
+void
+sr(int pn)  /* Scroll Right */
+{
+  char temp[80];
+  sprintf(temp, "%d ", pn);
+  brcstr(temp, 'A');
 }
 
 void
@@ -262,6 +344,12 @@ void
 il(int pn) /* Insert line */
 {
   brc(pn, 'L');
+}
+
+void
+vpa(int pn) /* Line Position Absolute */
+{
+  brc(pn, 'd');
 }
 
 void

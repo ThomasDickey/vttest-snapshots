@@ -1,4 +1,4 @@
-MANIFEST for vttest, version v2_2
+MANIFEST for vttest, version v2_3
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 CHANGES                         record of changes I've made to vttest
@@ -14,6 +14,8 @@ install.sh                      install script, needed for configure
 main.c                          main-program & most tests, for VTTEST
 makefile.in                     template for makefile
 mkdirs.sh                       mkinstalldirs script, from X11
+nonvt100.c                      non-VT100 tests
+nonvt100.h                      interface of nonvt100.c
 patchlev.h                      patch-level of VTTEST
 sargasso.h                      split-out obsolete compiler defs from header.h
 ttymodes.c                      module for changing tty modes
