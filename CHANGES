@@ -1,5 +1,11 @@
-$Id: CHANGES,v 1.80 1999/10/14 09:32:41 tom Exp $
+$Id: CHANGES,v 1.81 1999/10/26 00:12:06 tom Exp $
 -------------------------------------------------------------------------------
+
+991025
+	clarify top-level reports menu, which mixes tests that apply to various
+	models (VT100-VT420).
+
+	show decoded modifiers for the xterm mouse tests
 
 991014
 	modify position of cursor for printer tests, so autoprint tests work
@@ -16,7 +22,7 @@ $Id: CHANGES,v 1.80 1999/10/14 09:32:41 tom Exp $
 	DECscope booklet).
 
 990712
-	modify menu 3.12 (non-vt100 "Test Keyboard Layout with G0 Selection")
+	modify menu 3.12 (non-VT100 "Test Keyboard Layout with G0 Selection")
 	to show numeric codes as well as the actual character.
 
 	remove spurious test for SD which indicated that ISO's coding differed
@@ -36,7 +42,7 @@ $Id: CHANGES,v 1.80 1999/10/14 09:32:41 tom Exp $
 	menu.
 
 990119
-	add menu entry for enabling NRC mode, and (for vt220 & up) a menu
+	add menu entry for enabling NRC mode, and (for VT220 & up) a menu
 	entry to allow testing keyboard layout with NRC mode enabled.
 
 	remove logic that sets NRC mode from setup for character-set tests,
@@ -57,9 +63,9 @@ $Id: CHANGES,v 1.80 1999/10/14 09:32:41 tom Exp $
 
 980328
 	add logic to ensure we pick up the proper choice (e.g., in Norwegian)
-	where the choice depends on the terminal id (e.g., vt220 vs vt320).
+	where the choice depends on the terminal id (e.g., VT220 vs VT320).
 
-	minor correction for vt220 vs vt320 logic in do_scs for Latin-1 vs
+	minor correction for VT220 vs VT320 logic in do_scs for Latin-1 vs
 	British character set.
 
 980327
@@ -115,12 +121,12 @@ VERSION 2.7
 	corrected early return from test for DECRPM when badly-formatted
 	reply is received.
 
-	add DA1 codes from vt500 manual (from Jeffrey Altman).
+	add DA1 codes from VT500 manual (from Jeffrey Altman).
 
 	refined test to restore ANSI mode based on VT420 testing.
 
 961029
-	extend vt52 test to check operating level when restoring ANSI mode.
+	extend VT52 test to check operating level when restoring ANSI mode.
 
 961028
 	implemented tests for VT220/VT420 function keys, editing keypad.
@@ -138,7 +144,7 @@ VERSION 2.7
 
 	correct I/O modes on timeout
 
-	added padding, corrected some states on return from vt52 tests.
+	added padding, corrected some states on return from VT52 tests.
 
 	increase buffer size for DECTSR.
 
