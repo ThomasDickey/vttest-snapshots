@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.40 1996/09/11 10:22:36 tom Exp $ */
+/* $Id: vttest.h,v 1.44 1996/09/28 14:54:44 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -112,7 +112,6 @@ extern int output_8bits;
 extern int reading;
 extern int tty_speed;
 extern int use_padding;
-extern int user_geometry;
 extern jmp_buf intrenv;
 
 #if USE_FCNTL
@@ -171,6 +170,12 @@ typedef struct {
   int (*dispatch)(MENU_ARGS);
 } MENU;
 
+typedef struct {
+  int cur_level;
+  int input_8bits;
+  int output_8bits;
+} VTLEVEL;
+
 #define MENU_NOHOLD 0
 #define MENU_HOLD   1
 #define MENU_MERGE  2
@@ -184,6 +189,7 @@ extern char *skip_csi(char *input);
 extern char *skip_dcs(char *input);
 extern char *skip_digits(char *src);
 extern char *skip_prefix(char *prefix, char *input);
+extern char *skip_ss3(char *input);
 extern int any_DSR(MENU_ARGS, char *text, void (*explain)(char *report));
 extern int bug_a(MENU_ARGS);
 extern int bug_b(MENU_ARGS);
@@ -197,11 +203,13 @@ extern int bug_w(MENU_ARGS);
 extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
 extern int not_impl(MENU_ARGS);
+extern int set_level(int level);
 extern int scan_any(char *str, int *pos, int toc);
 extern int scanto(char *str, int *pos, int toc);
 extern int setup_terminal(MENU_ARGS);
 extern int strip_suffix(char *src, char *suffix);
 extern int strip_terminator(char *src);
+extern int terminal_id(void);
 extern int tst_DECSCA(MENU_ARGS);
 extern int tst_DECSTR(MENU_ARGS);
 extern int tst_DECTCEM(MENU_ARGS);
@@ -237,6 +245,9 @@ extern void chrprint(char *s);
 extern void do_scrolling(void);
 extern void enable_logging(void);
 extern void initterminal(int pn);
+extern void reset_level(void);
+extern void restore_level(VTLEVEL *save);
+extern void save_level(VTLEVEL *save);
 extern void setup_softchars(char *filename);
 extern void show_result(const char *fmt, ...);
 extern void title(int offset);

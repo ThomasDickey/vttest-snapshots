@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.58 1996/09/11 22:35:46 tom Exp $ */
+/* $Id: main.c,v 1.61 1996/09/28 14:52:23 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -33,7 +33,6 @@ int input_8bits   = FALSE;
 int output_8bits  = FALSE;
 int tty_speed     = DEFAULT_SPEED; /* nominal speed, for padding */
 int use_padding   = FALSE;
-int user_geometry = FALSE;     /* true if we're using nonstandard screensize */
 jmp_buf intrenv;
 
 static void
@@ -67,8 +66,8 @@ main(int argc, char *argv[])
     char *opt = *++argv;
     if (*opt == '-') {
       while (*++opt != '\0') {
-	switch (*opt) {
-	case 'f':
+        switch (*opt) {
+        case 'f':
           if (!*++opt) {
             if (argc-- < 1)
               usage();
@@ -77,18 +76,18 @@ main(int argc, char *argv[])
           setup_softchars(opt);
           opt = "?";
           break;
-	case 'l':
+        case 'l':
           enable_logging();
-	  break;
-	case 'p':
-	  use_padding = TRUE;
-	  break;
-	case '8':
-	  output_8bits = TRUE;
-	  break;
-	default:
-	  usage();
-	}
+          break;
+        case 'p':
+          use_padding = TRUE;
+          break;
+        case '8':
+          output_8bits = TRUE;
+          break;
+        default:
+          usage();
+        }
       }
     } else {
       /*
@@ -99,31 +98,30 @@ main(int argc, char *argv[])
       char *q;
       int values[3], n, m;
       for (n = 0; n < 3; n++) {
-	if (!*p)
-	  break;
-	if ((m = strtol(p, &q, 10)) > 0) {
-	  values[n] = m;
-	  p = q;
-	  if (*p)
-	    p++;
-	} else {
-	  break;
-	}
+        if (!*p)
+          break;
+        if ((m = strtol(p, &q, 10)) > 0) {
+          values[n] = m;
+          p = q;
+          if (*p)
+            p++;
+        } else {
+          break;
+        }
       }
       switch (n) {
       case 3:
-	max_cols = values[2];
-	/* FALLTHRU */
+        max_cols = values[2];
+        /* FALLTHRU */
       case 2:
-	min_cols = values[1];
-	/* FALLTHRU */
+        min_cols = values[1];
+        /* FALLTHRU */
       case 1:
-	max_lines = values[0];
-	user_geometry = TRUE;
-	break;
+        max_lines = values[0];
+        break;
       }
       if ((max_cols < min_cols) || (n == 0)) {
-	usage();
+        usage();
       }
     }
   }
@@ -1023,7 +1021,7 @@ setup_terminal(MENU_ARGS)
   if (LOG_ENABLED)
     fprintf(log_fp, "Setup Terminal with test-defaults\n");
 
-  esc("<");           /* Enter ANSI mode (if in VT52 mode)    */
+  set_level(1);       /* Enter ANSI mode (if in VT52 mode)    */
   rm("?1");           /* cursor keys normal   */
   deccolm(FALSE);     /* 80 col mode          */
   decsclm(FALSE);     /* Jump scroll          */
@@ -1045,7 +1043,7 @@ bye (void)
   if (LOG_ENABLED)
     fprintf(log_fp, "Cleanup & exit\n");
 
-  esc("<");           /* Enter ANSI mode (if in VT52 mode)    */
+  set_level(1);       /* Enter ANSI mode (if in VT52 mode)    */
   rm("?1");           /* cursor keys normal   */
   deccolm(FALSE);     /* 80 col mode          */
   decscnm(FALSE);     /* Normal screen        */
@@ -1236,7 +1234,7 @@ skip_prefix(char *prefix, char *input)
 char *skip_csi(char *input)
 {
   if ((unsigned char)*input == CSI) {
-	return input+1;
+    return input+1;
   }
   return skip_prefix(csi_input(), input);
 }
@@ -1244,9 +1242,17 @@ char *skip_csi(char *input)
 char *skip_dcs(char *input)
 {
   if ((unsigned char)*input == DCS) {
-	return input+1;
+        return input+1;
   }
   return skip_prefix(dcs_input(), input);
+}
+
+char *skip_ss3(char *input)
+{
+  if ((unsigned char)*input == SS3) {
+    return input+1;
+  }
+  return skip_prefix(ss3_input(), input);
 }
 
 /*
@@ -1289,11 +1295,11 @@ strip_terminator(char *src)
 {
   int ok = strip_suffix(src, st_input());
   if (!ok) {
-	int have = strlen(src);
-	if (have > 0 && (unsigned char)src[have-1] == ST) {
-	  ok = TRUE;
-	  src[--have] = '\0';
-	}
+    int have = strlen(src);
+    if (have > 0 && (unsigned char)src[have-1] == ST) {
+      ok = TRUE;
+      src[--have] = '\0';
+    }
   }
   if (!ok && LOG_ENABLED)
     fprintf(log_fp, "Missing ST\n");
@@ -1315,17 +1321,17 @@ my_vfprintf(FILE *fp, va_list ap, const char *fmt)
     if (*fmt == '%') {
       switch(*++fmt) {
       case 'c':
-	fputc(va_arg(ap, int), fp);
-	break;
+        fputc(va_arg(ap, int), fp);
+        break;
       case 'x':
-	fprintf(fp, "%x", va_arg(ap, int));
-	break;
+        fprintf(fp, "%x", va_arg(ap, int));
+        break;
       case 'd':
-	fprintf(fp, "%d", va_arg(ap, int));
-	break;
+        fprintf(fp, "%d", va_arg(ap, int));
+        break;
       case 's':
-	fputs(va_arg(ap, char *), fp);
-	break;
+        fputs(va_arg(ap, char *), fp);
+        break;
       }
     } else if (*fmt != '\n') {
       fputc(*fmt, fp);

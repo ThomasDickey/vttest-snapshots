@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.10 1996/08/25 18:56:14 tom Exp $ */
+/* $Id: ttymodes.c,v 1.11 1996/09/28 13:08:34 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -108,11 +108,8 @@ set_ttymodes(TTY *modes)
 #ifndef log_ttymodes
 void log_ttymodes(char *file, int line)
 {
-  FILE *fp = fopen("ttymodes.log", "a");
-  if (fp != 0) {
-    fprintf(fp, "%s @%d\n", file, line);
-    fclose(fp);
-  }
+  if (LOG_ENABLED)
+    fprintf(log_fp, "%s @%d\n", file, line);
 }
 #endif
 
@@ -120,24 +117,22 @@ void log_ttymodes(char *file, int line)
 void dump_ttymodes(char *tag, int flag)
 {
 #ifdef UNIX
-  FILE *fp = fopen("ttymodes.log", "a");
   TTY tmp_modes;
-  if (fp != 0) {
-    fprintf(fp, "%s (%d):\n", tag, flag);
+  if (LOG_ENABLED) {
+    fprintf(log_fp, "%s (%d):\n", tag, flag);
 # if USE_POSIX_TERMIOS || USE_TERMIO
     tcgetattr(0, &tmp_modes);
-    fprintf(fp, " iflag %08o\n", tmp_modes.c_iflag);
-    fprintf(fp, " oflag %08o\n", tmp_modes.c_oflag);
-    fprintf(fp, " lflag %08o\n", tmp_modes.c_lflag);
+    fprintf(log_fp, " iflag %08lo\n", tmp_modes.c_iflag);
+    fprintf(log_fp, " oflag %08lo\n", tmp_modes.c_oflag);
+    fprintf(log_fp, " lflag %08lo\n", tmp_modes.c_lflag);
     if (!tmp_modes.c_lflag & ICANON) {
-      fprintf(fp, " %d:min  =%d\n", VMIN,  tmp_modes.c_cc[VMIN]);
-      fprintf(fp, " %d:time =%d\n", VTIME, tmp_modes.c_cc[VTIME]);
+      fprintf(log_fp, " %d:min  =%d\n", VMIN,  tmp_modes.c_cc[VMIN]);
+      fprintf(log_fp, " %d:time =%d\n", VTIME, tmp_modes.c_cc[VTIME]);
     }
 # else
     gtty(0, &tmp_modes);
-    fprintf(fp, " flags %08o\n", tmp_modes.sg_flags);
+    fprintf(log_fp, " flags %08o\n", tmp_modes.sg_flags);
 # endif
-    fclose(fp);
   }
 #endif
 }
@@ -153,7 +148,7 @@ void init_ttymodes(int pn)
 {
   int speed_code, n;
 
-  dump_ttymodes("init_ttymode", pn);
+  dump_ttymodes("init_ttymodes", pn);
 #ifdef UNIX
   if (pn==0) {
     fflush(stdout);
@@ -176,8 +171,10 @@ void init_ttymodes(int pn)
       }
     }
   } else {
+    putchar(BEL);
     fflush(stdout);
     inflush();
+    new_modes = old_modes;
     sleep(2);
   }
 # if USE_POSIX_TERMIOS || USE_TERMIO
@@ -191,7 +188,7 @@ void init_ttymodes(int pn)
   open("/dev/tty", O_RDWR|O_NDELAY);
 # endif
 #endif /* UNIX */
-  dump_ttymodes("...init_ttymode", pn);
+  dump_ttymodes("...init_ttymodes", pn);
 }
 
 void restore_ttymodes(void)

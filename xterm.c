@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.14 1996/09/10 00:05:45 tom Exp $ */
+/* $Id: xterm.c,v 1.15 1996/09/28 12:52:34 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -327,7 +327,7 @@ test_window_name(MENU_ARGS)
   vt_move(1,1);
   println("Please enter the new window name.  Newer xterms may beep when setting the title.");
   inputline(temp);
-  do_osc("0;%s\007", temp);
+  do_osc("0;%s%c", temp, BEL);
   return MENU_NOHOLD;
 }
 

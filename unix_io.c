@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.7 1996/09/27 10:32:32 tom Exp $ */
+/* $Id: unix_io.c,v 1.9 1996/09/28 00:31:42 tom Exp $ */
 
 #include <stdarg.h>
 #include <vttest.h>
@@ -71,7 +71,7 @@ char *
 instr(void)
 {
   int i; long l1;
-  static char result[80];
+  static char result[1024];
 
   i = 0;
   result[i++] = inchar();
@@ -81,17 +81,17 @@ instr(void)
 #if HAVE_RDCHK
   while(rdchk(0)) {
     read(0,result+i,1);
-    if (i++ == 78) break;
+    if (i++ == sizeof(result)-2) break;
   }
 #else
 #if USE_FCNTL
   while(read(2,result+i,1) == 1)
-    if (i++ == 78) break;
+    if (i++ == sizeof(result)-2) break;
 #else
   while(ioctl(0,FIONREAD,&l1), l1 > 0L) {
     while(l1-- > 0L) {
       read(0,result+i,1);
-      if (i++ == 78) goto out1;
+      if (i++ == sizeof(result)-2) goto out1;
     }
   }
 out1:
@@ -117,9 +117,11 @@ get_reply(void)
 void
 inputline(char *s)
 {
-  int len = gets(s) != 0 ? strlen(s) : 0;
-  if (len > 0 && s[len-1] == '\n')
-    s[--len] = '\0';
+  do {
+    int len = gets(s) != 0 ? strlen(s) : 0;
+    if (len > 0 && s[len-1] == '\n')
+      s[--len] = '\0';
+  } while (!*s);
 }
 
 /*

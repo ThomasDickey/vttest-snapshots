@@ -1,5 +1,14 @@
-$Id: CHANGES,v 1.44 1996/09/27 10:50:55 tom Exp $
+$Id: CHANGES,v 1.48 1996/09/28 15:14:06 tom Exp $
 -------------------------------------------------------------------------------
+
+960928
+	allow 8-bit input for keyboard (function keys, cursor keys) tests.
+
+	correct I/O modes on timeout
+
+	added padding, corrected some states on return from vt52 tests.
+
+	increase buffer size for DECTSR.
 
 960927
 	modified scan_chr (used in DECCIR test) to properly diagnose Pericom's

@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.53 1996/09/21 17:49:55 tom Exp $ */
+/* $Id: esc.c,v 1.55 1996/09/28 14:53:19 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -57,6 +57,23 @@ char *
 osc_output(void)
 {
   return output_8bits ? (char *)osc_8 : osc_7;
+}
+
+/******************************************************************************/
+
+static char ss3_7[] = { ESC, 'O', 0 };
+static unsigned char ss3_8[] = { 0x8f, 0 };
+
+char *
+ss3_input(void)
+{
+  return input_8bits ? (char *)ss3_8 : ss3_7;
+}
+
+char *
+ss3_output(void)
+{
+  return output_8bits ? (char *)ss3_8 : ss3_7;
 }
 
 /******************************************************************************/
@@ -789,4 +806,26 @@ void
 vt52cup(int l, int c)
 {
   printf("%cY%c%c", ESC, l + 31, c + 31);
+  padding(5);
+}
+
+void
+vt52ed(void)
+{
+  esc("J");
+  padding(5);
+}
+
+void
+vt52el(void)
+{
+  esc("K");
+  padding(5);
+}
+
+void
+vt52home(void)
+{
+  esc("H");
+  padding(5);
 }

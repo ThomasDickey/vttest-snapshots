@@ -1,4 +1,4 @@
-/* $Id: reset.c,v 1.3 1996/09/11 22:59:48 tom Exp $ */
+/* $Id: reset.c,v 1.5 1996/09/28 12:36:27 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -9,6 +9,9 @@ int
 tst_DECSTR(MENU_ARGS)
 {
   vt_move(1,1);
+  println(the_title);
+  println("(VT220 & up)");
+  println("");
   println("The terminal will now soft-reset");
   holdit();
   decstr();
@@ -18,7 +21,10 @@ tst_DECSTR(MENU_ARGS)
 static int
 tst_DECTST(MENU_ARGS)
 {
-  vt_move(10,1);
+  vt_move(1,1);
+  println(the_title);
+  println("");
+
   if (did_reset)
     println("The terminal is now RESET.  Next, the built-in confidence test");
   else
@@ -32,19 +38,27 @@ tst_DECTST(MENU_ARGS)
   vt_move(10,1);
   println("If the built-in confidence test found any errors, a code");
   printf("%s", "is visible above. ");
+
+  did_reset = FALSE;
   return MENU_HOLD;
 }
 
 static int
 tst_RIS(MENU_ARGS)
 {
-  vt_move(10,1);
+  vt_move(1,1);
+  println(the_title);
+  println("(VT100 & up, not recommended)");
+  println("");
   printf ("The terminal will now be RESET. ");
   holdit();
   ris();
   zleep(5000);          /* Wait 5.0 seconds */
 
   did_reset = TRUE;
+  reset_level();
+  input_8bits = FALSE;
+  output_8bits = FALSE;
   return MENU_HOLD;
 }
 
@@ -62,7 +76,7 @@ tst_rst(MENU_ARGS)
   did_reset = FALSE;
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf(the_title);
     title(2); println("Choose test type:");
   } while (menu(my_menu));

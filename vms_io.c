@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.17 1996/09/27 10:32:11 tom Exp $ */
+/* $Id: vms_io.c,v 1.19 1996/09/28 00:30:39 tom Exp $ */
 
 #define DEBUG
 
@@ -177,7 +177,7 @@ inchar(void)
 char *
 instr(void)
 {
-  static char result[256];
+  static char result[1024];
 
   result[0] = inchar();
   zleep(100); /* Wait 0.1 seconds */
@@ -226,9 +226,11 @@ get_reply(void)
 void
 inputline(char *s)
 {
-  int len = gets(s) != 0 ? strlen(s) : 0;
-  if (len > 0 && s[len-1] == '\n')
-    s[--len] = '\0';
+  do {
+    int len = gets(s) != 0 ? strlen(s) : 0;
+    if (len > 0 && s[len-1] == '\n')
+      s[--len] = '\0';
+  } while (!*s);
 }
 
 /*
