@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.26 2002/04/22 22:41:24 tom Exp $
+# $Id: makefile.in,v 1.28 2003/03/01 19:40:55 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -52,6 +52,7 @@ C_SRC = \
 	setup.c \
 	sixel.c \
 	status.c \
+	tek4014.c \
 	ttymodes.c \
 	unix_io.c \
 	vt220.c \
@@ -76,6 +77,7 @@ OBJS  = \
 	setup.o \
 	sixel.o \
 	status.o \
+	tek4014.o \
 	ttymodes.o \
 	unix_io.o \
 	vt220.o \
@@ -85,7 +87,7 @@ OBJS  = \
 
 SRC =	patchlev.h \
 	CHANGES COPYING README BUGS \
-	$(THIS).lsm $(THIS).1 \
+	$(THIS).1 \
 	$(C_SRC) $(H_SRC) \
 	tech.set \
 	config.hin install.sh mkdirs.sh makefile.in configure.in

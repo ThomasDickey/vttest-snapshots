@@ -1,4 +1,4 @@
-$! $Id: vmsbuild.com,v 1.10 2001/11/30 21:51:03 tom Exp $
+$! $Id: vmsbuild.com,v 1.11 2003/02/15 16:16:18 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
@@ -22,6 +22,7 @@ $ write optf "reset.obj"
 $ write optf "setup.obj"
 $ write optf "sixel.obj"
 $ write optf "status.obj"
+$ write optf "tek4014.obj"
 $ write optf "vt220.obj"
 $ write optf "vt420.obj"
 $ write optf "vt52.obj"
@@ -92,6 +93,7 @@ $	call make reset
 $	call make setup
 $	call make sixel
 $	call make status
+$	call make tex4014
 $	call make vt220
 $	call make vt420
 $	call make vt52

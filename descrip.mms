@@ -1,4 +1,4 @@
-# $Id: descrip.mms,v 1.12 2001/11/30 21:51:25 tom Exp $
+# $Id: descrip.mms,v 1.13 2003/03/01 19:40:49 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
@@ -24,12 +24,13 @@ C_SRC = \
 	setup.c \
 	sixel.c \
 	status.c \
+	tek4014.c \
 	ttymodes.c \
+	unix_io.c \
+	vms_io.c \
 	vt220.c \
 	vt420.c \
 	vt52.c \
-	unix_io.c \
-	vms_io.c \
 	xterm.c
 H_SRC = \
 	vttest.h \
@@ -49,15 +50,16 @@ OBJS = \
 	setup.obj, \
 	sixel.obj, \
 	status.obj, \
+	tek4014.obj, \
+	vms_io.obj, \
 	vt220.obj, \
 	vt420.obj, \
 	vt52.obj, \
-	vms_io.obj, \
 	xterm.obj
 
 SRC =	patchlev.h \
 	CHANGES COPYING README BUGS \
-	$(THIS).lsm $(THIS).1 \
+	$(THIS).1 \
 	$(C_SRC) $(H_SRC) \
 	config.hin install.sh mkdirs.sh makefile.in configure.in
 

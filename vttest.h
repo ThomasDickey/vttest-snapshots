@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.54 2001/11/30 22:03:38 tom Exp $ */
+/* $Id: vttest.h,v 1.56 2003/03/01 00:23:10 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -105,6 +105,8 @@
 
 #define LOG_ENABLED ((log_fp != 0) && !log_disabled)
 
+#define CharOf(c) ((unsigned char)(c))
+
 extern FILE *log_fp;
 extern int brkrd;
 extern int input_8bits;
@@ -137,7 +139,7 @@ extern jmp_buf intrenv;
 #define SHOW_SUCCESS "ok"
 #define SHOW_FAILURE "failed"
 
-#define TABLESIZE(table) (sizeof(table)/sizeof(table[0]))
+#define TABLESIZE(table) (int)(sizeof(table)/sizeof(table[0]))
 
 #define DEFAULT_SPEED 9600
 
@@ -244,6 +246,7 @@ extern int tst_screen(MENU_ARGS);
 extern int tst_setup(MENU_ARGS);
 extern int tst_softchars(MENU_ARGS);
 extern int tst_statusline(MENU_ARGS);
+extern int tst_tek4014(MENU_ARGS);
 extern int tst_vt220(MENU_ARGS);
 extern int tst_vt420(MENU_ARGS);
 extern int tst_vt52(MENU_ARGS);
