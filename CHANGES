@@ -1,5 +1,14 @@
-$Id: CHANGES,v 1.98 2004/12/05 18:33:16 tom Exp $
+$Id: CHANGES,v 1.100 2004/12/21 02:07:55 tom Exp $
 -------------------------------------------------------------------------------
+
+20041220
+	modify configure script to work with Intel compiler.
+
+	improved parameterization of scrolling test for screen sizes other
+	than 24x80.
+
+	add initialization to disable tab/space conversion during menu items
+	1 and 2, e.g., when "stty tab3" is set (report by Pavel Cahyna).
 
 20041205
 	add the ability to redraw the screen for mouse-tests, since some can

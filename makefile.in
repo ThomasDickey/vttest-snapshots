@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.33 2004/08/04 21:54:56 tom Exp $
+# $Id: makefile.in,v 1.35 2004/12/21 01:48:46 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -10,6 +10,7 @@ srcdir = @srcdir@
 VPATH  = @srcdir@
 
 CC		= @CC@
+CPP		= @CPP@
 LINK		= $(CC)
 LINT		= @LINT@
 INSTALL 	= @INSTALL@
@@ -17,7 +18,6 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
 LIBS		= @LIBS@
-CPPFLAGS	= @CPPFLAGS@
 CFLAGS		= @CFLAGS@ @EXTRA_CFLAGS@
 LDFLAGS 	= @LDFLAGS@
 
@@ -36,6 +36,11 @@ DEFINES 	= -DHAVE_CONFIG_H -DRELEASE=$(RELEASE)
 INCLUDES	= -I. -I$(srcdir)
 CPPFLAGS	= $(DEFINES) $(INCLUDES) @CPPFLAGS@
 
+.SUFFIXES: .c .i .o
+
+.c.i:
+@RULE_CC@
+	@ECHO_CC@$(CPP) -E -C $(CPPFLAGS) $< >$@
 .c.o:
 @RULE_CC@
 	@ECHO_CC@$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
@@ -120,7 +125,7 @@ uninstall:
 	rm -f $(mandir)/$(THIS).$(manext)
 
 mostlyclean:
-	rm -f *.o core *~ *.BAK *.trace *.atac
+	rm -f *.[oi] core *~ *.BAK *.trace *.atac
 
 clean: mostlyclean
 	rm -f $(THIS)
