@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.18 1998/03/11 11:53:14 tom Exp $ */
+/* $Id: xterm.c,v 1.19 1998/07/19 18:31:28 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -15,6 +15,60 @@ show_click(int y, int x, int c)
   putchar(c);
   vt_move(y,x);
   fflush(stdout);
+}
+
+/* Print the corners of the highlight-region.  Note that xterm doesn't use
+ * the last row.
+ */
+static void show_hilite(int first, int last)
+{
+  vt_move(first, 1);          printf("+");
+  vt_move(last-1,  1);        printf("+");
+  vt_move(first, min_cols);   printf("+");
+  vt_move(last-1,  min_cols); printf("+");
+  fflush(stdout);
+}
+
+/* Normal Mouse Tracking */
+static void
+show_mouse_tracking(MENU_ARGS, char *the_mode)
+{
+  int y = 0, x = 0;
+
+  vt_move(1,1);
+  println(the_title);
+  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
+
+  sm(the_mode);
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  for(;;) {
+    char *report = instr();
+    if (isQuit(*report))
+      break;
+    vt_move(3,10); vt_el(2); chrprint(report);
+    while ((report = skip_csi(report)) != 0
+     && *report == 'M'
+     && strlen(report) >= 4) {
+      int b = MCHR(report[1]);
+      vt_move(4,10); vt_el(2);
+      show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
+      b &= 3;
+      if (b != 3)
+        show_click(MCHR(report[3]), MCHR(report[2]), b + 1 + '0');
+      else if (MCHR(report[2]) != x || MCHR(report[3]) != y)
+        show_click(MCHR(report[3]), MCHR(report[2]), '*');
+      x = MCHR(report[2]);
+      y = MCHR(report[3]);
+      report += 4;
+    }
+  }
+
+  rm(the_mode);
+  restore_ttymodes();
+
+  vt_move(max_lines-2,1);
 }
 
 static int
@@ -148,16 +202,20 @@ test_modify_ops(MENU_ARGS)
   return MENU_HOLD;
 }
 
-/* Print the corners of the highlight-region.  Note that xterm doesn't use
- * the last row.
- */
-static void show_hilite(int first, int last)
+/* Any-Event Mouse Tracking */
+static int
+test_mouse_any_event(MENU_ARGS)
 {
-  vt_move(first, 1);          printf("+");
-  vt_move(last-1,  1);        printf("+");
-  vt_move(first, min_cols);   printf("+");
-  vt_move(last-1,  min_cols); printf("+");
-  fflush(stdout);
+  show_mouse_tracking(PASS_ARGS, "?1003");
+  return MENU_HOLD;
+}
+
+/* Button-Event Mouse Tracking */
+static int
+test_mouse_button_event(MENU_ARGS)
+{
+  show_mouse_tracking(PASS_ARGS, "?1002");
+  return MENU_HOLD;
 }
 
 /* Mouse Highlight Tracking */
@@ -240,41 +298,7 @@ test_mouse_hilite(MENU_ARGS)
 static int
 test_mouse_normal(MENU_ARGS)
 {
-  int y = 0, x = 0;
-
-  vt_move(1,1);
-  println(the_title);
-  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
-
-  sm("?1000");
-  set_tty_raw(TRUE);
-  set_tty_echo(FALSE);
-
-  for(;;) {
-    char *report = instr();
-    if (isQuit(*report))
-      break;
-    vt_move(3,10); vt_el(2); chrprint(report);
-    if ((report = skip_csi(report)) != 0
-     && *report == 'M'
-     && strlen(report) == 4) {
-      int b = MCHR(report[1]);
-      vt_move(4,10); vt_el(2);
-      show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
-      b &= 3;
-      if (b != 3)
-        show_click(MCHR(report[3]), MCHR(report[2]), b + 1 + '0');
-      else if (MCHR(report[2]) != x || MCHR(report[3]) != y)
-        show_click(MCHR(report[3]), MCHR(report[2]), '*');
-      x = MCHR(report[2]);
-      y = MCHR(report[3]);
-    }
-  }
-
-  rm("?1000");
-  restore_ttymodes();
-
-  vt_move(max_lines-2,1);
+  show_mouse_tracking(PASS_ARGS, "?1000");
   return MENU_HOLD;
 }
 
@@ -398,6 +422,8 @@ tst_xterm(MENU_ARGS)
     { "X10 Mouse Compatibility",                             test_X10_mouse },
     { "Normal Mouse Tracking",                               test_mouse_normal },
     { "Mouse Highlight Tracking",                            test_mouse_hilite },
+    { "Mouse Any-Event Tracking (XFree86)",                  test_mouse_any_event },
+    { "Mouse Button-Event Tracking (XFree86)",               test_mouse_button_event },
     { "Window modify-operations",                            test_modify_ops },
     { "Window report-operations",                            test_report_ops },
     { "",                                                    0 }

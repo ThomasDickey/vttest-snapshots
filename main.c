@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.66 1997/05/23 10:52:54 tom Exp $ */
+/* $Id: main.c,v 1.67 1998/04/02 23:43:14 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -137,6 +137,10 @@ main(int argc, char *argv[])
   do {
     vt_clear(2);
     title(0); printf("VT100 test program, version %d.%d", RELEASE, PATCHLEVEL);
+#ifdef PATCH_DATE
+    if (PATCH_DATE)
+      printf(" (%d)", PATCH_DATE);
+#endif
 
     title(1);
     if (max_lines != 24
