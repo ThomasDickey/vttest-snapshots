@@ -1,4 +1,4 @@
-$! $Id: vmsbuild.com,v 1.7 1996/11/26 23:09:05 tom Exp $
+$! $Id: vmsbuild.com,v 1.10 2001/11/30 21:51:03 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
@@ -9,12 +9,14 @@ $!	Build the option-file
 $!
 $ release := 2
 $ open/write optf vms_link.opt
-$ write optf "Identification=""VtTest ''release'.6"""
+$ write optf "Identification=""VtTest ''release'.7"""
 $ write optf "charsets.obj"
 $ write optf "color.obj"
 $ write optf "esc.obj"
 $ write optf "keyboard.obj"
+$ write optf "mouse.obj"
 $ write optf "nonvt100.obj"
+$ write optf "printer.obj"
 $ write optf "reports.obj"
 $ write optf "reset.obj"
 $ write optf "setup.obj"
@@ -34,14 +36,14 @@ $ then
 $  arch = "__alpha__=1"
 $  comp  = "__decc__=1"
 $  CFLAGS = "/prefix=all"
-$  DEFS = "HAVE_ALARM"
+$  DEFS = ",HAVE_ALARM"
 $  if f$trnlnm("SYS").eqs."" then define sys sys$library:
 $ else
 $  arch = "__vax__=1"
 $  if f$search("SYS$SYSTEM:DECC$COMPILER.EXE").eqs.""
 $   then
 $    if f$trnlnm("SYS").eqs."" then define sys sys$library:
-$    DEFS = "HAVE_SYS_ERRLIST"
+$    DEFS = ",HAVE_SYS_ERRLIST"
 $    write optf "sys$library:vaxcrtl.exe/share"
 $    if f$search("SYS$SYSTEM:VAXC.EXE").eqs.""
 $     then
@@ -72,7 +74,7 @@ $
 $ if f$search("SYS$SYSTEM:MMS.EXE").eqs.""
 $  then
 $
-$   CFLAGS := 'CFLAGS/Diagnostics /Define=("RELEASE=''RELEASE',''DEFS'") /Include=([])
+$   CFLAGS := 'CFLAGS/Diagnostics /Define=("RELEASE=''RELEASE'''DEFS'") /Include=([])
 $
 $	if "''p1'" .nes. "" then goto 'p1
 $
@@ -82,7 +84,9 @@ $	call make color
 $	call make esc
 $	call make keyboard
 $	call make main
+$	call make mouse
 $	call make nonvt100
+$	call make printer
 $	call make reports
 $	call make reset
 $	call make setup

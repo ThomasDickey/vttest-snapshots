@@ -1,7 +1,9 @@
-$Id: README,v 1.3 1996/08/21 10:23:54 tom Exp $
+$Id: README,v 1.4 2001/11/30 22:01:10 tom Exp $
 
 I extended the original vttest program (I've found no modifications) with
-several new features listed in CHANGES - Thomas E. Dickey <dickey@clark.net>
+several new features listed in CHANGES
+
+- Thomas E. Dickey <tom@invisible-island.net>
 
 --------------------------------------------------------------------------------
 The remainder of this file is the original README:
