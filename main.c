@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.82 2004/12/05 15:01:28 tom Exp $ */
+/* $Id: main.c,v 1.83 2004/12/21 01:46:07 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -179,6 +179,8 @@ tst_movements(MENU_ARGS)
   int i, row, col, pass, width, hlfxtra;
   char *ctext = "This is a correct sentence";
 
+  set_tty_crmod(TRUE);  /* want to disable tab/space conversion */
+
   for (pass = 0; pass <= 1; pass++) {
     int inner_l, inner_r;
 
@@ -352,30 +354,39 @@ tst_movements(MENU_ARGS)
   for (col = 1; *ctext; col++)
    printf("%s00000000004;00000000%dH%c", csi_output(), col, *ctext++);
   cup(20,1);
+
+  restore_ttymodes();
   return MENU_HOLD;
 }
 
 /* Scrolling test (used also in color-testing) */
 void do_scrolling(void)
 {
-  int soft, row, down, i;
+  int soft, first, last, down, i, pass;
 
   ed(2);
   decom(TRUE); /* Origin mode (relative) */
   for (soft = -1; soft <= 0; soft++) {
     if (soft) decsclm(TRUE);
     else      decsclm(FALSE);
-    for (row = 12; row >= 1; row -= 11) {
-      decstbm(row, max_lines-row+1);
+    for (pass = 0; pass < 2; ++pass) {
+      if (pass == 0) {
+        first = max_lines / 2;
+        last = first + 1;
+      } else {
+        first = 1;
+        last = max_lines;
+      }
+      decstbm(first, last);
       ed(2);
       for (down = 0; down >= -1; down--) {
         if (down) cuu(max_lines);
         else      cud(max_lines);
-        for (i = 1; i <= 30; i++) {
-          printf("%s scroll %s region %d Line %d\n",
+        for (i = 1; i <= max_lines + 5; i++) {
+          printf("%s scroll %s region [%d..%d] size %d Line %d\n",
                  soft ? "Soft" : "Jump",
                  down ? "down" : "up",
-                 2*(13-row), i);
+                 first, last, last - first + 1, i);
           if (down) { ri(); ri(); }
           else if (soft) extra_padding(10);
         }
@@ -406,6 +417,8 @@ tst_screen(MENU_ARGS)
 
   static char *tststr = "*qx`";
   static char *attr[5] = { ";0", ";1", ";4", ";5", ";7" };
+
+  set_tty_crmod(TRUE);  /* want to disable tab/space conversion */
 
   cup(1,1);
   decawm(TRUE); /* DECAWM: Wrap Around ON */
@@ -542,6 +555,8 @@ tst_screen(MENU_ARGS)
   println("Test of the SAVE/RESTORE CURSOR feature. There should");
   println("be ten characters of each flavour, and a rectangle");
   println("of 5 x 4 A's filling the top left of the screen.");
+
+  restore_ttymodes();
   return MENU_HOLD;
 }
 

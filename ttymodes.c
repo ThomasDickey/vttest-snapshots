@@ -1,8 +1,24 @@
-/* $Id: ttymodes.c,v 1.16 2004/08/04 00:32:06 tom Exp $ */
+/* $Id: ttymodes.c,v 1.17 2004/12/21 01:06:02 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
 #include <esc.h>        /* inflush() */
+
+#undef tabs
+
+#ifdef TAB3
+# define tabs TAB3
+#else
+# ifdef XTABS
+#  define tabs XTABS
+# else
+#  ifdef OXTABS
+#   define tabs OXTABS
+#  else
+#   define tabs 0
+#  endif
+# endif
+#endif
 
 static TTY old_modes, new_modes;
 
@@ -178,9 +194,10 @@ void init_ttymodes(int pn)
     sleep(2);
   }
 # if USE_POSIX_TERMIOS || USE_TERMIO
-    new_modes.c_iflag = BRKINT | old_modes.c_iflag;
+  new_modes.c_iflag = BRKINT | old_modes.c_iflag;
+  new_modes.c_oflag &= ~tabs;
 # else /* USE_SGTTY */
-    new_modes.sg_flags = old_modes.sg_flags | CBREAK;
+  new_modes.sg_flags = old_modes.sg_flags | CBREAK;
 # endif
   set_ttymodes(&new_modes);
 # ifdef HAVE_FCNTL_H
