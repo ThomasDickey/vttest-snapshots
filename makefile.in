@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.19 1996/09/10 00:48:22 tom Exp $
+# $Id: makefile.in,v 1.20 1996/11/18 00:02:33 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -80,6 +80,7 @@ SRC =	patchlev.h \
 	CHANGES COPYING README BUGS \
 	$(THIS).lsm $(THIS).1 \
 	$(C_SRC) $(H_SRC) \
+	tech.set \
 	config.hin install.sh mkdirs.sh makefile.in configure.in
 
 DISTFILES = MANIFEST configure $(SRC)
