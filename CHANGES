@@ -1,5 +1,13 @@
-$Id: CHANGES,v 1.10 1996/07/08 23:18:58 tom Exp $
+$Id: CHANGES,v 1.12 1996/07/21 23:35:45 tom Exp $
 -------------------------------------------------------------------------------
+
+VERSION 2.2
+
+960721
+	Initialize terminal with 80/132 switching enabled
+
+960716
+	Add tests for CDE-compatible xterm
 
 VERSION 2.1
 

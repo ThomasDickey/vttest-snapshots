@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.16 1996/06/24 23:59:27 tom Exp $ */
+/* $Id: main.c,v 1.18 1996/07/21 22:17:11 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -21,6 +21,7 @@ choice to the address below.
 #include <ttymodes.h>
 #include <esc.h>
 #include <color.h>
+#include <xterm.h>
 
 struct table {
     int key;
@@ -82,6 +83,7 @@ main(int argc, char *argv[])
       "Test of known bugs",
       "Test of reset and self-test",
       "Test ANSI colors",
+      "Test XTERM special features",
       ""
     };
 
@@ -153,6 +155,7 @@ main(int argc, char *argv[])
       case 9:  tst_bugs();        break;
       case 10: tst_rst();         break;
       case 11: tst_colors();      break;
+      case 12: tst_xterm();       break;
     }
   } while (menuchoice);
   bye();
@@ -1873,6 +1876,7 @@ initterminal(int pn)
   rm("?6");	/* Absolute origin mode	*/
   sm("?7");	/* Wrap around on	*/
   rm("?8");	/* Auto repeat off	*/
+  sm("?40");    /* Enable 80/132 switch */
   decstbm(0,0);	/* No scroll region	*/
   sgr("0");     /* Normal character attributes  */
 }

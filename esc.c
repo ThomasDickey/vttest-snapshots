@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.9 1996/06/23 19:20:32 tom Exp $ */
+/* $Id: esc.c,v 1.10 1996/07/16 23:07:56 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -35,6 +35,12 @@ void
 brc2(int pn1, int pn2, int c)
 {
   printf("%c[%d;%d%c", 27, pn1, pn2, c);
+}
+
+void
+brc3(int pn1, int pn2, int pn3, int c)
+{
+  printf("%c[%d;%d;%d%c", 27, pn1, pn2, pn3, c);
 }
 
 void
