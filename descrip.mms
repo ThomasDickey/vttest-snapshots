@@ -1,4 +1,4 @@
-# $Id: descrip.mms,v 1.15 2004/08/01 20:37:59 tom Exp $
+# $Id: descrip.mms,v 1.16 2004/11/03 02:26:37 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
@@ -71,8 +71,11 @@ SRC =	patchlev.h \
 all : $(THIS).exe
 	@ write sys$output "** produced $?"
 
-$(THIS).exe : $(OBJS)
-	$(LINK)/exec=$(THIS) $(OBJS),sys$library:vaxcrtl/lib
+$(THIS).exe : $(OBJS), vms_link.opt
+	$(LINK)/exec=$(THIS) main.obj, vms_link/opt
+
+vms_link.opt :
+	@vmsbuild vms_link_opt
 
 $(THIS).com :
 	if "''f$search("vttest.com")'" .nes. "" then delete vttest.com;*

@@ -1,4 +1,4 @@
-$! $Id: vmsbuild.com,v 1.13 2004/08/01 20:37:59 tom Exp $
+$! $Id: vmsbuild.com,v 1.16 2004/11/05 10:12:37 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
@@ -34,14 +34,28 @@ $!
 $! Look for the compiler used
 $!
 $ CC = "CC"
-$ if f$getsyi("HW_MODEL").ge.1024
+$ arch = "UNKNOWN"
+$!
+$ if f$getsyi("ARCH_NAME") .eqs. "Alpha"
 $ then
 $  arch = "__alpha__=1"
 $  comp  = "__decc__=1"
 $  CFLAGS = "/prefix=all"
 $  DEFS = ",HAVE_ALARM"
 $  if f$trnlnm("SYS").eqs."" then define sys sys$library:
-$ else
+$ endif
+$!
+$ if f$getsyi("ARCH_NAME") .eqs. "IA64"
+$ then
+$  arch = "__ia64__=1"
+$  comp  = "__decc__=1"
+$  CFLAGS = "/prefix=all"
+$  DEFS = ",HAVE_ALARM,USE_IEEE_FLOAT"
+$  if f$trnlnm("SYS").eqs."" then define sys sys$library:
+$ endif
+$!
+$ if f$getsyi("ARCH_NAME") .eqs. "VAX"
+$ then
 $  arch = "__vax__=1"
 $  if f$search("SYS$SYSTEM:DECC$COMPILER.EXE").eqs.""
 $   then
@@ -69,10 +83,23 @@ $    comp  = "__decc__=1"
 $  endif
 $ endif
 $
+$ if "''arch'" .eqs. "UNKNOWN"
+$ then
+$   write sys$output "Cannot determine architecture type"
+$   exit 1
+$ endif
+$
 $ close optf
 $
 $! used /G_FLOAT with vaxcrtlg/share in vms_link.opt
 $! can also use /Debug /Listing, /Show=All
+$
+$! -------------- vms_link.opt is created -------------
+$ if f$edit("''p1'", "UPCASE") .eqs. "VMS_LINK.OPT"
+$ then
+$!  mms called this script to build vms_link.opt.  all done
+$   exit
+$ endif
 $
 $ if f$search("SYS$SYSTEM:MMS.EXE").eqs.""
 $  then
@@ -96,7 +123,7 @@ $	call make reset
 $	call make setup
 $	call make sixel
 $	call make status
-$	call make tex4014
+$	call make tek4014
 $	call make vt220
 $	call make vt320
 $	call make vt420
@@ -135,6 +162,9 @@ $	if f$search("*.exe") .nes. "" then purge *.exe
 $	if f$search("*.log") .nes. "" then purge *.log
 $	exit
 $
+$ vms_link_opt :
+$	exit 1
+$!
 $! Runs VTTEST from the current directory (used for testing)
 $ vttest_com :
 $	if "''f$search("vttest.com")'" .nes. "" then delete vttest.com;*
@@ -154,7 +184,7 @@ $	exit
 $!
 $! We have MMS installed
 $  else
-$   mms/macro=('comp','mmstar','arch') 'p2
+$   mms/macro=('comp','arch') 'p1
 $  endif
 $ exit
 $
