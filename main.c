@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.65 1996/12/16 01:43:11 tom Exp $ */
+/* $Id: main.c,v 1.66 1997/05/23 10:52:54 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1097,8 +1097,7 @@ menu(MENU *table)
 {
   int i, tablesize, choice;
   char c;
-  char storage[80];
-  char *s = storage;
+  char storage[BUFSIZ];
 
   println("");
   tablesize = 0;
@@ -1111,6 +1110,7 @@ menu(MENU *table)
 
   printf("\n          Enter choice number (0 - %d): ", tablesize);
   for(;;) {
+    char *s = storage;
     inputline(s);
     choice = 0;
     while ((c = *s++) != '\0') {

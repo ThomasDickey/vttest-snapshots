@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.13 1997/05/18 20:22:08 tom Exp $ */
+/* $Id: ttymodes.c,v 1.14 1997/05/20 19:53:01 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -183,7 +183,7 @@ void init_ttymodes(int pn)
     new_modes.sg_flags = old_modes.sg_flags | CBREAK;
 # endif
   set_ttymodes(&new_modes);
-# if USE_FCNTL
+# if HAVE_FCNTL_H
   close(2);
   open("/dev/tty", O_RDWR|O_NDELAY);
 # endif
@@ -266,7 +266,7 @@ set_tty_raw(int enabled)
     set_ttymodes(&new_modes);
     set_tty_crmod(FALSE);
 # else /* USE_SGTTY */
-#   if USE_FCNTL
+#   if HAVE_FCNTL_H
       new_modes.sg_flags &= ~CBREAK;
 #   endif
     new_modes.sg_flags |= RAW;
@@ -287,7 +287,7 @@ set_tty_raw(int enabled)
     new_modes = old_modes;      /* FIXME */
 # else /* USE_SGTTY */
     new_modes.sg_flags &= ~RAW;
-#   if USE_FCNTL
+#   if HAVE_FCNTL_H
       new_modes.sg_flags |= CBREAK;
 #   endif
     ioctl(0, TIOCSETC, &old_tchars);

@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.47 1996/11/26 00:35:21 tom Exp $ */
+/* $Id: vttest.h,v 1.48 1997/05/20 19:53:01 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -86,6 +86,10 @@
 #  include <sys/filio.h>	/* FIONREAD */
 #endif
 
+#if HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 #if !defined(sun) || !defined(NL0)
 #  if HAVE_IOCTL_H
 #   include <ioctl.h>
@@ -113,10 +117,6 @@ extern int reading;
 extern int tty_speed;
 extern int use_padding;
 extern jmp_buf intrenv;
-
-#if USE_FCNTL
-#include <fcntl.h>
-#endif
 
 #ifndef TRUE
 #define TRUE (1)

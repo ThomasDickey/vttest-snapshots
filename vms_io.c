@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.20 1996/11/25 11:17:21 tom Exp $ */
+/* $Id: vms_io.c,v 1.21 1997/05/23 11:00:38 tom Exp $ */
 
 #define DEBUG
 
@@ -223,13 +223,20 @@ get_reply(void)
   return(result);
 }
 
+/*
+ * Read to the next newline, truncating the buffer at BUFSIZ-1 characters
+ */
 void
 inputline(char *s)
 {
   do {
-    int len = gets(s) != 0 ? strlen(s) : 0;
-    if (len > 0 && s[len-1] == '\n')
-      s[--len] = '\0';
+    int ch;
+    char *d = s;
+    while ((ch = getchar()) != EOF && ch != '\n') {
+      if ((d - s) < BUFSIZ-2)
+        *d++ = ch;
+    }
+    *d = 0;
   } while (!*s);
 }
 

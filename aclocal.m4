@@ -1,4 +1,24 @@
-dnl $Id: aclocal.m4,v 1.1 1997/05/18 20:22:12 tom Exp $
+dnl $Id: aclocal.m4,v 1.2 1997/05/20 19:53:01 tom Exp $
+dnl ---------------------------------------------------------------------------
+dnl Test if we have a usable ioctl with FIONREAD, or if fcntl.h is preferred.
+AC_DEFUN([CF_FCNTL_VS_IOCTL],
+[
+AC_MSG_CHECKING(if we may use FIONREAD)
+AC_CACHE_VAL(cf_cv_use_fionread,[
+	AC_TRY_COMPILE([
+#if HAVE_SYS_FILIO_H
+#  include <sys/filio.h>	/* FIONREAD */
+#endif
+	],[
+long l1;
+ioctl (0, FIONREAD, &l1);
+	],
+	[cf_cv_use_fionread=yes],
+	[cf_cv_use_fionread=no])
+])
+AC_MSG_RESULT($cf_cv_use_fionread)
+test $cf_cv_use_fionread = yes && AC_DEFINE(USE_FIONREAD)
+])dnl
 dnl ---------------------------------------------------------------------------
 dnl Special test to workaround gcc 2.6.2, which cannot parse C-preprocessor
 dnl conditionals.
