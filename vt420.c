@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.51 1996/11/14 01:52:35 tom Exp $ */
+/* $Id: vt420.c,v 1.52 1996/11/25 11:17:33 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -922,7 +922,7 @@ tst_ISO_DECRPM(MENU_ARGS)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  for (mode = 0; mode < sizeof(ansi_modes)/sizeof(ansi_modes[0]); mode++) {
+  for (mode = 0; mode < TABLESIZE(ansi_modes); mode++) {
     do_csi("%d$p", ansi_modes[mode].mode);
     report = instr();
     vt_move(mode+2,10);
@@ -992,7 +992,7 @@ tst_DEC_DECRPM(MENU_ARGS)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  for (mode = 0; mode < sizeof(dec_modes)/sizeof(dec_modes[0]); mode++) {
+  for (mode = 0; mode < TABLESIZE(dec_modes); mode++) {
     do_csi("?%d$p", dec_modes[mode].mode);
     report = instr();
     vt_move(mode+2,10);

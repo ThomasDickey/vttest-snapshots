@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.63 1996/10/30 01:22:25 tom Exp $ */
+/* $Id: main.c,v 1.64 1996/11/26 00:34:13 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -443,67 +443,23 @@ tst_screen(MENU_ARGS)
     for (i = 0; i <= 4; i++) {
     cup(10 + 2 * cset, 12 + 12 * i);
     sgr(attr[i]);
-    if (cset == 0 || cset == 2) scs(0,'B');
-    else                        scs(0,'0');
+    if (cset == 0 || cset == 2) scs_normal();
+    else                        scs_graphics();
       for (j = 0; j <= 4; j++) {
         printf("%c", tststr[cset]);
       }
       decsc();
-      cup(cset + 1, i + 1); sgr(""); scs(0,'B'); printf("A");
+      cup(cset + 1, i + 1); sgr(""); scs_normal(); printf("A");
       decrc();
       for (j = 0; j <= 4; j++) {
         printf("%c", tststr[cset]);
       }
     }
   }
-  sgr("0"); scs(0,'B'); cup(21,1);
+  sgr("0"); scs_normal(); cup(21,1);
   println("Test of the SAVE/RESTORE CURSOR feature. There should");
   println("be ten characters of each flavour, and a rectangle");
   println("of 5 x 4 A's filling the top left of the screen.");
-  return MENU_HOLD;
-}
-
-int
-tst_characters(MENU_ARGS)
-{
-  /* Test of:
-     SCS    (Select character Set)
-  */
-
-  int i, j, g, cset;
-  char chcode[5], *setmsg[5];
-
-  chcode[0] = 'A';
-  chcode[1] = 'B';
-  chcode[2] = '0';
-  chcode[3] = '1';
-  chcode[4] = '2';
-  setmsg[0] = "UK / national";
-  setmsg[1] = "US ASCII";
-  setmsg[2] = "Special graphics and line drawing";
-  setmsg[3] = "Alternate character ROM standard characters";
-  setmsg[4] = "Alternate character ROM special graphics";
-
-  cup(1,10); printf("Selected as G0 (with SI)");
-  cup(1,48); printf("Selected as G1 (with SO)");
-  for (cset = 0; cset <= 4; cset++) {
-    scs(1,'B');
-    cup(3 + 4 * cset, 1);
-    sgr("1");
-    printf("Character set %c (%s)",chcode[cset], setmsg[cset]);
-    sgr("0");
-    for (g = 0; g <= 1; g++) {
-      scs(g,chcode[cset]);
-      for (i = 1; i <= 3; i++) {
-        cup(3 + 4 * cset + i, 10 + 38 * g);
-        for (j = 0; j <= 31; j++) {
-          printf("%c", i * 32 + j);
-        }
-      }
-    }
-  }
-  scs(1,'B');
-  cup(max_lines,1); printf("These are the installed character sets. ");
   return MENU_HOLD;
 }
 
@@ -569,7 +525,7 @@ tst_doublesize(MENU_ARGS)
   cup(1,1); tbc(3); for (col = 1; col <= max_cols; col += 8) { cuf(8); hts(); }
   deccolm(FALSE);
   ed(2);
-  scs(0,'0');
+  scs_graphics();
 
   cup( 8,1); decdhl(0); printf("lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk");
   cup( 9,1); decdhl(1); printf("lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk");
@@ -581,7 +537,7 @@ tst_doublesize(MENU_ARGS)
   cup(15,1); decdhl(1); printf("x                                      x");
   cup(16,1); decdhl(0); printf("mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj");
   cup(17,1); decdhl(1); printf("mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj");
-  scs(0,'B'); sgr("1;5");
+  scs_normal(); sgr("1;5");
   cup(12,3);
   printf("* The mad programmer strikes again * ");
   cup(13,3); printf("%c",9); cub(6);

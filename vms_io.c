@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.19 1996/09/28 00:30:39 tom Exp $ */
+/* $Id: vms_io.c,v 1.20 1996/11/25 11:17:21 tom Exp $ */
 
 #define DEBUG
 
@@ -78,7 +78,7 @@ lookup_speed(int code)
   };
   int n;
   int speed = DEFAULT_SPEED;
-  for (n = 0; n < sizeof(table)/sizeof(table[0]); n++) {
+  for (n = 0; n < TABLESIZE(table); n++) {
     if (table[n].code == code) {
       if (table[n].speed > DEFAULT_SPEED)
         speed = table[n].speed;

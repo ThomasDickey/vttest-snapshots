@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.11 1996/09/28 13:08:34 tom Exp $ */
+/* $Id: ttymodes.c,v 1.12 1996/11/25 11:17:12 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -164,7 +164,7 @@ void init_ttymodes(int pn)
 #   endif
 # endif
     new_modes = old_modes;
-    for (n = 0; n < sizeof(speeds)/sizeof(speeds[0]); n++) {
+    for (n = 0; n < TABLESIZE(speeds); n++) {
       if (speeds[n].name == speed_code) {
 	tty_speed = speeds[n].code;
 	break;

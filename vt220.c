@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.8 1996/09/11 22:39:46 tom Exp $ */
+/* $Id: vt220.c,v 1.9 1996/11/25 11:17:43 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002)
@@ -288,7 +288,7 @@ tst_DECUDK(MENU_ARGS)
     { 33, "F19" },
     { 34, "F20" } };
 
-  for (key = 0; key < sizeof(keytable)/sizeof(keytable[0]); key++) {
+  for (key = 0; key < TABLESIZE(keytable); key++) {
     char temp[80];
     char *s;
     temp[0] = '\0';

@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.20 1996/11/18 00:02:33 tom Exp $
+# $Id: makefile.in,v 1.21 1996/11/25 23:07:30 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -38,6 +38,7 @@ CPPFLAGS	= $(DEFINES) $(INCLUDES) @CPPFLAGS@
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
 C_SRC = \
+	charsets.c \
 	color.c \
 	esc.c \
 	keyboard.c \
@@ -59,6 +60,7 @@ H_SRC = \
 	esc.h \
 	ttymodes.h
 OBJS  = \
+	charsets.o \
 	color.o \
 	esc.o \
 	keyboard.o \
