@@ -1,4 +1,4 @@
--- $Id: BUGS,v 1.3 1996/09/12 23:08:01 tom Exp $
+-- $Id: BUGS,v 1.4 1996/09/28 15:13:09 tom Exp $
 
 Please report bugs to dickey@clark.net
 
@@ -8,8 +8,6 @@ This is a list of known problems with VTTEST:
 
   + the skip_csi/skip_dcs functions are too permissive (they're allowing
     either 8-bit or 7-bit responses).
-
-  + the keyboard test should allow 8-bit responses
 
   + when I test the DECRQSS responses on a VT420, they usually come back
     with a code '1' (according to my manual, that's invalid), though the

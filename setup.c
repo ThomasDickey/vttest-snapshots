@@ -1,11 +1,11 @@
-/* $Id: setup.c,v 1.20 1996/09/27 10:52:31 tom Exp $ */
+/* $Id: setup.c,v 1.24 1996/09/28 16:05:57 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
 
-static int cur_level; /* current operating level (VT100=1) */
-static int max_level; /* maximum operating level */
+static int cur_level = -1; /* current operating level (VT100=1) */
+static int max_level = -1; /* maximum operating level */
 
 static int
 check_8bit_toggle(void)
@@ -73,21 +73,18 @@ find_levels(void)
 static int
 toggle_DECSCL(MENU_ARGS)
 {
+  int request = cur_level;
+
   if (max_level <= 1) {
     vt_move(1,1);
-    printf("Sorry, terminal supports only %s", max_level ? "VT100" : "VT52");
+    printf("Sorry, terminal supports only VT%d", terminal_id());
     vt_move(max_lines-1,1);
     return MENU_HOLD;
   }
 
-  if (++cur_level > max_level)
-    cur_level = 1;
-  if (cur_level > 1)
-    do_csi("6%d;%d\"p", cur_level, !output_8bits);
-  else
-    do_csi("61\"p");
-  padding(5); /* FIXME: may not be needed */
-  zleep(800); /* DECSCL does a soft reset, which is slow */
+  if (++request > max_level)
+    request = 1;
+  set_level(request);
 
   restore_ttymodes();
   return MENU_NOHOLD;
@@ -147,6 +144,8 @@ toggle_8bit_out(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
+/******************************************************************************/
+
 void
 enable_logging(void)
 {
@@ -156,6 +155,90 @@ enable_logging(void)
     perror(my_name);
     exit(EXIT_FAILURE);
   }
+}
+
+void
+reset_level(void)
+{
+  cur_level = max_level;
+}
+
+void
+restore_level(VTLEVEL *save)
+{
+  set_level(save->cur_level);
+  if (cur_level > 1
+   && save->input_8bits != input_8bits) /* just in case level didn't change */
+    s8c1t(save->input_8bits);
+  output_8bits = save->output_8bits; /* in case we thought this was VT100 */
+}
+
+void
+save_level(VTLEVEL *save)
+{
+  save->cur_level = cur_level;
+  save->input_8bits = input_8bits;
+  save->output_8bits = output_8bits;
+
+  if (LOG_ENABLED)
+    fprintf(log_fp, "save_level(%d) in=%d, out=%d\n", cur_level,
+        input_8bits ? 8 : 7,
+        output_8bits ? 8 : 7);
+}
+
+int
+set_level(int request)
+{
+  if (cur_level < 0)
+    find_levels();
+
+  if (LOG_ENABLED)
+    fprintf(log_fp, "set_level(%d)\n", request);
+
+  if (request > max_level) {
+    printf("Sorry, this terminal supports only VT%d\n", terminal_id());
+    return FALSE;
+  }
+
+  if (request != cur_level) {
+    if (request == 0) {
+      rm("?2");      /* Reset ANSI (VT100) mode, Set VT52 mode  */
+      input_8bits  = FALSE;
+      output_8bits = FALSE;
+    } else {
+      if (cur_level == 0) {
+        esc("<");    /* Enter ANSI mode (VT100 mode) */
+      }
+      if (request == 1) {
+        input_8bits  = FALSE;
+        output_8bits = FALSE;
+      }
+      if (request > 1)
+        do_csi("6%d;%d\"p", request, !input_8bits);
+      else
+        do_csi("61\"p");
+    }
+    padding(5); /* FIXME: may not be needed */
+
+    cur_level = request;
+  }
+
+  if (LOG_ENABLED)
+    fprintf(log_fp, "...set_level(%d) in=%d, out=%d\n", cur_level,
+        input_8bits ? 8 : 7,
+        output_8bits ? 8 : 7);
+
+  return TRUE;
+}
+
+int
+terminal_id(void)
+{
+  if (max_level >= 1)
+    return max_level * 100;
+  else if (max_level == 0)
+    return 52;
+  return 100;
 }
 
 int
@@ -178,7 +261,7 @@ tst_setup(MENU_ARGS)
     { "",                                                    0 }
   };
 
-  if (!cur_level)
+  if (cur_level < 0)
     find_levels();
 
   do {

@@ -1,10 +1,12 @@
-/* $Id: esc.h,v 1.35 1996/09/21 17:44:57 tom Exp $ */
+/* $Id: esc.h,v 1.38 1996/09/28 14:53:50 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
 
+#define BEL 0007
 #define ESC 0033
 #define CSI 0233
+#define SS3 0217
 #define DCS 0220
 #define ST  0234
 
@@ -55,10 +57,12 @@ char *csi_input(void);
 char *csi_output(void);
 char *dcs_input(void);
 char *dcs_output(void);
-char *osc_input(void);
-char *osc_output(void);
 char *get_reply(void);
 char *instr(void);
+char *osc_input(void);
+char *osc_output(void);
+char *ss3_input(void);
+char *ss3_output(void);
 char *st_input(void);
 char *st_output(void);
 char inchar(void);
@@ -140,8 +144,8 @@ void println(char *s);
 void put_char(FILE *fp, int c);
 void put_string(FILE *fp, char *s);
 void readnl(void);
-void reset_inchar(void);
 void rep(int pn);
+void reset_inchar(void);
 void ri(void);
 void ris(void);
 void rm(char *ps);
@@ -158,6 +162,9 @@ void su(int pn);
 void tbc(int pn);
 void vpa(int pn);
 void vt52cup(int l, int c);
+void vt52ed(void);
+void vt52el(void);
+void vt52home(void);
 void zleep(int t);
 
 #endif /* ESC_H */

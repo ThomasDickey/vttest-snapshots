@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.22 1996/09/27 10:58:18 tom Exp $ */
+/* $Id: color.c,v 1.23 1996/09/27 22:25:31 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -515,7 +515,8 @@ static int
 test_SGR_0(MENU_ARGS)
 {
   vt_move(1,1);
-  reset_colors();
+  println(the_title);
+  println("");
   println("ECMA-48 states that SGR 0 \"cancels the effect of any preceding occurrence");
   println("of SGR in the data stream regardless of the setting of the graphic rendition");
   println("combination mode (GRCM)\".");
@@ -523,16 +524,31 @@ test_SGR_0(MENU_ARGS)
   println("");
 
   reset_colors();
-  printf("You should see nothing: ");
+  printf("You should see only black:");
   sgr("30;40");
   printf("SGR 30 and SGR 40 don't work");
-  println("");
+  reset_colors();
+  println(":up to here");
+
+  reset_colors();
+  printf("You should see only white:");
+  sgr("37;47");
+  printf("SGR 37 and SGR 47 don't work");
+  reset_colors();
+  println(":up to here");
 
   reset_colors();
   printf("You should see text here: ");
   sgr("30;40");
   sgr("0");
-  printf("SGR 0 reset works");
+  printf("SGR 0 reset works (explicit 0)");
+  println("");
+
+  reset_colors();
+  printf("................and here: ");
+  sgr("37;47");
+  sgr("");
+  printf("SGR 0 reset works (default param)");
   println("");
 
   reset_colors();

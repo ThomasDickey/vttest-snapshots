@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.3 1996/09/21 11:45:25 tom Exp $ */
+/* $Id: vt52.c,v 1.6 1996/09/28 14:19:59 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -18,18 +18,20 @@ tst_vt52(MENU_ARGS)
 
   int i,j;
   char *response;
+  VTLEVEL save;
 
-  rm("?2");  /* Reset ANSI (VT100) mode, Set VT52 mode  */
-  esc("H");  /* Cursor home     */
-  esc("J");  /* Erase to end of screen  */
-  esc("H");  /* Cursor home     */
+  save_level(&save);
+  set_level(0);  /* Reset ANSI (VT100) mode, Set VT52 mode  */
+  vt52home();    /* Cursor home     */
+  vt52ed();      /* Erase to end of screen  */
+  vt52home();    /* Cursor home     */
   for (i = 0; i <= max_lines-1; i++) {
     for (j = 0; j <= 9; j++)
     printf("%s", "FooBar ");
     println("Bletch");
   }
-  esc("H");  /* Cursor home     */
-  esc("J");  /* Erase to end of screen  */
+  vt52home();  /* Cursor home     */
+  vt52ed();    /* Erase to end of screen  */
 
   vt52cup(7,47);
   printf("nothing more.");
@@ -40,10 +42,10 @@ tst_vt52(MENU_ARGS)
     esc("I");           /* Reverse LineFeed (with backscroll!)  */
   }
   vt52cup(12,60);
-  esc("J");  /* Erase to end of screen  */
+  vt52ed();    /* Erase to end of screen  */
   for (i = 2; i <= 6; i++) {
     vt52cup(i,1);
-    esc("K");           /* Erase to end of line */
+    vt52el();           /* Erase to end of line */
   }
 
   for (i = 2; i <= max_lines-1; i++) {
@@ -80,7 +82,7 @@ tst_vt52(MENU_ARGS)
   }
   for (i = 2; i <= max_lines-1; i++) {
     vt52cup(i,71);
-    esc("K");           /* Erase to end of line */
+    vt52el();           /* Erase to end of line */
   }
 
   vt52cup(10,16);
@@ -92,8 +94,8 @@ tst_vt52(MENU_ARGS)
   vt52cup(13,16);
   holdit();
 
-  esc("H");  /* Cursor home     */
-  esc("J");  /* Erase to end of screen  */
+  vt52home();  /* Cursor home     */
+  vt52ed();  /* Erase to end of screen  */
   printf("%s", "This is the normal character set:");
   for (j =  0; j <=  1; j++) {
     vt52cup(3 + j, 16);
@@ -112,18 +114,20 @@ tst_vt52(MENU_ARGS)
   vt52cup(12,1);
   holdit();
 
-  esc("H");  /* Cursor home     */
-  esc("J");  /* Erase to end of screen  */
+  vt52home();  /* Cursor home     */
+  vt52ed();    /* Erase to end of screen  */
   println("Test of terminal response to IDENTIFY command");
 
   set_tty_raw(TRUE);
   esc("Z");     /* Identify     */
   response = get_reply();
   println("");
+
+  restore_level(&save);
   restore_ttymodes();
+  padding(10);  /* some terminals miss part of the 'chrprint()' otherwise */
 
   printf("Response was");
-  esc("<");  /* Enter ANSI mode (VT100 mode) */
   chrprint(response);
   for(i = 0; resptable[i].rcode[0] != '\0'; i++)
     if (!strcmp(response, resptable[i].rcode))

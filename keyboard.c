@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.14 1996/09/21 12:11:00 tom Exp $ */
+/* $Id: keyboard.c,v 1.18 1996/09/28 16:00:04 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -100,53 +100,58 @@ static struct key {
     {'\0', 0,  0, ""  }
   };
 
+typedef struct {
+    unsigned char prefix;
+    char *msg;
+} CTLKEY;
+
 static struct curkey {
-    char *curkeymsg[3];
+    CTLKEY curkeymsg[3];
     int  curkeyrow;
     int  curkeycol;
     char *curkeysymbol;
     char *curkeyname;
 } curkeytab [] = {
 
-    /* A Reset, A Set,  VT52  */
+    /* A Reset,   A Set,     VT52  */
 
-    {{"\033[A","\033OA","\033A"}, 0, 56, "UP",  "Up arrow"   },
-    {{"\033[B","\033OB","\033B"}, 0, 61, "DN",  "Down arrow" },
-    {{"\033[D","\033OD","\033D"}, 0, 66, "LT",  "Left arrow" },
-    {{"\033[C","\033OC","\033C"}, 0, 71, "RT",  "Right arrow"},
-    {{"",      "",       ""     }, 0,  0, "",    "" }
+    {{{CSI,"A"}, {SS3,"A"}, {ESC,"A"}}, 0, 56, "UP",  "Up arrow"   },
+    {{{CSI,"B"}, {SS3,"B"}, {ESC,"B"}}, 0, 61, "DN",  "Down arrow" },
+    {{{CSI,"D"}, {SS3,"D"}, {ESC,"D"}}, 0, 66, "LT",  "Left arrow" },
+    {{{CSI,"C"}, {SS3,"C"}, {ESC,"C"}}, 0, 71, "RT",  "Right arrow"},
+    {{{0,  ""},  {0,  ""},  {0,  "" }}, 0,  0, "",    "" }
 };
 
 static struct fnkey {
-    char *fnkeymsg[4];
+    CTLKEY fnkeymsg[4];
     int  fnkeyrow;
     int  fnkeycol;
     char *fnkeysymbol;
     char *fnkeyname;
 } fnkeytab [] = {
 
-    /* ANSI-num,ANSI-app,VT52-nu,VT52-ap,  r, c,  symb   name         */
+  /* ANSI-num, ANSI-app,  VT52-nu,   VT52-ap,     r,  c,  symb   name        */
 
-    {{"\033OP","\033OP","\033P","\033P" }, 6, 59, "PF1", "PF1"        },
-    {{"\033OQ","\033OQ","\033Q","\033Q" }, 6, 63, "PF2", "PF2"        },
-    {{"\033OR","\033OR","\033R","\033R" }, 6, 67, "PF3", "PF3"        },
-    {{"\033OS","\033OS","\033S","\033S" }, 6, 71, "PF4", "PF4"        },
-    {{"7",     "\033Ow","7",    "\033?w"}, 7, 59, " 7 ", "Numeric 7"  },
-    {{"8",     "\033Ox","8",    "\033?x"}, 7, 63, " 8 ", "Numeric 8"  },
-    {{"9",     "\033Oy","9",    "\033?y"}, 7, 67, " 9 ", "Numeric 9"  },
-    {{"-",     "\033Om","-",    "\033?m"}, 7, 71, " - ", "Minus"      },
-    {{"4",     "\033Ot","4",    "\033?t"}, 8, 59, " 4 ", "Numeric 4"  },
-    {{"5",     "\033Ou","5",    "\033?u"}, 8, 63, " 5 ", "Numeric 5"  },
-    {{"6",     "\033Ov","6",    "\033?v"}, 8, 67, " 6 ", "Numeric 6"  },
-    {{",",     "\033Ol",",",    "\033?l"}, 8, 71, " , ", "Comma"      },
-    {{"1",     "\033Oq","1",    "\033?q"}, 9, 59, " 1 ", "Numeric 1"  },
-    {{"2",     "\033Or","2",    "\033?r"}, 9, 63, " 2 ", "Numeric 2"  },
-    {{"3",     "\033Os","3",    "\033?s"}, 9, 67, " 3 ", "Numeric 3"  },
-    {{"0",     "\033Op","0",    "\033?p"},10, 59,"   O   ","Numeric 0"},
-    {{".",     "\033On",".",    "\033?n"},10, 67, " . ", "Point"      },
-    {{"\015",  "\033OM","\015", "\033?M"},10, 71, "ENT", "ENTER"      },
-    {{"","","",""},       0,  0, "",    ""           }
-  };
+  {{{SS3,"P"}, {SS3,"P"}, {ESC,"P"}, {ESC,"P" }}, 6, 59, "PF1", "PF1"        },
+  {{{SS3,"Q"}, {SS3,"Q"}, {ESC,"Q"}, {ESC,"Q" }}, 6, 63, "PF2", "PF2"        },
+  {{{SS3,"R"}, {SS3,"R"}, {ESC,"R"}, {ESC,"R" }}, 6, 67, "PF3", "PF3"        },
+  {{{SS3,"S"}, {SS3,"S"}, {ESC,"S"}, {ESC,"S" }}, 6, 71, "PF4", "PF4"        },
+  {{{0,  "7"}, {SS3,"w"}, {0,  "7"}, {ESC,"?w"}}, 7, 59, " 7 ", "Numeric 7"  },
+  {{{0,  "8"}, {SS3,"x"}, {0,  "8"}, {ESC,"?x"}}, 7, 63, " 8 ", "Numeric 8"  },
+  {{{0,  "9"}, {SS3,"y"}, {0,  "9"}, {ESC,"?y"}}, 7, 67, " 9 ", "Numeric 9"  },
+  {{{0,  "-"}, {SS3,"m"}, {0,  "-"}, {ESC,"?m"}}, 7, 71, " - ", "Minus"      },
+  {{{0,  "4"}, {SS3,"t"}, {0,  "4"}, {ESC,"?t"}}, 8, 59, " 4 ", "Numeric 4"  },
+  {{{0,  "5"}, {SS3,"u"}, {0,  "5"}, {ESC,"?u"}}, 8, 63, " 5 ", "Numeric 5"  },
+  {{{0,  "6"}, {SS3,"v"}, {0,  "6"}, {ESC,"?v"}}, 8, 67, " 6 ", "Numeric 6"  },
+  {{{0,  ","}, {SS3,"l"}, {0,  ","}, {ESC,"?l"}}, 8, 71, " , ", "Comma"      },
+  {{{0,  "1"}, {SS3,"q"}, {0,  "1"}, {ESC,"?q"}}, 9, 59, " 1 ", "Numeric 1"  },
+  {{{0,  "2"}, {SS3,"r"}, {0,  "2"}, {ESC,"?r"}}, 9, 63, " 2 ", "Numeric 2"  },
+  {{{0,  "3"}, {SS3,"s"}, {0,  "3"}, {ESC,"?s"}}, 9, 67, " 3 ", "Numeric 3"  },
+  {{{0,  "0"}, {SS3,"p"}, {0,  "0"}, {ESC,"?p"}},10, 59, "   O   ","Numeric 0"},
+  {{{0,  "."}, {SS3,"n"}, {0,  "."}, {ESC,"?n"}},10, 67, " . ", "Point"      },
+  {{{0,"\015"},{SS3,"M"}, {0,"\015"},{ESC,"?M"}},10, 71, "ENT", "ENTER"      },
+  {{{0,  ""},  {0,  ""},  {0,  ""},  {0,  ""}},   0,  0, "",    ""           }
+};
 
 struct natkey {
     char natc;
@@ -177,6 +182,27 @@ default_layout(MENU_ARGS)
 {
   /* FIXME */
   return MENU_NOHOLD;
+}
+
+static int
+same_CTLKEY(char *response, CTLKEY *code)
+{
+  switch (code->prefix) {
+  case CSI:
+    if ((response = skip_csi(response)) == 0)
+      return FALSE;
+    break;
+  case SS3:
+    if ((response = skip_ss3(response)) == 0)
+      return FALSE;
+    break;
+  case ESC:
+    if (*response++ != ESC)
+      return FALSE;
+  default:
+    break;
+  }
+  return !strcmp(response, code->msg);
 }
 
 static int
@@ -440,6 +466,7 @@ tst_CursorKeys(MENU_ARGS)
   int  i;
   int  ckeymode;
   char *curkeystr;
+  VTLEVEL save;
 
   static char *curkeymodes[3] = {
       "ANSI / Cursor key mode RESET",
@@ -448,6 +475,7 @@ tst_CursorKeys(MENU_ARGS)
   };
 
   vt_clear(2);
+  save_level(&save);
   show_keyboard(0);
   show_keypad(0);
   vt_move(max_lines-2,1);
@@ -465,18 +493,18 @@ tst_CursorKeys(MENU_ARGS)
     vt_move(max_lines-2,1); printf("%s", "Press each cursor key. Finish with TAB.");
     for(;;) {
       vt_move(max_lines-1,1);
-      if (ckeymode == 2) rm("?2"); /* VT52 mode */
+      if (ckeymode == 2) set_level(0); /* VT52 mode */
       curkeystr = instr();
-      esc("<");                      /* ANSI mode */
+      set_level(1);                     /* ANSI mode */
 
       vt_move(max_lines-1,1); vt_el(0);
       vt_move(max_lines-1,1); chrprint(curkeystr);
 
       if (!strcmp(curkeystr,"\t")) break;
       for (i = 0; curkeytab[i].curkeysymbol[0] != '\0'; i++) {
-        if (!strcmp(curkeystr,curkeytab[i].curkeymsg[ckeymode])) {
+        if (same_CTLKEY(curkeystr, &curkeytab[i].curkeymsg[ckeymode])) {
           vt_hilite(TRUE);
-          printf(" (%s key) ", curkeytab[i].curkeyname);
+          show_result(" (%s key) ", curkeytab[i].curkeyname);
           vt_hilite(FALSE);
           vt_move(1 + 2 * curkeytab[i].curkeyrow,
               1 + curkeytab[i].curkeycol);
@@ -486,12 +514,13 @@ tst_CursorKeys(MENU_ARGS)
       }
       if (i == sizeof(curkeytab) / sizeof(struct curkey) - 1) {
         vt_hilite(TRUE);
-        printf("%s", " (Unknown cursor key) ");
+        show_result("%s", " (Unknown cursor key) ");
         vt_hilite(FALSE);
       }
     }
   }
 
+  restore_level(&save);
   vt_move(max_lines-1,1); vt_el(0);
   restore_ttymodes();
   return MENU_MERGE;
@@ -503,6 +532,7 @@ tst_FunctionKeys(MENU_ARGS)
   int  i;
   int  fkeymode;
   char *fnkeystr;
+  VTLEVEL save;
 
   static char *fnkeymodes[4] = {
       "ANSI Numeric mode",
@@ -512,6 +542,7 @@ tst_FunctionKeys(MENU_ARGS)
   };
 
   vt_clear(2);
+  save_level(&save);
   show_keyboard(0);
   show_cursor_keys(0);
   vt_move(max_lines-2,1);
@@ -527,20 +558,20 @@ tst_FunctionKeys(MENU_ARGS)
 
     for(;;) {
       vt_move(max_lines-1,1);
-      if (fkeymode >= 2)  rm("?2");    /* VT52 mode */
+      if (fkeymode >= 2)  set_level(0);    /* VT52 mode */
       if (fkeymode % 2)   deckpam();   /* Application mode */
       else                deckpnm();   /* Numeric mode     */
       fnkeystr = instr();
-      esc("<");                         /* ANSI mode */
+      set_level(1);                    /* ANSI mode */
 
       vt_move(max_lines-1,1); vt_el(0);
       vt_move(max_lines-1,1); chrprint(fnkeystr);
 
       if (!strcmp(fnkeystr,"\t")) break;
       for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
-        if (!strcmp(fnkeystr,fnkeytab[i].fnkeymsg[fkeymode])) {
+        if (same_CTLKEY(fnkeystr, &fnkeytab[i].fnkeymsg[fkeymode])) {
           vt_hilite(TRUE);
-          printf(" (%s key) ", fnkeytab[i].fnkeyname);
+          show_result(" (%s key) ", fnkeytab[i].fnkeyname);
           vt_hilite(FALSE);
           vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
           printf("%s", fnkeytab[i].fnkeysymbol);
@@ -549,13 +580,14 @@ tst_FunctionKeys(MENU_ARGS)
       }
       if (i == sizeof(fnkeytab) / sizeof(struct fnkey) - 1) {
         vt_hilite(TRUE);
-        printf("%s", " (Unknown function key) ");
+        show_result("%s", " (Unknown function key) ");
         vt_hilite(FALSE);
       }
     }
   }
 
   vt_move(max_lines-1,1); vt_el(0);
+  restore_level(&save);
   restore_ttymodes();
   return MENU_MERGE;
 }
