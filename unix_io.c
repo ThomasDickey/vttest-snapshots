@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.5 1996/09/02 23:39:06 tom Exp $ */
+/* $Id: unix_io.c,v 1.6 1996/09/08 22:04:37 tom Exp $ */
 
 #include <stdarg.h>
 #include <vttest.h>
@@ -7,7 +7,7 @@
 static void
 give_up(int sig)
 {
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fprintf(log_fp, "** killing program due to timeout\n");
     fflush(log_fp);
   }
@@ -99,7 +99,7 @@ out1:
 #endif
   result[i] = '\0';
 
-  if (log_fp != 0) {
+  if (LOG_ENABLED) {
     fputs("Reply: ", log_fp);
     put_string(log_fp, result);
     fputs("\n", log_fp);

@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.11 1996/09/02 23:27:29 tom Exp $ */
+/* $Id: keyboard.c,v 1.13 1996/09/08 22:17:09 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -243,10 +243,10 @@ show_cursor_keys(int flag)
   int i;
 
   for (i = 0; curkeytab[i].curkeysymbol[0] != '\0'; i++) {
-    cup(1 + 2 * curkeytab[i].curkeyrow, 1 + curkeytab[i].curkeycol);
-    if (flag) sgr("7");
+    vt_move(1 + 2 * curkeytab[i].curkeyrow, 1 + curkeytab[i].curkeycol);
+    if (flag) vt_hilite(TRUE);
     printf("%s", curkeytab[i].curkeysymbol);
-    if (flag) sgr("");
+    if (flag) vt_hilite(FALSE);
   }
 }
 
@@ -256,10 +256,10 @@ show_keypad(int flag)
   int i;
 
   for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
-    cup(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
-    if (flag) sgr("7");
+    vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
+    if (flag) vt_hilite(TRUE);
     printf("%s", fnkeytab[i].fnkeysymbol);
-    if (flag) sgr("");
+    if (flag) vt_hilite(FALSE);
   }
 }
 
@@ -269,10 +269,10 @@ show_keyboard(int flag)
   int i;
 
   for (i = 0; keytab[i].c != '\0'; i++) {
-    cup(1 + 2 * keytab[i].row, 1 + keytab[i].col);
-    if (flag) sgr("7");
+    vt_move(1 + 2 * keytab[i].row, 1 + keytab[i].col);
+    if (flag) vt_hilite(TRUE);
     printf("%s", keytab[i].symbol);
-    if (flag) sgr("");
+    if (flag) vt_hilite(FALSE);
   }
 }
 
@@ -284,8 +284,8 @@ tst_AnswerBack(MENU_ARGS)
   char *abmstr;
 
   set_tty_crmod(TRUE);
-  ed(2);
-  cup(5,1);
+  vt_clear(2);
+  vt_move(5,1);
   println("Finally, a check of the ANSWERBACK MESSAGE, which can be sent");
   println("by pressing CTRL-BREAK. The answerback message can be loaded");
   println("in SET-UP B by pressing SHIFT-A and typing e.g.");
@@ -299,11 +299,11 @@ tst_AnswerBack(MENU_ARGS)
 
   set_tty_crmod(FALSE);
   do {
-    cup(17,1);
+    vt_move(17,1);
     inflush();
     abmstr = get_reply();
-    cup(17,1);
-    el(0);
+    vt_move(17,1);
+    vt_el(0);
     chrprint(abmstr);
   } while (strcmp(abmstr,"\r"));
   return MENU_NOHOLD;
@@ -314,8 +314,8 @@ tst_AutoRepeat(MENU_ARGS)
 {
   char arptstring[500];
 
-  ed(2);
-  cup(10,1);
+  vt_clear(2);
+  vt_move(10,1);
   println("Test of the AUTO REPEAT feature");
 
   println("");
@@ -323,7 +323,7 @@ tst_AutoRepeat(MENU_ARGS)
   printf("%s", "Auto Repeat OFF: ");
   rm("?8"); /* DECARM */
   inputline(arptstring);
-  if (log_fp != 0)
+  if (LOG_ENABLED)
     fprintf(log_fp, "Input: %s\n", arptstring);
   if (strlen(arptstring) == 0)      println("No characters read!??");
   else if (strlen(arptstring) == 1) println("OK.");
@@ -334,7 +334,7 @@ tst_AutoRepeat(MENU_ARGS)
   printf("%s", "Auto Repeat ON: ");
   sm("?8"); /* DECARM */
   inputline(arptstring);
-  if (log_fp != 0)
+  if (LOG_ENABLED)
     fprintf(log_fp, "Input: %s\n", arptstring);
   if (strlen(arptstring) == 0)      println("No characters read!??");
   else if (strlen(arptstring) == 1) println("Not enough characters read.");
@@ -390,14 +390,14 @@ tst_ControlKeys(MENU_ARGS)
       { 0, "US  (CTRL-_ or CTRL-?)" }
   };
 
-  ed(2);
+  vt_clear(2);
   for (i = 0; i < 32; i++) {
-    cup(1 + (i % 16), 1 + 40 * (i / 16));
-    sgr("7");
+    vt_move(1 + (i % 16), 1 + 40 * (i / 16));
+    vt_hilite(TRUE);
     printf("%s", ckeytab[i].csymbol);
-    sgr("0");
+    vt_hilite(FALSE);
   }
-  cup(19,1);
+  vt_move(19,1);
   set_tty_crmod(TRUE);
   println(
   "Push each CTRL-key TWICE. Note that you should be able to send *all*");
@@ -407,11 +407,11 @@ tst_ControlKeys(MENU_ARGS)
   "Finish with DEL (also called DELETE or RUB OUT), or wait 1 minute.");
   set_tty_raw(TRUE);
   do {
-    cup(max_lines-1,1); kbdc = inchar();
-    cup(max_lines-1,1); el(0);
+    vt_move(max_lines-1,1); kbdc = inchar();
+    vt_move(max_lines-1,1); vt_el(0);
     if (kbdc < 32) {
       printf("  %s", ckeytab[kbdc].csymbol);
-      if (log_fp != 0)
+      if (LOG_ENABLED)
         fprintf(log_fp, "Key: %s\n", ckeytab[kbdc].csymbol);
     } else {
       sprintf(kbds, "%c", kbdc);
@@ -420,13 +420,13 @@ tst_ControlKeys(MENU_ARGS)
     }
     if (kbdc < 32) ckeytab[kbdc].ccount++;
     if (ckeytab[kbdc].ccount == 2) {
-      cup(1 + (kbdc % 16), 1 + 40 * (kbdc / 16));
+      vt_move(1 + (kbdc % 16), 1 + 40 * (kbdc / 16));
       printf("%s", ckeytab[kbdc].csymbol);
     }
   } while (kbdc != '\177');
 
   restore_ttymodes();
-  cup(max_lines,1);
+  vt_move(max_lines,1);
   okflag = 1;
   for (i = 0; i < 32; i++) if (ckeytab[i].ccount < 2) okflag = 0;
   if (okflag) printf("%s", "OK. ");
@@ -447,10 +447,10 @@ tst_CursorKeys(MENU_ARGS)
       "VT52 Mode"
   };
 
-  ed(2);
+  vt_clear(2);
   show_keyboard(0);
   show_keypad(0);
-  cup(max_lines-2,1);
+  vt_move(max_lines-2,1);
 
   set_tty_crmod(FALSE);
   set_tty_echo(FALSE);
@@ -460,39 +460,39 @@ tst_CursorKeys(MENU_ARGS)
     else          rm("?1");
 
     show_cursor_keys(1);
-    cup(20,1); printf("<%s>%20s", curkeymodes[ckeymode], "");
-    cup(max_lines-2,1); el(0);
-    cup(max_lines-2,1); printf("%s", "Press each cursor key. Finish with TAB.");
+    vt_move(20,1); printf("<%s>%20s", curkeymodes[ckeymode], "");
+    vt_move(max_lines-2,1); vt_el(0);
+    vt_move(max_lines-2,1); printf("%s", "Press each cursor key. Finish with TAB.");
     for(;;) {
-      cup(max_lines-1,1);
+      vt_move(max_lines-1,1);
       if (ckeymode == 2) rm("?2"); /* VT52 mode */
       curkeystr = instr();
       esc("<");                      /* ANSI mode */
 
-      cup(max_lines-1,1); el(0);
-      cup(max_lines-1,1); chrprint(curkeystr);
+      vt_move(max_lines-1,1); vt_el(0);
+      vt_move(max_lines-1,1); chrprint(curkeystr);
 
       if (!strcmp(curkeystr,"\t")) break;
       for (i = 0; curkeytab[i].curkeysymbol[0] != '\0'; i++) {
         if (!strcmp(curkeystr,curkeytab[i].curkeymsg[ckeymode])) {
-          sgr("7");
+          vt_hilite(TRUE);
           printf(" (%s key) ", curkeytab[i].curkeyname);
-          sgr("");
-          cup(1 + 2 * curkeytab[i].curkeyrow,
+          vt_hilite(FALSE);
+          vt_move(1 + 2 * curkeytab[i].curkeyrow,
               1 + curkeytab[i].curkeycol);
           printf("%s", curkeytab[i].curkeysymbol);
           break;
         }
       }
       if (i == sizeof(curkeytab) / sizeof(struct curkey) - 1) {
-        sgr("7");
+        vt_hilite(TRUE);
         printf("%s", " (Unknown cursor key) ");
-        sgr("");
+        vt_hilite(FALSE);
       }
     }
   }
 
-  cup(max_lines-1,1); el(0);
+  vt_move(max_lines-1,1); vt_el(0);
   restore_ttymodes();
   return MENU_MERGE;
 }
@@ -511,51 +511,51 @@ tst_FunctionKeys(MENU_ARGS)
       "VT52 Application mode"
   };
 
-  ed(2);
+  vt_clear(2);
   show_keyboard(0);
   show_cursor_keys(0);
   show_keypad(1);
-  cup(max_lines-2,1);
+  vt_move(max_lines-2,1);
 
   set_tty_crmod(FALSE);
   set_tty_echo(FALSE);
 
   for (fkeymode = 0; fkeymode <= 3; fkeymode++) {
-    cup(20,1); printf("<%s>%20s", fnkeymodes[fkeymode], "");
-    cup(max_lines-2,1); el(0);
-    cup(max_lines-2,1); printf("%s", "Press each function key. Finish with TAB.");
+    vt_move(20,1); printf("<%s>%20s", fnkeymodes[fkeymode], "");
+    vt_move(max_lines-2,1); vt_el(0);
+    vt_move(max_lines-2,1); printf("%s", "Press each function key. Finish with TAB.");
 
     for(;;) {
-      cup(max_lines-1,1);
+      vt_move(max_lines-1,1);
       if (fkeymode >= 2)  rm("?2");    /* VT52 mode */
       if (fkeymode % 2)   deckpam();   /* Application mode */
       else                deckpnm();   /* Numeric mode     */
       fnkeystr = instr();
       esc("<");                         /* ANSI mode */
 
-      cup(max_lines-1,1); el(0);
-      cup(max_lines-1,1); chrprint(fnkeystr);
+      vt_move(max_lines-1,1); vt_el(0);
+      vt_move(max_lines-1,1); chrprint(fnkeystr);
 
       if (!strcmp(fnkeystr,"\t")) break;
       for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
         if (!strcmp(fnkeystr,fnkeytab[i].fnkeymsg[fkeymode])) {
-          sgr("7");
+          vt_hilite(TRUE);
           printf(" (%s key) ", fnkeytab[i].fnkeyname);
-          sgr("");
-          cup(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
+          vt_hilite(FALSE);
+          vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
           printf("%s", fnkeytab[i].fnkeysymbol);
           break;
         }
       }
       if (i == sizeof(fnkeytab) / sizeof(struct fnkey) - 1) {
-        sgr("7");
+        vt_hilite(TRUE);
         printf("%s", " (Unknown function key) ");
-        sgr("");
+        vt_hilite(FALSE);
       }
     }
   }
 
-  cup(max_lines-1,1); el(0);
+  vt_move(max_lines-1,1); vt_el(0);
   restore_ttymodes();
   return MENU_MERGE;
 }
@@ -576,15 +576,15 @@ tst_KeyBoardLayout(MENU_ARGS)
       { "",                                                  0 }
     };
 
-  ed(2);
+  vt_clear(2);
   title(0); println("Choose keyboard layout:");
   (void) menu(keyboardmenu);
 
-  ed(2);
+  vt_clear(2);
   show_keyboard(1);
   show_cursor_keys(0);
   show_keypad(0);
-  cup(max_lines-2,1);
+  vt_move(max_lines-2,1);
 
   set_tty_crmod(FALSE);
   set_tty_echo(FALSE);
@@ -592,20 +592,20 @@ tst_KeyBoardLayout(MENU_ARGS)
   inflush();
   printf("Press each key, both shifted and unshifted. Finish with RETURN:");
   do { /* while (kbdc != 13) */
-    cup(max_lines-1,1); kbdc = inchar();
-    cup(max_lines-1,1); el(0);
+    vt_move(max_lines-1,1); kbdc = inchar();
+    vt_move(max_lines-1,1); vt_el(0);
     sprintf(kbds, "%c", kbdc);
     chrprint(kbds);
     for (i = 0; keytab[i].c != '\0'; i++) {
       if (keytab[i].c == kbdc) {
-        cup(1 + 2 * keytab[i].row, 1 + keytab[i].col);
+        vt_move(1 + 2 * keytab[i].row, 1 + keytab[i].col);
         printf("%s", keytab[i].symbol);
         break;
       }
     }
   } while (kbdc != 13);
 
-  cup(max_lines-1,1); el(0);
+  vt_move(max_lines-1,1); vt_el(0);
   restore_ttymodes();
   return MENU_MERGE;
 }
@@ -626,14 +626,14 @@ tst_LED_Lights(MENU_ARGS)
 #ifdef UNIX
   fflush(stdout);
 #endif
-  ed(2);
-  cup(10,1);
+  vt_clear(2);
+  vt_move(10,1);
   println("These LEDs (\"lamps\") on the keyboard should be on:");
   for (i = 0; i <= 5; i++) {
-    cup(10,52); el(0); printf("%s", ledmsg[i]);
+    vt_move(10,52); vt_el(0); printf("%s", ledmsg[i]);
     decll("0");
     decll(ledseq[i]);
-    cup(12,1); holdit();
+    vt_move(12,1); holdit();
   }
   return MENU_NOHOLD;
 }
@@ -655,7 +655,7 @@ tst_keyboard(MENU_ARGS)
     };
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); printf("Keyboard Tests");
     title(2); println("Choose test type:");
   } while (menu(my_menu));

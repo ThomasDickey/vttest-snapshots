@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.3 1996/09/06 01:23:49 tom Exp $ */
+/* $Id: vt220.c,v 1.4 1996/09/08 22:30:07 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002)
@@ -388,6 +388,7 @@ tst_vt220(MENU_ARGS)
       { "Test Printer (MC)",                                 not_impl },
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
+      { "Test Soft Character Sets (DECDLD)",                 tst_softchars },
       { "Test UDK Status",                                   tst_DSR_userkeys },
       { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
       { "Test user-defined keys (DECUDK)",                   tst_DECUDK },

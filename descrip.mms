@@ -1,11 +1,11 @@
-# $Id: descrip.mms,v 1.6 1996/09/02 12:12:18 tom Exp $
+# $Id: descrip.mms,v 1.8 1996/09/08 20:00:57 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
 
 #### Start of system configuration section. ####
 
-DEFINES	= /Define=(STDC_HEADERS,RELEASE=2)
+DEFINES = /Define=(STDC_HEADERS,RELEASE=2)
 CFLAGS	= /Listing /Include=([]) $(DEFINES)
 
 #### End of system configuration section. ####
@@ -17,9 +17,12 @@ C_SRC = \
 	main.c \
 	nonvt100.c \
 	reports.c \
+	reset.c \
 	setup.c \
+	sixel.c \
 	status.c \
 	ttymodes.c \
+	vt220.c \
 	vt420.c \
 	vt52.c \
 	unix_io.c \
@@ -36,8 +39,11 @@ OBJS = \
 	main.obj, \
 	nonvt100.obj, \
 	reports.obj, \
+	reset.obj, \
 	setup.obj, \
+	sixel.obj, \
 	status.obj, \
+	vt220.obj, \
 	vt420.obj, \
 	vt52.obj, \
 	vms_io.obj, \

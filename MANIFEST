@@ -1,4 +1,4 @@
-MANIFEST for vttest, version d960905
+MANIFEST for vttest, version d960908
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 CHANGES                         record of changes I've made to vttest
@@ -18,7 +18,9 @@ mkdirs.sh                       mkinstalldirs script, from X11
 nonvt100.c                      non-VT100 tests
 patchlev.h                      patch-level of VTTEST
 reports.c                       test device-reports
+reset.c                         test-functions for terminal-reset
 setup.c                         modify test-parameters
+sixel.c                         tests for soft characters (sixel)
 status.c                        status-line tests
 ttymodes.c                      module for changing tty modes
 ttymodes.h                      interface of ttymodes.c

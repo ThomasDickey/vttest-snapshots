@@ -1,4 +1,4 @@
-.\" $Id: vttest.1,v 1.6 1996/08/25 21:14:07 tom Exp $
+.\" $Id: vttest.1,v 1.7 1996/09/09 01:27:12 tom Exp $
 .TH VTTEST 1 "LOCAL"
 .
 .SH NAME
@@ -25,6 +25,9 @@ If your terminal does not switch between 80 and 132 columns you
 may specify 24x80.80, for example, to avoid a misleading display.
 .PP
 Other options are:
+.TP 5
+.BI \-f " file"
+specify a file containing a DRCS (soft character definition) string.
 .TP 5
 .B \-l
 log test results to \fIvttest.log\fP.

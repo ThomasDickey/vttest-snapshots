@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.33 1996/09/02 12:25:32 tom Exp $ */
+/* $Id: vttest.h,v 1.38 1996/09/08 22:41:46 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -99,9 +99,12 @@
 /*FIXME: really want 'extern' for errno*/
 #include <errno.h>
 
+#define LOG_ENABLED ((log_fp != 0) && !log_disabled)
+
 extern FILE *log_fp;
 extern int brkrd;
 extern int input_8bits;
+extern int log_disabled;
 extern int max_cols;
 extern int max_lines;
 extern int min_cols;
@@ -174,6 +177,7 @@ extern char *skip_csi(char *input);
 extern char *skip_dcs(char *input);
 extern char *skip_digits(char *src);
 extern char *skip_prefix(char *prefix, char *input);
+extern int any_DSR(MENU_ARGS, char *text, void (*explain)(char *report));
 extern int bug_a(MENU_ARGS);
 extern int bug_b(MENU_ARGS);
 extern int bug_c(MENU_ARGS);
@@ -186,11 +190,20 @@ extern int bug_w(MENU_ARGS);
 extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
 extern int not_impl(MENU_ARGS);
+extern int scan_any(char *str, int *pos, int toc);
 extern int scanto(char *str, int *pos, int toc);
+extern int setup_terminal(MENU_ARGS);
 extern int strip_suffix(char *src, char *suffix);
 extern int strip_terminator(char *src);
 extern int tst_DECSCA(MENU_ARGS);
+extern int tst_DECSTR(MENU_ARGS);
+extern int tst_DECTCEM(MENU_ARGS);
+extern int tst_DECUDK(MENU_ARGS);
+extern int tst_DSR_keyboard(MENU_ARGS);
+extern int tst_DSR_printer(MENU_ARGS);
+extern int tst_DSR_userkeys(MENU_ARGS);
 extern int tst_ECH(MENU_ARGS);
+extern int tst_S8C1T(MENU_ARGS);
 extern int tst_SD_DEC(MENU_ARGS);
 extern int tst_SU(MENU_ARGS);
 extern int tst_bugs(MENU_ARGS);
@@ -205,15 +218,23 @@ extern int tst_reports(MENU_ARGS);
 extern int tst_rst(MENU_ARGS);
 extern int tst_screen(MENU_ARGS);
 extern int tst_setup(MENU_ARGS);
+extern int tst_softchars(MENU_ARGS);
 extern int tst_statusline(MENU_ARGS);
+extern int tst_vt220(MENU_ARGS);
 extern int tst_vt420(MENU_ARGS);
 extern int tst_vt52(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
 extern void bye(void);
 extern void chrprint(char *s);
 extern void do_scrolling(void);
+extern void enable_logging(void);
 extern void initterminal(int pn);
+extern void setup_softchars(char *filename);
 extern void show_result(const char *fmt, ...);
 extern void title(int offset);
+extern void vt_clear(int code);
+extern void vt_el(int code);
+extern void vt_hilite(int flag);
+extern void vt_move(int row, int col);
 
 #endif /* VTTEST_H */

@@ -1,8 +1,11 @@
-$Id: CHANGES,v 1.36 1996/09/05 10:58:51 tom Exp $
+$Id: CHANGES,v 1.38 1996/09/09 01:27:39 tom Exp $
 -------------------------------------------------------------------------------
 
+960908
+        implement DECDLD tests.
+
 960905
-	implement DECCARA, DECRARA tests.
+	implement DECCARA, DECRARA, DECSACE, DECSERA tests.
 
 960901
 	implement DECBKM, DECCRA, DECERA, DECFRA, DECKBUM, DECKPM, DECNKM,
@@ -67,7 +70,7 @@ VERSION 2.5
 VERSION 2.4
 
 960807
-	Implement test for VT5xx C7C1T and C8C1T
+	Implement test for VT5xx C7C1T and S8C1T
 
 	Remove check for scrolling-behavior in CPL and CNL (no one but kermit
 	seems to consider doing this).

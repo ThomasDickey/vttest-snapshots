@@ -1,5 +1,9 @@
-/* $Id: vt420.c,v 1.35 1996/09/05 11:00:46 tom Exp $ */
+/* $Id: vt420.c,v 1.40 1996/09/08 22:02:49 tom Exp $ */
 
+/*
+ * Reference:  Installing and Using the VT420 Video Terminal (North American
+ *             Model (EK-VT420-UG.002)
+ */
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
@@ -83,37 +87,6 @@ any_decrqss(char *msg, char *func)
     show = SHOW_FAILURE;
   }
   show_result(show);
-
-  restore_ttymodes();
-  cup(max_lines-1, 1);
-  return MENU_HOLD;
-}
-
-static int
-any_DSR(MENU_ARGS, char *text, void (*explain)(char *report))
-{
-  char *report;
-
-  cup(1,1);
-  printf("Testing DSR: %s\n", the_title);
-
-  set_tty_raw(TRUE);
-  set_tty_echo(FALSE);
-
-  do_csi("%s", text);
-  report = get_reply();
-  cup(3,10);
-  chrprint(report);
-  if ((report = skip_csi(report)) != 0
-   && strlen(report) > 2
-   && *report++ == '?') {
-    if (explain != 0)
-      (*explain)(report);
-    else
-      show_result(SHOW_SUCCESS);
-  } else {
-    show_result(SHOW_FAILURE);
-  }
 
   restore_ttymodes();
   cup(max_lines-1, 1);
@@ -213,20 +186,6 @@ rpt_DECSMKR(MENU_ARGS)
 /******************************************************************************/
 
 static int
-scan_any(char *str, int *pos, int toc)
-{
-  int save = *pos;
-  int value = scanto(str, pos, ';');
-  if (value == 0) {
-    *pos = save;
-    value = scanto(str, pos, toc);
-    if (str[*pos] != '\0')
-      value = 0;
-  }
-  return value;
-}
-
-static int
 scan_chr(char *str, int *pos, int toc)
 {
   int value = str[*pos];
@@ -254,7 +213,7 @@ show_DataIntegrity(char *report)
 }
 
 /*
- * From Kermit 3.13
+ * From Kermit 3.13 & VT220 pocket guide
  *
  * Request  CSI 1 $ w             cursor information report
  * Response DCS 1 $ u Pr; Pc; Pp; Srend; Satt; Sflag; Pgl; Pgr; Scss; Sdesig ST
@@ -335,14 +294,14 @@ show_DECCIR(char *report)
   cup(9,10);
   show_result("Char set in GL: G%d, Char set in GR: G%d", Pgl, Pgr);
 
-  Scss  = scanto(report, &pos, ';');
+  Scss  = scan_chr(report, &pos, ';');
   cup(10,10);
   if (Scss & 0x40) {
     show_DECCIR_flag(Scss, 0x40, "Char set sizes:");
     show_DECCIR_flag(Scss, 0x08, " G3 is 96 char");
     show_DECCIR_flag(Scss, 0x04, " G2 is 96 char");
     show_DECCIR_flag(Scss, 0x02, " G1 is 96 char");
-    show_DECCIR_flag(Scss, 0x01, " G0 is 96 char");
+    show_DECCIR_flag(Scss, 0x01, " G0 is 96 char"); /* VT420 manual says this cannot happen */
   } else {
     show_result(" -> unknown char set size (0x%x)", Scss);
   }
@@ -354,35 +313,57 @@ show_DECCIR(char *report)
     cup(++n, 12);
     ++pos;
     switch (Sdesig) {
-    case 'A': show_result("British");
+    case 'B':
+      show_result("ASCII");
       break;
-    case 'Y': show_result("Italian");
+    case '<':
+      show_result("DEC supplemental");
       break;
-    case '4': show_result("Dutch");
+    case '0':
+      show_result("DEC special graphics");
+      break;
+    case 'A':
+      show_result("British");
+      break;
+    case 'Y':
+      show_result("Italian");
+      break;
+    case '4':
+      show_result("Dutch");
       break;
     case '\'':
     case 'E':
-    case '6': show_result("Norwegian/Danish");
+    case '6':
+      show_result("Norwegian/Danish");
       break;
     case '5':
-    case '?': show_result("Finnish");
+    case 'C':
+      show_result("Finnish");
       break;
     case 'g':
-    case 'L': show_result("Portuguese");
+    case 'L':
+      show_result("Portuguese");
       break;
     case 'R':
-    case 'f': show_result("French");
-    case 'Z': show_result("Spanish");
+    case 'f':
+      show_result("French");
+      break;
+    case 'Z':
+      show_result("Spanish");
       break;
     case '9':
-    case 'Q': show_result("French Canadian");
+    case 'Q':
+      show_result("French Canadian");
       break;
     case '7':
-    case 'H': show_result("Swedish");
+    case 'H':
+      show_result("Swedish");
       break;
-    case 'K': show_result("German");
+    case 'K':
+      show_result("German");
       break;
-    case '=': show_result("Swiss");
+    case '=':
+      show_result("Swiss");
       break;
     case '%':
       if ((Sdesig = report[pos]) != '\0') {
@@ -421,6 +402,7 @@ show_DECTABSR(char *report)
   while ((stop = scanto(report, &pos, '/')) != 0) {
     sprintf(buffer + strlen(buffer), " %d", stop);
   }
+  println("");
   show_result("Tab stops:%s", buffer);
   free(buffer);
 }
@@ -442,60 +424,21 @@ show_ExtendedCursorPosition(char *report)
     show_result(SHOW_FAILURE);
 }
 
-/*
- * From Kermit 3.13
- * Request  CSI ? 26 n            keyboard dialect
- * Response CSI ? 27; Ps n
- */
 static void
-show_KeyboardStatus(char *report)
+show_keypress(int row, int col)
 {
-  int pos = 0;
-  int code;
-  int save;
-  char *show = SHOW_FAILURE;
+  char *report;
+  char last[BUFSIZ];
 
-  if ((code = scanto(report, &pos, ';')) == 27
-   && (code = scan_any(report, &pos, 'n')) != 0) {
-    switch(code) {
-    case  1:  show = "North American/ASCII"; break;
-    case  2:  show = "British";              break;
-    case  4:  show = "French Canadian";      break;
-    case  6:  show = "Finnish";              break;
-    case  7:  show = "German";               break;
-    case  8:  show = "Dutch";                break;
-    case  9:  show = "Italian";              break;
-    case 11:  show = "Swiss (German)";       break;
-    case 12:  show = "Swedish";              break;
-    case 13:  show = "Norwegian/Danish";     break;
-    case 14:  show = "French";               break;
-    case 15:  show = "Spanish";              break;
-    case 16:  show = "Portugese";            break;
-    case 17:  show = "Hebrew";               break; /* FIXME: kermit says 14 */
-    default:  show = "unknown";
-    }
-  }
-  show_result(show);
-
-  save = pos;
-  code = scan_any(report, &pos, 'n');
-  if (save != pos) {
-    cup(5,10);
-    switch(code) {
-    case 0: show = "keyboard ready"; break;
-    case 3: show = "no keyboard"; break;
-    case 8: show = "keyboard busy"; break;
-    default: show = "unknown keyboard status";
-    }
-    show_result(show);
-
-    cup(6,10);
-    switch (code = scan_any(report, &pos, 'n')) {
-    case 0:  show = "LK201"; break;
-    case 1:  show = "LK401"; break;
-    default: show = "unknown keyboard type";
-    }
-    show_result(show);
+  last[0] = '\0';
+  cup(row++,1);
+  println("When you are done, press any key twice to quit.");
+  cup(row,col);
+  while (strcmp(report = instr(), last)) {
+    cup(row,col);
+    ed(0);
+    chrprint(report);
+    strcpy(last, report);
   }
 }
 
@@ -515,39 +458,6 @@ show_MultisessionStatus(char *report)
   default: show = SHOW_FAILURE;
   }
   show_result(show, Ps2);
-}
-
-static void
-show_PrinterStatus(char *report)
-{
-  int pos = 0;
-  int code = scanto(report, &pos, 'n');
-  char *show;
-
-  switch (code) {
-  case 13: show = "No printer"; break;
-  case 10: show = "Printer ready"; break;
-  case 11: show = "Printer not ready"; break;
-  case 18: show = "Printer busy"; break;
-  case 19: show = "Printer assigned to other session"; break;
-  default: show = SHOW_FAILURE;
-  }
-  show_result(show);
-}
-
-static void
-show_UDK_Status(char *report)
-{
-  int pos = 0;
-  int code = scanto(report, &pos, 'n');
-  char *show;
-
-  switch(code) {
-  case 20: show = "UDKs unlocked"; break;
-  case 21: show = "UDKs locked";   break;
-  default: show = SHOW_FAILURE;
-  }
-  show_result(show);
 }
 
 /******************************************************************************/
@@ -625,6 +535,7 @@ tst_DECCARA(MENU_ARGS)
   int right = 45;
   int bottom = max_lines-10;
 
+  decsace(TRUE);
   decaln(); /* fill the screen */
   deccara(top, left, bottom, right, 7); /* invert a rectangle) */
   deccara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
@@ -632,6 +543,17 @@ tst_DECCARA(MENU_ARGS)
   cup(max_lines-2, 1);
   ed(0);
   println("There should be an open rectangle formed by reverse-video E's");
+  holdit();
+
+  decsace(FALSE);
+  decaln(); /* fill the screen */
+  deccara(top, left, bottom, right, 7); /* invert a rectangle) */
+  deccara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
+
+  cup(max_lines-2, 1);
+  ed(0);
+  println("There should be an open rectangle formed by reverse-video E's");
+  println("combined with wrapping at the margins.");
   return MENU_HOLD;
 }
 
@@ -818,8 +740,6 @@ tst_DECIC(MENU_ARGS)
 static int
 tst_DECKBUM(MENU_ARGS)
 {
-  char *report;
-
   ed(2);
   cup(1,1);
   println(the_title);
@@ -828,21 +748,13 @@ tst_DECKBUM(MENU_ARGS)
   set_tty_echo(FALSE);
 
   deckbum(TRUE);
-  println("The keyboard is set for data processing.  Press 'q' to quit.");
-  while (*(report = instr()) != 'q' && *report != 'Q') {
-    cup(3,10);
-    ed(0);
-    chrprint(report);
-  }
+  println("The keyboard is set for data processing.");
+  show_keypress(3,10);
 
-  cup(5,1);
+  cup(10,1);
   deckbum(FALSE);
-  println("The keyboard is set for normal (typewriter) processing.  Press 'q' to quit.");
-  while (*(report = instr()) != 'q' && *report != 'Q') {
-    cup(6,10);
-    ed(0);
-    chrprint(report);
-  }
+  println("The keyboard is set for normal (typewriter) processing.");
+  show_keypress(11,10);
 
   restore_ttymodes();
   cup(max_lines-1,1);
@@ -852,9 +764,6 @@ tst_DECKBUM(MENU_ARGS)
 static int
 tst_DECKPM(MENU_ARGS)
 {
-  char *report;
-  char last[BUFSIZ];
-
   ed(2);
   cup(1,1);
   println(the_title);
@@ -862,24 +771,14 @@ tst_DECKPM(MENU_ARGS)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  last[0] = '\0';
   deckpm(TRUE);
-  println("The keyboard is set for position reports.  Press a key twice to quit.");
-  while (strcmp(report = instr(), last)) {
-    cup(3,10);
-    ed(0);
-    chrprint(report);
-    strcpy(last, report);
-  }
+  println("The keyboard is set for position reports.");
+  show_keypress(3,10);
 
-  cup(5,1);
+  cup(10,1);
   deckpm(FALSE);
-  println("The keyboard is set for character codes.  Press 'q' to quit.");
-  while (*(report = instr()) != 'q' && *report != 'Q') {
-    cup(6,10);
-    ed(0);
-    chrprint(report);
-  }
+  println("The keyboard is set for character codes.");
+  show_keypress(11,10);
 
   restore_ttymodes();
   cup(max_lines-1,1);
@@ -889,8 +788,6 @@ tst_DECKPM(MENU_ARGS)
 static int
 tst_DECNKM(MENU_ARGS)
 {
-  char *report;
-
   ed(2);
   cup(1,1);
   println(the_title);
@@ -900,22 +797,12 @@ tst_DECNKM(MENU_ARGS)
 
   decnkm(FALSE);
   println("Press one or more keys on the keypad.  They should generate numeric codes.");
-  println("When you are done, press 'q' to quit.");
-  while (*(report = instr()) != 'q' && *report != 'Q') {
-    cup(5,10);
-    ed(0);
-    chrprint(report);
-  }
+  show_keypress(3,10);
 
   cup(10,1);
   decnkm(TRUE);
   println("Press one or more keys on the keypad.  They should generate control codes.");
-  println("When you are done, press 'q' to quit.");
-  while (*(report = instr()) != 'q' && *report != 'Q') {
-    cup(12,10);
-    ed(0);
-    chrprint(report);
-  }
+  show_keypress(11,10);
 
   decnkm(FALSE);
   cup(max_lines-1,1);
@@ -935,6 +822,7 @@ tst_DECRARA(MENU_ARGS)
   int right = 45;
   int bottom = max_lines-10;
 
+  decsace(TRUE);
   decaln(); /* fill the screen */
   decrara(top, left, bottom, right, 7); /* invert a rectangle) */
   decrara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
@@ -942,6 +830,17 @@ tst_DECRARA(MENU_ARGS)
   cup(max_lines-2, 1);
   ed(0);
   println("There should be an open rectangle formed by reverse-video E's");
+  holdit();
+
+  decsace(FALSE);
+  decaln(); /* fill the screen */
+  decrara(top, left, bottom, right, 7); /* invert a rectangle) */
+  decrara(top+1, left+1, bottom-1, right-1, 7); /* invert a rectangle) */
+
+  cup(max_lines-2, 1);
+  ed(0);
+  println("There should be an open rectangle formed by reverse-video E's");
+  println("combined with wrapping at the margins.");
   return MENU_HOLD;
 }
 
@@ -985,7 +884,7 @@ tst_ISO_DECRPM(MENU_ARGS)
     report = instr();
     cup(mode+2,10);
     printf("%8s", ansi_modes[mode].name);
-    if (log_fp != 0)
+    if (LOG_ENABLED)
       fprintf(log_fp, "Testing %8s\n", ansi_modes[mode].name);
     chrprint(report);
     if ((report = skip_csi(report)) != 0
@@ -1056,7 +955,7 @@ tst_DEC_DECRPM(MENU_ARGS)
     report = instr();
     cup(mode+2,10);
     printf("%8s", dec_modes[mode].name);
-    if (log_fp != 0)
+    if (LOG_ENABLED)
       fprintf(log_fp, "Testing %8s\n", dec_modes[mode].name);
     chrprint(report);
     if ((report = skip_csi(report)) != 0
@@ -1215,6 +1114,32 @@ tst_DECRQUPSS(MENU_ARGS)
   return MENU_HOLD;
 }
 
+/*
+ * Selective-Erase Rectangular area
+ */
+static int
+tst_DECSERA(MENU_ARGS)
+{
+  int top = 5;
+  int left = 5;
+  int right = 45;
+  int bottom = max_lines-10;
+
+  decaln();
+  decsca(1);
+  decfra('E', top+1, left+1, bottom-1, right-1);
+  decsca(1);
+  decsera(top, left, bottom, right); /* erase the inside */
+
+  cup(max_lines-2, 1);
+  ed(0);
+  println("There should be an open rectangle formed by blanks on a background of E's");
+
+  holdit();
+  decaln();
+  return MENU_NOHOLD;
+}
+
 /* FIXME: use DECRQSS to get reports */
 static int
 tst_DECSNLS(MENU_ARGS)
@@ -1240,82 +1165,10 @@ tst_DECSNLS(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
-/* Test soft terminal-reset - Vt400 */
-static int
-tst_DECSTR(MENU_ARGS)
-{
-  return not_impl(PASS_ARGS);
-}
-
 static int
 tst_DECTABSR(MENU_ARGS)
 {
   return any_decrqpsr(PASS_ARGS, 2);
-}
-
-static int
-tst_DECUDK(MENU_ARGS)
-{
-  int key;
-
-  static struct {
-    int code;
-    char *name;
-  } keytable[] = {
-    /* xterm programs these: */
-    { 11, "F1" },
-    { 12, "F2" },
-    { 13, "F3" },
-    { 14, "F4" },
-    { 15, "F5" },
-    /* vt420 programs these: */
-    { 17, "F6" },
-    { 18, "F7" },
-    { 19, "F8" },
-    { 20, "F9" },
-    { 21, "F10" },
-    { 23, "F11" },
-    { 24, "F12" },
-    { 25, "F13" },
-    { 26, "F14" },
-    { 28, "F15" },
-    { 29, "F16" },
-    { 31, "F17" },
-    { 32, "F18" },
-    { 33, "F19" },
-    { 34, "F20" } };
-
-  for (key = 0; key < sizeof(keytable)/sizeof(keytable[0]); key++) {
-    char temp[80];
-    char *s;
-    temp[0] = '\0';
-    for (s = keytable[key].name; *s; s++)
-      sprintf(temp + strlen(temp), "%02x", *s & 0xff);
-    do_dcs("1;1|%d/%s", keytable[key].code, temp);
-  }
-
-  cup(1,1);
-  println(the_title);
-  println("Press 'q' to quit.  Function keys should echo their labels.");
-  println("(On a DEC terminal you must press SHIFT as well).");
-
-  set_tty_raw(TRUE);
-  set_tty_echo(FALSE);
-
-  for (;;) {
-    char *report = instr();
-    if (*report == 'q')
-      break;
-    cup(5,10);
-    el(2);
-    chrprint(report);
-  }
-
-  do_dcs("0"); /* clear all keys */
-
-  restore_ttymodes();
-  cup(max_lines-1,1);
-  return MENU_HOLD;
 }
 
 static int
@@ -1334,12 +1187,6 @@ static int
 tst_DSR_data_ok(MENU_ARGS)
 {
   return any_DSR(PASS_ARGS, "?75n", show_DataIntegrity);
-}
-
-static int
-tst_DSR_keyboard(MENU_ARGS)
-{
-  return any_DSR(PASS_ARGS, "?26n", show_KeyboardStatus);
 }
 
 static int
@@ -1385,18 +1232,6 @@ tst_DSR_multisession(MENU_ARGS)
 }
 
 static int
-tst_DSR_printer(MENU_ARGS)
-{
-  return any_DSR(PASS_ARGS, "?15n", show_PrinterStatus);
-}
-
-static int
-tst_DSR_userkeys(MENU_ARGS)
-{
-  return any_DSR(PASS_ARGS, "?25n", show_UDK_Status);
-}
-
-static int
 tst_SRM(MENU_ARGS)
 {
   int oldc, newc;
@@ -1428,6 +1263,52 @@ tst_SRM(MENU_ARGS)
   cup(max_lines-1,1);
   restore_ttymodes();
   return MENU_HOLD;
+}
+
+/******************************************************************************/
+
+static int
+tst_PageFormat(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test set columns per page (DECSCPP)",               not_impl },
+      { "Test columns mode (DECCOLM)",                       not_impl },
+      { "Test set lines per page (DECSLPP)",                 not_impl },
+      { "Test set left and right margins (DECSLRM)",         not_impl },
+      { "Test set vertical split-screen (DECVSSM)",          not_impl },
+      { "",                                                  0 }
+    };
+
+  do {
+    ed(2);
+    title(0); printf("Page Format Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+
+static int
+tst_PageMovement(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Next Page (NP)",                               not_impl },
+      { "Test Preceding Page (PP)",                          not_impl },
+      { "Test Page Position Absolute (PPA)",                 not_impl },
+      { "Test Page Position Backward (PPB)",                 not_impl },
+      { "Test Page Position Relative (PPR)",                 not_impl },
+      { "",                                                  0 }
+    };
+
+  do {
+    ed(2);
+    title(0); printf("Page Format Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
 }
 
 /******************************************************************************/
@@ -1557,8 +1438,7 @@ tst_VT420_rectangle(MENU_ARGS)
       { "Test Erase Rectangular area (DECERA)",              tst_DECERA },
       { "Test Fill Rectangular area (DECFRA)",               tst_DECFRA },
       { "Test Reverse-Attributes in Rectangular Area (DECRARA)", tst_DECRARA },
-      { "Test Selective-Attribute Change Extent (DECSACE)",  not_impl },
-      { "Test Selective-Erase Rectangular area (DECSERA)",   not_impl },
+      { "Test Selective-Erase Rectangular area (DECSERA)",   tst_DECSERA },
       { "",                                                  0 }
     };
 
@@ -1653,8 +1533,8 @@ tst_VT420_reports(MENU_ARGS)
       { "Test Device Status Reports",                        tst_VT420_report_device },
       { "Test Presentation State Reports",                   tst_VT420_report_presentation },
       { "Test Terminal State Reports",                       tst_VT420_report_terminal },
-      { "Test Window Report (DECRPDE)",                      tst_DECRQDE },
       { "Test User-Preferred Supplemental Set (DECAUPSS)",   tst_DECRQUPSS },
+      { "Test Window Report (DECRPDE)",                      tst_DECRQDE },
       { "",                                                  0 }
     };
 
@@ -1700,6 +1580,8 @@ tst_vt420(MENU_ARGS)
       { "Test editing sequences",                            tst_VT420_editing },
       { "Test keyboard-control",                             tst_VT420_keyboard_ctl },
       { "Test macro-definition (DECDMAC)",                   not_impl },
+      { "Test page-format controls",                         tst_PageFormat },
+      { "Test page-movement controls",                       tst_PageMovement },
       { "Test printing functions",                           tst_VT420_printing },
       { "Test rectangular area functions",                   tst_VT420_rectangle },
       { "Test reporting functions",                          tst_VT420_reports },
