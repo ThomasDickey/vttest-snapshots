@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.51 1999/07/12 10:47:04 tom Exp $ */
+/* $Id: vttest.h,v 1.53 1999/10/07 23:55:05 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -219,6 +219,7 @@ extern int tst_DECSTR(MENU_ARGS);
 extern int tst_DECTCEM(MENU_ARGS);
 extern int tst_DECUDK(MENU_ARGS);
 extern int tst_DSR_keyboard(MENU_ARGS);
+extern int tst_DSR_locator(MENU_ARGS);
 extern int tst_DSR_printer(MENU_ARGS);
 extern int tst_DSR_userkeys(MENU_ARGS);
 extern int tst_ECH(MENU_ARGS);
@@ -235,6 +236,7 @@ extern int tst_keyboard(MENU_ARGS);
 extern int tst_keyboard_layout(char *scs_params);
 extern int tst_movements(MENU_ARGS);
 extern int tst_nonvt100(MENU_ARGS);
+extern int tst_printing(MENU_ARGS);
 extern int tst_reports(MENU_ARGS);
 extern int tst_rst(MENU_ARGS);
 extern int tst_screen(MENU_ARGS);

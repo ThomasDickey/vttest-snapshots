@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.59 1999/07/12 10:46:41 tom Exp $ */
+/* $Id: esc.c,v 1.63 1999/10/08 01:36:41 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -399,6 +399,18 @@ decdc(int pn) /* VT400 Delete Column */
 }
 
 void
+decefr(int top, int left, int bottom, int right) /* DECterm Enable filter rectangle */
+{
+  do_csi("%d;%d;%d;%d'w", top, left, bottom, right);
+}
+
+void
+decelr(int all_or_one, int pixels_or_cells) /* DECterm Enable Locator Reporting */
+{
+  do_csi("%d;%d'z", all_or_one, pixels_or_cells);
+}
+
+void
 decera(int top, int left, int bottom, int right) /* VT400 Erase Rectangular area */
 {
   do_csi("%d;%d;%d;%d$z", top, left, bottom, right);
@@ -489,6 +501,24 @@ decnkm(int flag) /* VT400: Numeric Keypad */
 }
 
 void
+decpex(int flag) /* VT220: printer extent mode */
+{
+  if (flag)
+    sm("?19"); /* full screen (page) */
+  else
+    rm("?19"); /* scrolling region */
+}
+
+void
+decpff(int flag) /* VT220: print form feed mode */
+{
+  if (flag)
+    sm("?18"); /* form feed */
+  else
+    rm("?18"); /* no form feed */
+}
+
+void
 decnrcm(int flag) /* VT220: National replacement character set */
 {
   if (flag)
@@ -513,6 +543,12 @@ void
 decreqtparm(int pn)  /* Request Terminal Parameters */
 {
   brc(pn,'x');
+}
+
+void
+decrqlp(int mode) /* DECterm Request Locator Position */
+{
+  do_csi("%d'|", mode);
 }
 
 void
@@ -581,6 +617,12 @@ void
 decsera(int top, int left, int bottom, int right) /* VT400 Selective erase rectangular area */
 {
   do_csi("%d;%d;%d;%d${", top, left, bottom, right);
+}
+
+void
+decsle(int mode) /* DECterm Select Locator Events */
+{
+  do_csi("%d'{", mode);
 }
 
 void
@@ -673,6 +715,56 @@ ind(void)  /* Index */
 {
   esc("D");
   padding(20); /* vt220 */
+}
+
+/* The functions beginning "mc_" are variations of Media Copy (MC) */
+
+void
+mc_autoprint(int flag) /* VT220: auto print mode */
+{
+  do_csi("?%di", flag ? 5 : 4);
+}
+
+void
+mc_printer_controller(int flag) /* VT220: printer controller mode */
+{
+  do_csi("%di", flag ? 5 : 4);
+}
+
+void
+mc_print_page(void) /* VT220: print page */
+{
+  do_csi("?0i");
+}
+
+void
+mc_print_composed(void) /* VT300: print composed main display */
+{
+  do_csi("?10i");
+}
+
+void
+mc_print_all_pages(void) /* VT300: print composed all pages */
+{
+  do_csi("?11i");
+}
+
+void
+mc_print_cursor_line(void) /* VT220: print cursor line */
+{
+  do_csi("?1i");
+}
+
+void
+mc_printer_start(int flag) /* VT300: start/stop printer-to-host session */
+{
+  do_csi("?%di", flag ? 9 : 8);
+}
+
+void
+mc_printer_assign(int flag) /* VT300: assign/release printer to active session */
+{
+  do_csi("?%di", flag ? 18 : 19);
 }
 
 void

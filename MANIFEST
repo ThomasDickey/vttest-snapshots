@@ -1,4 +1,4 @@
-MANIFEST for vttest, version d990712
+MANIFEST for vttest, version d991007
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -20,6 +20,7 @@ makefile.in                     template for makefile
 mkdirs.sh                       mkinstalldirs script, from X11
 nonvt100.c                      non-VT100 tests
 patchlev.h                      patch-level of VTTEST
+printer.c                       test printer functions
 reports.c                       test device-reports
 reset.c                         test-functions for terminal-reset
 setup.c                         modify test-parameters

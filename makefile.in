@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.23 1999/01/20 10:39:45 tom Exp $
+# $Id: makefile.in,v 1.24 1999/10/07 23:23:58 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -44,6 +44,7 @@ C_SRC = \
 	keyboard.c \
 	main.c \
 	nonvt100.c \
+	printer.c \
 	reports.c \
 	reset.c \
 	setup.c \
@@ -66,6 +67,7 @@ OBJS  = \
 	keyboard.o \
 	main.o \
 	nonvt100.o \
+	printer.o \
 	reports.o \
 	reset.o \
 	setup.o \
