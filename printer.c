@@ -1,4 +1,4 @@
-/* $Id: printer.c,v 1.3 1999/10/08 01:37:46 tom Exp $ */
+/* $Id: printer.c,v 1.5 1999/10/13 23:39:43 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -7,29 +7,33 @@ static int pex_mode;
 static int pff_mode;
 static int started;
 static int assigned;
+static int margin_lo;
+static int margin_hi;
 
 static void
-setup_printout(int visible, char * whole)
+setup_printout(MENU_ARGS, int visible, char * whole)
 {
-  int top = 7;
-  int bottom = max_lines - 5;
+  margin_lo = 7;
+  margin_hi = max_lines - 5;
 
   vt_clear(2);
   cup(1,1);
+  println(the_title);
   println("Test screen for printing.  We will set scrolling margins at");
-  printf("lines %d and %d, and write a test pattern there.\n", top, bottom);
+  printf("lines %d and %d, and write a test pattern there.\n", margin_lo, margin_hi);
   printf("The test pattern should be %s.\n", visible
         ? "visible"
         : "invisible");
   printf("The %s should be in the printer's output.\n", whole);
-  decstbm(top, bottom);
-  cup(top, 1);
+  decstbm(margin_lo, margin_hi);
+  cup(margin_lo, 1);
 }
 
 static void
 test_printout(void)
 {
   int row, col;
+  vt_move(margin_hi,1);
   for (row = 0; row < max_lines; row++) {
     printf("%3d:", row);
     for (col = 0; col < min_cols - 5; col++) {
@@ -77,7 +81,7 @@ tst_Start(MENU_ARGS)
 static int
 tst_autoprint(MENU_ARGS)
 {
-  setup_printout(TRUE, "scrolling region");
+  setup_printout(PASS_ARGS, TRUE, "scrolling region");
   mc_autoprint(TRUE);
   test_printout();
   mc_autoprint(FALSE);
@@ -88,7 +92,7 @@ tst_autoprint(MENU_ARGS)
 static int
 tst_printer_controller(MENU_ARGS)
 {
-  setup_printout(FALSE, "scrolling region");
+  setup_printout(PASS_ARGS, FALSE, "scrolling region");
   mc_printer_controller(TRUE);
   test_printout();
   mc_printer_controller(FALSE);
@@ -99,7 +103,7 @@ tst_printer_controller(MENU_ARGS)
 static int
 tst_print_all_pages(MENU_ARGS)
 {
-  setup_printout(TRUE, "contents of all pages");
+  setup_printout(PASS_ARGS, TRUE, "contents of all pages");
   test_printout();
   mc_print_all_pages();
   cleanup_printout();
@@ -109,9 +113,13 @@ tst_print_all_pages(MENU_ARGS)
 static int
 tst_print_cursor(MENU_ARGS)
 {
-  setup_printout(TRUE, "end of the scrolling region");
+  int row;
+  setup_printout(PASS_ARGS, TRUE, "reverse of the scrolling region");
   test_printout();
-  mc_print_cursor_line();
+  for (row = margin_hi; row >= margin_lo; row--) {
+    vt_move(row,1);
+    mc_print_cursor_line();
+  }
   cleanup_printout();
   return MENU_HOLD;
 }
@@ -119,7 +127,7 @@ tst_print_cursor(MENU_ARGS)
 static int
 tst_print_display(MENU_ARGS)
 {
-  setup_printout(TRUE, "whole display");
+  setup_printout(PASS_ARGS, TRUE, "whole display");
   test_printout();
   mc_print_composed();
   cleanup_printout();
@@ -129,7 +137,7 @@ tst_print_display(MENU_ARGS)
 static int
 tst_print_page(MENU_ARGS)
 {
-  setup_printout(TRUE, pex_mode ? "whole page" : "scrolling region");
+  setup_printout(PASS_ARGS, TRUE, pex_mode ? "whole page" : "scrolling region");
   test_printout();
   mc_print_page();
   cleanup_printout();

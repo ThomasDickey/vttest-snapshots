@@ -1,5 +1,11 @@
-$Id: CHANGES,v 1.78 1999/10/08 01:40:46 tom Exp $
+$Id: CHANGES,v 1.80 1999/10/14 09:32:41 tom Exp $
 -------------------------------------------------------------------------------
+
+991014
+	modify position of cursor for printer tests, so autoprint tests work
+	as expected.
+
+	correct escape sequence for mc_print_page().
 
 991007
 	implement tests for Media Copy, e.g., transparent printing.
