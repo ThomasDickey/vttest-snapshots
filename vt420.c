@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.50 1996/10/30 00:33:35 tom Exp $ */
+/* $Id: vt420.c,v 1.51 1996/11/14 01:52:35 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -944,7 +944,6 @@ tst_ISO_DECRPM(MENU_ARGS)
       }
     } else {
       show_result(SHOW_FAILURE);
-      break;
     }
   }
 
@@ -1015,7 +1014,6 @@ tst_DEC_DECRPM(MENU_ARGS)
       }
     } else {
       show = SHOW_FAILURE;
-      break;
     }
     show_result(show);
   }

@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.22 1996/09/09 23:36:08 tom Exp $ */
+/* $Id: reports.c,v 1.23 1996/11/14 01:38:36 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -52,12 +52,20 @@ struct table {
     {   7, "soft character set (DRCS)" },               /* vt400 */
     {   8, "user-defined keys" },                       /* vt400 */
     {   9, "national replacement character-sets" },     /* kermit */
+    {  12, "Serbo-Croation (SCS)" },                    /* vt500 */
     {  13, "local editing mode" },                      /* kermit */
     {  15, "DEC technical set" },                       /* vt400 */
     {  16, "locator device port" },                     /* kermit */
     {  18, "user windows" },                            /* vt400 */
     {  19, "two sessions" },                            /* vt400 */
     {  21, "horizontal scrolling" },                    /* vt400 */
+    {  22, "color" },                                   /* vt500 */
+    {  23, "Greek" },                                   /* vt500 */
+    {  24, "Turkish" },                                 /* vt500 */
+    {  42, "ISO Latin-2" },                             /* vt500 */
+    {  44, "PC Term" },                                 /* vt500 */
+    {  45, "Soft key mapping" },                        /* vt500 */
+    {  46, "ASCII Terminal emulation (WYSE,TVI,...)" }, /* vt500 */
     {  -1, "" }
 };
 
@@ -249,6 +257,7 @@ tst_DA_3(MENU_ARGS)
   return MENU_HOLD;
 }
 
+/* Not supported above VT320 */
 static int
 tst_DECREQTPARM(MENU_ARGS)
 {

@@ -1,8 +1,23 @@
-/* $Id: vt52.c,v 1.11 1996/10/30 02:05:08 tom Exp $ */
+/* $Id: vt52.c,v 1.12 1996/11/14 00:48:53 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
 #include <esc.h>
+
+static int
+testing(char *name, int row)
+{
+  printf("Testing %s. ", name);
+  printf("A real VT%d will not recognize %s at this point", terminal_id(), name);
+  println("");
+  return row+1;
+}
+
+static int
+isreturn(char *reply)
+{
+  return (*reply == '\r' || *reply == '\n');
+}
 
 int
 tst_vt52(MENU_ARGS)
@@ -18,6 +33,7 @@ tst_vt52(MENU_ARGS)
 
   int i,j;
   char *response;
+  char *temp;
   VTLEVEL save;
 
   save_level(&save);
@@ -124,7 +140,7 @@ tst_vt52(MENU_ARGS)
    * emulation of VT52 does not recognize DA -- so we use DECID in this case.
    */
   set_tty_raw(TRUE);
-  decid();     /* Identify     */
+  decid();      /* Identify     */
   response = get_reply();
   println("");
 
@@ -146,35 +162,64 @@ tst_vt52(MENU_ARGS)
   /*
    * Verify whether returning to ANSI mode restores the previous operating
    * level.  If it was a VT220, we can check this by seeing if 8-bit controls
-   * work; if a VT420 we can check the value of DECSCL.
+   * work; if a VT420 we can check the value of DECSCL.  A real VT420 goes to
+   * VT100 mode.
    */
   if (terminal_id() >= 200) {
+    int row = 8;
     set_level(0);  /* Reset ANSI (VT100) mode, Set VT52 mode  */
     println("Verify operating level after restoring ANSI mode");
     esc("<");    /* Enter ANSI mode (VT100 mode) */
     set_tty_raw(TRUE);
     if (save.cur_level >= 3) { /* VT340 implements DECRQSS */
-      printf("Testing DECSCL ");
+      vt_move(row,1);
+      row = testing("DECSCL", row);
+      println("You should have to press return to continue:");
+      println("");
       decrqss("\"p");
       response = get_reply();
+      vt_move(++row,10);
+      printf("Response was");
       chrprint(response);
+      if (isreturn(response)) {
+        show_result(SHOW_SUCCESS);
+      } else {
+        if (parse_decrqss(response, "\"p") > 0)
+          printf("DECSCL recognized --");
+        show_result(SHOW_FAILURE);
+      }
       println("");
-      if (parse_decrqss(response, "\"p") > 0)
-        printf("MAYBE:%s\n", response);
-      else
-        printf("NO:%s\n", response);
+      row++;
     }
+
     if (save.cur_level >= 2) {
-      vt_move(10,1);
-      printf("Testing S8C1T ");
+      vt_move(++row,1);
+      row = testing("S8C1T", row);
       s8c1t(1);
-      cup(1,1); dsr(6);
+      cup(1,1);
+      dsr(6);
       response = instr();
-      vt_move(10,15);
+      vt_move(row,10);
+      printf("Response to CUP(1,1)/DSR(6)");
       chrprint(response);
-      if ((response = skip_prefix(csi_input(), response)) != 0
-       && !strcmp("1;1R", response))
-        printf(SHOW_SUCCESS);
+      if ((temp = skip_prefix(csi_input(), response)) != 0) {
+        if (!strcmp("1;1R", temp)) {
+          printf("S8C1T recognized --");
+          show_result(SHOW_FAILURE);
+        } else {
+          printf("unknown response --");
+          show_result(SHOW_FAILURE);
+        }
+      } else {
+        input_8bits = FALSE;    /* we expect this anyway */
+        if ((temp = skip_prefix(csi_input(), response)) != 0
+         && !strcmp("1;1R", temp)) {
+          show_result(SHOW_SUCCESS);
+        } else {
+          printf("unknown response --");
+          show_result(SHOW_FAILURE);
+        }
+      }
     }
     restore_level(&save);
     restore_ttymodes();
