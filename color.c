@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.11 1996/08/03 19:05:31 tom Exp $ */
+/* $Id: color.c,v 1.13 1996/08/07 10:57:22 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -462,6 +462,7 @@ test_color_screen(void)
  * underline 4/24
  * blink     5/25
  * inverse   7/27
+ * concealed 8/28
  */
 static void
 test_iso_6429_sgr(void)
@@ -487,14 +488,20 @@ test_iso_6429_sgr(void)
   cup(18,45); c_sgr("1");            printf("bold underline blink negative");
   cup(20, 6); c_sgr(""); set_foreground(9); printf("original foreground");
   cup(20,45); c_sgr(""); set_background(9); printf("original background");
+  cup(22, 1); c_sgr(";8");           printf("concealed");
+  cup(22,40); c_sgr("8;7");          printf("concealed negative");
   c_sgr(""); /* same as c_sgr("0") */
+  printf(" <- concealed text");
 
   rm("?5"); /* Inverse video off */
   cup(max_lines-1,1); el(0); printf("Dark background. "); holdit();
 
   sm("?5"); /* Inverse video */
   cup(max_lines-1,1); el(0); printf("Light background. "); holdit();
+
   rm("?5");
+  cup(max_lines-1,1); el(0); printf("Dark background. "); holdit();
+
   reset_colors();
 }
 

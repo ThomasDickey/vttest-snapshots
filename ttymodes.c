@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.6 1996/06/21 21:07:40 tom Exp $ */
+/* $Id: ttymodes.c,v 1.7 1996/08/07 01:49:28 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -174,9 +174,9 @@ set_tty_crmod(int enabled)
 #ifdef UNIX
 # if USE_POSIX_TERMIOS || USE_TERMIO
 #   if USE_POSIX_TERMIOS
-#     define MASK_CRMOD ((unsigned long) (INLCR | IGNCR | ICRNL | IXON))
+#     define MASK_CRMOD ((unsigned long) (ICRNL | IXON))
 #   else
-#     define MASK_CRMOD ((unsigned long) (INLCR | IGNCR | ICRNL))
+#     define MASK_CRMOD ((unsigned long) (ICRNL))
 #   endif
     if (enabled) {
       new_modes.c_iflag |= MASK_CRMOD;
@@ -227,7 +227,6 @@ set_tty_raw(int enabled)
 #ifdef UNIX
 # if USE_POSIX_TERMIOS || USE_TERMIO
     new_modes.c_iflag      = 0;
-    new_modes.c_oflag      = 0;
     new_modes.c_lflag      = 0;
     new_modes.c_cc[VMIN]   = 1;
     new_modes.c_cc[VTIME]  = 0;
