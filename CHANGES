@@ -1,7 +1,11 @@
-$Id: CHANGES,v 1.39 1996/09/10 00:36:07 tom Exp $
+$Id: CHANGES,v 1.41 1996/09/11 11:03:41 tom Exp $
 -------------------------------------------------------------------------------
 
 VERSION 2.6
+
+960911
+	corrected DECBI, DECFI (documentation from Jeffrey Altman), SRM (on
+	VT420) tests.
 
 960908
 	implement DECDLD tests.

@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.4 1996/09/09 23:01:30 tom Exp $ */
+/* $Id: sixel.c,v 1.5 1996/09/11 01:56:39 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -157,10 +157,11 @@ tst_DECDLD(MENU_ARGS)
 {
   char *s;
 
+  vt_move(1,1);
   printf("Working...\n");
   for (s = font_string; *s; s++) {
     putchar(*s);
-    if (*s == ';') {
+    if (*s == '\n') {
       fflush(stdout);
       padding(20);
     }
@@ -211,6 +212,7 @@ static int
 tst_cleanup(MENU_ARGS)
 {
   do_dcs("1;1;2%c @", L_CURL);
+  padding(20);
   return MENU_NOHOLD;
 }
 

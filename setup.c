@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.18 1996/09/09 19:51:52 tom Exp $ */
+/* $Id: setup.c,v 1.19 1996/09/11 01:54:25 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -183,7 +183,7 @@ tst_setup(MENU_ARGS)
     sprintf(txt_input8, "Receive %d-bit controls", input_8bits ? 8 : 7);
     sprintf(txt_DECSCL, "Operating level %d (VT%d00)",
         cur_level, cur_level);
-    sprintf(txt_logging, "Logging %s", log_disabled ? "disabled" : "enabled");
+    sprintf(txt_logging, "Logging %s", LOG_ENABLED ? "enabled" : "disabled");
     sprintf(txt_padded, "Padding %s", use_padding ? "enabled" : "disabled");
 
     vt_clear(2);
