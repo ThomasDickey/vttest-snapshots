@@ -1,16 +1,64 @@
-/* $Id: esc.h,v 1.7 1996/08/06 09:51:59 tom Exp $ */
+/* $Id: esc.h,v 1.16 1996/08/19 01:45:51 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
 
+#define ESC 27	/* 033 */
+
+/* ANSI modes for DECRQM, DECRPM, SM and RM */
+#define GATM      1    /* guarded area transfer (disabled) */
+#define AM        2    /* keyboard action */
+#define CRM       3    /* control representation */
+#define IRM       4    /* insert/replace */
+#define SRTM      5    /* status reporting transfer (disabled) */
+#define VEM       7    /* vertical editing (disabled) */
+#define HEM      10    /* horizontal editing (disabled) */
+#define PUM      11    /* positioning unit (disabled) */
+#define SRM      12    /* send/receive */
+#define FEAM     13    /* format effector action (disabled) */
+#define FETM     14    /* format effector transfer (disabled) */
+#define MATM     15    /* multiple area transfer (disabled) */
+#define TTM      16    /* transfer termination (disabled) */
+#define SATM     17    /* selected area transfer (disabled) */
+#define TSM      18    /* tabulation stop (disabled) */
+#define EBM      19    /* editing boundary (disabled) */
+#define LNM      20    /* line feed/new line */
+
+/* DEC modes for DECRQM, DECRPM, SM and RM */
+#define DECCKM    1    /* cursor keys */
+#define DECANM    2    /* ANSI */
+#define DECCOLM   3    /* column */
+#define DECSCLM   4    /* scrolling */
+#define DECSCNM   5    /* screen */
+#define DECOM     6    /* origin */
+#define DECAWM    7    /* autowrap */
+#define DECARM    8    /* autorepeat */
+#define DECPFF   18    /* print form feed */
+#define DECPEX   19    /* printer extent */
+#define DECTCEM  25    /* text cursor enable */
+#define DECNRCM  42    /* national replacement character set */
+#define DECHCCM  60    /* horizontal cursor coupling */
+#define DECVCCM  61    /* vertical cursor coupling */
+#define DECPCCM  64    /* page cursor coupling */
+#define DECNKM   66    /* numeric keypad */
+#define DECBKM   67    /* backarrow key */
+#define DECKBUM  68    /* keyboard usage */
+#define DECVSSM  69    /* vertical split */
+#define DECXRLM  73    /* transmit rate linking */
+#define DECKPM   81    /* keyboard positioning */
+
 /* esc.c */
+char *csi_input(void);
+char *csi_output(void);
+char *dcs_input(void);
+char *dcs_output(void);
 char *instr(void);
+char *st_input(void);
+char *st_output(void);
 char inchar(void);
 void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
 void brc3(int pn1, int pn2, int pn3, int c);
-void brcstr(char *ps, int c);
-void c8c1t(int flag);
 void cbt(int pn);
 void cha(int pn);
 void cht(int pn);
@@ -31,6 +79,7 @@ void deckpnm(void);
 void decll(char *ps);
 void decrc(void);
 void decreqtparm(int pn);
+void decrqss(char *pn);
 void decsc(void);
 void decsca(int pn1);
 void decsed(int pn1);
@@ -39,6 +88,8 @@ void decstbm(int pn1, int pn2);
 void decswl(void);
 void dectst(int pn);
 void dl(int pn);
+void do_csi(char *fmt, ...) GCC_PRINTFLIKE(1,2);
+void do_dcs(char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void dsr(int pn);
 void ech(int pn);
 void ed(int pn);
@@ -59,16 +110,16 @@ void readnl(void);
 void ri(void);
 void ris(void);
 void rm(char *ps);
+void s8c1t(int flag);
 void scs(int g, int c);
-void sd(int pn);
+void sd_dec(int pn);
+void sd_iso(int pn);
 void sgr(char *ps);
 void sl(int pn);
 void sm(char *ps);
 void sr(int pn);
 void su(int pn);
 void tbc(int pn);
-void trmop(int fc, int arg);
-void ttybin(int bin);
 void vpa(int pn);
 void vt52cup(int l, int c);
 void zleep(int t);

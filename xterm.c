@@ -1,12 +1,22 @@
-/* $Id: xterm.c,v 1.4 1996/08/02 23:39:38 tom Exp $ */
+/* $Id: xterm.c,v 1.11 1996/08/19 00:17:45 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
-#include <xterm.h>
+
+#define MCHR(c) (c - ' ')
 
 static void
-test_modify_ops(void)
+show_click(int y, int x, int c)
+{
+  cup(y,x);
+  putchar(c);
+  cup(y,x);
+  fflush(stdout);
+}
+
+static int
+test_modify_ops(MENU_ARGS)
 {
   int n;
   int wide, high;
@@ -135,11 +145,124 @@ test_modify_ops(void)
   ed(2);
   println("Raise");
   brc(5, 't');
-  holdit();
+  return MENU_HOLD;
 }
 
-static void
-test_report_ops(void)
+/* Mouse Highlight Tracking */
+static int
+test_mouse_hilite(MENU_ARGS)
+{
+  int y = 0, x = 0;
+
+  ed(2);
+  cup(1,1);
+
+  sm("?1001");
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
+  for(;;) {
+    char *report = instr();
+    if (*report == 'q')
+      break;
+    cup(3,10); el(2); chrprint(report);
+    if ((report = skip_prefix(csi_input(), report)) != 0) {
+      if (*report == 'M'
+       && strlen(report) == 4) {
+	int b = MCHR(report[1]);
+	b &= 3;
+	x = MCHR(report[2]);
+	y = MCHR(report[3]);
+	if (b != 3) {
+	  /* send the xterm the highlighting range (it MUST be done first) */
+	  do_csi("1;%d;%d;%d;%d;T", x, y, 10, 20);
+	  /* now, show the mouse-click */
+	  show_click(y, x, b + 1 + '0');
+	}
+	/* interpret the event */
+	cup(4,10); el(2);
+	printf("tracking: code %#x (%d,%d)", MCHR(report[1]), y, x);
+	fflush(stdout);
+      } else if (*report == 'T' && strlen(report) == 7) {
+	/* interpret the event */
+	cup(4,10); el(2);
+	printf("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
+	  MCHR(report[2]), MCHR(report[1]),
+	  MCHR(report[4]), MCHR(report[3]),
+	  MCHR(report[6]), MCHR(report[5]));
+	if (MCHR(report[2]) != y
+	 || MCHR(report[1]) != x)
+	  show_click(MCHR(report[2]), MCHR(report[1]), 's');
+	if (MCHR(report[4]) != y
+	 || MCHR(report[3]) != x)
+	  show_click(MCHR(report[4]), MCHR(report[3]), 'e');
+	if (MCHR(report[6]) != y
+	 || MCHR(report[5]) != x)
+	  show_click(MCHR(report[6]), MCHR(report[5]), 'm');
+      } else if (*report == 't' && strlen(report) == 3) {
+	/* interpret the event */
+	cup(4,10); el(2);
+	printf("done: end(%d,%d)",
+	  MCHR(report[2]), MCHR(report[1]));
+	if (MCHR(report[2]) != y
+	 || MCHR(report[1]) != x)
+	  show_click(MCHR(report[2]), MCHR(report[1]), 'e');
+      }
+    }
+  }
+
+  rm("?1001");
+  restore_ttymodes();
+
+  cup(max_lines-2,1);
+  return MENU_HOLD;
+}
+
+/* Normal Mouse Tracking */
+static int
+test_mouse_normal(MENU_ARGS)
+{
+  int y = 0, x = 0;
+
+  ed(2);
+  cup(1,1);
+
+  sm("?1000");
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
+  for(;;) {
+    char *report = instr();
+    if (*report == 'q')
+      break;
+    cup(3,10); el(2); chrprint(report);
+    if ((report = skip_prefix(csi_input(), report)) != 0
+     && *report == 'M'
+     && strlen(report) == 4) {
+      int b = MCHR(report[1]);
+      cup(4,10); el(2);
+      printf("code %#x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
+      b &= 3;
+      if (b != 3)
+        show_click(MCHR(report[3]), MCHR(report[2]), b + 1 + '0');
+      else if (MCHR(report[2]) != x || MCHR(report[3]) != y)
+        show_click(MCHR(report[3]), MCHR(report[2]), '*');
+      x = MCHR(report[2]);
+      y = MCHR(report[3]);
+    }
+  }
+
+  rm("?1000");
+  restore_ttymodes();
+
+  cup(max_lines-2,1);
+  return MENU_HOLD;
+}
+
+static int
+test_report_ops(MENU_ARGS)
 {
   char *report;
 
@@ -192,11 +315,52 @@ test_report_ops(void)
   report = instr();
   chrprint(report);
 
-  set_tty_raw(FALSE);
-  set_tty_echo(TRUE);
-
   cup(20,1);
-  holdit();
+  restore_ttymodes();
+  return MENU_HOLD;
+}
+
+/* Set window title */
+static int
+test_window_name(MENU_ARGS)
+{
+  return not_impl(PASS_ARGS);
+}
+
+/* X10 Mouse Compatibility */
+static int
+test_X10_mouse(MENU_ARGS)
+{
+  ed(2);
+  cup(1,1);
+
+  sm("?9");
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  printf("Press 'q' to quit.  Mouse events will be marked with the button number.");
+  for(;;) {
+    char *report = instr();
+    if (*report == 'q')
+      break;
+    cup(3,10); el(2); chrprint(report);
+    if ((report = skip_prefix(csi_input(), report)) != 0
+     && *report == 'M'
+     && strlen(report) == 4) {
+      int x = report[2] - ' ';
+      int y = report[3] - ' ';
+      cup(y,x);
+      printf("%d", report[1] - ' ' + 1);
+      cup(y,x);
+      fflush(stdout);
+    }
+  }
+
+  rm("?9");
+  restore_ttymodes();
+
+  cup(max_lines-2,1);
+  return MENU_HOLD;
 }
 
 /*
@@ -204,25 +368,24 @@ test_report_ops(void)
  * widely used vt100 near-compatible terminal emulators (other than modem
  * programs).
  */
-void
-tst_xterm(void)
+int
+tst_xterm(MENU_ARGS)
 {
-  int menuchoice;
-  static char *colormenu[] = {
-    "Return to main menu",
-    "Window modify-operations",
-    "Window report-operations",
-    ""
+  static MENU my_menu[] = {
+    { "Return to main menu",                                 0 },
+    { "Set window title",                                    test_window_name },
+    { "X10 Mouse Compatibility",                             test_X10_mouse },
+    { "Normal Mouse Tracking",                               test_mouse_normal },
+    { "Mouse Highlight Tracking",                            test_mouse_hilite },
+    { "Window modify-operations",                            test_modify_ops },
+    { "Window report-operations",                            test_report_ops },
+    { "",                                                    0 }
   };
 
   do {
     ed(2);
-    cup(5,10); println("XTERM special features");
-    cup(7,10); println("Choose test type:");
-    menuchoice = menu(colormenu);
-    switch (menuchoice) {
-    case 1: test_modify_ops();   break;
-    case 2: test_report_ops();   break;
-    }
-  } while (menuchoice);
+    title(0); println("XTERM special features");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
 }

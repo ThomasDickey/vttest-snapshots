@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.7 1996/08/07 01:49:28 tom Exp $ */
+/* $Id: ttymodes.c,v 1.8 1996/08/16 10:50:56 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -135,32 +135,12 @@ void init_ttymodes(int pn)
   open("/dev/tty", O_RDWR|O_NDELAY);
 # endif
 #endif /* UNIX */
-#ifdef SARG10
-  /* Set up neccesary TOPS-10 terminal parameters	*/
-
-  trmop(02041, `VT100`);	/* tty type vt100	*/
-  trmop(02002, 0);	/* tty no tape	*/
-  trmop(02003, 0);	/* tty lc	*/
-  trmop(02005, 1);	/* tty tab	*/
-  trmop(02010, 1);	/* tty no crlf	*/
-  trmop(02020, 0);	/* tty no tape	*/
-  trmop(02021, 1);	/* tty page	*/
-  trmop(02025, 0);	/* tty blanks	*/
-  trmop(02026, 1);	/* tty no alt	*/
-  trmop(02040, 1);	/* tty defer	*/
-#endif
-#ifdef SARG20
-  ttybin(1);	/* set line to binary mode */
-#endif
   dump_ttymodes("...init_ttymode", pn);
 }
 
 void restore_ttymodes(void)
 {
   dump_ttymodes("restore_ttymodes", -1);
-#ifdef SARG20
-  ttybin(0);	/* reset line to normal mode */
-#endif
 #ifdef UNIX
   set_ttymodes(&old_modes);
 #endif
@@ -248,14 +228,6 @@ set_tty_raw(int enabled)
     }
 # endif
 #endif
-#ifdef SARG10
-    ttybin(1);
-#endif
-#ifdef SARG20
-    ttybin(1);
-    page(0);		/* Turn off all character processing at input */
-    superbin(1);	/* Turn off ^C (among others). Keep your fingers crossed!! */
-#endif
   } else {
 #ifdef UNIX
 # if USE_POSIX_TERMIOS || USE_TERMIO
@@ -269,15 +241,6 @@ set_tty_raw(int enabled)
     ioctl(0, TIOCSLTC, &old_ltchars);
 # endif
     set_ttymodes(&new_modes);
-#endif
-#ifdef SARG10
-    ttybin(0);
-#endif
-#ifdef SARG20
-    ttybin(0);
-    superbin(0);	/* Puuuh! We made it!? */
-    page(1);		/* Back to normal input processing */
-    ttybin(1);		/* This must be the mode for DEC20 */
 #endif
   }
   dump_ttymodes("...set_tty_raw", enabled);

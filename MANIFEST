@@ -1,27 +1,27 @@
-MANIFEST for vttest, version v2_4
+MANIFEST for vttest, version v2_5
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 CHANGES                         record of changes I've made to vttest
 COPYING                         copyright notice
 README                          original version of vttest posted to comp.sources.unix, volume 7
 color.c                         color tests
-color.h                         interface of color.c
 config.hin                      template for config.h
 configure.in                    template for configure script
 esc.c                           escape-sequence formatting & I/O
 esc.h                           interface of esc.c
 install.sh                      install script, needed for configure
+keyboard.c                      test keyboard functions
 main.c                          main-program & most tests, for VTTEST
 makefile.in                     template for makefile
 mkdirs.sh                       mkinstalldirs script, from X11
 nonvt100.c                      non-VT100 tests
-nonvt100.h                      interface of nonvt100.c
 patchlev.h                      patch-level of VTTEST
-sargasso.h                      split-out obsolete compiler defs from header.h
+reports.c                       test device-reports
+setup.c                         modify test-parameters
 ttymodes.c                      module for changing tty modes
 ttymodes.h                      interface of ttymodes.c
+vt420.c                         vt420 tests
 vttest.1                        manual-page for VTTEST
 vttest.h                        renamed from header.h, common definitions of VTTEST
 vttest.lsm                      Linux Software Map description of VTTEST
 xterm.c                         tests for xterm and clones
-xterm.h                         interface of xterm.c

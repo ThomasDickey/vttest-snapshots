@@ -1,8 +1,7 @@
-/* $Id: color.c,v 1.13 1996/08/07 10:57:22 tom Exp $ */
+/* $Id: color.c,v 1.19 1996/08/19 00:07:38 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
-#include <color.h>
 
 #define MAX_COLORS    8
 
@@ -28,21 +27,10 @@ static char     *colors[MAX_COLORS] =
 };
 
 static int next_word(char *s);
-static void c_sgr(char *s);
 static void draw_box_caption(int x0, int y0, int x1, int y1, char **c);
 static void draw_box_outline(int x0, int y0, int x1, int y1, int c);
 static void draw_hline(int x0, int y0, int x1, int c);
 static void draw_vline(int x0, int y0, int y1, int c);
-static void reset_colors(void);
-static void set_background(int bg);
-static void set_color_pair(int fg, int bg);
-static void set_foreground(int fg);
-static void show_graphic_rendition(void);
-static void show_line_deletions(void);
-static void show_line_insertions(void);
-static void show_test_pattern(void);
-static void simple_bce_test(void);
-static void test_color_insdel(void);
 
 /*
  * Pick an unusual color combination for testing, just in case the user's
@@ -281,8 +269,8 @@ show_line_insertions(void)
   holdit();
 }
 
-static void
-show_test_pattern(void)
+static int
+show_test_pattern(MENU_ARGS)
 /* generate a color test pattern */
 {
   int i, j, k;
@@ -329,7 +317,7 @@ show_test_pattern(void)
   }
   reset_colors();
   cup(max_lines-1, 1);
-  holdit();
+  return MENU_HOLD;
 }
 
 /*
@@ -341,8 +329,8 @@ show_test_pattern(void)
  * outer box, so we can exercise the various parameter combinations of each
  * of these.
  */
-static void
-simple_bce_test(void)
+static int
+simple_bce_test(MENU_ARGS)
 {
   int i, j;
   static int top  = 3,    top2  = 7;    /* box margins */
@@ -355,7 +343,7 @@ simple_bce_test(void)
   };
   static char *text2[] = {
     "The screen background should be black, with a box made of asterisks",
-    " and this caption, in white (non-bold yellow). ",
+    " and this caption, in white (actually gray - it is not bold). ",
     " Only the asterisk box should be in color.",
     0
   };
@@ -421,6 +409,7 @@ simple_bce_test(void)
   holdit();
 
   reset_colors();
+  return MENU_NOHOLD;
 }
 
 /*
@@ -428,8 +417,8 @@ simple_bce_test(void)
  * We'll test insert/delete line operations specially, because it is very hard
  * to see what is happening with the accordion test when it does not work.
  */
-static void
-test_color_insdel(void)
+static int
+test_color_insdel(MENU_ARGS)
 {
   set_test_colors();
 
@@ -439,18 +428,20 @@ test_color_insdel(void)
   /* The rest of the test can be done nicely with the standard vt100 test
    * for insert/delete, since it doesn't modify SGR.
    */
-  tst_insdel();
+  tst_insdel(PASS_ARGS);
   reset_colors();
+  return MENU_NOHOLD;
 }
 
-static void
-test_color_screen(void)
+static int
+test_color_screen(MENU_ARGS)
 {
   set_test_colors();
 
   do_scrolling();
   show_graphic_rendition();
   reset_colors();
+  return MENU_NOHOLD;
 }
 
 /*
@@ -464,8 +455,8 @@ test_color_screen(void)
  * inverse   7/27
  * concealed 8/28
  */
-static void
-test_iso_6429_sgr(void)
+static int
+test_iso_6429_sgr(MENU_ARGS)
 {
   set_test_colors();
   ed(2);
@@ -503,6 +494,7 @@ test_iso_6429_sgr(void)
   cup(max_lines-1,1); el(0); printf("Dark background. "); holdit();
 
   reset_colors();
+  return MENU_NOHOLD;
 }
 
 /*
@@ -510,31 +502,23 @@ test_iso_6429_sgr(void)
  * set of tests that first display colors (if the terminal does indeed
  * support them), then exercise the associated reset, clear operations.
  */
-void
-tst_colors(void)
+int
+tst_colors(MENU_ARGS)
 {
-  int menuchoice;
-  static char *colormenu[] = {
-    "Return to main menu",
-    "Display color test-pattern",
-    "Test BCE-style clear line/display",
-    "Test of VT102-style features with BCE (Insert/Delete Char/Line)",
-    "Test of screen features with BCE",
-    "Test of screen features with ISO 6429 SGR 22-27 codes",
-    ""
+  static MENU colormenu[] = {
+    { "Return to main menu",                                 0 },
+    { "Display color test-pattern",                          show_test_pattern, },
+    { "Test BCE-style clear line/display",                   simple_bce_test, },
+    { "Test of VT102-style features with BCE (Insert/Delete Char/Line)", test_color_insdel, },
+    { "Test of screen features with BCE",                    test_color_screen, },
+    { "Test of screen features with ISO 6429 SGR 22-27 codes", test_iso_6429_sgr, },
+    { "", 0 }
   };
 
   do {
     ed(2);
-    cup(5,10); println("ISO 6429 colors");
-    cup(7,10); println("Choose test type:");
-    menuchoice = menu(colormenu);
-    switch (menuchoice) {
-    case 1: show_test_pattern(); break;
-    case 2: simple_bce_test();   break;
-    case 3: test_color_insdel(); break;
-    case 4: test_color_screen(); break;
-    case 5: test_iso_6429_sgr(); break;
-    }
-  } while (menuchoice);
+    title(0); println("ISO 6429 colors");
+    title(2); println("Choose test type:");
+  } while (menu(colormenu));
+  return MENU_NOHOLD;
 }

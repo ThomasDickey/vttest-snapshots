@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.7 1996/08/01 23:31:08 tom Exp $
+# $Id: makefile.in,v 1.13 1996/08/19 00:20:53 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -37,9 +37,32 @@ CPPFLAGS	= $(DEFINES) $(INCLUDES) @CPPFLAGS@
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
-C_SRC = main.c   esc.c ttymodes.c color.c nonvt100.c xterm.c
-H_SRC = vttest.h esc.h ttymodes.h color.h nonvt100.h xterm.h
-OBJS  = main.o   esc.o ttymodes.o color.o nonvt100.o xterm.o
+C_SRC = \
+	color.c \
+	esc.c \
+	keyboard.c \
+	main.c \
+	nonvt100.c \
+	reports.c \
+	setup.c \
+	ttymodes.c \
+	vt420.c \
+	xterm.c
+H_SRC = \
+	vttest.h \
+	esc.h \
+	ttymodes.h
+OBJS  = \
+	color.o \
+	esc.o \
+	keyboard.o \
+	main.o \
+	nonvt100.o \
+	reports.o \
+	setup.o \
+	ttymodes.o \
+	vt420.o \
+	xterm.o
 
 SRC =	patchlev.h \
 	CHANGES COPYING README \
@@ -86,10 +109,10 @@ distclean: clean
 realclean: distclean
 	rm -f tags TAGS # don't remove configure!
 
-tags:
+tags:	$(C_SRC) $(HDRS)
 	ctags $(C_SRC) $(HDRS)
 
-TAGS:
+TAGS:	$(C_SRC) $(HDRS)
 	etags $(C_SRC) $(HDRS)
 
 # I keep my sources in RCS, and assign a symbolic release to the current patch

@@ -1,5 +1,31 @@
-$Id: CHANGES,v 1.19 1996/08/08 00:41:58 tom Exp $
+$Id: CHANGES,v 1.25 1996/08/19 03:00:42 tom Exp $
 -------------------------------------------------------------------------------
+
+VERSION 2.5
+
+960818
+	implements most VT420 report-tests
+
+	make menu-skeleton for VT420 tests (some are needed for xterm tests),
+	marking the non-implemented entries with an '*'.
+
+960817
+	add tests/examples for xterm mouse controls
+
+960816
+	remove obsolete support for Sargasso C (TOPS-20)
+
+960813
+	use usleep() if the system has it, to make responses faster.
+
+	add menu-entry for toggling 7/8-bit input/output controls
+
+	split-out keyboard.c, organized by a set of submenus.
+
+	split-out reports.c, parameterized to allow testing 8-bit controls.
+	make submenu for individual reports.
+
+	modified menu decoding to accept '*' to step through all submenus.
 
 VERSION 2.4
 

@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.6 1996/08/07 10:51:34 tom Exp $ */
+/* $Id: nonvt100.c,v 1.21 1996/08/19 00:23:12 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -6,55 +6,64 @@
  * (ECMA-48) spec.
  */
 #include <vttest.h>
-#include <color.h>
-#include <xterm.h>
 #include <ttymodes.h>
-#include <nonvt100.h>
 #include <esc.h>
 
-static void report_ok(char *ref, char *tst)
+int
+not_impl(MENU_ARGS)
 {
+  cup(1,1);
+  printf("Sorry, test not implemented:\r\n\r\n  %s", the_title);
+  cup(max_lines-1,1);
+  return MENU_HOLD;
+}
+
+static void
+report_ok(char *ref, char *tst)
+{
+  if ((tst = skip_prefix(csi_input(), tst)) == 0)
+    tst = "?";
   printf(" (%s)", !strcmp(ref, tst) ? "success" : "fail");
 }
 
-/* Kermit 3.13 and dtterm implement this; it's probably for VT320 */
-static void tst_C8C1T(void)
+/* Kermit 3.13 and dtterm implement this; it's probably for VT220 */
+static int
+tst_C8C1T(MENU_ARGS)
 {
-  static char *table[] = {
-    "\2331;1R",
-    "\033[1;1R",
-  };
   char *report;
 
   ed(2);
   cup(5,1);
-  println("This tests the VT5xx control sequence to direct the terminal to emit 8-bit");
+  println("This tests the VT200+ control sequence to direct the terminal to emit 8-bit");
   println("control-sequences instead of <esc> sequences.");
 
   set_tty_raw(TRUE);
-  c8c1t(1); fflush(stdout);
+  set_tty_echo(FALSE);
+
+  s8c1t(1);
   cup(1,1); dsr(6);
   report = instr();
   cup(10,1);
   printf("8-bit controls enabled: ");
   chrprint(report);
-  report_ok(table[0], report);
+  report_ok("1;1R", report);
 
-  c8c1t(0); fflush(stdout);
+  s8c1t(0);
   cup(1,1); dsr(6);
   report = instr();
   cup(12,1);
   printf("8-bit controls disabled: ");
   chrprint(report);
-  report_ok(table[1], report);
+  report_ok("1;1R", report);
 
-  set_tty_raw(FALSE);
-  set_tty_crmod(TRUE);
+  restore_ttymodes();
   cup(max_lines-1,1);
-  holdit();
+  return MENU_HOLD;
 }
 
-static void tst_CBT(void)
+/* VT420 doesn't do this */
+static int
+tst_CBT(MENU_ARGS)
 {
   int n;
   int last = (min_cols + 7) / 8;
@@ -68,12 +77,13 @@ static void tst_CBT(void)
   cup(max_lines-3,1);
   ed(0);
   println("If your terminal supports CBT, the tab-stops are numbered starting at 1.");
-  holdit();
+  return MENU_HOLD;
 }
 
 /* Note: CHA and HPA have identical descriptions in ECMA-48 */
-/* dtterm implements this (does VT320?) */
-static void tst_CHA(void)
+/* dtterm implements this (VT400 doesn't) */
+static int
+tst_CHA(MENU_ARGS)
 {
   int n;
 
@@ -88,11 +98,16 @@ static void tst_CHA(void)
     printf("%c", n == max_lines-3 ? '+' : '*');
   cup(max_lines-2, 1);
   println("There should be a diagonal of +'s down to the row of *'s above this message");
-  holdit();
+  return MENU_HOLD;
 }
 
-/* Kermit's documentation refers to this as CHI, ECMA-48 as CHT */
-static void tst_CHT(void)
+/*
+ * Kermit's documentation refers to this as CHI, ECMA-48 as CHT.
+ *
+ * VT420 doesn't do this
+ */
+static int
+tst_CHT(MENU_ARGS)
 {
   int n;
   int last = (min_cols * 2 + 7) / 8;
@@ -122,10 +137,12 @@ static void tst_CHT(void)
   cup(max_lines-3, 1);
   println("If your terminal supports CHT, the lines with *'s above will look the same.");
   println("The lines are designed to wrap-around once.");
-  holdit();
+  return MENU_HOLD;
 }
 
-static void tst_CNL(void)
+/* VT420 doesn't do this */
+static int
+tst_CNL(MENU_ARGS)
 {
   int n;
 
@@ -140,19 +157,7 @@ static void tst_CNL(void)
   cup(max_lines-2, 1);
   ed(0);
   println("The lines above this should be numbered in sequence, from 1.");
-  holdit();
-
-#if 0
-  decstbm(1, max_lines-3);
-  cup(max_lines-3, 1);
-  cnl(5);
-  decstbm(0, 0); /* No scroll region */
-
-  cup(max_lines-2, 1);
-  ed(0);
-  println("The numbered lines (if any) may be shifted up by 5.");
-  holdit();
-#endif
+  return MENU_HOLD;
 }
 
 /*
@@ -160,7 +165,8 @@ static void tst_CNL(void)
  * is used to replace RI (reverse-index).  ECMA-48 doesn't specify scrolling
  * regions, DEC terminals do apparently, so for CPL and CNL we'll test this.
  */
-static void tst_CPL(void)
+static int
+tst_CPL(MENU_ARGS)
 {
   int i;
 
@@ -173,72 +179,90 @@ static void tst_CPL(void)
   cup(max_lines-2, 1);
   ed(0);
   println("If your terminal supports CPL, the lines above this are numbered.");
-  holdit();
-
-#if 0
-  decstbm(1, max_lines-3);
-  cup(1, 1);
-  cpl(5);
-  decstbm(0, 0); /* No scroll region */
-
-  cup(max_lines-2, 1);
-  ed(0);
-  println("The numbered lines (if any) may be shifted down by 5.");
-  holdit();
-#endif
+  return MENU_HOLD;
 }
 
 /*
- * Test DEC's selective-erase (set-protected area)
+ * Test DEC's selective-erase (set-protected area) by drawing a box of
+ * *'s that will remain, and a big X of *'s that gets cleared..
  */
-static void tst_DECSCA(void)
+static int
+tst_DECSCA(MENU_ARGS)
 {
   int i, j, pass;
+  int tmar = 5;
+  int bmar = max_lines - 8;
+  int lmar = 20;
+  int rmar = min_cols - lmar;
 
   ed(2);
 
   for (pass = 0; pass < 2; pass++) {
     if (pass == 0)
       decsca(1);
-    cup(5, 20);
-    for (i = 5; i <= max_lines - 6; i++) {
-      cup(i, 20);
-      for (j = 20; j < min_cols - 20; j++) {
+    for (i = tmar; i <= bmar; i++) {
+      cup(i, lmar);
+      for (j = lmar; j <= rmar; j++) {
         printf("*");
       }
     }
     if (pass == 0) {
       decsca(0);
 
-      cup(max_lines/2, min_cols/2);
-      decsed(0); /* after the cursor */
-      decsed(1); /* before the cursor */
-      decsed(2); /* the whole display */
+      for (j = 0; j <= 2; j++) {
+        for (i = 1; i < tmar; i++) {
+          cup(i, lmar - tmar + (i+j)); printf("*");
+          cup(i, rmar + tmar - (i+j)); printf("*");
+        }
+        for (i = bmar + 1; i < max_lines; i++) {
+          cup(i, lmar + bmar - i + j); printf("*");
+          cup(i, rmar - bmar + i - j); printf("*");
+        }
+        cup(max_lines/2, min_cols/2);
+        decsed(j);
+      }
 
+      for (i = rmar+1; i <= min_cols; i++) {
+        cup(tmar, i);        printf("*");
+        cup(max_lines/2, i); printf("*");
+      }
+      cup(max_lines/2, min_cols/2);
       decsel(0); /* after the cursor */
+
+      for (i = 1; i < lmar; i++) {
+        cup(tmar, i);        printf("*");
+        cup(max_lines/2, i); printf("*");
+      }
+      cup(max_lines/2, min_cols/2);
       decsel(1); /* before the cursor */
+
+      cup(tmar, min_cols/2);
       decsel(2); /* the whole line */
 
       cup(max_lines-3, 1);
+      ed(0);
       println("If your terminal supports DEC protected areas (DECSCA, DECSED, DECSEL),");
       println("there will be an solid box made of *'s in the middle of the screen.");
       holdit();
     }
   }
+  return MENU_NOHOLD;
 }
 
 /*
  * Test if the terminal can make the cursor invisible
  */
-static void tst_DECTCEM(void)
+static int
+tst_DECTCEM(MENU_ARGS)
 {
   ed(2);
+  cup(1,1);
   rm("?25");
   println("The cursor should be invisible");
   holdit();
   sm("?25");
   println("The cursor should be visible again");
-  holdit();
+  return MENU_HOLD;
 }
 
 /*
@@ -248,7 +272,8 @@ static void tst_DECTCEM(void)
  * explicit parameter, and longer than the screen width (to ensure that the
  * terminal doesn't try to wrap-around the erasure).
  */
-static void tst_ECH(void)
+int
+tst_ECH(MENU_ARGS)
 {
   int i;
 
@@ -256,7 +281,7 @@ static void tst_ECH(void)
   decaln();
   for (i = 1; i <= max_lines; i++) {
     cup(i, min_cols - i - 2);
-    brcstr("", 'X'); /* make sure default-parameter works */
+    do_csi("X"); /* make sure default-parameter works */
     cup(i, min_cols - i - 1);
     printf("*");
     ech(min_cols);
@@ -270,10 +295,12 @@ static void tst_ECH(void)
   println("diagonal: ^^ (clear)");
   println("ECH test: there should be E's with a gap before diagonal of **'s");
   println("The lower-right diagonal region should be cleared.  Nothing else.");
-  holdit();
+  return MENU_HOLD;
 }
 
-static void tst_HPA(void)
+/* VT420 doesn't do this */
+static int
+tst_HPA(MENU_ARGS)
 {
   int n;
 
@@ -288,38 +315,58 @@ static void tst_HPA(void)
     printf("%c", n == max_lines-3 ? '+' : '*');
   cup(max_lines-2, 1);
   println("There should be a diagonal of +'s down to the row of *'s above this message");
-  holdit();
+  return MENU_HOLD;
 }
 
 /*
  * Test the SD (scroll-down) by forcing characters written in a diagonal into
  * a horizontal row.
  *
- * dtterm uses the incorrect escape sequence (ending with 'T' instead of '^'),
- * apparently someone misread 05/14 as 05/04.
+ * vt400 and dtterm use the (incorrect?) escape sequence (ending with 'T'
+ * instead of '^'), apparently someone misread 05/14 as 05/04 or vice versa.
  */
-static void tst_SD(void)
+int
+tst_SD_DEC(MENU_ARGS)
 {
   int n;
   int last = max_lines - 3;
 
   ed(2);
-  for (n = 1; n <= last; n++) {
+  for (n = 1; n < last; n++) {
     cup(n, n);
     printf("*");
-    sd(1); 
+    sd_dec(1);
   }
   cup(last+1,1);
   ed(0);
   println("If your terminal supports SD, there is a horizontal row of *'s above.");
-  holdit();
+  return MENU_HOLD;
+}
+
+static int
+tst_SD_ISO(MENU_ARGS)
+{
+  int n;
+  int last = max_lines - 3;
+
+  ed(2);
+  for (n = 1; n < last; n++) {
+    cup(n, n);
+    printf("*");
+    sd_iso(1);
+  }
+  cup(last+1,1);
+  ed(0);
+  println("If your terminal supports SD, there is a horizontal row of *'s above.");
+  return MENU_HOLD;
 }
 
 /*
  * Test the SL (scroll-left) by forcing characters written in a diagonal into
  * a vertical line.
  */
-static void tst_SL(void)
+static int
+tst_SL(MENU_ARGS)
 {
   int n;
   int last = max_lines - 3;
@@ -328,19 +375,20 @@ static void tst_SL(void)
   for (n = 1; n < last; n++) {
     cup(n, min_cols/2 + last - n);
     printf("*");
-    sl(1); 
+    sl(1);
   }
   cup(last,1);
   ed(0);
   println("If your terminal supports SL, there is a vertical column of *'s centered above.");
-  holdit();
+  return MENU_HOLD;
 }
 
 /*
  * Test the SR (scroll-right) by forcing characters written in a diagonal into
  * a vertical line.
  */
-static void tst_SR(void)
+static int
+tst_SR(MENU_ARGS)
 {
   int n;
   int last = max_lines - 3;
@@ -349,19 +397,20 @@ static void tst_SR(void)
   for (n = 1; n < last; n++) {
     cup(n, min_cols/2 - last + n);
     printf("*");
-    sr(1); 
+    sr(1);
   }
   cup(last,1);
   ed(0);
   println("If your terminal supports SR, there is a vertical column of *'s centered above.");
-  holdit();
+  return MENU_HOLD;
 }
 
 /*
  * Test the SU (scroll-up) by forcing characters written in a diagonal into
  * a horizontal row.
  */
-static void tst_SU(void)
+int
+tst_SU(MENU_ARGS)
 {
   int n;
   int last = max_lines - 3;
@@ -370,18 +419,19 @@ static void tst_SU(void)
   for (n = 1; n < last; n++) {
     cup(last + 1 - n, n);
     printf("*");
-    su(1); 
+    su(1);
   }
   cup(last+1,1);
   ed(0);
   println("If your terminal supports SU, there is a horizontal row of *'s above.");
-  holdit();
+  return MENU_HOLD;
 }
 
 /*
  * Test SPA (set-protected area)
  */
-static void tst_SPA(void)
+static int
+tst_SPA(MENU_ARGS)
 {
   int i, j, pass;
 
@@ -415,17 +465,21 @@ static void tst_SPA(void)
 
       cup(max_lines-3, 1);
       println("If your terminal supports protected areas, there will be an solid box made of");
-      println("*'s in the middle of the screen.");
+      println("*'s in the middle of the screen.  (VT420 does not implement this)");
       holdit();
     }
   }
+  return MENU_NOHOLD;
 }
 
 /*
  * Kermit's documentation refers to this as CVA, ECMA-48 as VPA.
  * Move the cursor in the current column to the specified line.
+ *
+ * VT420 doesn't do this
  */
-static void tst_VPA(void)
+static int
+tst_VPA(MENU_ARGS)
 {
   int n;
 
@@ -446,131 +500,167 @@ static void tst_VPA(void)
 
   cup(max_lines-3, 1);
   println("There should be a box-outline made of *'s in the middle of the screen.");
-  holdit();
+  return MENU_HOLD;
 }
 
 /******************************************************************************/
 
-static
-void tst_vt220(void)
+static int
+tst_Editing(MENU_ARGS)
 {
-  int menuchoice;
-
-  static char *my_menu[] = {
-      "Exit",
-      "Test Erase Char",
-      "Test Previous-Line (CPL)",
-      "Test Protected-Areas (DECSCA)",
-      "Test Protected-Areas (SPA)",
-      "Test Visible/Invisible Cursor (DECTCEM)",
-      "Test 8-bit controls (C7C1T/C8C1T)",
-      ""
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Delete Column (DECDC)",                        not_impl },
+      { "Test Erase Char (ECH)",                             tst_ECH },
+      { "Test Insert Column (DECIC)",                        not_impl },
+      { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
+      { "",                                                  0 }
     };
 
   do {
     ed(2);
-    cup(5, 10); printf("VT220/VT320 Tests");
-    cup(7, 10); println("Choose test type:");
-    menuchoice = menu(my_menu);
-    switch (menuchoice) {
-      case 1: tst_ECH();         break;
-      case 2: tst_CPL();         break;
-      case 3: tst_DECSCA();      break;
-      case 4: tst_SPA();         break;
-      case 5: tst_DECTCEM();     break;
-      case 6: tst_C8C1T();       break;
-    }
-  } while (menuchoice);
+    title(0); printf("Editing Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
 }
 
 /******************************************************************************/
 
-static
-void tst_ecma48_curs(void)
+static int
+tst_PageFormat(MENU_ARGS)
 {
-  int menuchoice;
-
-  static char *my_menu[] = {
-      "Exit",
-      "Test Character-Position-Absolute (HPA)",
-      "Test Cursor-Back-Tab (CBT)",
-      "Test Cursor-Character-Absolute (CHA)",
-      "Test Cursor-Horizontal-Index (CHT)",
-      "Test Line-Position-Absolute (VPA)",
-      "Test Next-Line (CNL)",
-      ""
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test set columns per page (DECSCPP)",               not_impl },
+      { "Test columns mode (DECCOLM)",                       not_impl },
+      { "Test set lines per page (DECSLPP)",                 not_impl },
+      { "Test set left and right margins (DECSLRM)",         not_impl },
+      { "Test set vertical split-screen (DECVSSM)",          not_impl },
+      { "",                                                  0 }
     };
 
   do {
     ed(2);
-    cup(5, 10); printf("ISO-6429 (ECMA-48) Cursor-Movement");
-    cup(7, 10); println("Choose test type:");
-    menuchoice = menu(my_menu);
-    switch (menuchoice) {
-      case  1: tst_HPA();         break;
-      case  2: tst_CBT();         break;
-      case  3: tst_CHA();         break;
-      case  4: tst_CHT();         break;
-      case  5: tst_VPA();         break;
-      case  6: tst_CNL();         break;
-    }
-  } while (menuchoice);
-}
-
-static
-void tst_ecma48_misc(void)
-{
-  int menuchoice;
-
-  static char *my_menu[] = {
-      "Exit",
-      "Test Scroll-Down (SD)",
-      "Test Scroll-Left (SL)",
-      "Test Scroll-Right (SR)",
-      "Test Scroll-Up (SU)",
-      ""
-    };
-
-  do {
-    ed(2);
-    cup(5, 10); printf("Miscellaneous ISO-6429 (ECMA-48) Tests");
-    cup(7, 10); println("Choose test type:");
-    menuchoice = menu(my_menu);
-    switch (menuchoice) {
-      case 1: tst_SD();          break;
-      case 2: tst_SL();          break;
-      case 3: tst_SR();          break;
-      case 4: tst_SU();          break;
-    }
-  } while (menuchoice);
+    title(0); printf("Page Format Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
 }
 
 /******************************************************************************/
-void tst_nonvt100(void)
-{
-  int menuchoice;
 
-  static char *my_menu[] = {
-      "Exit",
-      "Test of VT220/VT320 features (Erase Char, etc.)",
-      "Test ISO-6429 cursor-movement",
-      "Test ISO-6429 colors",
-      "Test other ISO-6429 features",
-      "Test XTERM special features",
-      ""
+static int
+tst_PageMovement(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Next Page (NP)",                               not_impl },
+      { "Test Preceding Page (PP)",                          not_impl },
+      { "Test Page Position Absolute (PPA)",                 not_impl },
+      { "Test Page Position Backward (PPB)",                 not_impl },
+      { "Test Page Position Relative (PPR)",                 not_impl },
+      { "",                                                  0 }
     };
 
   do {
     ed(2);
-    cup(5, 10); printf("Non-VT100 Tests");
-    cup(7, 10); println("Choose test type:");
-    menuchoice = menu(my_menu);
-    switch (menuchoice) {
-      case 1: tst_vt220();       break;
-      case 2: tst_ecma48_curs(); break;
-      case 3: tst_colors();      break;
-      case 4: tst_ecma48_misc(); break;
-      case 5: tst_xterm();       break;
-    }
-  } while (menuchoice);
+    title(0); printf("Page Format Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+
+/* FIXME: some of the VT420 stuff should be here... */
+
+static int
+tst_vt220(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test page-format controls",                         tst_PageFormat },
+      { "Test page-movement controls",                       tst_PageMovement },
+      { "Test editing controls",                             tst_Editing },
+      { "Test Previous-Line (CPL)",                          tst_CPL },
+      { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
+      { "Test 8-bit controls (C7C1T/C8C1T)",                 tst_C8C1T },
+      { "",                                                  0 }
+    };
+
+  do {
+    ed(2);
+    title(0); printf("VT220/VT320 Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+
+static int
+tst_ecma48_curs(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Character-Position-Absolute (HPA)",            tst_HPA },
+      { "Test Cursor-Back-Tab (CBT)",                        tst_CBT },
+      { "Test Cursor-Character-Absolute (CHA)",              tst_CHA },
+      { "Test Cursor-Horizontal-Index (CHT)",                tst_CHT },
+      { "Test Line-Position-Absolute (VPA)",                 tst_VPA },
+      { "Test Next-Line (CNL)",                              tst_CNL },
+      { "",                                                  0 }
+    };
+
+  do {
+    ed(2);
+    title(0); printf("ISO-6429 (ECMA-48) Cursor-Movement");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+static int
+tst_ecma48_misc(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test Protected-Areas (SPA)",                        tst_SPA },
+      { "Test Scroll-Down (SD)",                             tst_SD_ISO },
+      { "Test Scroll-Left (SL)",                             tst_SL },
+      { "Test Scroll-Right (SR)",                            tst_SR },
+      { "Test Scroll-Up (SU)",                               tst_SU },
+      { "",                                                  0 },
+    };
+
+  do {
+    ed(2);
+    title(0); printf("Miscellaneous ISO-6429 (ECMA-48) Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+int
+tst_nonvt100(MENU_ARGS)
+{
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test of VT220/VT320 features",                      tst_vt220 },
+      { "Test of VT420 features",                            tst_vt420 },
+      { "Test ISO-6429 cursor-movement",                     tst_ecma48_curs },
+      { "Test ISO-6429 colors",                              tst_colors },
+      { "Test other ISO-6429 features",                      tst_ecma48_misc },
+      { "Test XTERM special features",                       tst_xterm },
+      { "",                                                  0 }
+    };
+
+  do {
+    ed(2);
+    title(0); printf("Non-VT100 Tests");
+    title(2); println("Choose test type:");
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
 }
