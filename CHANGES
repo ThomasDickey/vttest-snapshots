@@ -1,11 +1,33 @@
-$Id: CHANGES,v 1.65 1998/03/26 12:05:45 tom Exp $
+$Id: CHANGES,v 1.67 1998/03/28 14:54:38 tom Exp $
 -------------------------------------------------------------------------------
+
+980328
+	add logic to ensure we pick up the proper choice (e.g., in Norwegian)
+	where the choice depends on the terminal id (e.g., vt220 vs vt320).
+
+	minor correction for vt220 vs vt320 logic in do_scs for Latin-1 vs
+	British character set.
+
+980327
+	implement test for single-shift (SS2 and SS3).
 
 980326
 	implement shift-in/shift-out character-set tests oriented toward VT220.
 
 	several corrections to VT220 character-set tests, from reports by
-	Kenneth R. Robinette <zkrr01@mailbox.neosoft.com>.
+	Kenneth R. Robinette <zkrr01@mailbox.neosoft.com>:
+
+		+ move SCS strings to immediately before/after the tests to
+		  avoid conflict with menu selection, and to keep the tests
+		  distinct.
+
+		+ use 96-character control sequences only for character sets
+		  (Latin 1), and 94-character control sequences for the
+		  National Replacement character sets.
+
+		+ add ISO Latin-1 as a font option
+
+		+ add Swiss as a font option
 
 980310
 	decode known values for secondary DA response.

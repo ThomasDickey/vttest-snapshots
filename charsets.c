@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.9 1998/03/27 02:13:23 tom Exp $ */
+/* $Id: charsets.c,v 1.12 1998/03/28 14:52:32 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -47,8 +47,8 @@ static const struct {
   { British_Latin_1,   1, 0, 3, "A",    "Latin-1" },
   { DEC_Spec_Graphic,  0, 0, 0, "0",    "DEC Special Graphics" },
   { DEC_Supp,          0, 0, 2, "<",    "DEC Supplemental" },
-  { DEC_Supp_Graphic,  0, 0, 0, "%5",   "DEC Supplemental Graphic" },
-  { DEC_Tech,          0, 0, 0, ">",    "DEC Technical" },
+  { DEC_Supp_Graphic,  0, 0, 3, "%5",   "DEC Supplemental Graphic" },
+  { DEC_Tech,          0, 0, 3, ">",    "DEC Technical" },
   { Danish,            0, 0, 0, "?",    "Danish" },
   { Dutch,             0, 0, 2, "4",    "Dutch" },
   { Finnish,           0, 0, 2, "5",    "Finnish" },
@@ -57,7 +57,7 @@ static const struct {
   { French,            0, 0, 2, "R",    "French" },
   { French_Canadian,   0, 0, 2, "Q",    "French Canadian" },
   { German,            0, 0, 2, "K",    "German" },
-  { Hebrew,            0, 0, 0, "%=",   "Hebrew" },
+  { Hebrew,            0, 0, 3, "%=",   "Hebrew" },
   { Italian,           0, 0, 2, "Y",    "Italian" },
   { Norwegian_Danish,  0, 0, 3, "`",    "Norwegian/Danish" },
   { Norwegian_Danish,  0, 1, 2, "E",    "Norwegian/Danish" },
@@ -83,7 +83,7 @@ do_scs(int g)
     decnrcm(TRUE);
 
   sprintf(buffer, "%c%s",
-    (KnownCharsets[n].allow96)
+    (KnownCharsets[n].allow96 && get_level() > 2)
       ? "?-./"[g]
       : "()*+"[g],
     KnownCharsets[n].final);
@@ -128,6 +128,7 @@ reset_charset(MENU_ARGS)
 }
 
 static int the_code;
+static int the_list[TABLESIZE(KnownCharsets)+2];
 
 static int
 lookup_Gx(MENU_ARGS)
@@ -135,7 +136,8 @@ lookup_Gx(MENU_ARGS)
   int n;
   the_code = -1;
   for (n = 0; n < TABLESIZE(KnownCharsets); n++) {
-    if (!strcmp(the_title, KnownCharsets[n].name)) {
+    if (the_list[n]
+     && !strcmp(the_title, KnownCharsets[n].name)) {
       the_code = n;
       break;
     }
@@ -157,6 +159,7 @@ specify_any_Gx(int g)
    * character sets, for example, but not the 96-character ISO Latin-1).
    */
   for (n = m = 0; n < TABLESIZE(KnownCharsets); n++) {
+    the_list[n] = 0;
     if (!strcmp(KnownCharsets[n].final, "?"))
       continue;
     if (get_level() < KnownCharsets[n].model)
@@ -167,6 +170,7 @@ specify_any_Gx(int g)
       continue;
     my_menu[m].description = KnownCharsets[n].name;
     my_menu[m].dispatch = lookup_Gx;
+    the_list[n] = 1;
     m++;
   }
   my_menu[m].description = "";
@@ -308,7 +312,7 @@ tst_vt220_locking(MENU_ARGS)
     char *msg;
   } table[] = {
     { 1, 1, "~", "G1 into GR (LS1R)" },
-    { 0, 2, "n", "G2 into GL (LS2)"  },
+    { 0, 2, "n", "G2 into GL (LS2)"  }, /* "{" vi */
     { 1, 2, "}", "G2 into GR (LS2R)" },
     { 0, 3, "o", "G3 into GL (LS3)"  },
     { 1, 3, "|", "G3 into GR (LS3R)" },
@@ -350,7 +354,33 @@ tst_vt220_locking(MENU_ARGS)
 static int
 tst_vt220_single(MENU_ARGS)
 {
-  return not_impl(PASS_ARGS);
+  int pass, x, y;
+
+  for (pass = 0; pass < 2; pass++) {
+    int g = pass + 2;
+
+    vt_clear(2);
+    cup(1,1);
+    printf("Testing single-shift G%d into GL (SS%d)\n", g, g);
+    printf("G%d is %s", g, KnownCharsets[current_Gx[g]].name);
+
+    do_scs(g);
+    for (y = 0; y < 16; y++) {
+      for (x = 0; x < 6; x++) {
+        int ch = y + (x * 16) + 32;
+        cup(y+5, (x * 12) + 5);
+        printf("%3d: {", ch);
+        esc(pass ? "O" : "N");  /* SS3 or SS2 */
+        printf("%c", ch);
+        printf("}");
+      }
+    }
+
+    cup(max_lines,1);
+    holdit();
+  }
+
+  return MENU_NOHOLD;
 }
 
 /******************************************************************************/
@@ -385,6 +415,7 @@ tst_characters(MENU_ARGS)
       { "Test Shift In/Shift Out (SI/SO)",                   tst_shift_in_out },
       { "Test VT220 Locking Shifts",                         tst_vt220_locking },
       { "Test VT220 Single Shifts",                          tst_vt220_single },
+      { "Test Soft Character Sets",                          not_impl },
       { "",                                                  0 }
   };
   int n;
