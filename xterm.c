@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.27 1999/10/26 00:09:33 tom Exp $ */
+/* $Id: xterm.c,v 1.28 1999/12/29 01:25:39 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -176,6 +176,9 @@ show_mouse_tracking(MENU_ARGS, char *the_mode)
       int b = MCHR(report[1]);
       vt_move(4,10); vt_el(2);
       show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
+      if (b > 0x20)
+        b -= 0x20;
+#if 0 /* documented in xterm, but never implemented */
       if (b & ~3) {
         if (b & 4)
           printf(" shift");
@@ -183,13 +186,21 @@ show_mouse_tracking(MENU_ARGS, char *the_mode)
           printf(" meta");
         if (b & 16)
           printf(" control");
+      }
+      b &= 3;
+#else /* implemented in XFree86 xterm */
+      if (b & ~7) {
+        if (b & 16)
+          printf(" control");
         if (b & 32)
           printf(" motion");
       }
-      b &= 3;
+      b &= 7;
+#endif
       if (b != 3) {
-        printf(" button %d", b + 1);
-        show_click(MCHR(report[3]), MCHR(report[2]), b + 1 + '0');
+        if (b < 3) b++;
+        printf(" button %d", b);
+        show_click(MCHR(report[3]), MCHR(report[2]), b + '0');
       } else if (MCHR(report[2]) != x || MCHR(report[3]) != y) {
         printf(" release");
         show_click(MCHR(report[3]), MCHR(report[2]), '*');
@@ -423,14 +434,15 @@ test_mouse_hilite(MENU_ARGS)
       if (*report == 'M'
        && strlen(report) == 4) {
         int b = MCHR(report[1]);
-        b &= 3;
+        b &= 7;
         x = MCHR(report[2]);
         y = MCHR(report[3]);
         if (b != 3) {
           /* send the xterm the highlighting range (it MUST be done first) */
           do_csi("1;%d;%d;%d;%d;T", x, y, 10, 20);
           /* now, show the mouse-click */
-          show_click(y, x, b + 1 + '0');
+          if (b < 3) b++;
+          show_click(y, x, b + '0');
         }
         /* interpret the event */
         vt_move(5,10); vt_el(2);

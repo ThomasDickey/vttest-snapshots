@@ -1,5 +1,8 @@
-$Id: CHANGES,v 1.81 1999/10/26 00:12:06 tom Exp $
+$Id: CHANGES,v 1.82 1999/12/29 01:30:03 tom Exp $
 -------------------------------------------------------------------------------
+
+991228
+	modify to report wheel-mouse events for XFree86 xterm (patch #122).
 
 991025
 	clarify top-level reports menu, which mixes tests that apply to various
