@@ -1,5 +1,8 @@
-$Id: CHANGES,v 1.86 2002/12/08 22:52:38 tom Exp $
+$Id: CHANGES,v 1.88 2003/03/01 19:38:28 tom Exp $
 -------------------------------------------------------------------------------
+
+20030301
+	add tek4014 test menu, for xterm.
 
 20021208
 	improved test for cursor-control sequences within escape sequences

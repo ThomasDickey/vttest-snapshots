@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.32 2001/12/01 00:39:06 tom Exp $ */
+/* $Id: xterm.c,v 1.33 2003/02/15 17:05:28 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -261,7 +261,7 @@ test_modify_ops(MENU_ARGS)
     high = n+5;
     brc3(8, high, wide, 't');
     sprintf(temp, "%d x %d chars", high, wide);
-    while (strlen(temp) < wide - 1)
+    while ((int)strlen(temp) < wide - 1)
       strcat(temp, ".");
     println(temp);
     fflush(stdout);
@@ -386,6 +386,7 @@ tst_xterm(MENU_ARGS)
     { "Return to main menu",                                 0 },
     { "Set window title",                                    test_window_name },
     { "Mouse features",                                      tst_mouse },
+    { "Tektronix 4014 features",                             tst_tek4014 },
     { "Alternate-Screen features (xterm)",                   tst_altscrn },
     { "Window modify-operations (dtterm)",                   test_modify_ops },
     { "Window report-operations (dtterm)",                   test_report_ops },

@@ -1,4 +1,4 @@
-MANIFEST for vttest, version d20021208
+MANIFEST for vttest, version d20030301
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -9,6 +9,7 @@ aclocal.m4                      local macros for autoconf script
 charsets.c                      character-set tests
 color.c                         color tests
 config.hin                      template for config.h
+configure                       generated autoconf script
 configure.in                    template for configure script
 descrip.mms                     VAX MMS script for VTTEST
 esc.c                           escape-sequence formatting & I/O
@@ -28,6 +29,7 @@ setup.c                         modify test-parameters
 sixel.c                         tests for soft characters (sixel)
 status.c                        status-line tests
 tech.set                        DEC technical set font definition from VT220 toolkit
+tek4014.c                       tektronix tests
 ttymodes.c                      module for changing tty modes
 ttymodes.h                      interface of ttymodes.c
 unix_io.c                       UNIX-specific I/O support
@@ -38,5 +40,4 @@ vt420.c                         vt420 tests
 vt52.c                          tests for VT52
 vttest.1                        manual-page for VTTEST
 vttest.h                        renamed from header.h, common definitions of VTTEST
-vttest.lsm                      Linux Software Map description of VTTEST
 xterm.c                         tests for xterm and clones
