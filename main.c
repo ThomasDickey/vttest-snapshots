@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.67 1998/04/02 23:43:14 tom Exp $ */
+/* $Id: main.c,v 1.68 2002/04/09 00:12:56 pw Exp $ */
 
 /*
                                VTTEST.C
@@ -256,12 +256,24 @@ tst_movements(MENU_ARGS)
   vt_clear(2);
   vt_move(1,1);
   println("Test of cursor-control characters inside ESC sequences.");
-  println("Below should be two identical lines:");
+  println("Below should be four identical lines:");
   println("");
-  println("A B C D E F G H I J K L M N O P Q R S");
-  for (i = 1; i < 20; i++) {
+  println("A B C D E F G H I");
+  for (i = 1; i < 10; i++) {
     printf("%c", '@' + i);
     do_csi("2\010C");   /* Two forward, one backspace */
+  }
+  println("");
+  /* Now put CR in CUF sequence. */
+  printf("A ");
+  for (i = 2; i < 10; i++)
+    printf("%s\015%dC%c", csi_output(), 2 * i - 2, '@' + i);
+  println("");
+  /* Now put VT in CUU sequence. */
+  rm("20");
+  for (i = 1; i < 10; i++) {
+    printf("%c ", '@' + i);
+    do_csi("1\013A");
   }
   println("");
   println("");
