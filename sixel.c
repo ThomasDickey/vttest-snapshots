@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.2 1996/09/09 01:45:31 tom Exp $ */
+/* $Id: sixel.c,v 1.4 1996/09/09 23:01:30 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -11,8 +11,8 @@
 #define MAX_WIDTH 10
 
 static char *EraseCtl = "";
-static char *FontName = 0;
-static char *StartingCharPtr;
+static char *FontName = "";
+static char *StartingCharPtr = "";
 static char *TextCell = "";
 static char *WidthAttr = "";
 static char *font_string = "";
@@ -140,8 +140,10 @@ display_char(FILE *fp, int chr)
           bits[n][bit] = ((*s - '?') & 1 << n) ? 'O' : '.';
         bit++;
       } else if ((*s == ';' || *s == '/') && bit) {
-        for (n = 0; (n < 6) && (high++ < MatrixHigh); n++)
-          fprintf(fp, "%.*s\n", bit, bits[n]);
+        for (n = 0; (n < 6) && (high++ < MatrixHigh); n++) {
+          bits[n][bit] = '\0';
+          fprintf(fp, "%s\n", bits[n]);
+        }
         bit = 0;
       }
     } while (*s++ != ';');
@@ -153,15 +155,24 @@ display_char(FILE *fp, int chr)
 static int
 tst_DECDLD(MENU_ARGS)
 {
-  if (font_string != 0) {
-    printf("Working...\n%s\n", font_string);
-    printf("...done ");
-    printf("%c*%s", ESC, FontName); /* designate G2 as the DRCS font */
-    padding(4);
-    fflush(stdout);
-  } else {
-    printf("You did not specify a font-file with the -f option\n");
+  char *s;
+
+  printf("Working...\n");
+  for (s = font_string; *s; s++) {
+    putchar(*s);
+    if (*s == ';') {
+      fflush(stdout);
+      padding(20);
+    }
   }
+  fflush(stdout);
+  padding(20);
+  printf("...done ");
+
+  printf("%c*%s", ESC, FontName); /* designate G2 as the DRCS font */
+  padding(4);
+  fflush(stdout);
+
   return MENU_HOLD;
 }
 
@@ -276,6 +287,10 @@ tst_softchars(MENU_ARGS)
       { "",                                                  0 }
     };
 
+  if (font_string == 0 || *font_string == 0) {
+    printf("You did not specify a font-file with the -f option\n");
+    return MENU_HOLD;
+  }
   do {
     ed(2);
     title(0); printf("Soft Character Sets");

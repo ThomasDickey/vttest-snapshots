@@ -1,4 +1,4 @@
-/* $Id: status.c,v 1.3 1996/09/02 13:30:48 tom Exp $ */
+/* $Id: status.c,v 1.4 1996/09/09 23:46:53 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -17,8 +17,7 @@ simple_statusline(MENU_ARGS)
 {
   static char text[] = "TEXT IN THE STATUS LINE";
 
-  ed(2);
-  cup(1,1);
+  vt_move(1,1);
   println("This is a simple test of the status-line");
   println("");
 
@@ -44,8 +43,7 @@ simple_statusline(MENU_ARGS)
 static int
 SGR_statusline(MENU_ARGS)
 {
-  ed(2);
-  cup(1,1);
+  vt_move(1,1);
   println("This test writes SGR controls to the status-line");
   holdit();
 
@@ -96,7 +94,7 @@ tst_statusline(MENU_ARGS)
     };
 
   do {
-    ed(2);
+    vt_clear(2);
     title(0); println(the_title);
     title(2); println("Choose test type:");
   } while (menu(my_menu));

@@ -1,4 +1,4 @@
-# $Id: descrip.mms,v 1.8 1996/09/08 20:00:57 tom Exp $
+# $Id: descrip.mms,v 1.9 1996/09/10 00:48:29 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
@@ -50,7 +50,7 @@ OBJS = \
 	xterm.obj
 
 SRC =	patchlev.h \
-	CHANGES COPYING README \
+	CHANGES COPYING README BUGS \
 	$(THIS).lsm $(THIS).1 \
 	$(C_SRC) $(H_SRC) \
 	config.hin install.sh mkdirs.sh makefile.in configure.in

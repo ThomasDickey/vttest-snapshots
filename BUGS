@@ -1,0 +1,15 @@
+-- $Id: BUGS,v 1.1 1996/09/10 00:43:53 tom Exp $
+
+Please report bugs to dickey@clark.net
+
+This is a list of known problems with VTTEST:
+
+  + tests for DECFI and DECBI don't seem to function on VT420 (I need better
+    documentation)
+
+  + SD and SU tests pass with dtterm, but not with VT420.
+
+  + the skip_csi/skip_dcs functions are too permissive (they're allowing
+    either 8-bit or 7-bit responses).
+
+  + the keyboard test should allow 8-bit responses
