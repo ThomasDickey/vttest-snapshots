@@ -1,5 +1,11 @@
-$Id: CHANGES,v 1.58 1996/12/16 01:50:16 tom Exp $
+$Id: CHANGES,v 1.60 1997/05/18 20:27:26 tom Exp $
 -------------------------------------------------------------------------------
+
+970518
+	add CF_POSIX_VDISABLE test to work around gcc 2.6.2 bug.
+
+970419
+	correct sign-extension in xterm mouse-position
 
 961215
 	correct err introduced between d960905 and v2_5 that broke test for IRM

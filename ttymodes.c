@@ -1,8 +1,8 @@
-/* $Id: ttymodes.c,v 1.12 1996/11/25 11:17:12 tom Exp $ */
+/* $Id: ttymodes.c,v 1.13 1997/05/18 20:22:08 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
-#include <esc.h>	/* inflush() */
+#include <esc.h>        /* inflush() */
 
 static TTY old_modes, new_modes;
 
@@ -58,24 +58,24 @@ disable_control_chars(TTY *modes)
 # if USE_POSIX_TERMIOS
     int n;
     int temp;
-#   if defined(_POSIX_VDISABLE) && (_POSIX_VDISABLE != -1)
+#   if HAVE_POSIX_VDISABLE
       temp = _POSIX_VDISABLE;
 #   else
       errno = 0;
       temp = fpathconf(0, _PC_VDISABLE);
       if (temp == -1) {
-	if (errno != 0) {
-	  restore_ttymodes();
-	  fprintf(stderr, "Cannot disable special characters!\n");
-	  exit(EXIT_FAILURE);
-	}
-	temp = 0377;
+        if (errno != 0) {
+          restore_ttymodes();
+          fprintf(stderr, "Cannot disable special characters!\n");
+          exit(EXIT_FAILURE);
+        }
+        temp = 0377;
       }
-#     endif
+#   endif
     for (n = 0; n < NCCS; n++)
       modes->c_cc[n] = temp;
-# else	/* USE_TERMIO */
-#   ifdef	VSWTCH
+# else  /* USE_TERMIO */
+#   ifdef       VSWTCH
       modes->c_cc[VSWTCH] = VDISABLE;
 #   endif
     modes->c_cc[VSUSP]  = VDISABLE;
@@ -166,8 +166,8 @@ void init_ttymodes(int pn)
     new_modes = old_modes;
     for (n = 0; n < TABLESIZE(speeds); n++) {
       if (speeds[n].name == speed_code) {
-	tty_speed = speeds[n].code;
-	break;
+        tty_speed = speeds[n].code;
+        break;
       }
     }
   } else {
@@ -284,7 +284,7 @@ set_tty_raw(int enabled)
   } else {
 #ifdef UNIX
 # if USE_POSIX_TERMIOS || USE_TERMIO
-    new_modes = old_modes;	/* FIXME */
+    new_modes = old_modes;      /* FIXME */
 # else /* USE_SGTTY */
     new_modes.sg_flags &= ~RAW;
 #   if USE_FCNTL
