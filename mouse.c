@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.1 2001/11/30 22:04:59 tom Exp $ */
+/* $Id: mouse.c,v 1.2 2002/04/22 23:49:09 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -7,6 +7,11 @@
 #define MCHR(c) (((c) - ' ') & 0xff)
 
 #define isQuit(c) (((c) == 'q') || ((c) == 'Q'))
+
+static int chars_high;
+static int chars_wide;
+static int pixels_high;
+static int pixels_wide;
 
 static void
 cat_button(char *dst, char *src)
@@ -95,22 +100,65 @@ static int show_locator_report(char *report, int row, int pixels)
     vt_move(row,10); vt_el(2);
     show_result("%s - %s (%d,%d)", locator_event(Pe), locator_button(Pb), Pr, Pc);
     vt_el(0);
-    if (!pixels)  /* FIXME: we should be able to scale from the screen size */
+    if (pixels) {
+      if (pixels_high > 0 && pixels_wide > 0) {
+        Pr = (Pr * chars_high + pixels_high - 1) / pixels_high;
+        Pc = (Pc * chars_wide + pixels_wide - 1) / pixels_wide;
+        show_click(Pr, Pc, '*');
+      }
+    } else {
       show_click(Pr, Pc, '*');
+    }
     report = strchr(report, '&') + 2;
     now = row++;
   }
   return now;
 }
 
+static int
+get_screensize(MENU_ARGS)
+{
+  char *report;
+  char tmp;
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  brc(14, 't'); /* report window's pixel-size */
+  report = instr();
+  if ((report = skip_csi(report)) == 0
+   || sscanf(report, "4;%d;%d%c", &pixels_high, &pixels_wide, &tmp) != 3
+   || tmp != 't'
+   || pixels_high <= 0
+   || pixels_wide <= 0) {
+    pixels_high = -1;
+    pixels_wide = -1;
+  }
+
+  brc(18, 't'); /* report window's char-size */
+  report = instr();
+  if ((report = skip_csi(report)) == 0
+   || sscanf(report, "8;%d;%d%c", &chars_high, &chars_wide, &tmp) != 3
+   || tmp != 't'
+   || chars_high <= 0
+   || chars_wide <= 0) {
+    chars_high = 24;
+    chars_wide = 80;
+  }
+
+  restore_ttymodes();
+  return MENU_NOHOLD;
+}
+
 static void
 show_dec_locator_events(MENU_ARGS, int mode, int pixels)
 {
   int row, now;
+  int high, wide;
 
   vt_move(1,1);
   println(the_title);
-  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
+  println("Press 'q' to quit.  Mouse events will be marked with '*'");
 
   decelr((mode > 0) ? mode : ((mode == 0) ? 2 : -mode), pixels ? 1 : 2);
 
@@ -395,6 +443,8 @@ test_X10_mouse(MENU_ARGS)
 static int
 tst_dec_locator_events (MENU_ARGS)
 {
+  static char pixel_screensize[80];
+
   static MENU my_menu[] = {
     { "Return to main menu",                                 0 },
     { "One-Shot",                                            test_dec_locator_event },
@@ -403,13 +453,24 @@ tst_dec_locator_events (MENU_ARGS)
     { "Repeated (pixels)",                                   test_dec_locator_events_p },
     { "Filter Rectangle",                                    test_dec_locator_rectangle },
     { "Filter Rectangle (unfiltered)",                       test_dec_locator_unfiltered },
+    { pixel_screensize,                                      get_screensize },
     { "",                                                    0 }
   };
 
+  chars_high = 24;
+  chars_wide = 80;
+  pixels_high = -1;
+  pixels_wide = -1;
   do {
     vt_clear(2);
     title(0); println("DEC Locator Events");
     title(2); println("Choose test type:");
+    if (pixels_high > 0 && pixels_wide > 0) {
+      sprintf(pixel_screensize, "XFree86 xterm: screensize %dx%d chars, %dx%d pixels",
+              chars_high, chars_wide, pixels_high, pixels_wide);
+    } else {
+      strcpy(pixel_screensize, "XFree86 xterm: screensize unknown");
+    }
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.27 1999/07/12 09:46:52 tom Exp $ */
+/* $Id: keyboard.c,v 1.28 2002/04/22 22:50:49 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -752,6 +752,7 @@ tst_CursorKeys(MENU_ARGS)
     }
   }
 
+  rm("?1");
   restore_level(&save);
   vt_move(max_lines-1,1); vt_el(0);
   restore_ttymodes();
@@ -946,6 +947,7 @@ tst_NumericKeypad(MENU_ARGS)
     }
   }
 
+  deckpnm();
   vt_move(max_lines-1,1); vt_el(0);
   restore_level(&save);
   restore_ttymodes();
@@ -1000,6 +1002,7 @@ tst_LED_Lights(MENU_ARGS)
     decll(ledseq[i]);
     vt_move(12,1); holdit();
   }
+  decll("0");
   return MENU_NOHOLD;
 }
 

@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.25 2001/11/30 21:54:13 tom Exp $
+# $Id: makefile.in,v 1.26 2002/04/22 22:41:24 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -16,7 +16,8 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
 
 LIBS		= @LIBS@
-CFLAGS		= @CFLAGS@
+CPPFLAGS	= @CPPFLAGS@
+CFLAGS		= @CFLAGS@ @EXTRA_CFLAGS@
 LDFLAGS 	= @LDFLAGS@
 
 prefix		= @prefix@
@@ -94,7 +95,6 @@ DISTFILES = MANIFEST configure $(SRC)
 all:	$(THIS)
 
 $(THIS): $(OBJS)
-	-mv $(THIS) o$(THIS)
 	$(LINK) $(CFLAGS) $(LDFLAGS) -o $(THIS) $(OBJS) $(LIBS)
 
 $(OBJS): config.h $(THIS).h patchlev.h
@@ -110,14 +110,8 @@ uninstall:
 	rm -f $(bindir)/$(THIS)
 	rm -f $(mandir)/$(THIS).$(manext)
 
-makefile: makefile.in config.status
-	./config.status
-
-config.status: configure
-	./config.status --recheck
-
 mostlyclean:
-	rm -f *.o o$(THIS) core *~ *.BAK *.trace *.atac
+	rm -f *.o core *~ *.BAK *.trace *.atac
 
 clean: mostlyclean
 	rm -f $(THIS)
