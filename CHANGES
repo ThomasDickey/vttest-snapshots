@@ -1,5 +1,11 @@
-$Id: CHANGES,v 1.62 1997/05/23 11:01:43 tom Exp $
+$Id: CHANGES,v 1.64 1998/03/11 01:06:52 tom Exp $
 -------------------------------------------------------------------------------
+
+980310
+	decode known values for secondary DA response.
+
+	make mouse-highlight test a little clearer by putting '+' marks at the
+	corners of the highlight-region.
 
 970524
 	eliminate 'gets()' calls, which can overflow buffer.

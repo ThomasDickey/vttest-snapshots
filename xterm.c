@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.16 1997/04/19 01:00:58 tom Exp $ */
+/* $Id: xterm.c,v 1.18 1998/03/11 11:53:14 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -148,15 +148,31 @@ test_modify_ops(MENU_ARGS)
   return MENU_HOLD;
 }
 
+/* Print the corners of the highlight-region.  Note that xterm doesn't use
+ * the last row.
+ */
+static void show_hilite(int first, int last)
+{
+  vt_move(first, 1);          printf("+");
+  vt_move(last-1,  1);        printf("+");
+  vt_move(first, min_cols);   printf("+");
+  vt_move(last-1,  min_cols); printf("+");
+  fflush(stdout);
+}
+
 /* Mouse Highlight Tracking */
 static int
 test_mouse_hilite(MENU_ARGS)
 {
+  const int first = 10;
+  const int last  = 20;
   int y = 0, x = 0;
 
   vt_move(1,1);
   println(the_title);
   println("Press 'q' to quit.  Mouse events will be marked with the button number.");
+  printf("Highlighting range is [%d..%d)\n", first, last);
+  show_hilite(first,last);
 
   sm("?1001");
   set_tty_raw(TRUE);
@@ -166,7 +182,8 @@ test_mouse_hilite(MENU_ARGS)
     char *report = instr();
     if (isQuit(*report))
       break;
-    vt_move(3,10); vt_el(2); chrprint(report);
+    show_hilite(first,last);
+    vt_move(4,10); vt_el(2); chrprint(report);
     if ((report = skip_csi(report)) != 0) {
       if (*report == 'M'
        && strlen(report) == 4) {
@@ -181,12 +198,12 @@ test_mouse_hilite(MENU_ARGS)
           show_click(y, x, b + 1 + '0');
         }
         /* interpret the event */
-        vt_move(4,10); vt_el(2);
+        vt_move(5,10); vt_el(2);
         show_result("tracking: code 0x%x (%d,%d)", MCHR(report[1]), y, x);
         fflush(stdout);
       } else if (*report == 'T' && strlen(report) == 7) {
         /* interpret the event */
-        vt_move(4,10); vt_el(2);
+        vt_move(5,10); vt_el(2);
         show_result("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
           MCHR(report[2]), MCHR(report[1]),
           MCHR(report[4]), MCHR(report[3]),
@@ -202,7 +219,7 @@ test_mouse_hilite(MENU_ARGS)
           show_click(MCHR(report[6]), MCHR(report[5]), 'm');
       } else if (*report == 't' && strlen(report) == 3) {
         /* interpret the event */
-        vt_move(4,10); vt_el(2);
+        vt_move(5,10); vt_el(2);
         show_result("done: end(%d,%d)",
           MCHR(report[2]), MCHR(report[1]));
         if (MCHR(report[2]) != y
