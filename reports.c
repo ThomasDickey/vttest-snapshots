@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.11 1996/08/19 00:15:02 tom Exp $ */
+/* $Id: reports.c,v 1.21 1996/09/05 10:47:40 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -22,7 +22,7 @@ struct table {
     {   0,    "50" },
     {   8,    "75" },
     {  16,   "110" },
-    {  24,   "132.5"},
+    {  24,   "134.5"},
     {  32,   "150" },
     {  40,   "200" },
     {  48,   "300" },
@@ -35,6 +35,7 @@ struct table {
     { 104,  "4800" },
     { 112,  "9600" },
     { 120, "19200" },
+    { 128, "38400" },
     { -1, "" }
 },operating_level[] = {
     {  61, "VT100 family" },
@@ -43,20 +44,20 @@ struct table {
     {  64, "VT400 family" },
     {  -1, "" }
 },extensions[] = {
-    {   1, "132 columns" },				/* vt400 */
-    {   2, "printer port" },				/* vt400 */
-    {   3, "ReGIS Graphics" },				/* kermit */ 
-    {   4, "Sixel Graphics" },				/* kermit */ 
-    {   6, "selective erase" },				/* vt400 */
-    {   7, "soft character set (DRCS)" },		/* vt400 */
-    {   8, "user-defined keys" },			/* vt400 */
-    {   9, "national replacement character-sets" },	/* kermit */
-    {  13, "local editing mode" },			/* kermit */
-    {  15, "DEC technical set" },			/* vt400 */
-    {  16, "locator device port" },			/* kermit */
-    {  18, "user windows" },				/* vt400 */
-    {  19, "two sessions" },				/* vt400 */
-    {  21, "horizontal scrolling" },			/* vt400 */
+    {   1, "132 columns" },                             /* vt400 */
+    {   2, "printer port" },                            /* vt400 */
+    {   3, "ReGIS Graphics" },                          /* kermit */
+    {   4, "Sixel Graphics" },                          /* kermit */
+    {   6, "selective erase" },                         /* vt400 */
+    {   7, "soft character set (DRCS)" },               /* vt400 */
+    {   8, "user-defined keys" },                       /* vt400 */
+    {   9, "national replacement character-sets" },     /* kermit */
+    {  13, "local editing mode" },                      /* kermit */
+    {  15, "DEC technical set" },                       /* vt400 */
+    {  16, "locator device port" },                     /* kermit */
+    {  18, "user windows" },                            /* vt400 */
+    {  19, "two sessions" },                            /* vt400 */
+    {  21, "horizontal scrolling" },                    /* vt400 */
     {  -1, "" }
 };
 
@@ -65,10 +66,14 @@ legend(int n, char *input, char *word, char *description)
 {
   int i;
   unsigned len = strlen(word);
+  char buf[BUFSIZ];
+
   for (i = 0; input[i] != 0; i++) {
     if ((i == 0 || !isalpha(input[i-1]))
      && !strncmp(word, input+i, len)) {
-      printf("%-8s %-3s = %s\r\n", n ? "" : "Legend:", word, description);
+      sprintf(buf, "%-8s %-3s = %s", n ? "" : "Legend:", word, description);
+      show_result("%s", buf);
+      println("");
       return n+1;
     }
   }
@@ -100,6 +105,7 @@ scan_DA(char *str, int *pos)
 }
 
 /******************************************************************************/
+
 static int
 tst_DA(MENU_ARGS)
 {
@@ -136,46 +142,107 @@ tst_DA(MENU_ARGS)
     { "", "" }
   };
 
-  set_tty_raw(TRUE);
-  cup(7,1);
+  cup(1,1);
   println("Test of Device Attributes report (what are you)");
-  cup(8,1);
+
+  set_tty_raw(TRUE);
   da();
-  report = instr();
-  cup(8,1);
+  report = get_reply();
+  cup(3,1);
   el(0);
   printf("Report is: ");
   chrprint(report);
 
   found = FALSE;
-  if ((cmp = skip_prefix(csi_input(), report)) != 0) {
+  if ((cmp = skip_csi(report)) != 0) {
     for (i = 0; *attributes[i][0] != '\0'; i++) {
       if (!strcmp(cmp, attributes[i][0])) {
-	int n = 0;
-	printf(" -- means %s", attributes[i][1]);
-	cup(9,1);
-	n = legend(n, attributes[i][1], "STP", "Processor Option");
-	n = legend(n, attributes[i][1], "AVO", "Advanced Video Option");
-	n = legend(n, attributes[i][1], "GPO", "Graphics Processor Option");
-	n = legend(n, attributes[i][1], "PP",  "Printer Port");
-	found = TRUE;
+        int n = 0;
+        show_result(" -- means %s", attributes[i][1]);
+        println("");
+        n = legend(n, attributes[i][1], "STP", "Processor Option");
+        n = legend(n, attributes[i][1], "AVO", "Advanced Video Option");
+        n = legend(n, attributes[i][1], "GPO", "Graphics Processor Option");
+        n = legend(n, attributes[i][1], "PP",  "Printer Port");
+        found = TRUE;
         break;
       }
     }
   }
   if (!found) { /* this could be a vt200+ with some options disabled */
-    if (*cmp == '?') {
+    if (cmp != 0 && *cmp == '?') {
       int reportpos = 1;
       int value = scan_DA(cmp, &reportpos);
-      printf("%s\n",
-        lookup(operating_level, value));
-      while ((value = scan_DA(cmp, &reportpos)) != 0)
-        printf("%3d = %s\n", value, lookup(extensions, value));
+      show_result("%s\n", lookup(operating_level, value));
+      println("");
+      while ((value = scan_DA(cmp, &reportpos)) != 0) {
+        printf("   ");
+        show_result("%d = %s\n", value, lookup(extensions, value));
+        println("");
+      }
       found = TRUE;
     }
   }
   if (!found)
-    printf(" -- Unknown response, refer to the manual");
+    show_result(" -- Unknown response, refer to the manual");
+
+  restore_ttymodes();
+  cup(max_lines-1,1);
+  return MENU_HOLD;
+}
+
+/*
+ * Expected reply (from VT420 manual):
+ *      CSI > 4 1 ; Pv ; 0 c (Pv = firmware version)
+ * From kermit:
+ *      CSI > 2 4 ; Pv ; 0 c (Pv = "0 ; 0 ; 0", for "0.0")
+ * I've seen also:
+ *      CSI > 8 3 ; Pv ; 0 c  (e.g., Pv = "3 0 7 0 1")
+ */
+static int
+tst_DA_2(MENU_ARGS)
+{
+  char *report;
+
+  cup(1,1); println("Testing Secondary Device Attributes (Firmware version)");
+
+  set_tty_raw(TRUE);
+  do_csi(">c"); /* or "CSI > 0 c" */
+  report = get_reply();
+  cup(3,10);
+  chrprint(report);
+
+  restore_ttymodes();
+  cup(max_lines-1,1);
+  return MENU_HOLD;
+}
+
+/*
+ * VT400 (reply is a hexidecimal string)
+ */
+static int
+tst_DA_3(MENU_ARGS)
+{
+  char *report;
+  char *show;
+
+  cup(1,1); println("Testing Tertiary Device Attributes (unit ID)");
+
+  set_tty_raw(TRUE);
+  do_csi("=c"); /* or "CSI = 0 c" */
+  report = get_reply();
+  cup(3,10);
+  chrprint(report);
+  if ((report = skip_dcs(report)) != 0
+   && strip_terminator(report) != 0
+   && *report++ == '!'
+   && *report++ == '|'
+   && strlen(report) != 0) {
+    show = SHOW_SUCCESS;
+  } else {
+    show = SHOW_FAILURE;
+  }
+  show_result(show);
 
   restore_ttymodes();
   cup(max_lines-1,1);
@@ -195,13 +262,13 @@ tst_DECREQTPARM(MENU_ARGS)
   println("Test of the \"Request Terminal Parameters\" feature, argument 0.");
   cup(3,1);
   decreqtparm(0);
-  report = instr();
+  report = get_reply();
   cup(5,1);
   el(0);
   printf("Report is: ");
   chrprint(report);
 
-  if ((cmp = skip_prefix(csi_input(), report)) != 0)
+  if ((cmp = skip_csi(report)) != 0)
     report = cmp;
 
   if (strlen(report) < 14
@@ -216,28 +283,30 @@ tst_DECREQTPARM(MENU_ARGS)
     rspeed = scanto(report, &reportpos, ';');
     clkmul = scanto(report, &reportpos, ';');
     flags  = scanto(report, &reportpos, 'x');
+
     if (parity == 0 || nbits == 0 || clkmul == 0) println(" -- Bad format");
     else                                          println(" -- OK");
-    printf(
+
+    show_result(
       "This means: Parity %s, %s bits, xmitspeed %s, recvspeed %s.\n",
       lookup(paritytable, parity),
       lookup(nbitstable, nbits),
       lookup(speedtable, xspeed),
       lookup(speedtable, rspeed));
-    printf("(CLoCk MULtiplier = %d, STP option flags = %d)\n", clkmul, flags);
+    show_result("(CLoCk MULtiplier = %d, STP option flags = %d)\n", clkmul, flags);
   }
 
   cup(10,1);
   println("Test of the \"Request Terminal Parameters\" feature, argument 1.");
   cup(11,1);
-  decreqtparm(1);	/* Does the same as decreqtparm(0), reports "3" */
-  report2 = instr();
+  decreqtparm(1);       /* Does the same as decreqtparm(0), reports "3" */
+  report2 = get_reply();
   cup(13,1);
   el(0);
   printf("Report is: ");
   chrprint(report2);
 
-  if ((cmp = skip_prefix(csi_input(), report2)) != 0)
+  if ((cmp = skip_csi(report2)) != 0)
     report2 = cmp;
 
   if (strlen(report2) < 1
@@ -261,46 +330,45 @@ tst_DSR(MENU_ARGS)
   char *report, *cmp;
 
   set_tty_raw(TRUE);
-  ed(2);
   cup(1,1);
   printf("Test of Device Status Report 5 (report terminal status).");
   cup(2,1);
   dsr(5);
-  report = instr();
+  report = get_reply();
   cup(2,1);
   el(0);
   printf("Report is: ");
   chrprint(report);
 
-  if ((cmp = skip_prefix(csi_input(), report)) != 0)
+  if ((cmp = skip_csi(report)) != 0)
     found = !strcmp(cmp, "0n") || !strcmp(cmp, "3n");
   else
     found = 0;
 
   if (found)
-    printf(" -- means \"TERMINAL OK\"");
+    show_result(" -- means \"TERMINAL OK\"");
   else
-    printf(" -- Unknown response!");
+    show_result(" -- Unknown response!");
 
   cup(4,1);
   println("Test of Device Status Report 6 (report cursor position).");
   cup(5,1);
   dsr(6);
-  report = instr();
+  report = get_reply();
   cup(5,1);
   el(0);
   printf("Report is: ");
   chrprint(report);
 
-  if ((cmp = skip_prefix(csi_input(), report)) != 0)
+  if ((cmp = skip_csi(report)) != 0)
     found = !strcmp(cmp,"5;1R");
   else
     found = 0;
 
   if (found)
-    printf(" -- OK");
+    show_result(" -- OK");
   else
-    printf(" -- Unknown response!");
+    show_result(" -- Unknown response!");
 
   cup(max_lines-1,1);
   restore_ttymodes();
@@ -323,7 +391,7 @@ tst_ENQ(MENU_ARGS)
   set_tty_echo(FALSE);
   inflush();
   printf("%c", 5); /* ENQ */
-  report = instr();
+  report = get_reply();
   cup(10,1);
   chrprint(report);
   cup(12,1);
@@ -337,7 +405,6 @@ tst_NLM(MENU_ARGS)
 {
   char *report;
 
-  ed(2);
   cup(1,1);
   println("Test of LineFeed/NewLine mode.");
   cup(3,1);
@@ -348,8 +415,8 @@ tst_NLM(MENU_ARGS)
   cup(4,1);
   el(0);
   chrprint(report);
-  if (!strcmp(report, "\015\012")) printf(" -- OK");
-  else                             printf(" -- Not expected");
+  if (!strcmp(report, "\015\012")) show_result(" -- OK");
+  else                             show_result(" -- Not expected");
   cup(6,1);
   rm("20");
   printf("NewLine mode reset. Push the RETURN key: ");
@@ -357,8 +424,8 @@ tst_NLM(MENU_ARGS)
   cup(7,1);
   el(0);
   chrprint(report);
-  if (!strcmp(report, "\015")) printf(" -- OK");
-  else                         printf(" -- Not expected");
+  if (!strcmp(report, "\015")) show_result(" -- OK");
+  else                         show_result(" -- Not expected");
   cup(9,1);
 
   restore_ttymodes();
@@ -374,8 +441,10 @@ tst_reports(MENU_ARGS)
       { "<ENQ> (AnswerBack Message)",                        tst_ENQ },
       { "SM RM (Set/Reset Mode) - LineFeed / Newline",       tst_NLM },
       { "DSR (Device Status Report)",                        tst_DSR },
-      { "DA (Device Attributes)",                            tst_DA },
-      { "DECREQTPARM (Request Terminal Parameters)",         tst_DECREQTPARM },
+      { "Primary Device Attributes (DA)",                    tst_DA },
+      { "Secondary Device Attributes (DA)",                  tst_DA_2 },
+      { "Tertiary Device Attributes (DA)",                   tst_DA_3 },
+      { "Request Terminal Parameters (DECREQTPARM )",        tst_DECREQTPARM },
       { "",                                                  0 }
     };
 

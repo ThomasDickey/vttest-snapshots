@@ -1,4 +1,4 @@
-/* $Id: ttymodes.h,v 1.2 1996/06/18 19:17:44 tom Exp $ */
+/* $Id: ttymodes.h,v 1.3 1996/08/22 10:56:18 tom Exp $ */
 
 #ifndef TTYMODES_H
 #define TTYMODES_H 1
@@ -11,6 +11,7 @@ void dump_ttymodes(char *tag, int flag);
 #define dump_ttymodes(tag, flag) /*nothing*/
 #endif
 
+void close_tty(void);
 void init_ttymodes(int pn);
 void restore_ttymodes(void);
 void set_tty_crmod(int enabled);

@@ -1,9 +1,12 @@
-/* $Id: esc.h,v 1.16 1996/08/19 01:45:51 tom Exp $ */
+/* $Id: esc.h,v 1.31 1996/09/05 10:57:38 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
 
-#define ESC 27	/* 033 */
+#define ESC 0033
+#define CSI 0233
+#define DCS 0220
+#define ST  0234
 
 /* ANSI modes for DECRQM, DECRPM, SM and RM */
 #define GATM      1    /* guarded area transfer (disabled) */
@@ -52,6 +55,7 @@ char *csi_input(void);
 char *csi_output(void);
 char *dcs_input(void);
 char *dcs_output(void);
+char *get_reply(void);
 char *instr(void);
 char *st_input(void);
 char *st_output(void);
@@ -72,18 +76,37 @@ void cuu(int pn);
 void da(void);
 void dch(int pn);
 void decaln(void);
+void decbi(void);
+void decbkm(int flag);
+void deccara(int top, int left, int bottom, int right, int attr);
+void deccolm(int flag);
+void deccra(int Pts, int Pl, int Pbs, int Prs, int Pps, int Ptd, int Pld, int Ppd);
+void decdc(int pn);
 void decdhl(int lower);
 void decdwl(void);
+void decera(int top, int left, int bottom, int right);
+void decfi(void);
+void decfra(int c, int top, int left, int bottom, int right);
+void decic(int pn);
+void deckbum(int flag);
 void deckpam(void);
+void deckpm(int flag);
 void deckpnm(void);
 void decll(char *ps);
+void decnkm(int flag);
+void decrara(int top, int left, int bottom, int right, int attr);
 void decrc(void);
 void decreqtparm(int pn);
 void decrqss(char *pn);
+void decsasd(int pn);
 void decsc(void);
 void decsca(int pn1);
+void decsclm(int flag);
+void decscnm(int flag);
 void decsed(int pn1);
 void decsel(int pn1);
+void decsnls(int pn);
+void decssdt(int pn);
 void decstbm(int pn1, int pn2);
 void decswl(void);
 void dectst(int pn);
@@ -95,6 +118,7 @@ void ech(int pn);
 void ed(int pn);
 void el(int pn);
 void esc(char *s);
+void extra_padding(int msecs);
 void holdit(void);
 void hpa(int pn);
 void hts(void);
@@ -105,8 +129,12 @@ void ind(void);
 void inflush(void);
 void inputline(char *s);
 void nel(void);
+void padding(int msecs);
 void println(char *s);
+void put_char(FILE *fp, int c);
+void put_string(FILE *fp, char *s);
 void readnl(void);
+void reset_inchar(void);
 void ri(void);
 void ris(void);
 void rm(char *ps);
@@ -118,6 +146,7 @@ void sgr(char *ps);
 void sl(int pn);
 void sm(char *ps);
 void sr(int pn);
+void srm(int flag);
 void su(int pn);
 void tbc(int pn);
 void vpa(int pn);

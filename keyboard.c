@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.8 1996/08/19 00:08:27 tom Exp $ */
+/* $Id: keyboard.c,v 1.11 1996/09/02 23:27:29 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -13,7 +13,7 @@
      - DECKPNM (Keypad Numeric Mode)
 
 The standard VT100 keyboard layout:
- 
+
                                                         UP   DN   LE  RI
 
 ESC   1!   2@   3#   4$   5%   6^   7&   8*   9(   0)   -_   =+   `~  BS
@@ -163,10 +163,10 @@ set_keyboard_layout(struct natkey *table)
   for (j = 0; table[j].natc != '\0'; j++) {
     for (i = 0; keytab[i].c != '\0'; i++) {
       if (keytab[i].row == table[j].natrow &&
-	  keytab[i].col == table[j].natcol) {
-	keytab[i].c = table[j].natc;
-	keytab[i].symbol = table[j].natsymbol;
-	break;
+          keytab[i].col == table[j].natcol) {
+        keytab[i].c = table[j].natc;
+        keytab[i].symbol = table[j].natsymbol;
+        break;
       }
     }
   }
@@ -301,7 +301,7 @@ tst_AnswerBack(MENU_ARGS)
   do {
     cup(17,1);
     inflush();
-    abmstr = instr();
+    abmstr = get_reply();
     cup(17,1);
     el(0);
     chrprint(abmstr);
@@ -323,6 +323,8 @@ tst_AutoRepeat(MENU_ARGS)
   printf("%s", "Auto Repeat OFF: ");
   rm("?8"); /* DECARM */
   inputline(arptstring);
+  if (log_fp != 0)
+    fprintf(log_fp, "Input: %s\n", arptstring);
   if (strlen(arptstring) == 0)      println("No characters read!??");
   else if (strlen(arptstring) == 1) println("OK.");
   else                              println("Too many characters read.");
@@ -332,6 +334,8 @@ tst_AutoRepeat(MENU_ARGS)
   printf("%s", "Auto Repeat ON: ");
   sm("?8"); /* DECARM */
   inputline(arptstring);
+  if (log_fp != 0)
+    fprintf(log_fp, "Input: %s\n", arptstring);
   if (strlen(arptstring) == 0)      println("No characters read!??");
   else if (strlen(arptstring) == 1) println("Not enough characters read.");
   else                              println("OK.");
@@ -405,8 +409,11 @@ tst_ControlKeys(MENU_ARGS)
   do {
     cup(max_lines-1,1); kbdc = inchar();
     cup(max_lines-1,1); el(0);
-    if (kbdc < 32) printf("  %s", ckeytab[kbdc].csymbol);
-    else {
+    if (kbdc < 32) {
+      printf("  %s", ckeytab[kbdc].csymbol);
+      if (log_fp != 0)
+        fprintf(log_fp, "Key: %s\n", ckeytab[kbdc].csymbol);
+    } else {
       sprintf(kbds, "%c", kbdc);
       chrprint(kbds);
       printf("%s", " -- not a CTRL key");
@@ -461,24 +468,26 @@ tst_CursorKeys(MENU_ARGS)
       if (ckeymode == 2) rm("?2"); /* VT52 mode */
       curkeystr = instr();
       esc("<");                      /* ANSI mode */
+
       cup(max_lines-1,1); el(0);
       cup(max_lines-1,1); chrprint(curkeystr);
+
       if (!strcmp(curkeystr,"\t")) break;
       for (i = 0; curkeytab[i].curkeysymbol[0] != '\0'; i++) {
-	if (!strcmp(curkeystr,curkeytab[i].curkeymsg[ckeymode])) {
-	  sgr("7");
-	  printf(" (%s key) ", curkeytab[i].curkeyname);
-	  sgr("");
-	  cup(1 + 2 * curkeytab[i].curkeyrow,
-	      1 + curkeytab[i].curkeycol);
-	  printf("%s", curkeytab[i].curkeysymbol);
-	  break;
-	}
+        if (!strcmp(curkeystr,curkeytab[i].curkeymsg[ckeymode])) {
+          sgr("7");
+          printf(" (%s key) ", curkeytab[i].curkeyname);
+          sgr("");
+          cup(1 + 2 * curkeytab[i].curkeyrow,
+              1 + curkeytab[i].curkeycol);
+          printf("%s", curkeytab[i].curkeysymbol);
+          break;
+        }
       }
       if (i == sizeof(curkeytab) / sizeof(struct curkey) - 1) {
-	sgr("7");
-	printf("%s", " (Unknown cursor key) ");
-	sgr("");
+        sgr("7");
+        printf("%s", " (Unknown cursor key) ");
+        sgr("");
       }
     }
   }
@@ -505,40 +514,43 @@ tst_FunctionKeys(MENU_ARGS)
   ed(2);
   show_keyboard(0);
   show_cursor_keys(0);
+  show_keypad(1);
   cup(max_lines-2,1);
 
   set_tty_crmod(FALSE);
   set_tty_echo(FALSE);
 
   for (fkeymode = 0; fkeymode <= 3; fkeymode++) {
-    show_keypad(1);
     cup(20,1); printf("<%s>%20s", fnkeymodes[fkeymode], "");
     cup(max_lines-2,1); el(0);
     cup(max_lines-2,1); printf("%s", "Press each function key. Finish with TAB.");
+
     for(;;) {
       cup(max_lines-1,1);
       if (fkeymode >= 2)  rm("?2");    /* VT52 mode */
       if (fkeymode % 2)   deckpam();   /* Application mode */
       else                deckpnm();   /* Numeric mode     */
       fnkeystr = instr();
-      esc("<");				/* ANSI mode */
+      esc("<");                         /* ANSI mode */
+
       cup(max_lines-1,1); el(0);
       cup(max_lines-1,1); chrprint(fnkeystr);
+
       if (!strcmp(fnkeystr,"\t")) break;
       for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
-	if (!strcmp(fnkeystr,fnkeytab[i].fnkeymsg[fkeymode])) {
-	  sgr("7");
-	  printf(" (%s key) ", fnkeytab[i].fnkeyname);
-	  sgr("");
-	  cup(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
-	  printf("%s", fnkeytab[i].fnkeysymbol);
-	  break;
-	}
+        if (!strcmp(fnkeystr,fnkeytab[i].fnkeymsg[fkeymode])) {
+          sgr("7");
+          printf(" (%s key) ", fnkeytab[i].fnkeyname);
+          sgr("");
+          cup(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
+          printf("%s", fnkeytab[i].fnkeysymbol);
+          break;
+        }
       }
       if (i == sizeof(fnkeytab) / sizeof(struct fnkey) - 1) {
-	sgr("7");
-	printf("%s", " (Unknown function key) ");
-	sgr("");
+        sgr("7");
+        printf("%s", " (Unknown function key) ");
+        sgr("");
       }
     }
   }
@@ -587,8 +599,8 @@ tst_KeyBoardLayout(MENU_ARGS)
     for (i = 0; keytab[i].c != '\0'; i++) {
       if (keytab[i].c == kbdc) {
         cup(1 + 2 * keytab[i].row, 1 + keytab[i].col);
-	printf("%s", keytab[i].symbol);
-	break;
+        printf("%s", keytab[i].symbol);
+        break;
       }
     }
   } while (kbdc != 13);

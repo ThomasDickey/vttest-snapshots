@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.34 1996/08/19 00:19:22 tom Exp $ */
+/* $Id: main.c,v 1.53 1996/09/02 13:35:26 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -21,15 +21,26 @@ choice to the address below.
 #include <ttymodes.h>
 #include <esc.h>
 
-jmp_buf intrenv;
+FILE *log_fp       = 0;
+char *current_menu = "";
 int brkrd;
 int reading;
-int max_lines = 24;
-int max_cols = 132;
-int min_cols = 80;
-int input_8bits = 0;
-int output_8bits = 0;
-int user_geometry = FALSE;
+int max_lines     = 24;
+int max_cols      = 132;
+int min_cols      = 80;
+int input_8bits   = FALSE;
+int output_8bits  = FALSE;
+int tty_speed     = DEFAULT_SPEED; /* nominal speed, for padding */
+int use_padding   = FALSE;
+int user_geometry = FALSE;     /* true if we're using nonstandard screensize */
+jmp_buf intrenv;
+
+static void
+usage(void)
+{
+  fprintf(stderr, "Usage: vttest [-l] [-p] [-8] [24x80.132]\n");
+  exit(EXIT_FAILURE);
+}
 
 int
 main(int argc, char *argv[])
@@ -51,50 +62,59 @@ main(int argc, char *argv[])
       { "",                                                  0 }
     };
 
-  /*
-   * A single "-8" option specifies that the tests will use 8-bit controls
-   */
-  if (argc > 1) {
-    if (!strcmp(argv[1], "-8")) {
-      output_8bits = 1;
-      argc--;
-      argv++;
-    }
-  }
-  /*
-   * Allow user to specify geometry of terminal to accommodate quasi-VT100
-   * terminals such as Linux console and xterm.
-   */
-  if (argc > 1) {
-    char *p = argv[1];
-    char *q;
-    int values[3], n, m;
-    for (n = 0; n < 3; n++) {
-      if (!*p)
-        break;
-      if ((m = strtol(p, &q, 10)) > 0) {
-        values[n] = m;
-        p = q;
-        if (*p)
-          p++;
-      } else {
-        break;
+  while (argc-- > 1) {
+    char *opt = *++argv;
+    if (*opt == '-') {
+      while (*++opt != '\0') {
+	switch (*opt) {
+	case 'l':
+	  log_fp = fopen("vttest.log", "w");
+	  break;
+	case 'p':
+	  use_padding = TRUE;
+	  break;
+	case '8':
+	  output_8bits = TRUE;
+	  break;
+	default:
+	  usage();
+	}
       }
-    }
-    switch (n) {
-    case 3:
-      max_cols = values[2];
-      /* FALLTHRU */
-    case 2:
-      min_cols = values[1];
-      /* FALLTHRU */
-    case 1:
-      max_lines = values[0];
-      user_geometry = TRUE;
-      break;
-    }
-    if ((max_cols < min_cols) || (n == 0)) {
-      fprintf(stderr, "Usage: vttest [24x80.132]\n");
+    } else {
+      /*
+       * Allow user to specify geometry of terminal to accommodate quasi-VT100
+       * terminals such as Linux console and xterm.
+       */
+      char *p = argv[0];
+      char *q;
+      int values[3], n, m;
+      for (n = 0; n < 3; n++) {
+	if (!*p)
+	  break;
+	if ((m = strtol(p, &q, 10)) > 0) {
+	  values[n] = m;
+	  p = q;
+	  if (*p)
+	    p++;
+	} else {
+	  break;
+	}
+      }
+      switch (n) {
+      case 3:
+	max_cols = values[2];
+	/* FALLTHRU */
+      case 2:
+	min_cols = values[1];
+	/* FALLTHRU */
+      case 1:
+	max_lines = values[0];
+	user_geometry = TRUE;
+	break;
+      }
+      if ((max_cols < min_cols) || (n == 0)) {
+	usage();
+      }
     }
   }
 
@@ -109,9 +129,17 @@ main(int argc, char *argv[])
   do {
     ed(2);
     title(0); printf("VT100 test program, version %d.%d", RELEASE, PATCHLEVEL);
-    if (user_geometry) {
-      title(1); printf("Screen size %dx%d (%d max)", max_lines, min_cols, max_cols);
-    }
+
+    title(1);
+    if (max_lines != 24
+     || min_cols  != 80
+     || max_cols  != 132)
+      printf("Screen size %dx%d (%d max) ", max_lines, min_cols, max_cols);
+    if (tty_speed != DEFAULT_SPEED)
+      printf("Line speed %dbd ", tty_speed);
+    if (use_padding)
+      printf(" (padded)");
+
     title(2); println("Choose test type:");
   } while (menu(mainmenu));
   bye();
@@ -139,8 +167,8 @@ tst_movements(MENU_ARGS)
   for (pass = 0; pass <= 1; pass++) {
     int inner_l, inner_r;
 
-    if (pass == 0) { rm("?3"); width = min_cols; }
-    else           { sm("?3"); width = max_cols; }
+    if (pass == 0) { deccolm(FALSE); width = min_cols; }
+    else           { deccolm(TRUE);  width = max_cols; }
 
     /* Compute left/right columns for a 60-column box centered in 'width' */
     inner_l = (width - 60) / 2;
@@ -211,7 +239,7 @@ tst_movements(MENU_ARGS)
     printf("with  one (1) free position around it.    ");
     holdit();
   }
-  rm("?3");
+  deccolm(FALSE);
 
   ed(2);
   cup(1,1);
@@ -220,7 +248,7 @@ tst_movements(MENU_ARGS)
   println("");
   println("A B C D E F G H I J K L M N O P Q R S");
   for (i = 1; i < 20; i++) {
-    printf("%c", 'A' + i);
+    printf("%c", '@' + i);
     do_csi("2\010C");   /* Two forward, one backspace */
   }
   println("");
@@ -245,8 +273,8 @@ void do_scrolling(void)
   ed(2);
   sm("?6"); /* Origin mode (relative) */
   for (soft = -1; soft <= 0; soft++) {
-    if (soft) sm("?4");
-    else      rm("?4");
+    if (soft) decsclm(TRUE);
+    else      decsclm(FALSE);
     for (row = 12; row >= 1; row -= 11) {
       decstbm(row, max_lines-row+1);
       ed(2);
@@ -259,6 +287,7 @@ void do_scrolling(void)
                  down ? "down" : "up",
                  2*(13-row), i);
           if (down) { ri(); ri(); }
+          else if (soft) extra_padding(10);
         }
       }
       holdit();
@@ -319,9 +348,9 @@ tst_screen(MENU_ARGS)
   printf("should look the same. ");
   holdit();
   for (background = 0; background <= 1; background++) {
-    if (background) rm("?5");
-    else            sm("?5");
-    sm("?3"); /* 132 cols */
+    if (background) decscnm(FALSE);
+    else            decscnm(TRUE);
+    deccolm(TRUE); /* 132 cols */
     ed(2);    /* VT100 clears screen on SM3/RM3, but not obviously, so... */
     cup(1,1); tbc(3);
     for (col = 1; col <= max_cols; col += 8) {
@@ -336,7 +365,7 @@ tst_screen(MENU_ARGS)
       background ? "dark" : "light");
     }
     holdit();
-    rm("?3"); /* 80 cols */
+    deccolm(FALSE); /* 80 cols */
     ed(2);    /* VT100 clears screen on SM3/RM3, but not obviously, so... */
     cup(1,1);
     for (col = 1; col <= min_cols; col += 10)
@@ -387,11 +416,11 @@ tst_screen(MENU_ARGS)
   cup(18,45); sgr("0;1;4;5;7"); printf("bold underline blink negative");
   sgr("");
 
-  rm("?5"); /* Inverse video off */
+  decscnm(FALSE); /* Inverse video off */
   cup(max_lines-1,1); el(0); printf("Dark background. "); holdit();
-  sm("?5"); /* Inverse video */
+  decscnm(TRUE); /* Inverse video */
   cup(max_lines-1,1); el(0); printf("Light background. "); holdit();
-  rm("?5");
+  decscnm(FALSE);
   ed(2);
   cup(8,12); printf("normal");
   cup(8,24); printf("bold");
@@ -488,8 +517,8 @@ tst_doublesize(MENU_ARGS)
 
     ed(2);
     cup(1, 1);
-    if (w) { sm("?3"); printf("%3d column mode", max_cols); }
-    else   { rm("?3"); printf("%3d column mode", min_cols); }
+    if (w) { deccolm(TRUE);  printf("%3d column mode", max_cols); }
+    else   { deccolm(FALSE); printf("%3d column mode", min_cols); }
 
     cup( 5, 3 + 2 * w1);
     printf("v------- left margin");
@@ -530,7 +559,7 @@ tst_doublesize(MENU_ARGS)
   }
   /* Set vanilla tabs for next test */
   cup(1,1); tbc(3); for (col = 1; col <= max_cols; col += 8) { cuf(8); hts(); }
-  rm("?3");
+  deccolm(FALSE);
   ed(2);
   scs(0,'0');
 
@@ -566,132 +595,6 @@ tst_doublesize(MENU_ARGS)
 }
 
 int
-tst_vt52(MENU_ARGS)
-{
-  static struct rtabl {
-      char *rcode;
-      char *rmsg;
-  } resptable[] = {
-      { "\033/K", " -- OK (means Standard VT52)" },
-      { "\033/Z", " -- OK (means VT100 emulating VT52)" },
-      { "",       " -- Unknown response"}
-  };
-
-  int i,j;
-  char *response;
-
-  rm("?2");  /* Reset ANSI (VT100) mode, Set VT52 mode  */
-  esc("H");  /* Cursor home     */
-  esc("J");  /* Erase to end of screen  */
-  esc("H");  /* Cursor home     */
-  for (i = 0; i <= max_lines-1; i++) {
-    for (j = 0; j <= 9; j++)
-    printf("%s", "FooBar ");
-    println("Bletch");
-  }
-  esc("H");  /* Cursor home     */
-  esc("J");  /* Erase to end of screen  */
-
-  vt52cup(7,47);
-  printf("nothing more.");
-  for (i = 1; i <= 10; i++) printf("THIS SHOULD GO AWAY! ");
-  for (i = 1; i <= 5; i++) {
-    vt52cup(1,1);
-    printf("%s", "Back scroll (this should go away)");
-    esc("I");           /* Reverse LineFeed (with backscroll!)  */
-  }
-  vt52cup(12,60);
-  esc("J");  /* Erase to end of screen  */
-  for (i = 2; i <= 6; i++) {
-    vt52cup(i,1);
-    esc("K");           /* Erase to end of line */
-  }
-
-  for (i = 2; i <= max_lines-1; i++) {
-    vt52cup(i,70); printf("%s", "**Foobar");
-  }
-  vt52cup(max_lines-1,10);
-  for (i = max_lines-1; i >= 2; i--) {
-    printf("%s", "*");
-    printf("%c", 8);    /* BS */
-    esc("I");           /* Reverse LineFeed (LineStarve)        */
-  }
-  vt52cup(1,70);
-  for (i = 70; i >= 10; i--) {
-    printf("%s", "*");
-    esc("D"); esc("D"); /* Cursor Left */
-  }
-  vt52cup(max_lines,10);
-  for (i = 10; i <= 70; i++) {
-    printf("%s", "*");
-    printf("%c", 8);    /* BS */
-    esc("C");           /* Cursor Right */
-  }
-  vt52cup(2,11);
-  for (i = 2; i <= max_lines-1; i++) {
-    printf("%s", "!");
-    printf("%c", 8);    /* BS */
-    esc("B");           /* Cursor Down  */
-  }
-  vt52cup(max_lines-1,69);
-  for (i = max_lines-1; i >= 2; i--) {
-    printf("%s", "!");
-    printf("%c", 8);    /* BS */
-    esc("A");           /* Cursor Up    */
-  }
-  for (i = 2; i <= max_lines-1; i++) {
-    vt52cup(i,71);
-    esc("K");           /* Erase to end of line */
-  }
-
-  vt52cup(10,16);
-  printf("%s", "The screen should be cleared, and have a centered");
-  vt52cup(11,16);
-  printf("%s", "rectangle of \"*\"s with \"!\"s on the inside to the");
-  vt52cup(12,16);
-  printf("%s", "left and right. Only this, and");
-  vt52cup(13,16);
-  holdit();
-
-  esc("H");  /* Cursor home     */
-  esc("J");  /* Erase to end of screen  */
-  printf("%s", "This is the normal character set:");
-  for (j =  0; j <=  1; j++) {
-    vt52cup(3 + j, 16);
-    for (i = 0; i <= 47; i++)
-    printf("%c", 32 + i + 48 * j);
-  }
-  vt52cup(6,1);
-  printf("%s", "This is the special graphics character set:");
-  esc("F");     /* Select Special Graphics character set        */
-  for (j =  0; j <=  1; j++) {
-    vt52cup(8 + j, 16);
-    for (i = 0; i <= 47; i++)
-    printf("%c", 32 + i + 48 * j);
-  }
-  esc("G");     /* Select ASCII character set   */
-  vt52cup(12,1);
-  holdit();
-
-  esc("H");  /* Cursor home     */
-  esc("J");  /* Erase to end of screen  */
-  println("Test of terminal response to IDENTIFY command");
-  esc("Z");     /* Identify     */
-  response = instr();
-  println("");
-  printf("Response was");
-  esc("<");  /* Enter ANSI mode (VT100 mode) */
-  chrprint(response);
-  for(i = 0; resptable[i].rcode[0] != '\0'; i++)
-    if (!strcmp(response, resptable[i].rcode))
-      break;
-  printf("%s", resptable[i].rmsg);
-  println("");
-  println("");
-  return MENU_HOLD;
-}
-
-int
 tst_insdel(MENU_ARGS)
 {
     /* Test of:
@@ -705,8 +608,8 @@ tst_insdel(MENU_ARGS)
   int i, row, col, sw, dblchr, scr132;
 
   for(scr132 = 0; scr132 <= 1; scr132++) {
-    if (scr132) { sm("?3"); sw = max_cols; }
-    else        { rm("?3"); sw = min_cols; }
+    if (scr132) { deccolm(TRUE);  sw = max_cols; }
+    else        { deccolm(FALSE); sw = min_cols; }
     ed(2);
     cup(1,1);
     for (row=1; row<=max_lines; row++) {
@@ -734,10 +637,10 @@ tst_insdel(MENU_ARGS)
     cup(1,2);
     printf("B");
     cub(1);
-    sm("4");
+    decsclm(TRUE);
     for (col=2; col<=sw-1; col++)
       printf("*");
-    rm("4");
+    decsclm(FALSE);
     cup(4,1);
     printf("Test of 'Insert Mode'. The top line should be 'A*** ... ***B'. ");
     holdit(); ri(); el(2);
@@ -776,7 +679,7 @@ tst_insdel(MENU_ARGS)
     cup(10,1);
     holdit();
 
-    if (sw == max_cols) rm("?3");
+    if (sw == max_cols) deccolm(FALSE);
   }
   return MENU_NOHOLD;
 }
@@ -840,14 +743,14 @@ bug_a(MENU_ARGS)
   /*  Invoke the bug  */
 
   esc ("[24H");                         /* Simplified cursor movement   */
-  rm("?4"); for (i = 1; i <= 20; i++) printf("\n");
-  sm("?4"); for (i = 1; i <= 10; i++) printf("\n");
-  rm("?4"); for (i = 1; i <=  5; i++) printf("\n");
+  decsclm(FALSE); for (i = 1; i <= 20; i++) printf("\n");
+  decsclm(TRUE);  for (i = 1; i <= 10; i++) printf("\n");
+  decsclm(FALSE); for (i = 1; i <=  5; i++) printf("\n");
 
   /* That should be enough to show the bug. But we'll try another way:  */
-  sm ("?4");                            /* Set soft scroll              */
+  decsclm(TRUE);                        /* Set soft scroll              */
   nel ();                               /* "NextLine", move down        */
-  rm ("?4");                            /* Reset soft scroll            */
+  decsclm(FALSE);                       /* Reset soft scroll            */
   nel ();                               /* "NextLine", move down        */
   for (i = 1; i <= 10; i++) {           /* Show the bug                 */
       printf ("Softscroll bug test, line %d.  ", i);
@@ -888,9 +791,9 @@ bug_b(MENU_ARGS)
 int
 bug_c(MENU_ARGS)
 {
-  sm("?3");                                             /* 132 column mode */
+  deccolm(TRUE);                                        /* 132 column mode */
   cup(1,81);
-  rm("?3");                                             /*  80 column mode */
+  deccolm(FALSE);                                       /*  80 column mode */
   cup(12,5);
   printf("Except for this line, the screen should be blank. ");
   return MENU_HOLD;
@@ -913,7 +816,7 @@ bug_d(MENU_ARGS)
      * (To output a pure LF might be tricky).
      */
 
-    sm("?3");                 /* Make the bug visible */
+    deccolm(TRUE);                 /* Make the bug visible */
     cup(1,9); decdwl();
     println("You should see blinking text at the bottom line.");
     cup(3,9); decdwl();
@@ -922,14 +825,14 @@ bug_d(MENU_ARGS)
     printf("If you can see this then the bug did not appear."); sgr("");
     cup(4,9); decdwl();
     result = inchar(); readnl();
-    rm("?3");
+    deccolm(FALSE);
   } while (result == '1');
-  sm("?4");     /* Syrup scroll */
+  decsclm(TRUE);     /* Syrup scroll */
   cup(max_lines-1,1);
   for (i = 1; i <= 5; i++)
   println("If the bug is present, this should make things much worse!");
   holdit();
-  rm("?4");     /* Jump scroll */
+  decsclm(FALSE);     /* Jump scroll */
   return MENU_NOHOLD;
 }
 
@@ -940,7 +843,7 @@ bug_e(MENU_ARGS)
 {
   int i;
   static char *rend[2] = { "m", "7m" };
-  sm("?3");
+  deccolm(TRUE);
   cup(1,1); decdwl();
   println("This test should put an 'X' at line 3 column 100.");
   for (i = 1; i <= 12; i++)
@@ -953,7 +856,7 @@ bug_e(MENU_ARGS)
   printf("--------------------------- The 'X' should NOT be above here -");
   printf("---+------------ but above here -----+");
   cup(10,1); decdwl(); holdit();
-  rm("?3");
+  deccolm(FALSE);
   return MENU_NOHOLD;
 }
 
@@ -968,8 +871,8 @@ bug_f(MENU_ARGS)
   *     ("?6") parameter, parameters that appear after the "?6"
   *     remain unaffected.  This is also true on CIT-101 terminals.
   */
-  sm ("?5");                            /* Set reverse mode             */
-  sm ("?3");                            /* Set 132 column mode          */
+  decscnm(TRUE);                       /* Set reverse mode             */
+  deccolm(TRUE);                       /* Set 132 column mode          */
   println("Test VT100 'Toggle origin mode, forget rest' bug, part 1.");
   printf("The screen should be in reverse, %d column mode.\n", max_cols);
   holdit();
@@ -1050,7 +953,7 @@ bug_l(MENU_ARGS)
 
   /* ...and in 132 column mode  */
 
-  sm("?3");
+  deccolm(TRUE);
   ed(2);
   cup(15, 1);
   printf("This-is-a-long-line-This-is-a-long-line-");
@@ -1072,7 +975,7 @@ bug_l(MENU_ARGS)
   cup(11, 1);
   printf("Now the line below should contain %d characters in single width.\n", max_cols);
   holdit();
-  rm("?3");
+  deccolm(FALSE);
   return MENU_NOHOLD;
 }
 
@@ -1129,17 +1032,17 @@ initterminal(int pn)
 
   /* Set up my personal prejudices      */
 
-  esc("<");     /* Enter ANSI mode (if in VT52 mode)    */
-  rm("?1");     /* cursor keys normal   */
-  rm("?3");     /* 80 col mode          */
-  rm("?4");     /* Jump scroll          */
-  rm("?5");     /* Normal screen        */
-  rm("?6");     /* Absolute origin mode */
-  sm("?7");     /* Wrap around on       */
-  rm("?8");     /* Auto repeat off      */
-  sm("?40");    /* Enable 80/132 switch */
-  decstbm(0,0); /* No scroll region     */
-  sgr("0");     /* Normal character attributes  */
+  esc("<");           /* Enter ANSI mode (if in VT52 mode)    */
+  rm("?1");           /* cursor keys normal   */
+  deccolm(FALSE);     /* 80 col mode          */
+  decsclm(FALSE);     /* Jump scroll          */
+  decscnm(FALSE);     /* Normal screen        */
+  rm("?6");           /* Absolute origin mode */
+  sm("?7");           /* Wrap around on       */
+  rm("?8");           /* Auto repeat off      */
+  sm("?40");          /* Enable 80/132 switch */
+  decstbm(0,0);       /* No scroll region     */
+  sgr("0");           /* Normal character attributes  */
 }
 
 void
@@ -1147,15 +1050,15 @@ bye (void)
 {
   /* Force my personal prejudices upon the poor luser   */
 
-  esc("<");     /* Enter ANSI mode (if in VT52 mode)    */
-  rm("?1");     /* cursor keys normal   */
-  rm("?3");     /* 80 col mode          */
-  rm("?5");     /* Normal screen        */
-  rm("?6");     /* Absolute origin mode */
-  sm("?7");     /* Wrap around on       */
-  sm("?8");     /* Auto repeat on       */
-  decstbm(0,0); /* No scroll region     */
-  sgr("0");     /* Normal character attributes  */
+  esc("<");           /* Enter ANSI mode (if in VT52 mode)    */
+  rm("?1");           /* cursor keys normal   */
+  deccolm(FALSE);     /* 80 col mode          */
+  decscnm(FALSE);     /* Normal screen        */
+  rm("?6");           /* Absolute origin mode */
+  sm("?7");           /* Wrap around on       */
+  sm("?8");           /* Auto repeat on       */
+  decstbm(0,0);       /* No scroll region     */
+  sgr("0");           /* Normal character attributes  */
 
   /* Say goodbye */
 
@@ -1164,8 +1067,8 @@ bye (void)
   printf("That's all, folks!\n");
   printf("\n\n\n");
   inflush();
-  restore_ttymodes();
-  exit(0);
+  close_tty();
+  exit(EXIT_SUCCESS);
 }
 
 #ifdef UNIX
@@ -1197,12 +1100,33 @@ scanto(char *str, int *pos, int toc)
   char c;
   int result = 0;
 
-  while (toc != (c = str[(*pos)++])) {
+  while (toc != (c = str[(*pos)])) {
+    *pos += 1;
     if (isdigit(c)) result = result * 10 + c - '0';
     else break;
   }
-  if (c == toc) return(result);
-  else          return(0);
+  if (c == toc) {
+    *pos += 1; /* point past delimiter */
+    return(result);
+  }
+  return(0);
+}
+
+static char *
+push_menu(int number)
+{
+  char *saved = current_menu;
+  current_menu = malloc(strlen(saved) + 10);
+  sprintf(current_menu, "%s%s%d", saved, *saved ? "." : "", number);
+  return saved;
+}
+
+static void
+pop_menu(char *saved)
+{
+  if (current_menu && *current_menu)
+    free(current_menu);
+  current_menu = saved;
 }
 
 int
@@ -1212,6 +1136,7 @@ menu(MENU *table)
   char c;
   char storage[80];
   char *s = storage;
+
   println("");
   tablesize = 0;
   for (i = 0; table[i].description[0] != '\0'; i++) {
@@ -1225,7 +1150,7 @@ menu(MENU *table)
   for(;;) {
     inputline(s);
     choice = 0;
-    while ((c = *s++) != '\0')
+    while ((c = *s++) != '\0') {
       if (c == '*') {
         choice = -1;
         break;
@@ -1235,28 +1160,33 @@ menu(MENU *table)
         choice = tablesize+1;
         break;
       }
-#ifdef DEBUG
-    {
-      FILE *fp = fopen("ttymodes.log", "a");
-      if (fp != 0) {
-        fprintf(fp, "Selected menu choice #%d [0..%d]\n", choice, tablesize);
-        fclose(fp);
-      }
     }
-#endif
+
     if (choice < 0) {
       for (choice = 0; choice <= tablesize; choice++) {
         ed(2);
-        if (table[choice].dispatch != 0)
-          if ((*table[choice].dispatch)(table[choice].description) == MENU_HOLD)
+        if (table[choice].dispatch != 0) {
+          char *save = push_menu(choice);
+          char *name = table[choice].description;
+          if (log_fp != 0)
+            fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
+          if ((*table[choice].dispatch)(name) == MENU_HOLD)
             holdit();
+          pop_menu(save);
+        }
       }
       return 1;
     } else if (choice <= tablesize) {
       ed(2);
-      if (table[choice].dispatch != 0)
-        if ((*table[choice].dispatch)(table[choice].description) != MENU_NOHOLD)
+      if (table[choice].dispatch != 0) {
+        char *save = push_menu(choice);
+        char *name = table[choice].description;
+        if (log_fp != 0)
+          fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
+        if ((*table[choice].dispatch)(name) != MENU_NOHOLD)
           holdit();
+        pop_menu(save);
+      }
       return (table[choice].dispatch != 0);
     }
     printf("          Bad choice, try again: ");
@@ -1294,8 +1224,126 @@ skip_prefix(char *prefix, char *input)
   return input;
 }
 
+char *skip_csi(char *input)
+{
+  if ((unsigned char)*input == CSI) {
+	return input+1;
+  }
+  return skip_prefix(csi_input(), input);
+}
+
+char *skip_dcs(char *input)
+{
+  if ((unsigned char)*input == DCS) {
+	return input+1;
+  }
+  return skip_prefix(dcs_input(), input);
+}
+
+/*
+ * Returns a pointer past digits, or null if none are found
+ */
+char *
+skip_digits(char *src)
+{
+  char *base = src;
+  while (*src != '\0' && isdigit(*src))
+    src++;
+  return (base == src) ? 0 : src;
+}
+
+/*
+ * Strip the string terminator (ST) from the given string, returning true if
+ * we did this.
+ */
+int
+strip_suffix(char *src, char *suffix)
+{
+  int have = strlen(src);
+  int want = strlen(suffix);
+  if (have > want) {
+    have -= want;
+    if (!strcmp(src+have, suffix)) {
+      src[have] = '\0';
+      return TRUE;
+    }
+  }
+  return FALSE;
+}
+
+/*
+ * Strip the string terminator (ST) from the given string, returning true if
+ * we did this.
+ */
+int
+strip_terminator(char *src)
+{
+  int ok = strip_suffix(src, st_input());
+  if (!ok) {
+	int have = strlen(src);
+	if (have > 0 && (unsigned char)src[have-1] == ST) {
+	  ok = TRUE;
+	  src[--have] = '\0';
+	}
+  }
+  if (!ok && log_fp != 0)
+    fprintf(log_fp, "Missing ST\n");
+  return ok;
+}
+
 void
 title(int offset)
 {
   cup(TITLE_LINE+offset, 10);
+  if (offset == 0 && *current_menu)
+    printf("Menu %s: ", current_menu);
+}
+
+static void
+my_vfprintf(FILE *fp, va_list ap, const char *fmt)
+{
+  while (*fmt != '\0') {
+    if (*fmt == '%') {
+      switch(*++fmt) {
+      case 'c':
+	fputc(va_arg(ap, int), fp);
+	break;
+      case 'x':
+	fprintf(fp, "%x", va_arg(ap, int));
+	break;
+      case 'd':
+	fprintf(fp, "%d", va_arg(ap, int));
+	break;
+      case 's':
+	fputs(va_arg(ap, char *), fp);
+	break;
+      }
+    } else if (*fmt != '\n') {
+      fputc(*fmt, fp);
+    }
+    fmt++;
+  }
+}
+
+/*
+ * Show a test-result, optionally logging it as well.
+ */
+void
+show_result(const char *fmt, ...)
+{
+  va_list ap;
+
+  if (*fmt != ' ')
+    fputc(' ', stdout);
+  va_start(ap, fmt);
+  my_vfprintf(stdout, ap, fmt);
+  va_end(ap);
+
+  if (log_fp != 0) {
+    fputs("Result: ", log_fp);
+    va_start(ap, fmt);
+    my_vfprintf(log_fp, ap, fmt);
+    va_end(ap);
+    fputc('\n', log_fp);
+  }
 }

@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.13 1996/08/19 00:20:53 tom Exp $
+# $Id: makefile.in,v 1.16 1996/08/28 23:01:45 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -45,8 +45,11 @@ C_SRC = \
 	nonvt100.c \
 	reports.c \
 	setup.c \
+	status.c \
 	ttymodes.c \
+	unix_io.c \
 	vt420.c \
+	vt52.c \
 	xterm.c
 H_SRC = \
 	vttest.h \
@@ -60,8 +63,11 @@ OBJS  = \
 	nonvt100.o \
 	reports.o \
 	setup.o \
+	status.o \
 	ttymodes.o \
+	unix_io.o \
 	vt420.o \
+	vt52.o \
 	xterm.o
 
 SRC =	patchlev.h \
@@ -144,6 +150,9 @@ dist-shar: MANIFEST
 	- rm -f .fname .files
 
 $(THIS).o:	config.h
+
+lint:
+	$(LINT) $(CPPFLAGS) $(C_SRC)
 
 check: $(THIS)
 	@echo 'Sorry -- You must run this interactively.'

@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.21 1996/08/19 00:23:12 tom Exp $ */
+/* $Id: nonvt100.c,v 1.26 1996/09/02 13:14:16 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -21,9 +21,9 @@ not_impl(MENU_ARGS)
 static void
 report_ok(char *ref, char *tst)
 {
-  if ((tst = skip_prefix(csi_input(), tst)) == 0)
+  if ((tst = skip_csi(tst)) == 0)
     tst = "?";
-  printf(" (%s)", !strcmp(ref, tst) ? "success" : "fail");
+  show_result(!strcmp(ref, tst) ? SHOW_SUCCESS : SHOW_FAILURE);
 }
 
 /* Kermit 3.13 and dtterm implement this; it's probably for VT220 */
@@ -61,7 +61,7 @@ tst_C8C1T(MENU_ARGS)
   return MENU_HOLD;
 }
 
-/* VT420 doesn't do this */
+/* VT420 doesn't do this, VT510 does */
 static int
 tst_CBT(MENU_ARGS)
 {
@@ -81,7 +81,7 @@ tst_CBT(MENU_ARGS)
 }
 
 /* Note: CHA and HPA have identical descriptions in ECMA-48 */
-/* dtterm implements this (VT400 doesn't) */
+/* dtterm implements this (VT400 doesn't, VT510 does) */
 static int
 tst_CHA(MENU_ARGS)
 {
@@ -104,7 +104,7 @@ tst_CHA(MENU_ARGS)
 /*
  * Kermit's documentation refers to this as CHI, ECMA-48 as CHT.
  *
- * VT420 doesn't do this
+ * VT420 doesn't do this, VT510 does
  */
 static int
 tst_CHT(MENU_ARGS)
@@ -140,7 +140,7 @@ tst_CHT(MENU_ARGS)
   return MENU_HOLD;
 }
 
-/* VT420 doesn't do this */
+/* VT420 doesn't do this, VT510 does */
 static int
 tst_CNL(MENU_ARGS)
 {
@@ -161,6 +161,8 @@ tst_CNL(MENU_ARGS)
 }
 
 /*
+ * VT420 & up
+ *
  * There's a comment in the MS-DOS Kermit 3.13 documentation that implies CPL
  * is used to replace RI (reverse-index).  ECMA-48 doesn't specify scrolling
  * regions, DEC terminals do apparently, so for CPL and CNL we'll test this.
@@ -186,7 +188,7 @@ tst_CPL(MENU_ARGS)
  * Test DEC's selective-erase (set-protected area) by drawing a box of
  * *'s that will remain, and a big X of *'s that gets cleared..
  */
-static int
+int
 tst_DECSCA(MENU_ARGS)
 {
   int i, j, pass;
@@ -250,6 +252,8 @@ tst_DECSCA(MENU_ARGS)
 }
 
 /*
+ * VT220 & up
+ *
  * Test if the terminal can make the cursor invisible
  */
 static int
@@ -266,7 +270,7 @@ tst_DECTCEM(MENU_ARGS)
 }
 
 /*
- * VT200 and higher
+ * VT200 and higher (though VT420 manual says it's VT400 & higher)
  *
  * Test to ensure that 'ech' (erase character) is honored, with no parameter,
  * explicit parameter, and longer than the screen width (to ensure that the
@@ -298,23 +302,25 @@ tst_ECH(MENU_ARGS)
   return MENU_HOLD;
 }
 
-/* VT420 doesn't do this */
+/* VT420 doesn't do this, VT510 does */
 static int
 tst_HPA(MENU_ARGS)
 {
   int n;
+  int last = max_lines-4;
 
   ed(2);
-  for (n = 1; n < max_lines-3; n++) {
+  for (n = 1; n < last; n++) {
     cup(n, min_cols - n);
     hpa(n);
     printf("+");
   }
-  cup(max_lines-3, 1);
+  cup(last, 1);
   for (n = 1; n <= min_cols; n++)
-    printf("%c", n == max_lines-3 ? '+' : '*');
-  cup(max_lines-2, 1);
-  println("There should be a diagonal of +'s down to the row of *'s above this message");
+    printf("%c", n == last ? '+' : '*');
+  cup(last+1, 1);
+  println("There should be a diagonal of +'s down to the row of *'s above this message.");
+  println("(The + in the row of *'s is the target)");
   return MENU_HOLD;
 }
 
@@ -322,7 +328,7 @@ tst_HPA(MENU_ARGS)
  * Test the SD (scroll-down) by forcing characters written in a diagonal into
  * a horizontal row.
  *
- * vt400 and dtterm use the (incorrect?) escape sequence (ending with 'T'
+ * VT400 and dtterm use the (incorrect?) escape sequence (ending with 'T'
  * instead of '^'), apparently someone misread 05/14 as 05/04 or vice versa.
  */
 int
@@ -362,6 +368,8 @@ tst_SD_ISO(MENU_ARGS)
 }
 
 /*
+ * not in VT510
+ *
  * Test the SL (scroll-left) by forcing characters written in a diagonal into
  * a vertical line.
  */
@@ -384,6 +392,8 @@ tst_SL(MENU_ARGS)
 }
 
 /*
+ * not in VT510
+ *
  * Test the SR (scroll-right) by forcing characters written in a diagonal into
  * a vertical line.
  */
@@ -476,7 +486,7 @@ tst_SPA(MENU_ARGS)
  * Kermit's documentation refers to this as CVA, ECMA-48 as VPA.
  * Move the cursor in the current column to the specified line.
  *
- * VT420 doesn't do this
+ * VT420 doesn't do this, VT510 does
  */
 static int
 tst_VPA(MENU_ARGS)
@@ -501,28 +511,6 @@ tst_VPA(MENU_ARGS)
   cup(max_lines-3, 1);
   println("There should be a box-outline made of *'s in the middle of the screen.");
   return MENU_HOLD;
-}
-
-/******************************************************************************/
-
-static int
-tst_Editing(MENU_ARGS)
-{
-  static MENU my_menu[] = {
-      { "Exit",                                              0 },
-      { "Test Delete Column (DECDC)",                        not_impl },
-      { "Test Erase Char (ECH)",                             tst_ECH },
-      { "Test Insert Column (DECIC)",                        not_impl },
-      { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
-      { "",                                                  0 }
-    };
-
-  do {
-    ed(2);
-    title(0); printf("Editing Tests");
-    title(2); println("Choose test type:");
-  } while (menu(my_menu));
-  return MENU_NOHOLD;
 }
 
 /******************************************************************************/
@@ -582,7 +570,7 @@ tst_vt220(MENU_ARGS)
       { "Exit",                                              0 },
       { "Test page-format controls",                         tst_PageFormat },
       { "Test page-movement controls",                       tst_PageMovement },
-      { "Test editing controls",                             tst_Editing },
+      { "Test Erase Char (ECH)",                             tst_ECH },
       { "Test Previous-Line (CPL)",                          tst_CPL },
       { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
       { "Test 8-bit controls (C7C1T/C8C1T)",                 tst_C8C1T },

@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.19 1996/08/19 00:07:38 tom Exp $ */
+/* $Id: color.c,v 1.21 1996/08/27 00:54:19 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -215,12 +215,12 @@ show_graphic_rendition(void)
   cup(20,45); c_sgr(""); set_background(9); printf("original background");
   c_sgr(""); /* same as c_sgr("0") */
 
-  rm("?5"); /* Inverse video off */
+  decscnm(FALSE); /* Inverse video off */
   cup(max_lines-1,1); el(0); printf("Dark background. "); holdit();
 
-  sm("?5"); /* Inverse video */
+  decscnm(TRUE); /* Inverse video */
   cup(max_lines-1,1); el(0); printf("Light background. "); holdit();
-  rm("?5");
+  decscnm(FALSE);
 }
 
 static void
@@ -445,6 +445,9 @@ test_color_screen(MENU_ARGS)
 }
 
 /*
+ * VT220 and higher implement the 22, 24, 25 and 27 codes.
+ * VT510 implements concealed text.
+ *
  * ISO 6429 specifies additional SGR codes so that one needn't use SGR 0
  * to reset everything before switching, e.g., set/clear pairs are
  * bold      1/22
@@ -484,13 +487,13 @@ test_iso_6429_sgr(MENU_ARGS)
   c_sgr(""); /* same as c_sgr("0") */
   printf(" <- concealed text");
 
-  rm("?5"); /* Inverse video off */
+  decscnm(FALSE); /* Inverse video off */
   cup(max_lines-1,1); el(0); printf("Dark background. "); holdit();
 
-  sm("?5"); /* Inverse video */
+  decscnm(TRUE); /* Inverse video */
   cup(max_lines-1,1); el(0); printf("Light background. "); holdit();
 
-  rm("?5");
+  decscnm(FALSE);
   cup(max_lines-1,1); el(0); printf("Dark background. "); holdit();
 
   reset_colors();

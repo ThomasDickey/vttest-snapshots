@@ -1,4 +1,4 @@
-$Id: README,v 1.2 1996/06/24 00:02:34 tom Exp $
+$Id: README,v 1.3 1996/08/21 10:23:54 tom Exp $
 
 I extended the original vttest program (I've found no modifications) with
 several new features listed in CHANGES - Thomas E. Dickey <dickey@clark.net>
@@ -31,9 +31,9 @@ serious bug, or ported it to VMS, do tell me. I can't promise any new
 version release, though. From this version on (1.7b) VTTEST will have
 to live its own life without its father holding its hand.
 
-My adress is:
+My address is:
 
-Network-mail adress:     (mcvax,seismo)!enea!suadb!lindberg
+Network-mail address:    (mcvax,seismo)!enea!suadb!lindberg
 
 Real-world-mail address: Per Lindberg
                          QZ, Stockholm University Computing Center

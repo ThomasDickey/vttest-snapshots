@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.4 1996/08/19 00:15:51 tom Exp $ */
+/* $Id: setup.c,v 1.12 1996/09/03 00:39:44 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -13,41 +13,67 @@ check_8bit_toggle(void)
 
   set_tty_raw(TRUE);
   cup(1,1); dsr(6);
-  report = instr();
+  padding(5); /* FIXME: may not be needed */
+  report = get_reply();
   restore_ttymodes();
 
-  if ((report = skip_prefix(csi_input(), report)) != 0
+  if ((report = skip_csi(report)) != 0
    && !strcmp(report, "1;1R"))
     return 1;
   return 0;
 }
 
+/* doesn't work yes on vt420 (I get stuff echoed)
+ * also, vt420 always seems to echo "?64".
+ */
 static int
 toggle_DECSCL(MENU_ARGS)
 {
   char *report;
-  static int level; /* FIXME */
-  static int max_level = 3;
-
-  if (++level > max_level)
-    level = 0;
-  if (level)
-    do_csi("6%d;%d\"p", level+1, !output_8bits);
-  else
-    do_csi("61\"p");
+  static int level = 1;
+  static int max_level = 1;
+  static int initialized = FALSE;
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
-  da();
-  if ((report = skip_prefix(csi_input(), instr())) == 0
-   || strncmp(report, "?6", 2)
-   || report[2] != level + 1 + '0'
-   || report[3] != ';') {
-    max_level = level;
-    level = 0;
+
+  if (!initialized) {
+    initialized = TRUE;
+    da();
+    report = get_reply();
+    if ((report = skip_csi(report)) == 0
+     || strncmp(report, "?6", 2)
+     || !isdigit(report[2])
+     || report[3] != ';') {
+      max_level = 1; /* must be a VT100 */
+    } else {
+      max_level = report[2] - '0'; /* VT220=2, VT320=3, VT420=4 */
+      decrqss("\"p");
+      report = get_reply();
+      /* FIXME: find the current operating level */
+    }
+    if (log_fp != 0)
+      fprintf(log_fp, "Max Operating Level: %d\n", max_level);
   }
+
+  if (++level > max_level)
+    level = 1;
+  if (level > 1)
+    do_csi("6%d;%d\"p", level+1, !output_8bits);
+  else
+    do_csi("61\"p");
+  padding(5); /* FIXME: may not be needed */
+  zleep(800); /* DECSCL does a soft reset, which is slow */
+
   restore_ttymodes();
-  operating_level = level + 1;
+  operating_level = level;
+  return MENU_NOHOLD;
+}
+
+static int
+toggle_Padding(MENU_ARGS)
+{
+  use_padding = !use_padding;
   return MENU_NOHOLD;
 }
 
@@ -96,17 +122,18 @@ tst_setup(MENU_ARGS)
     { "send 7/8",                                            toggle_8bit_out },
     { "receive 7/8",                                         toggle_8bit_in },
     { "DECSCL",                                              toggle_DECSCL },
+    { "Padding",                                             toggle_Padding },
     { "",                                                    0 }
   };
 
   do {
     my_menu[1].description = output_8bits
-			   ? "Send 8-bit controls"
-			   : "Send 7-bit controls";
+                           ? "Send 8-bit controls"
+                           : "Send 7-bit controls";
 
     my_menu[2].description = input_8bits
-			   ? "Receive 8-bit controls"
-			   : "Receive 7-bit controls";
+                           ? "Receive 8-bit controls"
+                           : "Receive 7-bit controls";
     switch (operating_level) {
     case 1:
       my_menu[3].description = "Operating level 1 (VT100)";
@@ -121,6 +148,9 @@ tst_setup(MENU_ARGS)
       my_menu[3].description = "Operating level 4 (VT400)";
       break;
     }
+    my_menu[4].description = use_padding
+                           ? "Padding enabled"
+                           : "Padding disabled";
     ed(2);
     title(0); println("Modify test-parameters");
     title(2); println("Select a number to modify it:");

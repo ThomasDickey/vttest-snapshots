@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.21 1996/08/19 00:20:04 tom Exp $ */
+/* $Id: vttest.h,v 1.33 1996/09/02 12:25:32 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -8,14 +8,14 @@
 
 /* Choose one of these */
 
-#define UNIX            /* UNIX                                         */
-/* #define VMS          ** VMS not done yet -- send me your version!!!! */
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #define UNIX
 #else
 
+/* Assume ANSI and (minimal) Posix */
+#define HAVE_STDLIB_H 1
+#define HAVE_STRING_H 1
 #define RETSIGTYPE void
 
 #endif
@@ -23,8 +23,7 @@
 #define SIG_ARGS int sig	/* FIXME: configure-test */
 
 #include <stdio.h>
-
-#ifdef UNIX
+#include <stdarg.h>
 
 #if HAVE_STDLIB_H
 #include <stdlib.h>
@@ -50,7 +49,11 @@
 #      define USE_SGTTY 1
 #      define USE_FIONREAD 1
 #    else
-       please fix me
+#      ifdef VMS
+         /* FIXME */
+#      else
+         please fix me
+#      endif
 #    endif
 #  endif
 #endif
@@ -96,19 +99,21 @@
 /*FIXME: really want 'extern' for errno*/
 #include <errno.h>
 
-extern jmp_buf intrenv;
+extern FILE *log_fp;
 extern int brkrd;
-extern int reading;
-extern int max_lines;
-extern int max_cols;
-extern int min_cols;
 extern int input_8bits;
+extern int max_cols;
+extern int max_lines;
+extern int min_cols;
 extern int output_8bits;
+extern int reading;
+extern int tty_speed;
+extern int use_padding;
 extern int user_geometry;
+extern jmp_buf intrenv;
 
 #if USE_FCNTL
 #include <fcntl.h>
-#endif
 #endif
 
 #ifndef TRUE
@@ -126,6 +131,11 @@ extern int user_geometry;
 #ifndef EXIT_FAILURE
 #define EXIT_FAILURE 1
 #endif
+
+#define SHOW_SUCCESS "ok"
+#define SHOW_FAILURE "failed"
+
+#define DEFAULT_SPEED 9600
 
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(p) /* nothing */
@@ -160,6 +170,9 @@ typedef struct {
 /* main.c */
 extern RETSIGTYPE onbrk(SIG_ARGS);
 extern RETSIGTYPE onterm(SIG_ARGS);
+extern char *skip_csi(char *input);
+extern char *skip_dcs(char *input);
+extern char *skip_digits(char *src);
 extern char *skip_prefix(char *prefix, char *input);
 extern int bug_a(MENU_ARGS);
 extern int bug_b(MENU_ARGS);
@@ -174,6 +187,9 @@ extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
 extern int not_impl(MENU_ARGS);
 extern int scanto(char *str, int *pos, int toc);
+extern int strip_suffix(char *src, char *suffix);
+extern int strip_terminator(char *src);
+extern int tst_DECSCA(MENU_ARGS);
 extern int tst_ECH(MENU_ARGS);
 extern int tst_SD_DEC(MENU_ARGS);
 extern int tst_SU(MENU_ARGS);
@@ -189,6 +205,7 @@ extern int tst_reports(MENU_ARGS);
 extern int tst_rst(MENU_ARGS);
 extern int tst_screen(MENU_ARGS);
 extern int tst_setup(MENU_ARGS);
+extern int tst_statusline(MENU_ARGS);
 extern int tst_vt420(MENU_ARGS);
 extern int tst_vt52(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
@@ -196,6 +213,7 @@ extern void bye(void);
 extern void chrprint(char *s);
 extern void do_scrolling(void);
 extern void initterminal(int pn);
+extern void show_result(const char *fmt, ...);
 extern void title(int offset);
 
 #endif /* VTTEST_H */
