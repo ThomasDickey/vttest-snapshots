@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.55 1996/09/28 14:53:19 tom Exp $ */
+/* $Id: esc.c,v 1.57 1996/10/29 22:44:59 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -431,6 +431,12 @@ decfra(int c, int top, int left, int bottom, int right) /* VT400 Fill Rectangula
 }
 
 void
+decid(void) /* required for VT52, not recommended above VT100 */
+{
+  esc("Z");     /* Identify     */
+}
+
+void
 decic(int pn) /* VT400 Insert Column */
 {
   do_csi("%d'}", pn);
@@ -803,29 +809,65 @@ vpa(int pn) /* Line Position Absolute */
 }
 
 void
-vt52cup(int l, int c)
+vt52cub1(void) /* cursor left */
+{
+  esc("D");
+  padding(5);
+}
+
+void
+vt52cud1(void) /* cursor down */
+{
+  esc("B");
+  padding(5);
+}
+
+void
+vt52cuf1(void) /* cursor right */
+{
+  esc("C");
+  padding(5);
+}
+
+void
+vt52cup(int l, int c) /* direct cursor address */
 {
   printf("%cY%c%c", ESC, l + 31, c + 31);
   padding(5);
 }
 
 void
-vt52ed(void)
+vt52cuu1(void) /* cursor up */
+{
+  esc("A");
+  padding(5);
+}
+
+void
+vt52ed(void) /* erase to end of screen */
 {
   esc("J");
   padding(5);
 }
 
 void
-vt52el(void)
+vt52el(void) /* erase to end of line */
 {
   esc("K");
   padding(5);
 }
 
 void
-vt52home(void)
+vt52home(void) /* cursor to home */
 {
   esc("H");
   padding(5);
 }
+
+void
+vt52ri(void) /* reverse line feed */
+{
+  esc("I");
+  padding(5);
+}
+

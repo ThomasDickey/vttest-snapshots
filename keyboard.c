@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.18 1996/09/28 16:00:04 tom Exp $ */
+/* $Id: keyboard.c,v 1.22 1996/10/29 22:28:14 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -35,6 +35,30 @@ TAB*    qQ   wW   eE   rR   tT   yY   uU   iI   oO   pP   [{   ]}      DEL
                                                            *1* *2* *3*
 
                                                            ***0*** *.* ENT
+
+The standard LK401 (VT420) keyboard layout:
+
+F1 F2 F3 F4 F5   F6 F7 F8 F9 F10   F11 F12 F13 F14   Help Do   F17 F18 F19 F20
+
+  `~  1!   2@   3#   4$   5%   6^   7&   8*   9(   0)   -_   =+   DEL
+
+TAB*    qQ   wW   eE   rR   tT   yY   uU   iI   oO   pP   [{   ]}   Return
+
+**   **   aA   sS   dD   fF   gG   hH   jJ   kK   lL   ;:   ,"   \| 
+
+*****   <>  zZ   xX   cC   vV   bB   nN   mM   ,<   .>   /?    ******
+
+***** *****  ****************SPACE BAR****************  ****** ******
+
+                       Find  Insert Remove                 PF1 PF2 PF3 PF4
+
+                      Select  Prev   Next                  *7* *8* *9* *-*
+
+                               Up                          *4* *5* *6* *,*
+
+                       Left   Down   Right                 *1* *2* *3*
+
+                                                           ***0*** *.* ENT
 */
 
 static struct key {
@@ -42,7 +66,7 @@ static struct key {
     int  row;
     int  col;
     char *symbol;
-} keytab [] = {
+} VT100_keytab [] = {
     { ESC, 1,  0, "ESC" },
     { '1', 1,  6, "1" },    { '!', 1,  7, "!" },
     { '2', 1, 11, "2" },    { '@', 1, 12, "@" },
@@ -98,7 +122,63 @@ static struct key {
     {  10, 4, 69, "LF" },
     { ' ', 5, 13, "                SPACE BAR                "},
     {'\0', 0,  0, ""  }
-  };
+  },
+  LK401_keytab [] = {
+    { '`', 1,  3, "`" },    { '~', 1,  4, "~" },
+    { '1', 1,  7, "1" },    { '!', 1,  8, "!" },
+    { '2', 1, 12, "2" },    { '@', 1, 13, "@" },
+    { '3', 1, 17, "3" },    { '#', 1, 18, "#" },
+    { '4', 1, 22, "4" },    { '$', 1, 23, "$" },
+    { '5', 1, 27, "5" },    { '%', 1, 28, "%" },
+    { '6', 1, 32, "6" },    { '^', 1, 33, "^" },
+    { '7', 1, 37, "7" },    { '&', 1, 38, "&" },
+    { '8', 1, 42, "8" },    { '*', 1, 43, "*" },
+    { '9', 1, 47, "9" },    { '(', 1, 48, "(" },
+    { '0', 1, 52, "0" },    { ')', 1, 53, ")" },
+    { '-', 1, 57, "-" },    { '_', 1, 58, "_" },
+    { '=', 1, 62, "=" },    { '+', 1, 63, "+" },
+    { 127, 1, 67, "DEL" },
+    {   9, 2,  0, "TAB " },
+    { 'q', 2,  9, "q" },    { 'Q', 2, 10, "Q" },
+    { 'w', 2, 14, "w" },    { 'W', 2, 15, "W" },
+    { 'e', 2, 19, "e" },    { 'E', 2, 20, "E" },
+    { 'r', 2, 24, "r" },    { 'R', 2, 25, "R" },
+    { 't', 2, 29, "t" },    { 'T', 2, 30, "T" },
+    { 'y', 2, 34, "y" },    { 'Y', 2, 35, "Y" },
+    { 'u', 2, 39, "u" },    { 'U', 2, 40, "U" },
+    { 'i', 2, 44, "i" },    { 'I', 2, 45, "I" },
+    { 'o', 2, 49, "o" },    { 'O', 2, 50, "O" },
+    { 'p', 2, 54, "p" },    { 'P', 2, 55, "P" },
+    { '[', 2, 59, "[" },    { '{', 2, 60, "{" },
+    { ']', 2, 64, "]" },    { '}', 2, 65, "}" },
+    { 13,  2, 69, "Return" },
+    { 'a', 3, 11, "a" },    { 'A', 3, 12, "A" },
+    { 's', 3, 16, "s" },    { 'S', 3, 17, "S" },
+    { 'd', 3, 21, "d" },    { 'D', 3, 22, "D" },
+    { 'f', 3, 26, "f" },    { 'F', 3, 27, "F" },
+    { 'g', 3, 31, "g" },    { 'G', 3, 32, "G" },
+    { 'h', 3, 36, "h" },    { 'H', 3, 37, "H" },
+    { 'j', 3, 41, "j" },    { 'J', 3, 42, "J" },
+    { 'k', 3, 46, "k" },    { 'K', 3, 47, "K" },
+    { 'l', 3, 51, "l" },    { 'L', 3, 52, "L" },
+    { ';', 3, 56, ";" },    { ':', 3, 57, ":" },
+    {'\'', 3, 61, "'" },    { '"', 3, 62,"\"" },
+    {'\\', 3, 66,"\\" },    { '|', 3, 67, "|" },
+    { '<', 4,  9, "<" },    { '>', 4, 10, ">" },
+    { 'z', 4, 13, "z" },    { 'Z', 4, 14, "Z" },
+    { 'x', 4, 18, "x" },    { 'X', 4, 19, "X" },
+    { 'c', 4, 23, "c" },    { 'C', 4, 24, "C" },
+    { 'v', 4, 28, "v" },    { 'V', 4, 29, "V" },
+    { 'b', 4, 33, "b" },    { 'B', 4, 34, "B" },
+    { 'n', 4, 38, "n" },    { 'N', 4, 39, "N" },
+    { 'm', 4, 43, "m" },    { 'M', 4, 44, "M" },
+    { ',', 4, 48, "," },    { '<', 4, 49, "<" },
+    { '.', 4, 53, "." },    { '>', 4, 54, ">" },
+    { '/', 4, 58, "/" },    { '?', 4, 59, "?" },
+    { ' ', 5, 14, "                SPACE BAR                "},
+    {'\0', 0,  0, ""  }
+  },
+  *keytab;
 
 typedef struct {
     unsigned char prefix;
@@ -111,7 +191,7 @@ static struct curkey {
     int  curkeycol;
     char *curkeysymbol;
     char *curkeyname;
-} curkeytab [] = {
+} VT100_curkeytab [] = {
 
     /* A Reset,   A Set,     VT52  */
 
@@ -120,7 +200,60 @@ static struct curkey {
     {{{CSI,"D"}, {SS3,"D"}, {ESC,"D"}}, 0, 66, "LT",  "Left arrow" },
     {{{CSI,"C"}, {SS3,"C"}, {ESC,"C"}}, 0, 71, "RT",  "Right arrow"},
     {{{0,  ""},  {0,  ""},  {0,  "" }}, 0,  0, "",    "" }
-};
+  },
+  LK401_curkeytab [] = {
+
+    /* A Reset,   A Set,     VT52  */
+
+    {{{CSI,"A"}, {SS3,"A"}, {ESC,"A"}}, 8, 32, "Up",    "Up arrow"   },
+    {{{CSI,"B"}, {SS3,"B"}, {ESC,"B"}}, 9, 31, "Down",  "Down arrow" },
+    {{{CSI,"D"}, {SS3,"D"}, {ESC,"D"}}, 9, 24, "Left",  "Left arrow" },
+    {{{CSI,"C"}, {SS3,"C"}, {ESC,"C"}}, 9, 38, "Right", "Right arrow"},
+    {{{0,  ""},  {0,  ""},  {0,  "" }}, 0,  0, "",      "" }
+  },
+  *curkeytab;
+
+static struct fnckey {
+    CTLKEY fnkeymsg[2];
+    int  fnkeyrow;
+    int  fnkeycol;
+    char *fnkeysymbol;
+    char *fnkeyname;
+} fnkeytab [] = {
+
+    /* Normal,     VT100/VT52  */
+    {{{CSI,"11~"}, {0,""}},  0,  1, "F1",   "F1 (xterm)"   },
+    {{{CSI,"12~"}, {0,""}},  0,  4, "F2",   "F2 (xterm)"   },
+    {{{CSI,"13~"}, {0,""}},  0,  7, "F3",   "F3 (xterm)"   },
+    {{{CSI,"14~"}, {0,""}},  0, 10, "F4",   "F4 (xterm)"   },
+    {{{CSI,"15~"}, {0,""}},  0, 13, "F5",   "F5 (xterm)"   },
+
+    {{{CSI,"17~"}, {0,""}},  0, 18, "F6",   "F6"   },
+    {{{CSI,"18~"}, {0,""}},  0, 21, "F7",   "F7"   },
+    {{{CSI,"19~"}, {0,""}},  0, 24, "F8",   "F8"   },
+    {{{CSI,"20~"}, {0,""}},  0, 27, "F9",   "F9"   },
+    {{{CSI,"21~"}, {0,""}},  0, 30, "F10",  "F10"   },
+    {{{CSI,"23~"}, {0,""}},  0, 36, "F11",  "F11"   },
+    {{{CSI,"24~"}, {0,""}},  0, 40, "F12",  "F12"   },
+    {{{CSI,"25~"}, {0,""}},  0, 44, "F13",  "F13"   },
+    {{{CSI,"26~"}, {0,""}},  0, 48, "F14",  "F14"   },
+    {{{CSI,"28~"}, {0,""}},  0, 54, "Help", "Help (F15)"   },
+    {{{CSI,"29~"}, {0,""}},  0, 59, "Do",   "Do (F16)"   },
+    {{{CSI,"31~"}, {0,""}},  0, 64, "F17",  "F17"   },
+    {{{CSI,"32~"}, {0,""}},  0, 68, "F18",  "F18"   },
+    {{{CSI,"33~"}, {0,""}},  0, 72, "F19",  "F19"   },
+    {{{CSI,"34~"}, {0,""}},  0, 76, "F20",  "F20"   },
+    {{{0,  ""},    {0,"" }}, 0,  0, "",     ""   }
+  },
+  edt_keypadtab[] = {
+    {{{CSI,"1~"}, {0,""}}, 6, 24, "Find" ,  "Find"  },
+    {{{CSI,"2~"}, {0,""}}, 6, 30, "Insert", "Insert Here"   },
+    {{{CSI,"3~"}, {0,""}}, 6, 37, "Remove", "Remove"   },
+    {{{CSI,"4~"}, {0,""}}, 7, 23, "Select", "Select"   },
+    {{{CSI,"5~"}, {0,""}}, 7, 31, "Prev",   "Prev"   },
+    {{{CSI,"6~"}, {0,""}}, 7, 38, "Next",   "Next"   },
+    {{{0,  ""},   {0,""}}, 0,  0, "",       ""   }
+  };
 
 static struct fnkey {
     CTLKEY fnkeymsg[4];
@@ -128,7 +261,7 @@ static struct fnkey {
     int  fnkeycol;
     char *fnkeysymbol;
     char *fnkeyname;
-} fnkeytab [] = {
+} num_keypadtab [] = {
 
   /* ANSI-num, ANSI-app,  VT52-nu,   VT52-ap,     r,  c,  symb   name        */
 
@@ -147,7 +280,7 @@ static struct fnkey {
   {{{0,  "1"}, {SS3,"q"}, {0,  "1"}, {ESC,"?q"}}, 9, 59, " 1 ", "Numeric 1"  },
   {{{0,  "2"}, {SS3,"r"}, {0,  "2"}, {ESC,"?r"}}, 9, 63, " 2 ", "Numeric 2"  },
   {{{0,  "3"}, {SS3,"s"}, {0,  "3"}, {ESC,"?s"}}, 9, 67, " 3 ", "Numeric 3"  },
-  {{{0,  "0"}, {SS3,"p"}, {0,  "0"}, {ESC,"?p"}},10, 59, "   O   ","Numeric 0"},
+  {{{0,  "0"}, {SS3,"p"}, {0,  "0"}, {ESC,"?p"}},10, 59, "   0   ","Numeric 0"},
   {{{0,  "."}, {SS3,"n"}, {0,  "."}, {ESC,"?n"}},10, 67, " . ", "Point"      },
   {{{0,"\015"},{SS3,"M"}, {0,"\015"},{ESC,"?M"}},10, 71, "ENT", "ENTER"      },
   {{{0,  ""},  {0,  ""},  {0,  ""},  {0,  ""}},   0,  0, "",    ""           }
@@ -159,6 +292,60 @@ struct natkey {
     int  natcol;
     char *natsymbol;
 };
+
+static int same_CTLKEY(char *response, CTLKEY *code);
+
+static int
+find_cursor_key(char *curkeystr, int ckeymode)
+{
+  int i;
+
+  for (i = 0; curkeytab[i].curkeysymbol[0] != '\0'; i++) {
+    if (same_CTLKEY(curkeystr, &curkeytab[i].curkeymsg[ckeymode])) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+static int
+find_editing_key(char *keypadstr, int fkeymode)
+{
+  int i;
+
+  for (i = 0; edt_keypadtab[i].fnkeysymbol[0] != '\0'; i++) {
+    if (same_CTLKEY(keypadstr, &edt_keypadtab[i].fnkeymsg[fkeymode])) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+static int
+find_function_key(char *keypadstr, int fkeymode)
+{
+  int i;
+
+  for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
+    if (same_CTLKEY(keypadstr, &fnkeytab[i].fnkeymsg[fkeymode])) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+static int
+find_num_keypad_key(char *keypadstr, int fkeymode)
+{
+  int i;
+
+  for (i = 0; num_keypadtab[i].fnkeysymbol[0] != '\0'; i++) {
+    if (same_CTLKEY(keypadstr, &num_keypadtab[i].fnkeymsg[fkeymode])) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 static void
 set_keyboard_layout(struct natkey *table)
@@ -268,6 +455,8 @@ show_cursor_keys(int flag)
 {
   int i;
 
+  curkeytab = (terminal_id() < 200) ? VT100_curkeytab : LK401_curkeytab;
+
   for (i = 0; curkeytab[i].curkeysymbol[0] != '\0'; i++) {
     vt_move(1 + 2 * curkeytab[i].curkeyrow, 1 + curkeytab[i].curkeycol);
     if (flag) vt_hilite(TRUE);
@@ -277,14 +466,44 @@ show_cursor_keys(int flag)
 }
 
 static void
-show_keypad(int flag)
+show_editing_keypad(int flag)
+{
+  if (terminal_id() >= 200) {
+    int i;
+
+    for (i = 0; edt_keypadtab[i].fnkeysymbol[0] != '\0'; i++) {
+      vt_move(1 + 2 * edt_keypadtab[i].fnkeyrow, 1 + edt_keypadtab[i].fnkeycol);
+      if (flag) vt_hilite(TRUE);
+      printf("%s", edt_keypadtab[i].fnkeysymbol);
+      if (flag) vt_hilite(FALSE);
+    }
+  }
+}
+
+static void
+show_function_keys(int flag)
+{
+  if (terminal_id() >= 200) {
+    int i;
+
+    for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
+      vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
+      if (flag) vt_hilite(TRUE);
+      printf("%s", fnkeytab[i].fnkeysymbol);
+      if (flag) vt_hilite(FALSE);
+    }
+  }
+}
+
+static void
+show_numeric_keypad(int flag)
 {
   int i;
 
-  for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
-    vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
+  for (i = 0; num_keypadtab[i].fnkeysymbol[0] != '\0'; i++) {
+    vt_move(1 + 2 * num_keypadtab[i].fnkeyrow, 1 + num_keypadtab[i].fnkeycol);
     if (flag) vt_hilite(TRUE);
-    printf("%s", fnkeytab[i].fnkeysymbol);
+    printf("%s", num_keypadtab[i].fnkeysymbol);
     if (flag) vt_hilite(FALSE);
   }
 }
@@ -293,6 +512,11 @@ static void
 show_keyboard(int flag)
 {
   int i;
+
+  if (terminal_id() >= 200) /* LK201 _looks_ the same as LK401 (to me) */
+    keytab = LK401_keytab;
+  else
+    keytab = VT100_keytab;
 
   for (i = 0; keytab[i].c != '\0'; i++) {
     vt_move(1 + 2 * keytab[i].row, 1 + keytab[i].col);
@@ -477,7 +701,9 @@ tst_CursorKeys(MENU_ARGS)
   vt_clear(2);
   save_level(&save);
   show_keyboard(0);
-  show_keypad(0);
+  show_function_keys(0);
+  show_editing_keypad(0);
+  show_numeric_keypad(0);
   vt_move(max_lines-2,1);
 
   set_tty_crmod(FALSE);
@@ -488,7 +714,7 @@ tst_CursorKeys(MENU_ARGS)
     else          rm("?1");
 
     show_cursor_keys(1);
-    vt_move(20,1); printf("<%s>%20s", curkeymodes[ckeymode], "");
+    vt_move(21,1); printf("<%s>%20s", curkeymodes[ckeymode], "");
     vt_move(max_lines-2,1); vt_el(0);
     vt_move(max_lines-2,1); printf("%s", "Press each cursor key. Finish with TAB.");
     for(;;) {
@@ -501,18 +727,13 @@ tst_CursorKeys(MENU_ARGS)
       vt_move(max_lines-1,1); chrprint(curkeystr);
 
       if (!strcmp(curkeystr,"\t")) break;
-      for (i = 0; curkeytab[i].curkeysymbol[0] != '\0'; i++) {
-        if (same_CTLKEY(curkeystr, &curkeytab[i].curkeymsg[ckeymode])) {
-          vt_hilite(TRUE);
-          show_result(" (%s key) ", curkeytab[i].curkeyname);
-          vt_hilite(FALSE);
-          vt_move(1 + 2 * curkeytab[i].curkeyrow,
-              1 + curkeytab[i].curkeycol);
-          printf("%s", curkeytab[i].curkeysymbol);
-          break;
-        }
-      }
-      if (i == sizeof(curkeytab) / sizeof(struct curkey) - 1) {
+      if ((i = find_cursor_key(curkeystr, ckeymode)) >= 0) {
+        vt_hilite(TRUE);
+        show_result(" (%s key) ", curkeytab[i].curkeyname);
+        vt_hilite(FALSE);
+        vt_move(1 + 2 * curkeytab[i].curkeyrow, 1 + curkeytab[i].curkeycol);
+        printf("%s", curkeytab[i].curkeysymbol);
+      } else {
         vt_hilite(TRUE);
         show_result("%s", " (Unknown cursor key) ");
         vt_hilite(FALSE);
@@ -527,7 +748,137 @@ tst_CursorKeys(MENU_ARGS)
 }
 
 static int
+tst_EditingKeypad(MENU_ARGS)
+{
+  int  i;
+  int  fkeymode;
+  char *fnkeystr;
+  VTLEVEL save;
+
+  static char *fnkeymodes[] = {
+      "Normal mode",
+      "VT100/VT52 mode (none should be recognized)"
+  };
+
+  save_level(&save);
+  show_keyboard(0);
+  show_cursor_keys(0);
+  show_function_keys(0);
+  show_numeric_keypad(0);
+  vt_move(max_lines-2,1);
+
+  if (terminal_id() < 200) {
+    printf("Sorry, a real VT%d terminal doesn't have an editing keypad\n", terminal_id());
+    return MENU_HOLD;
+  }
+
+  set_tty_crmod(FALSE);
+  set_tty_echo(FALSE);
+
+  for (fkeymode = 0; fkeymode <= 1; fkeymode++) {
+    show_editing_keypad(1);
+    vt_move(21,1); printf("<%s>%20s", fnkeymodes[fkeymode], "");
+    vt_move(max_lines-2,1); vt_el(0);
+    vt_move(max_lines-2,1); printf("%s", "Press each function key. Finish with TAB.");
+
+    for(;;) {
+      vt_move(max_lines-1,1);
+      if (fkeymode == 0)  default_level();
+      if (fkeymode != 0)  set_level(1);    /* VT100 mode */
+
+      fnkeystr = instr();
+
+      vt_move(max_lines-1,1); vt_el(0);
+      vt_move(max_lines-1,1); chrprint(fnkeystr);
+
+      if (!strcmp(fnkeystr,"\t")) break;
+      if ((i = find_editing_key(fnkeystr, fkeymode)) >= 0) {
+        vt_hilite(TRUE);
+        show_result(" (%s key) ", edt_keypadtab[i].fnkeyname);
+        vt_hilite(FALSE);
+        vt_move(1 + 2 * edt_keypadtab[i].fnkeyrow, 1 + edt_keypadtab[i].fnkeycol);
+        printf("%s", edt_keypadtab[i].fnkeysymbol);
+      } else {
+        vt_hilite(TRUE);
+        show_result("%s", " (Unknown function key) ");
+        vt_hilite(FALSE);
+      }
+    }
+  }
+
+  vt_move(max_lines-1,1); vt_el(0);
+  restore_level(&save);
+  restore_ttymodes();
+  return MENU_MERGE;
+}
+
+static int
 tst_FunctionKeys(MENU_ARGS)
+{
+  int  i;
+  int  fkeymode;
+  char *fnkeystr;
+  VTLEVEL save;
+
+  static char *fnkeymodes[] = {
+      "Normal mode (F6-F20, except xterm also F1-F5)",
+      "VT100/VT52 mode (F11-F13 only)"
+  };
+
+  save_level(&save);
+  show_keyboard(0);
+  show_cursor_keys(0);
+  show_editing_keypad(0);
+  show_numeric_keypad(0);
+  vt_move(max_lines-2,1);
+
+  if (terminal_id() < 200) {
+    printf("Sorry, a real VT%d terminal doesn't have function keys\n", terminal_id());
+    return MENU_HOLD;
+  }
+
+  set_tty_crmod(FALSE);
+  set_tty_echo(FALSE);
+
+  for (fkeymode = 0; fkeymode <= 1; fkeymode++) {
+    show_function_keys(1);
+    vt_move(21,1); printf("<%s>%20s", fnkeymodes[fkeymode], "");
+    vt_move(max_lines-2,1); vt_el(0);
+    vt_move(max_lines-2,1); printf("%s", "Press each function key. Finish with TAB.");
+
+    for(;;) {
+      vt_move(max_lines-1,1);
+      if (fkeymode == 0)  default_level();
+      if (fkeymode != 0)  set_level(1);    /* VT100 mode */
+
+      fnkeystr = instr();
+
+      vt_move(max_lines-1,1); vt_el(0);
+      vt_move(max_lines-1,1); chrprint(fnkeystr);
+
+      if (!strcmp(fnkeystr,"\t")) break;
+      if ((i = find_function_key(fnkeystr, fkeymode)) >= 0) {
+        vt_hilite(TRUE);
+        show_result(" (%s key) ", fnkeytab[i].fnkeyname);
+        vt_hilite(FALSE);
+        vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
+        printf("%s", fnkeytab[i].fnkeysymbol);
+      } else {
+        vt_hilite(TRUE);
+        show_result("%s", " (Unknown function key) ");
+        vt_hilite(FALSE);
+      }
+    }
+  }
+
+  vt_move(max_lines-1,1); vt_el(0);
+  restore_level(&save);
+  restore_ttymodes();
+  return MENU_MERGE;
+}
+
+static int
+tst_NumericKeypad(MENU_ARGS)
 {
   int  i;
   int  fkeymode;
@@ -545,14 +896,16 @@ tst_FunctionKeys(MENU_ARGS)
   save_level(&save);
   show_keyboard(0);
   show_cursor_keys(0);
+  show_function_keys(0);
+  show_editing_keypad(0);
   vt_move(max_lines-2,1);
 
   set_tty_crmod(FALSE);
   set_tty_echo(FALSE);
 
   for (fkeymode = 0; fkeymode <= 3; fkeymode++) {
-    show_keypad(1);
-    vt_move(20,1); printf("<%s>%20s", fnkeymodes[fkeymode], "");
+    show_numeric_keypad(1);
+    vt_move(21,1); printf("<%s>%20s", fnkeymodes[fkeymode], "");
     vt_move(max_lines-2,1); vt_el(0);
     vt_move(max_lines-2,1); printf("%s", "Press each function key. Finish with TAB.");
 
@@ -568,17 +921,13 @@ tst_FunctionKeys(MENU_ARGS)
       vt_move(max_lines-1,1); chrprint(fnkeystr);
 
       if (!strcmp(fnkeystr,"\t")) break;
-      for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
-        if (same_CTLKEY(fnkeystr, &fnkeytab[i].fnkeymsg[fkeymode])) {
-          vt_hilite(TRUE);
-          show_result(" (%s key) ", fnkeytab[i].fnkeyname);
-          vt_hilite(FALSE);
-          vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
-          printf("%s", fnkeytab[i].fnkeysymbol);
-          break;
-        }
-      }
-      if (i == sizeof(fnkeytab) / sizeof(struct fnkey) - 1) {
+      if ((i = find_num_keypad_key(fnkeystr, fkeymode)) >= 0) {
+        vt_hilite(TRUE);
+        show_result(" (%s key) ", num_keypadtab[i].fnkeyname);
+        vt_hilite(FALSE);
+        vt_move(1 + 2 * num_keypadtab[i].fnkeyrow, 1 + num_keypadtab[i].fnkeycol);
+        printf("%s", num_keypadtab[i].fnkeysymbol);
+      } else {
         vt_hilite(TRUE);
         show_result("%s", " (Unknown function key) ");
         vt_hilite(FALSE);
@@ -608,14 +957,19 @@ tst_KeyBoardLayout(MENU_ARGS)
       { "",                                                  0 }
     };
 
-  vt_clear(2);
-  title(0); println("Choose keyboard layout:");
-  (void) menu(keyboardmenu);
+  if (terminal_id() < 200) {
+    vt_clear(2);
+    keytab = VT100_keytab;
+    title(0); println("Choose keyboard layout:");
+    (void) menu(keyboardmenu);
+  }
 
   vt_clear(2);
   show_keyboard(1);
   show_cursor_keys(0);
-  show_keypad(0);
+  show_function_keys(0);
+  show_editing_keypad(0);
+  show_numeric_keypad(0);
   vt_move(max_lines-2,1);
 
   set_tty_crmod(FALSE);
@@ -632,7 +986,7 @@ tst_KeyBoardLayout(MENU_ARGS)
       if (keytab[i].c == kbdc) {
         vt_move(1 + 2 * keytab[i].row, 1 + keytab[i].col);
         printf("%s", keytab[i].symbol);
-        break;
+        /* LK401 keyboard will have more than one hit for '<' and '>' */
       }
     }
   } while (kbdc != 13);
@@ -680,6 +1034,8 @@ tst_keyboard(MENU_ARGS)
       { "Auto Repeat",                                       tst_AutoRepeat },
       { "KeyBoard Layout",                                   tst_KeyBoardLayout },
       { "Cursor Keys",                                       tst_CursorKeys },
+      { "Numeric Keypad",                                    tst_NumericKeypad },
+      { "Editing Keypad",                                    tst_EditingKeypad },
       { "Function Keys",                                     tst_FunctionKeys },
       { "AnswerBack",                                        tst_AnswerBack },
       { "Control Keys",                                      tst_ControlKeys },

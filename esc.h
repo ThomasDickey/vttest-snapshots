@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.38 1996/09/28 14:53:50 tom Exp $ */
+/* $Id: esc.h,v 1.40 1996/10/29 22:45:08 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -93,6 +93,7 @@ void decdwl(void);
 void decera(int top, int left, int bottom, int right);
 void decfi(void);
 void decfra(int c, int top, int left, int bottom, int right);
+void decid(void);
 void decic(int pn);
 void deckbum(int flag);
 void deckpam(void);
@@ -161,10 +162,15 @@ void srm(int flag);
 void su(int pn);
 void tbc(int pn);
 void vpa(int pn);
+void vt52cub1(void);
+void vt52cud1(void);
+void vt52cuf1(void);
 void vt52cup(int l, int c);
+void vt52cuu1(void);
 void vt52ed(void);
 void vt52el(void);
 void vt52home(void);
+void vt52ri(void);
 void zleep(int t);
 
 #endif /* ESC_H */

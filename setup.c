@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.25 1996/10/28 00:42:07 tom Exp $ */
+/* $Id: setup.c,v 1.26 1996/10/30 00:03:41 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -184,6 +184,12 @@ save_level(VTLEVEL *save)
     fprintf(log_fp, "save_level(%d) in=%d, out=%d\n", cur_level,
         input_8bits ? 8 : 7,
         output_8bits ? 8 : 7);
+}
+
+int
+get_level(void)
+{
+  return cur_level;
 }
 
 int

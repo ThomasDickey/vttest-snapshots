@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.62 1996/10/28 00:40:08 tom Exp $ */
+/* $Id: main.c,v 1.63 1996/10/30 01:22:25 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1304,6 +1304,28 @@ strip_terminator(char *src)
   if (!ok && LOG_ENABLED)
     fprintf(log_fp, "Missing ST\n");
   return ok;
+}
+
+/* Parse the contents of a report from DECRQSS, returning the data as well */
+int parse_decrqss(char *report, char *func)
+{
+  int code = -1;
+  char *parse = report;
+
+  if ((parse = skip_dcs(parse)) != 0
+   && strip_terminator(parse)
+   && strip_suffix(parse, func)) {
+    if (!strncmp(parse, "1$r", 3))
+      code = 1;
+    else if (!strncmp(parse, "0$r", 3))
+      code = 0;
+  }
+
+  if (code >= 0) {
+    while ((*report++ = parse[3]) != '\0')
+      parse++;
+  }
+  return code;
 }
 
 void
