@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.7 1996/06/25 10:12:17 tom Exp $ */
+/* $Id: color.c,v 1.9 1996/07/08 23:16:22 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -71,7 +71,7 @@ c_sgr(char *s)
   }
 
   if (reset) {
-    sprintf(temp + strlen(temp), ";%d;%d", COLOR_YELLOW + 30, COLOR_GREEN + 40);
+    sprintf(temp + strlen(temp), ";%d;%d", COLOR_YELLOW + 30, COLOR_BLUE + 40);
   }
   sgr(temp);
 }
@@ -454,6 +454,51 @@ test_color_screen(void)
 }
 
 /*
+ * ISO 6429 specifies additional SGR codes so that one needn't use SGR 0
+ * to reset everything before switching, e.g., set/clear pairs are
+ * bold      1/22
+ * faint     2/22
+ * italics   3/23
+ * underline 4/24
+ * blink     5/25
+ * inverse   7/27
+ */
+static void
+test_iso_6429_sgr(void)
+{
+  set_test_colors();
+  ed(2);
+  cup( 1,20); printf("Extended/Graphic rendition test pattern:");
+  cup( 4, 1); c_sgr("0");            printf("vanilla");
+  cup( 4,40); c_sgr("0;1");          printf("bold");
+  cup( 6, 6); c_sgr("22;4");         printf("underline");
+  cup( 6,45); c_sgr("24;1;4");       printf("bold underline");
+  cup( 8, 1); c_sgr("22;24;5");      printf("blink");
+  cup( 8,40); c_sgr("25;5;1");       printf("bold blink");
+  cup(10, 6); c_sgr("22;4;5");       printf("underline blink");
+  cup(10,45); c_sgr("24;25;1;4;5");  printf("bold underline blink");
+  cup(12, 1); c_sgr("22;24;25;7");   printf("negative");
+  cup(12,40); c_sgr("1");            printf("bold negative");
+  cup(14, 6); c_sgr("22;4;7");       printf("underline negative");
+  cup(14,45); c_sgr("1;4;7");        printf("bold underline negative");
+  cup(16, 1); c_sgr("22;24;5;7");    printf("blink negative");
+  cup(16,40); c_sgr("1");            printf("bold blink negative");
+  cup(18, 6); c_sgr("22;4");         printf("underline blink negative");
+  cup(18,45); c_sgr("1");            printf("bold underline blink negative");
+  cup(20, 6); c_sgr(""); set_foreground(9); printf("original foreground");
+  cup(20,45); c_sgr(""); set_background(9); printf("original background");
+  c_sgr(""); /* same as c_sgr("0") */
+
+  rm("?5"); /* Inverse video off */
+  cup(max_lines-1,1); el(0); printf("Dark background. "); holdit();
+
+  sm("?5"); /* Inverse video */
+  cup(max_lines-1,1); el(0); printf("Light background. "); holdit();
+  rm("?5");
+  reset_colors();
+}
+
+/*
  * For terminals that support ANSI/ISO colors, work through a graduated
  * set of tests that first display colors (if the terminal does indeed
  * support them), then exercise the associated reset, clear operations.
@@ -468,6 +513,7 @@ tst_colors(void)
     "Test BCE-style clear line/display",
     "Test of VT102-style features with BCE (Insert/Delete Char/Line)",
     "Test of screen features with BCE",
+    "Test of screen features with ISO 6429 SGR 22-27 codes",
     ""
   };
 
@@ -480,6 +526,7 @@ tst_colors(void)
     case 2: simple_bce_test();   break;
     case 3: test_color_insdel(); break;
     case 4: test_color_screen(); break;
+    case 5: test_iso_6429_sgr(); break;
     }
   } while (menuchoice);
 }
