@@ -1,4 +1,4 @@
-MANIFEST for vttest, version v2_1
+MANIFEST for vttest, version v2_2
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 CHANGES                         record of changes I've made to vttest
@@ -21,3 +21,5 @@ ttymodes.h                      interface of ttymodes.c
 vttest.1                        manual-page for VTTEST
 vttest.h                        renamed from header.h, common definitions of VTTEST
 vttest.lsm                      Linux Software Map description of VTTEST
+xterm.c                         tests for xterm and clones
+xterm.h                         interface of xterm.c

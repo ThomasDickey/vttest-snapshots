@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.2 1996/06/23 19:14:50 tom Exp $ */
+/* $Id: esc.h,v 1.3 1996/07/16 23:08:07 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -8,6 +8,7 @@ char *instr(void);
 char inchar(void);
 void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
+void brc3(int pn1, int pn2, int pn3, int c);
 void brcstr(char *ps, int c);
 void cub(int pn);
 void cud(int pn);

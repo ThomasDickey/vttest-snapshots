@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.5 1996/06/24 00:19:07 tom Exp $
+# $Id: makefile.in,v 1.6 1996/07/12 23:39:52 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -37,9 +37,9 @@ CPPFLAGS	= $(DEFINES) $(INCLUDES) @CPPFLAGS@
 .c.o:
 	$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
-C_SRC = main.c   esc.c ttymodes.c color.c
-H_SRC = vttest.h esc.h ttymodes.h color.h
-OBJS  = main.o   esc.o ttymodes.o color.o
+C_SRC = main.c   esc.c ttymodes.c color.c xterm.c
+H_SRC = vttest.h esc.h ttymodes.h color.h xterm.h
+OBJS  = main.o   esc.o ttymodes.o color.o xterm.o
 
 SRC =	patchlev.h \
 	CHANGES COPYING README \

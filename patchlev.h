@@ -1,2 +1,2 @@
-/* $Id: patchlev.h,v 1.2 1996/07/08 23:19:14 tom Exp $ */
-#define PATCHLEVEL 1
+/* $Id: patchlev.h,v 1.3 1996/07/22 00:08:57 tom Exp $ */
+#define PATCHLEVEL 2
