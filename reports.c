@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.23 1996/11/14 01:38:36 tom Exp $ */
+/* $Id: reports.c,v 1.25 1998/03/11 01:36:26 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -38,10 +38,13 @@ struct table {
     { 128, "38400" },
     { -1, "" }
 },operating_level[] = {
+    {   6, "VT102" },
+    {  12, "VT125" },
     {  61, "VT100 family" },
     {  62, "VT200 family" },
     {  63, "VT300 family" },
     {  64, "VT400 family" },
+    {  65, "VT500 family" },
     {  -1, "" }
 },extensions[] = {
     {   1, "132 columns" },                             /* vt400 */
@@ -52,16 +55,22 @@ struct table {
     {   7, "soft character set (DRCS)" },               /* vt400 */
     {   8, "user-defined keys" },                       /* vt400 */
     {   9, "national replacement character-sets" },     /* kermit */
+    {  10, "text ruling vector" },                      /* ? */
+    {  11, "25th status line" },                        /* ? */
     {  12, "Serbo-Croation (SCS)" },                    /* vt500 */
     {  13, "local editing mode" },                      /* kermit */
+    {  14, "8-bit architecture" },                      /* ? */
     {  15, "DEC technical set" },                       /* vt400 */
-    {  16, "locator device port" },                     /* kermit */
+    {  16, "locator device port (ReGIS)" },             /* kermit */
+    {  17, "terminal state reports" },                  /* ? */
     {  18, "user windows" },                            /* vt400 */
     {  19, "two sessions" },                            /* vt400 */
     {  21, "horizontal scrolling" },                    /* vt400 */
     {  22, "color" },                                   /* vt500 */
     {  23, "Greek" },                                   /* vt500 */
     {  24, "Turkish" },                                 /* vt500 */
+    {  29, "ANSI text locator" },                       /* DXterm */
+    {  39, "page memory extension" },                   /* ? */
     {  42, "ISO Latin-2" },                             /* vt500 */
     {  44, "PC Term" },                                 /* vt500 */
     {  45, "Soft key mapping" },                        /* vt500 */
@@ -131,6 +140,7 @@ tst_DA(MENU_ARGS)
     { "?1;7c",   "VT100 with STP, AVO and GPO" },
     { "?1;11c",  "VT100 with PP and AVO" },
     { "?1;15c",  "VT100 with PP, GPO and AVO" },
+    { "?2c",     "VT102" },
     { "?4;2c",   "VT132 with AVO" },
     { "?4;3c",   "VT132 with AVO and STP" },
     { "?4;6c",   "VT132 with GPO and AVO" },
@@ -200,6 +210,7 @@ tst_DA(MENU_ARGS)
 }
 
 /*
+ * Applies to VT220 & up (probably no VT100's).
  * Expected reply (from VT420 manual):
  *      CSI > 4 1 ; Pv ; 0 c (Pv = firmware version)
  * From kermit:
@@ -210,7 +221,23 @@ tst_DA(MENU_ARGS)
 static int
 tst_DA_2(MENU_ARGS)
 {
+  static const struct {
+    int Pp;
+    const char *name;
+  } tbl[] = {
+    {  1,  "VT220" },
+    { 18,  "VT330" },
+    { 19,  "VT340" },
+    { 24,  "kermit" },
+    { 28,  "DECterm" },
+    { 41,  "VT420" },
+  };
+
   char *report;
+  int Pp, Pv, Pc;
+  char ch;
+  char *show = SHOW_FAILURE;
+  size_t n;
 
   vt_move(1,1); println("Testing Secondary Device Attributes (Firmware version)");
 
@@ -219,6 +246,23 @@ tst_DA_2(MENU_ARGS)
   report = get_reply();
   vt_move(3,10);
   chrprint(report);
+  if ((report = skip_csi(report)) != 0) {
+    if (sscanf(report, ">%d;%d;%d%c", &Pp, &Pv, &Pc, &ch) == 4
+     && ch == 'c') {
+      const char *name = "unknown";
+      show = SHOW_SUCCESS;
+      for (n = 0; n < TABLESIZE(tbl); n++) {
+        if (Pp == tbl[n].Pp) {
+          name = tbl[n].name;
+          break;
+        }
+      }
+      vt_move(4,10); printf("Pp=%d (%s)", Pp, name);
+      vt_move(5,10); printf("Pv=%d, firmware version %d.%d", Pv, Pv/10, Pv%10);
+      vt_move(6,10); printf("Pc=%d, ROM cartridge registration number", Pc);
+    }
+  }
+  show_result(show);
 
   restore_ttymodes();
   vt_move(max_lines-1,1);
