@@ -1,0 +1,35 @@
+$Id: CHANGES,v 1.8 1996/06/25 00:43:46 tom Exp $
+-------------------------------------------------------------------------------
+
+VERSION 2.0
+
+960624
+	Added color/graphic-rendition, and color-scrolling tests.
+
+960623
+	Implemented color tests (test-pattern, bce-test, insert/delete lines)
+
+960621
+	Implemented auto-config for termios (tested on SunOS 4.1.1, IRIX 5.2,
+	Solaris 5.4).
+
+960618
+	Modified to support nonstandard screen geometry.  For example, you can
+	test Linux console (which has 25 lines) by typing 'vttest 25'.
+
+	Implemented auto-config for termio (tested on SunOS 4.1.1).
+
+960617
+	Corrected broken write-to-string-constant in tst_keyboard().
+
+	Split-out logic for ttymodes.c
+
+	Converted to ANSI C (it's a lot easier to avoid breaking code when all
+	of the interfaces are fully specified).
+
+	Split-out sargasso.h from header.h, to avoid nested-comment syntax.  (I
+	don't think anyone will be using that again, anyway).
+
+	from original version (I've found nothing more recent ;-), marked 1.7b
+	1985-04-19, begin making changes to support testing for ANSI color
+	features.
