@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.28 1999/12/29 01:25:39 tom Exp $ */
+/* $Id: xterm.c,v 1.29 2000/02/09 03:11:58 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -174,11 +174,9 @@ show_mouse_tracking(MENU_ARGS, char *the_mode)
      && *report == 'M'
      && strlen(report) >= 4) {
       int b = MCHR(report[1]);
+      int adj = 1;
       vt_move(4,10); vt_el(2);
       show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
-      if (b > 0x20)
-        b -= 0x20;
-#if 0 /* documented in xterm, but never implemented */
       if (b & ~3) {
         if (b & 4)
           printf(" shift");
@@ -186,19 +184,14 @@ show_mouse_tracking(MENU_ARGS, char *the_mode)
           printf(" meta");
         if (b & 16)
           printf(" control");
-      }
-      b &= 3;
-#else /* implemented in XFree86 xterm */
-      if (b & ~7) {
-        if (b & 16)
-          printf(" control");
         if (b & 32)
           printf(" motion");
+        if (b & 64)
+          adj += 3;
       }
-      b &= 7;
-#endif
+      b &= 3;
       if (b != 3) {
-        if (b < 3) b++;
+        b += adj;
         printf(" button %d", b);
         show_click(MCHR(report[3]), MCHR(report[2]), b + '0');
       } else if (MCHR(report[2]) != x || MCHR(report[3]) != y) {
