@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.21 1997/05/23 11:00:38 tom Exp $ */
+/* $Id: vms_io.c,v 1.22 2004/11/05 10:11:43 tom Exp $ */
 
 #define DEBUG
 
@@ -15,6 +15,7 @@
 #include <iodef.h>
 #include <ttdef.h>
 #include <tt2def.h>
+#include <cvtdef.h>                     /* for float constants          */
 
 typedef struct  {
         unsigned short int status;      /* I/O completion status */
@@ -278,7 +279,13 @@ void
 zleep(int t)
 {
   float seconds = t/1000.;
-  lib$wait(&seconds);
+	unsigned flags = 0;
+#ifdef USE_IEEE_FLOAT
+	unsigned type = CVT$K_IEEE_S;
+#else
+	unsigned type = CVT$K_VAX_F;
+#endif
+  lib$wait(&seconds, &flags, &type);
 }
 
 /******************************************************************************/
