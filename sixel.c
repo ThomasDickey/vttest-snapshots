@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.6 1996/09/11 22:31:39 tom Exp $ */
+/* $Id: sixel.c,v 1.7 2004/12/05 18:59:23 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -243,7 +243,7 @@ setup_softchars(char *filename)
     if (use+1 >= len) {
       buffer = realloc(buffer, len *= 2);
     }
-    buffer[use++] = c;
+    buffer[use++] = (char) c;
   }
   buffer[use] = '\0';
   fclose(fp);

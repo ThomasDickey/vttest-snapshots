@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.8 2003/03/01 19:53:42 tom Exp $ */
+/* $Id: tek4014.c,v 1.9 2004/12/05 14:59:27 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -13,6 +13,10 @@
 #define SHIFTHI   7
 #define SHIFTLO   2
 #define TWOBITS   03
+
+#undef GS
+#undef RS
+#undef US
 
 #define GS  0x001D
 #define RS  0x001E

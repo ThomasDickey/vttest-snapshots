@@ -1,8 +1,10 @@
-/* $Id: unix_io.c,v 1.17 2004/08/04 00:40:34 tom Exp $ */
+/* $Id: unix_io.c,v 1.20 2004/12/05 19:13:27 tom Exp $ */
 
 #include <stdarg.h>
 #include <vttest.h>
 #include <esc.h>
+
+#define BUF_SIZE 1024
 
 static void
 give_up(SIG_ARGS GCC_UNUSED)
@@ -30,7 +32,7 @@ char
 inchar(void)
 {
   int lval;
-  char ch = 0;
+  char ch = '\0';
 
   fflush(stdout);
   lval = last_char;
@@ -60,7 +62,45 @@ inchar(void)
     last_char = ch;
   if ((last_char == 0177) && (last_char == lval))
     give_up(SIGTERM);
-  return (last_char);
+  return (char) (last_char);
+}
+
+static int
+read_buffer(char *result, int want)
+{
+#if USE_FIONREAD
+  int l1;
+#endif
+  int i = 0;
+
+/* Wait 0.1 seconds (1 second in vanilla UNIX) */
+  zleep(100);
+  fflush(stdout);
+#ifdef HAVE_RDCHK
+  while (rdchk(0)) {
+    read(0, result + i, 1);
+    if (i++ >= want)
+      break;
+  }
+#else
+#if USE_FIONREAD
+  while (ioctl(0, FIONREAD, &l1), l1 > 0L) {
+    while (l1-- > 0L) {
+      read(0, result + i, 1);
+      if (i++ >= want)
+        goto out1;
+    }
+  }
+out1:
+#else
+  while (read(2, result + i, 1) == 1)
+    if (i++ >= want)
+      break;
+#endif
+#endif
+  result[i] = '\0';
+
+  return i;
 }
 
 /*
@@ -71,40 +111,12 @@ inchar(void)
 char *
 instr(void)
 {
-#if USE_FIONREAD
-  int l1;
-#endif
-  int i;
-  static char result[1024];
+  static char result[BUF_SIZE];
 
-  i = 0;
+  int i = 0;
+
   result[i++] = inchar();
-/* Wait 0.1 seconds (1 second in vanilla UNIX) */
-  zleep(100);
-  fflush(stdout);
-#ifdef HAVE_RDCHK
-  while (rdchk(0)) {
-    read(0, result + i, 1);
-    if (i++ == sizeof(result) - 2)
-      break;
-  }
-#else
-#if USE_FIONREAD
-  while (ioctl(0, FIONREAD, &l1), l1 > 0L) {
-    while (l1-- > 0L) {
-      read(0, result + i, 1);
-      if (i++ == sizeof(result) - 2)
-        goto out1;
-    }
-  }
-out1:
-#else
-  while (read(2, result + i, 1) == 1)
-    if (i++ == sizeof(result) - 2)
-      break;
-#endif
-#endif
-  result[i] = '\0';
+  (void) read_buffer(result + i, sizeof(result) - 2);
 
   if (LOG_ENABLED) {
     fputs("Reply: ", log_fp);
@@ -115,10 +127,27 @@ out1:
   return (result);
 }
 
+/* cf: vms_io.c */
 char *
 get_reply(void)
 {
-  return instr();   /* cf: vms_io.c */
+  static char result[BUF_SIZE * 2];
+  int old_len = 0;
+  int new_len = 0;
+
+  result[old_len++] = inchar();
+  do {
+    new_len = read_buffer(result + old_len, sizeof(result) - 2 - old_len);
+    old_len += new_len;
+  } while (new_len != 0 && old_len < (BUF_SIZE - 2));
+
+  if (LOG_ENABLED) {
+    fputs("Reply: ", log_fp);
+    put_string(log_fp, result);
+    fputs("\n", log_fp);
+  }
+
+  return (result);
 }
 
 /*
@@ -132,7 +161,7 @@ inputline(char *s)
     char *d = s;
     while ((ch = getchar()) != EOF && ch != '\n') {
       if ((d - s) < BUFSIZ - 2)
-        *d++ = ch;
+        *d++ = (char) ch;
     }
     *d = 0;
   } while (!*s);
@@ -151,7 +180,7 @@ inflush(void)
     read(0, &val, 1);
 #else
 #if USE_FIONREAD
-  long l1;
+  int l1;
   ioctl(0, FIONREAD, &l1);
   while (l1-- > 0L)
     read(0, &val, 1);
@@ -172,7 +201,8 @@ holdit(void)
 void
 readnl(void)
 {
-  char ch;
+  char ch = '\0';
+
   fflush(stdout);
   brkrd = FALSE;
   reading = TRUE;

@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.68 2004/08/03 22:45:05 tom Exp $ */
+/* $Id: vttest.h,v 1.69 2004/12/05 18:44:22 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -123,7 +123,7 @@
 /*FIXME: really want 'extern' for errno*/
 #include <errno.h>
 
-#define LOG_ENABLED ((log_fp != 0) && !log_disabled)
+#define LOG_ENABLED ((log_fp != (FILE *) 0) && !log_disabled)
 
 #define CharOf(c) ((unsigned char)(c))
 
