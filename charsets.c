@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.27 2004/08/03 01:24:25 tom Exp $ */
+/* $Id: charsets.c,v 1.28 2005/01/08 01:14:47 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -95,6 +95,19 @@ static int national;
 static int cleanup;
 
 static int current_Gx[4];
+
+static void
+send32(int row, int upper)
+{
+  int col;
+  char buffer[33];
+
+  for (col = 0; col <= 31; col++) {
+    buffer[col] = (row * 32 + upper + col);
+  }
+  buffer[32] = 0;
+  tprintf("%s", buffer);
+}
 
 static char *
 scs_params(char *dst, int g)
@@ -279,7 +292,7 @@ tst_vt100_charsets(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
-  int i, j, g, cset;
+  int i, g, cset;
 
   cup(1, 10) && printf("Selected as G0 (with SI)");
   cup(1, 48) && printf("Selected as G1 (with SO)");
@@ -289,7 +302,7 @@ tst_vt100_charsets(MENU_ARGS)
     scs(1, 'B');
     cup(row, 1);
     sgr("1");
-    printf("Character set %c (%s)", table[cset].code, table[cset].msg);
+    tprintf("Character set %c (%s)", table[cset].code, table[cset].msg);
     sgr("0");
     for (g = 0; g <= 1; g++) {
       int set_nrc = (get_level() >= 2 && table[cset].code == 'A');
@@ -298,9 +311,7 @@ tst_vt100_charsets(MENU_ARGS)
       scs(g, (int) table[cset].code);
       for (i = 1; i <= 3; i++) {
         cup(row + i, 10 + 38 * g);
-        for (j = 0; j <= 31; j++) {
-          printf("%c", i * 32 + j);
-        }
+        send32(i, 0);
       }
       if (set_nrc != national)
         decnrcm(national);
@@ -322,7 +333,7 @@ tst_shift_in_out(MENU_ARGS)
     "Selected as G0 (with SI)",
     "Selected as G1 (with SO)"
   };
-  int i, j, cset;
+  int i, cset;
   char buffer[80];
 
   cup(1, 10) && printf("These are the G0 and G1 character sets.");
@@ -332,26 +343,26 @@ tst_shift_in_out(MENU_ARGS)
     scs(cset, 'B');
     cup(row, 1);
     sgr("1");
-    printf("Character set %s (%s)",
-           KnownCharsets[current_Gx[cset]].final,
-           KnownCharsets[current_Gx[cset]].name);
+    tprintf("Character set %s (%s)",
+            KnownCharsets[current_Gx[cset]].final,
+            KnownCharsets[current_Gx[cset]].name);
     sgr("0");
 
     cup(row, 48);
-    printf("%s", label[cset]);
+    tprintf("%s", label[cset]);
 
     esc(scs_params(buffer, cset));
     for (i = 1; i <= 3; i++) {
       cup(row + i, 10);
-      for (j = 0; j <= 31; j++) {
-        printf("%c", i * 32 + j);
-      }
+      send32(i, 0);
     }
     scs(cset, 'B');
   }
   cup(max_lines, 1);
   return MENU_HOLD;
 }
+
+#define map_g1_to_gr() esc("~")   /* LS1R */
 
 static int
 tst_vt220_locking(MENU_ARGS)
@@ -371,32 +382,46 @@ tst_vt220_locking(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
-  int i, j, cset;
+  int i, cset;
 
-  cup(1, 10) && printf("Locking shifts, with NRC %s:",
-                       national ? "enabled" : "disabled");
+  cup(1, 10) && tprintf("Locking shifts, with NRC %s:",
+                        national ? "enabled" : "disabled");
   for (cset = 0; cset < TABLESIZE(table); cset++) {
     int row = 3 + (4 * cset);
     int map = table[cset].mapped;
 
-    scs(1, 'B');
+    scs_normal();
     cup(row, 1);
     sgr("1");
-    printf("Character set %s (%s)",
-           KnownCharsets[current_Gx[map]].final,
-           KnownCharsets[current_Gx[map]].name);
+    tprintf("Character set %s (%s) in G%d",
+            KnownCharsets[current_Gx[map]].final,
+            KnownCharsets[current_Gx[map]].name,
+            map);
     sgr("0");
 
     cup(row, 48);
-    printf("Maps %s", table[cset].msg);
+    tprintf("Maps %s", table[cset].msg);
 
-    do_scs(map);
-    esc(table[cset].code);
     for (i = 1; i <= 3; i++) {
-      cup(row + i, 10);
-      for (j = 0; j <= 31; j++) {
-        printf("%c", table[cset].upper * 128 + i * 32 + j);
+      if (table[cset].upper) {
+        scs_normal();
+        map_g1_to_gr();
+      } else {
+        do_scs(map);
+        esc(table[cset].code);
       }
+      cup(row + i, 5);
+      send32(i, 0);
+
+      if (table[cset].upper) {
+        do_scs(map);
+        esc(table[cset].code);
+      } else {
+        scs_normal();
+        map_g1_to_gr();
+      }
+      cup(row + i, 40);
+      send32(i, 128);
     }
     reset_scs(cset);
   }
@@ -415,19 +440,19 @@ tst_vt220_single(MENU_ARGS)
 
     vt_clear(2);
     cup(1, 1);
-    printf("Testing single-shift G%d into GL (SS%d) with NRC %s\n",
-           g, g, national ? "enabled" : "disabled");
-    printf("G%d is %s", g, KnownCharsets[current_Gx[g]].name);
+    tprintf("Testing single-shift G%d into GL (SS%d) with NRC %s\n",
+            g, g, national ? "enabled" : "disabled");
+    tprintf("G%d is %s", g, KnownCharsets[current_Gx[g]].name);
 
     do_scs(g);
     for (y = 0; y < 16; y++) {
       for (x = 0; x < 6; x++) {
         int ch = y + (x * 16) + 32;
         cup(y + 5, (x * 12) + 5);
-        printf("%3d: (", ch);
+        tprintf("%3d: (", ch);
         esc(pass ? "O" : "N");  /* SS3 or SS2 */
-        printf("%c", ch);
-        printf(")");
+        tprintf("%c", ch);
+        tprintf(")");
       }
     }
 
