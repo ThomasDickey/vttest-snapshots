@@ -1,4 +1,4 @@
-# $Id: descrip.mms,v 1.11 1999/10/07 23:23:40 tom Exp $
+# $Id: descrip.mms,v 1.12 2001/11/30 21:51:25 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
@@ -16,6 +16,7 @@ C_SRC = \
 	esc.c \
 	keyboard.c \
 	main.c \
+	mouse.c \
 	nonvt100.c \
 	printer.c \
 	reports.c \
@@ -40,6 +41,7 @@ OBJS = \
 	esc.obj, \
 	keyboard.obj, \
 	main.obj, \
+	mouse.obj, \
 	nonvt100.obj, \
 	printer.obj, \
 	reports.obj, \

@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.24 1999/10/07 23:23:58 tom Exp $
+# $Id: makefile.in,v 1.25 2001/11/30 21:54:13 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -43,6 +43,7 @@ C_SRC = \
 	esc.c \
 	keyboard.c \
 	main.c \
+	mouse.c \
 	nonvt100.c \
 	printer.c \
 	reports.c \
@@ -66,6 +67,7 @@ OBJS  = \
 	esc.o \
 	keyboard.o \
 	main.o \
+	mouse.o \
 	nonvt100.o \
 	printer.o \
 	reports.o \
@@ -141,7 +143,6 @@ MANIFEST: patchlev.h
 
 dist: MANIFEST
 	- rm -f .fname .files
-#	fgrep PATCHLEVEL patchlev.h | sed -e 's/[^0-9.]//g' -e 's/^/$(THIS)-$(RELEASE)./' >.fname
 	fgrep PATCH_DATE patchlev.h | sed -e 's/[^0-9.]//g' -e 's/^/$(THIS)-/' >.fname
 	cat MANIFEST | grep ' ' | egrep -v ' subdirectory$$' | sed -e 's/\ .*//' | uniq >.files
 	rm -rf `cat .fname`
@@ -157,7 +158,6 @@ dist: MANIFEST
 # <CR><LF> terminated ".bat" files for MS-DOS.
 dist-shar: MANIFEST
 	- rm -f .fname .files
-#	fgrep PATCHLEVEL patchlev.h | sed -e 's/[^0-9.]//g' -e 's/^/$(THIS)-$(RELEASE)./' >.fname
 	fgrep PATCH_DATE patchlev.h | sed -e 's/[^0-9.]//g' -e 's/^/$(THIS)-/' >.fname
 	cat MANIFEST | grep ' ' | egrep -v ' subdirectory$$' | sed -e 's/\ .*//' | uniq >.files
 	shar -M -n`cat .fname` -opart -l50 `cat .files`

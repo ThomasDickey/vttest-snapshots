@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.53 1999/10/07 23:55:05 tom Exp $ */
+/* $Id: vttest.h,v 1.54 2001/11/30 22:03:38 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -234,6 +234,7 @@ extern int tst_doublesize(MENU_ARGS);
 extern int tst_insdel(MENU_ARGS);
 extern int tst_keyboard(MENU_ARGS);
 extern int tst_keyboard_layout(char *scs_params);
+extern int tst_mouse(MENU_ARGS);
 extern int tst_movements(MENU_ARGS);
 extern int tst_nonvt100(MENU_ARGS);
 extern int tst_printing(MENU_ARGS);
