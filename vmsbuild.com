@@ -1,4 +1,4 @@
-$! $Id: vmsbuild.com,v 1.6 1996/09/12 23:58:37 tom Exp $
+$! $Id: vmsbuild.com,v 1.7 1996/11/26 23:09:05 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
@@ -10,6 +10,7 @@ $!
 $ release := 2
 $ open/write optf vms_link.opt
 $ write optf "Identification=""VtTest ''release'.6"""
+$ write optf "charsets.obj"
 $ write optf "color.obj"
 $ write optf "esc.obj"
 $ write optf "keyboard.obj"
@@ -76,6 +77,7 @@ $
 $	if "''p1'" .nes. "" then goto 'p1
 $
 $ all :
+$	call make charsets
 $	call make color
 $	call make esc
 $	call make keyboard
