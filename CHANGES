@@ -1,5 +1,13 @@
-$Id: CHANGES,v 1.97 2004/11/05 10:13:33 tom Exp $
+$Id: CHANGES,v 1.98 2004/12/05 18:33:16 tom Exp $
 -------------------------------------------------------------------------------
+
+20041205
+	add the ability to redraw the screen for mouse-tests, since some can
+	produce lots of output, e.g., the any-event tracking.
+
+	modify function which reads replies, e.g., from DA, to retry as long
+	as it has read data.  This is needed for connecting to real VTxxx
+	terminals vs emulators (report by Pavel Cahyna).
 
 20041107
 	modify lib$wait() call to work on IA64, which uses a different default

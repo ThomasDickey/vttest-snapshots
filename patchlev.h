@@ -1,3 +1,3 @@
-/* $Id: patchlev.h,v 1.25 2004/11/03 01:21:39 tom Exp $ */
+/* $Id: patchlev.h,v 1.26 2004/12/05 15:14:59 tom Exp $ */
 #define PATCHLEVEL 7
-#define PATCH_DATE 20041107
+#define PATCH_DATE 20041205

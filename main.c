@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.81 2004/08/04 21:44:02 tom Exp $ */
+/* $Id: main.c,v 1.82 2004/12/05 15:01:28 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -22,7 +22,6 @@ choice to the address below.
 #include <esc.h>
 
 FILE *log_fp       = 0;
-char *current_menu = "";
 int brkrd;
 int reading;
 int log_disabled  = FALSE;
@@ -34,6 +33,8 @@ int output_8bits  = FALSE;
 int tty_speed     = DEFAULT_SPEED; /* nominal speed, for padding */
 int use_padding   = FALSE;
 jmp_buf intrenv;
+
+static char *current_menu = "";
 
 static void
 usage(void)

@@ -1,12 +1,15 @@
-/* $Id: mouse.c,v 1.3 2004/08/02 23:41:54 tom Exp $ */
+/* $Id: mouse.c,v 1.5 2004/12/05 19:01:05 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
 
-#define MCHR(c) (((c) - ' ') & 0xff)
+#define MCHR(c) ((unsigned)((c) - ' ') & 0xff)
 
 #define isQuit(c) (((c) == 'q') || ((c) == 'Q'))
+#define isClear(c) ((c) == ' ')
+
+#define ToData(n)  vt_move(4 + n, 10)
 
 static int chars_high;
 static int chars_wide;
@@ -16,12 +19,12 @@ static int pixels_wide;
 static void
 cat_button(char *dst, char *src)
 {
-  if (*dst != 0) strcat(dst, ", ");
+  if (*dst != '\0') strcat(dst, ", ");
   strcat(dst, src);
 }
 
 static char *
-locator_button(int b)
+locator_button(unsigned b)
 {
   static char result[80];
 
@@ -93,7 +96,7 @@ static int show_locator_report(char *report, int row, int pixels)
   int Pe, Pb, Pr, Pc, Pp;
   int now = row;
 
-  vt_move(3,10); vt_el(2); chrprint(report);
+  ToData(0); vt_el(2); chrprint(report);
   while ((report = skip_csi(report)) != 0
    && (sscanf(report, "%d;%d;%d;%d&w", &Pe, &Pb, &Pr, &Pc) == 4
     || sscanf(report, "%d;%d;%d;%d;%d&w", &Pe, &Pb, &Pr, &Pc, &Pp) == 5)) {
@@ -119,7 +122,7 @@ static int
 get_screensize(MENU_ARGS)
 {
   char *report;
-  char tmp;
+  char tmp = 0;
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -155,9 +158,12 @@ show_dec_locator_events(MENU_ARGS, int mode, int pixels)
 {
   int row, now;
 
+first:
   vt_move(1,1);
+  ed(0);
   println(the_title);
-  println("Press 'q' to quit.  Mouse events will be marked with '*'");
+  println("Press 'q' to quit, ' ' to clear.");
+  println("Mouse events will be marked with '*'");
 
   decelr((mode > 0) ? mode : ((mode == 0) ? 2 : -mode), pixels ? 1 : 2);
 
@@ -179,6 +185,8 @@ show_dec_locator_events(MENU_ARGS, int mode, int pixels)
       report = instr();
       show_locator_report(report, now+1, pixels);
       break;
+    } else if (isClear(*report)) {
+      goto first;
     }
     row = 4;
     while (now > row) {
@@ -202,11 +210,14 @@ show_dec_locator_events(MENU_ARGS, int mode, int pixels)
 static void
 show_mouse_tracking(MENU_ARGS, char *the_mode)
 {
-  int y = 0, x = 0;
+  unsigned y = 0, x = 0;
 
+first:
   vt_move(1,1);
+  ed(0);
   println(the_title);
-  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
+  println("Press 'q' to quit, ' ' to clear.");
+  println("Mouse events will be marked with the button number.");
 
   sm(the_mode);
   set_tty_raw(TRUE);
@@ -214,15 +225,18 @@ show_mouse_tracking(MENU_ARGS, char *the_mode)
 
   for(;;) {
     char *report = instr();
-    if (isQuit(*report))
+    if (isQuit(*report)) {
       break;
-    vt_move(3,10); vt_el(2); chrprint(report);
+    } else if (isClear(*report)) {
+      goto first;
+    }
+    ToData(0); vt_el(2); chrprint(report);
     while ((report = skip_csi(report)) != 0
      && *report == 'M'
      && strlen(report) >= 4) {
-      int b = MCHR(report[1]);
+      unsigned b = MCHR(report[1]);
       int adj = 1;
-      vt_move(4,10); vt_el(2);
+      ToData(1); vt_el(2);
       show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
       if (b & ~3) {
         if (b & 4)
@@ -239,7 +253,7 @@ show_mouse_tracking(MENU_ARGS, char *the_mode)
       b &= 3;
       if (b != 3) {
         b += adj;
-        printf(" button %d", b);
+        printf(" button %u", b);
         show_click(MCHR(report[3]), MCHR(report[2]), b + '0');
       } else if (MCHR(report[2]) != x || MCHR(report[3]) != y) {
         printf(" release");
@@ -321,11 +335,14 @@ test_mouse_hilite(MENU_ARGS)
 {
   const int first = 10;
   const int last  = 20;
-  int y = 0, x = 0;
+  unsigned y = 0, x = 0;
 
+first:
   vt_move(1,1);
+  ed(0);
   println(the_title);
-  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
+  println("Press 'q' to quit, ' ' to clear.");
+  println("Mouse events will be marked with the button number.");
   printf("Highlighting range is [%d..%d)\n", first, last);
   show_hilite(first,last);
 
@@ -335,31 +352,34 @@ test_mouse_hilite(MENU_ARGS)
 
   for(;;) {
     char *report = instr();
-    if (isQuit(*report))
+    if (isQuit(*report)) {
       break;
+    } else if (isClear(*report)) {
+      goto first;
+    }
     show_hilite(first,last);
-    vt_move(4,10); vt_el(2); chrprint(report);
+    ToData(1); vt_el(2); chrprint(report);
     if ((report = skip_csi(report)) != 0) {
       if (*report == 'M'
        && strlen(report) == 4) {
-        int b = MCHR(report[1]);
+        unsigned b = MCHR(report[1]);
         b &= 7;
         x = MCHR(report[2]);
         y = MCHR(report[3]);
         if (b != 3) {
           /* send the xterm the highlighting range (it MUST be done first) */
-          do_csi("1;%d;%d;%d;%d;T", x, y, 10, 20);
+          do_csi("1;%u;%u;%d;%d;T", x, y, 10, 20);
           /* now, show the mouse-click */
           if (b < 3) b++;
           show_click(y, x, b + '0');
         }
         /* interpret the event */
-        vt_move(5,10); vt_el(2);
+        ToData(2); vt_el(2);
         show_result("tracking: code 0x%x (%d,%d)", MCHR(report[1]), y, x);
         fflush(stdout);
       } else if (*report == 'T' && strlen(report) == 7) {
         /* interpret the event */
-        vt_move(5,10); vt_el(2);
+        ToData(2); vt_el(2);
         show_result("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
           MCHR(report[2]), MCHR(report[1]),
           MCHR(report[4]), MCHR(report[3]),
@@ -375,7 +395,7 @@ test_mouse_hilite(MENU_ARGS)
           show_click(MCHR(report[6]), MCHR(report[5]), 'm');
       } else if (*report == 't' && strlen(report) == 3) {
         /* interpret the event */
-        vt_move(5,10); vt_el(2);
+        ToData(2); vt_el(2);
         show_result("done: end(%d,%d)",
           MCHR(report[2]), MCHR(report[1]));
         if (MCHR(report[2]) != y
@@ -404,9 +424,12 @@ test_mouse_normal(MENU_ARGS)
 static int
 test_X10_mouse(MENU_ARGS)
 {
+first:
   vt_move(1,1);
+  ed(0);
   println(the_title);
-  println("Press 'q' to quit.  Mouse events will be marked with the button number.");
+  println("Press 'q' to quit, ' ' to clear.");
+  println("Mouse events will be marked with the button number.");
 
   sm("?9");
   set_tty_raw(TRUE);
@@ -414,9 +437,12 @@ test_X10_mouse(MENU_ARGS)
 
   for(;;) {
     char *report = instr();
-    if (isQuit(*report))
+    if (isQuit(*report)) {
       break;
-    vt_move(3,10); vt_el(2); chrprint(report);
+    } else if (isClear(*report)) {
+      goto first;
+    }
+    ToData(0); vt_el(2); chrprint(report);
     if ((report = skip_csi(report)) != 0
      && *report == 'M'
      && strlen(report) == 4) {
