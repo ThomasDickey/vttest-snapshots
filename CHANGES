@@ -1,5 +1,9 @@
-$Id: CHANGES,v 1.57 1996/11/26 02:27:31 tom Exp $
+$Id: CHANGES,v 1.58 1996/12/16 01:50:16 tom Exp $
 -------------------------------------------------------------------------------
+
+961215
+	correct err introduced between d960905 and v2_5 that broke test for IRM
+	mode by using decsclm (reported by Jeffrey Altman).
 
 961125
 	add VT220 character-set tests for locking-shifts

@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.64 1996/11/26 00:34:13 tom Exp $ */
+/* $Id: main.c,v 1.65 1996/12/16 01:43:11 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -601,10 +601,10 @@ tst_insdel(MENU_ARGS)
     cup(1,2);
     printf("B");
     cub(1);
-    decsclm(TRUE);
+    sm("4");
     for (col=2; col<=sw-1; col++)
       printf("*");
-    decsclm(FALSE);
+    rm("4");
     cup(4,1);
     printf("Test of 'Insert Mode'. The top line should be 'A*** ... ***B'. ");
     holdit(); ri(); el(2);
