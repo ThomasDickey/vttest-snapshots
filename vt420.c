@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.52 1996/11/25 11:17:33 tom Exp $ */
+/* $Id: vt420.c,v 1.53 1999/07/12 10:47:14 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -1370,7 +1370,7 @@ tst_VT420_cursor(MENU_ARGS)
       { "Test Back Index (DECBI)",                           tst_DECBI },
       { "Test Forward Index (DECFI)",                        tst_DECFI },
       { "Test Pan down (SU)",                                tst_SU },
-      { "Test Pan up (SD)",                                  tst_SD_DEC },
+      { "Test Pan up (SD)",                                  tst_SD},
       { "Test Vertical Cursor Coupling (DECVCCM)",           not_impl },
       { "Test Page Cursor Coupling (DECPCCM)",               not_impl },
       { "",                                                  0 }

@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.30 1996/09/21 17:56:30 tom Exp $ */
+/* $Id: nonvt100.c,v 1.31 1999/07/12 10:46:19 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -206,7 +206,7 @@ tst_REP(MENU_ARGS)
  * instead of '^'), apparently someone misread 05/14 as 05/04 or vice versa.
  */
 int
-tst_SD_DEC(MENU_ARGS)
+tst_SD(MENU_ARGS)
 {
   int n;
   int last = max_lines - 3;
@@ -214,25 +214,7 @@ tst_SD_DEC(MENU_ARGS)
   for (n = 1; n < last; n++) {
     cup(n, n);
     printf("*");
-    sd_dec(1);
-  }
-  vt_move(last+1,1);
-  vt_clear(0);
-  println(the_title);
-  println("There should be a horizontal row of *'s above.");
-  return MENU_HOLD;
-}
-
-static int
-tst_SD_ISO(MENU_ARGS)
-{
-  int n;
-  int last = max_lines - 3;
-
-  for (n = 1; n < last; n++) {
-    cup(n, n);
-    printf("*");
-    sd_iso(1);
+    sd(1);
   }
   vt_move(last+1,1);
   vt_clear(0);
@@ -416,7 +398,7 @@ tst_ecma48_misc(MENU_ARGS)
       { "Exit",                                              0 },
       { "Test Protected-Areas (SPA)",                        tst_SPA },
       { "Test Repeat (REP)",                                 tst_REP },
-      { "Test Scroll-Down (SD)",                             tst_SD_ISO },
+      { "Test Scroll-Down (SD)",                             tst_SD },
       { "Test Scroll-Left (SL)",                             tst_SL },
       { "Test Scroll-Right (SR)",                            tst_SR },
       { "Test Scroll-Up (SU)",                               tst_SU },
