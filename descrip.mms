@@ -1,4 +1,4 @@
-# $Id: descrip.mms,v 1.9 1996/09/10 00:48:29 tom Exp $
+# $Id: descrip.mms,v 1.10 1996/11/25 23:07:20 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
@@ -11,6 +11,7 @@ CFLAGS	= /Listing /Include=([]) $(DEFINES)
 #### End of system configuration section. ####
 
 C_SRC = \
+	charsets.c \
 	color.c \
 	esc.c \
 	keyboard.c \
@@ -33,6 +34,7 @@ H_SRC = \
 	esc.h \
 	ttymodes.h
 OBJS = \
+	charsets.obj, \
 	color.obj, \
 	esc.obj, \
 	keyboard.obj, \

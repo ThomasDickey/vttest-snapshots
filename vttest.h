@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.46 1996/10/30 00:34:06 tom Exp $ */
+/* $Id: vttest.h,v 1.47 1996/11/26 00:35:21 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -137,6 +137,8 @@ extern jmp_buf intrenv;
 #define SHOW_SUCCESS "ok"
 #define SHOW_FAILURE "failed"
 
+#define TABLESIZE(table) (sizeof(table)/sizeof(table[0]))
+
 #define DEFAULT_SPEED 9600
 
 #if !defined(__GNUC__) && !defined(__attribute__)
@@ -251,6 +253,8 @@ extern void initterminal(int pn);
 extern void reset_level(void);
 extern void restore_level(VTLEVEL *save);
 extern void save_level(VTLEVEL *save);
+extern void scs_graphics(void);
+extern void scs_normal(void);
 extern void setup_softchars(char *filename);
 extern void show_result(const char *fmt, ...);
 extern void title(int offset);

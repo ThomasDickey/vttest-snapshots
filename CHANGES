@@ -1,5 +1,8 @@
-$Id: CHANGES,v 1.56 1996/11/17 23:55:23 tom Exp $
+$Id: CHANGES,v 1.57 1996/11/26 02:27:31 tom Exp $
 -------------------------------------------------------------------------------
+
+961125
+	add VT220 character-set tests for locking-shifts
 
 VERSION 2.7
 

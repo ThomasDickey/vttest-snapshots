@@ -1,10 +1,11 @@
-MANIFEST for vttest, version v2_7
+MANIFEST for vttest, version d961125
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
 CHANGES                         record of changes I've made to vttest
 COPYING                         copyright notice
 README                          original version of vttest posted to comp.sources.unix, volume 7
+charsets.c                      character-set tests
 color.c                         color tests
 config.hin                      template for config.h
 configure.in                    template for configure script
