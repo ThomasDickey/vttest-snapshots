@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.12 1996/06/24 23:50:21 tom Exp $ */
+/* $Id: vttest.h,v 1.21 1996/08/19 00:20:04 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -8,24 +8,13 @@
 
 /* Choose one of these */
 
-/* #define XENIX        ** XENIX implies UNIX                           */
 #define UNIX            /* UNIX                                         */
 /* #define VMS          ** VMS not done yet -- send me your version!!!! */
-/* #define SARG20       ** Sargasso C for TOPS-20                       */
-/* #define SARG10       ** Sargasso C for TOPS-10                       */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #define UNIX
 #else
-
-#ifdef SARG10
-#include "sargasso.h"
-#endif
-
-#ifdef SARG20
-#include "sargasso.h"
-#endif
 
 #define RETSIGTYPE void
 
@@ -113,6 +102,9 @@ extern int reading;
 extern int max_lines;
 extern int max_cols;
 extern int min_cols;
+extern int input_8bits;
+extern int output_8bits;
+extern int user_geometry;
 
 #if USE_FCNTL
 #include <fcntl.h>
@@ -135,6 +127,12 @@ extern int min_cols;
 #define EXIT_FAILURE 1
 #endif
 
+#if !defined(__GNUC__) && !defined(__attribute__)
+#define __attribute__(p) /* nothing */
+#endif
+
+#define GCC_PRINTFLIKE(fmt,var) __attribute__((format(printf,fmt,var)))
+
 /* my SunOS 4.1.x doesn't have prototyped headers */
 #if defined(__GNUC__) && defined(sun) && !defined(__SVR4)
 extern int fclose(FILE *);
@@ -145,34 +143,59 @@ extern int printf(const char *fmt, ...);
 extern int scanf(const char *fmt, ...);
 #endif
 
+#define MENU_ARGS    char *   the_title
+#define PASS_ARGS /* char * */the_title
+
+typedef struct {
+  char *description;
+  int (*dispatch)(MENU_ARGS);
+} MENU;
+
+#define MENU_NOHOLD 0
+#define MENU_HOLD   1
+#define MENU_MERGE  2
+
+#define TITLE_LINE  3
+
 /* main.c */
-RETSIGTYPE onbrk(SIG_ARGS);
-RETSIGTYPE onterm(SIG_ARGS);
-int main(int argc, char *argv[]);
-int menu(char *table[]);
-int scanto(char *str, int *pos, int toc);
-void bug_a(void);
-void bug_b(void);
-void bug_c(void);
-void bug_d(void);
-void bug_e(void);
-void bug_f(void);
-void bug_l(void);
-void bug_s(void);
-void bug_w(void);
-void bye(void);
-void chrprint(char *s);
-void do_scrolling(void);
-void initterminal(int pn);
-void tst_bugs(void);
-void tst_characters(void);
-void tst_doublesize(void);
-void tst_insdel(void);
-void tst_keyboard(void);
-void tst_movements(void);
-void tst_reports(void);
-void tst_rst(void);
-void tst_screen(void);
-void tst_vt52(void);
+extern RETSIGTYPE onbrk(SIG_ARGS);
+extern RETSIGTYPE onterm(SIG_ARGS);
+extern char *skip_prefix(char *prefix, char *input);
+extern int bug_a(MENU_ARGS);
+extern int bug_b(MENU_ARGS);
+extern int bug_c(MENU_ARGS);
+extern int bug_d(MENU_ARGS);
+extern int bug_e(MENU_ARGS);
+extern int bug_f(MENU_ARGS);
+extern int bug_l(MENU_ARGS);
+extern int bug_s(MENU_ARGS);
+extern int bug_w(MENU_ARGS);
+extern int main(int argc, char *argv[]);
+extern int menu(MENU *table);
+extern int not_impl(MENU_ARGS);
+extern int scanto(char *str, int *pos, int toc);
+extern int tst_ECH(MENU_ARGS);
+extern int tst_SD_DEC(MENU_ARGS);
+extern int tst_SU(MENU_ARGS);
+extern int tst_bugs(MENU_ARGS);
+extern int tst_characters(MENU_ARGS);
+extern int tst_colors(MENU_ARGS);
+extern int tst_doublesize(MENU_ARGS);
+extern int tst_insdel(MENU_ARGS);
+extern int tst_keyboard(MENU_ARGS);
+extern int tst_movements(MENU_ARGS);
+extern int tst_nonvt100(MENU_ARGS);
+extern int tst_reports(MENU_ARGS);
+extern int tst_rst(MENU_ARGS);
+extern int tst_screen(MENU_ARGS);
+extern int tst_setup(MENU_ARGS);
+extern int tst_vt420(MENU_ARGS);
+extern int tst_vt52(MENU_ARGS);
+extern int tst_xterm(MENU_ARGS);
+extern void bye(void);
+extern void chrprint(char *s);
+extern void do_scrolling(void);
+extern void initterminal(int pn);
+extern void title(int offset);
 
 #endif /* VTTEST_H */
