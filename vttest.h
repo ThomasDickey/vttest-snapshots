@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.44 1996/09/28 14:54:44 tom Exp $ */
+/* $Id: vttest.h,v 1.45 1996/10/28 00:42:55 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -242,6 +242,7 @@ extern int tst_vt52(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
 extern void bye(void);
 extern void chrprint(char *s);
+extern void default_level(void);
 extern void do_scrolling(void);
 extern void enable_logging(void);
 extern void initterminal(int pn);

@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.24 1996/09/28 16:05:57 tom Exp $ */
+/* $Id: setup.c,v 1.25 1996/10/28 00:42:07 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -229,6 +229,18 @@ set_level(int request)
         output_8bits ? 8 : 7);
 
   return TRUE;
+}
+
+/*
+ * Set the terminal's operating level to the default (i.e., based on what the
+ * terminal returns as a response to DA).
+ */
+void
+default_level()
+{
+  if (max_level < 0)
+    find_levels();
+  set_level(max_level);
 }
 
 int

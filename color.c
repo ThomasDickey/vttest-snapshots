@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.23 1996/09/27 22:25:31 tom Exp $ */
+/* $Id: color.c,v 1.24 1996/09/30 22:56:10 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -158,6 +158,7 @@ static void
 reset_colors(void)
 {
   sgr("0;40;37;39;49");
+  sgr("0");
 }
 
 static void
