@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.57 1996/10/29 22:44:59 tom Exp $ */
+/* $Id: esc.c,v 1.58 1998/03/26 01:31:28 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -486,6 +486,15 @@ decnkm(int flag) /* VT400: Numeric Keypad */
     sm("?66"); /* application */
   else
     rm("?66"); /* numeric */
+}
+
+void
+decnrcm(int flag) /* VT220: National replacement character set */
+{
+  if (flag)
+    sm("?42"); /* national */
+  else
+    rm("?42"); /* multinational */
 }
 
 void

@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.40 1996/10/29 22:45:08 tom Exp $ */
+/* $Id: esc.h,v 1.41 1998/03/26 00:31:37 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -101,6 +101,7 @@ void deckpm(int flag);
 void deckpnm(void);
 void decll(char *ps);
 void decnkm(int flag);
+void decnrcm(int flag);
 void decrara(int top, int left, int bottom, int right, int attr);
 void decrc(void);
 void decreqtparm(int pn);
