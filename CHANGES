@@ -1,5 +1,7 @@
-$Id: CHANGES,v 1.55 1996/11/14 01:50:10 tom Exp $
+$Id: CHANGES,v 1.56 1996/11/17 23:55:23 tom Exp $
 -------------------------------------------------------------------------------
+
+VERSION 2.7
 
 961113
 	corrected early return from test for DECRPM when badly-formatted

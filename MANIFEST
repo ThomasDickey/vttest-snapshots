@@ -1,4 +1,4 @@
-MANIFEST for vttest, version d961113
+MANIFEST for vttest, version v2_7
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -23,6 +23,7 @@ reset.c                         test-functions for terminal-reset
 setup.c                         modify test-parameters
 sixel.c                         tests for soft characters (sixel)
 status.c                        status-line tests
+tech.set                        DEC technical set font definition from VT220 toolkit
 ttymodes.c                      module for changing tty modes
 ttymodes.h                      interface of ttymodes.c
 unix_io.c                       UNIX-specific I/O support
