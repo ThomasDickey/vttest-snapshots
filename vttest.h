@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.69 2004/12/05 18:44:22 tom Exp $ */
+/* $Id: vttest.h,v 1.70 2005/10/19 22:29:19 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -228,6 +228,7 @@ extern int bug_f(MENU_ARGS);
 extern int bug_l(MENU_ARGS);
 extern int bug_s(MENU_ARGS);
 extern int bug_w(MENU_ARGS);
+extern int chrprint2(char *s, int row, int col);
 extern int get_level(void);
 extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);

@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.83 2004/12/21 01:46:07 tom Exp $ */
+/* $Id: main.c,v 1.84 2005/10/19 22:20:59 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1255,22 +1255,46 @@ menu(MENU *table)
   }
 }
 
-void
-chrprint (char *s)
+/*
+ * Return updated row-number based on the number of characters printed to the
+ * screen, e.g., for test_report_ops() to handle very long results.
+ */
+int
+chrprint2 (char *s, int row, int col)
 {
   int i;
+  int result = row;
+  int tracks = (col += 2);
+  char temp[80];
 
   printf("  ");
   vt_hilite(TRUE);
   printf(" ");
+  tracks += 3;
+
   for (i = 0; s[i] != '\0'; i++) {
     int c = (unsigned char)s[i];
-    if (c <= ' ' || c >= '\177')
-      printf("<%d> ", c);
-    else
-      printf("%c ", c);
+    if (c <= ' ' || c >= '\177') {
+      sprintf(temp, "<%d> ", c);
+    } else {
+      sprintf(temp, "%c ", c);
+    }
+    tracks += strlen(temp);
+    if ((tracks > min_cols) && (col > 1)) {
+      vt_move(++result, col);
+      tracks = col + strlen(temp);
+    }
+    fputs(temp, stdout);
   }
+
   vt_hilite(FALSE);
+  return result + 1;
+}
+
+void
+chrprint (char *s)
+{
+  chrprint2(s, 1, 1);
 }
 
 /*

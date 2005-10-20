@@ -1,4 +1,4 @@
-MANIFEST for vttest, version d20050107
+MANIFEST for vttest, version d20051020
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -8,7 +8,9 @@ README                          original version of vttest posted to comp.source
 aclocal.m4                      local macros for autoconf script
 charsets.c                      character-set tests
 color.c                         color tests
+config.guess                    configure utility script
 config.hin                      template for config.h
+config.sub                      configure utility script
 configure                       generated autoconf script
 configure.in                    template for configure script
 descrip.mms                     VAX MMS script for VTTEST

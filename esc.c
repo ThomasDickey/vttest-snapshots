@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.75 2005/01/08 01:15:16 tom Exp $ */
+/* $Id: esc.c,v 1.77 2005/10/19 20:26:17 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -172,6 +172,10 @@ va_out(FILE *fp, va_list ap, const char *fmt)
         break;
       case 'd':
         sprintf(temp, "%d", va_arg(ap, int));
+        put_string(fp, temp);
+        break;
+      case 'u':
+        sprintf(temp, "%u", va_arg(ap, unsigned));
         put_string(fp, temp);
         break;
       case 's':
