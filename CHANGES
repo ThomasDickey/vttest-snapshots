@@ -1,5 +1,16 @@
-$Id: CHANGES,v 1.101 2005/01/08 01:14:25 tom Exp $
+$Id: CHANGES,v 1.105 2005/10/19 22:51:12 tom Exp $
 -------------------------------------------------------------------------------
+
+20051020
+	add suffix information to configure script to work with cygwin, etc.
+
+	modify window-reporting operations to handle result strings that may be
+	longer than a single line.
+
+	improve configure script checks for Intel compiler warning options.
+
+	add "%u" format needed in va_out() to work with 20050107 change
+	to mouse-highlight test.
 
 20050107
 	improve test for vt220 locking shifts, showing GL/GR side-by-side to

@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.35 2004/12/21 01:48:46 tom Exp $
+# $Id: makefile.in,v 1.36 2005/10/19 22:50:13 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -8,6 +8,9 @@ RELEASE = 2
 
 srcdir = @srcdir@
 VPATH  = @srcdir@
+
+x		= @EXEEXT@
+o		= .@OBJEXT@
 
 CC		= @CC@
 CPP		= @CPP@
@@ -36,12 +39,12 @@ DEFINES 	= -DHAVE_CONFIG_H -DRELEASE=$(RELEASE)
 INCLUDES	= -I. -I$(srcdir)
 CPPFLAGS	= $(DEFINES) $(INCLUDES) @CPPFLAGS@
 
-.SUFFIXES: .c .i .o
+.SUFFIXES: .c .i $o
 
 .c.i:
 @RULE_CC@
 	@ECHO_CC@$(CPP) -E -C $(CPPFLAGS) $< >$@
-.c.o:
+.c$o:
 @RULE_CC@
 	@ECHO_CC@$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
@@ -74,28 +77,28 @@ H_SRC = \
 	esc.h \
 	ttymodes.h
 OBJS  = \
-	charsets.o \
-	color.o \
-	draw.o \
-	esc.o \
-	keyboard.o \
-	main.o \
-	mouse.o \
-	nonvt100.o \
-	printer.o \
-	reports.o \
-	reset.o \
-	setup.o \
-	sixel.o \
-	status.o \
-	tek4014.o \
-	ttymodes.o \
-	unix_io.o \
-	vt220.o \
-	vt320.o \
-	vt420.o \
-	vt52.o \
-	xterm.o
+	charsets$o \
+	color$o \
+	draw$o \
+	esc$o \
+	keyboard$o \
+	main$o \
+	mouse$o \
+	nonvt100$o \
+	printer$o \
+	reports$o \
+	reset$o \
+	setup$o \
+	sixel$o \
+	status$o \
+	tek4014$o \
+	ttymodes$o \
+	unix_io$o \
+	vt220$o \
+	vt320$o \
+	vt420$o \
+	vt52$o \
+	xterm$o
 
 SRC =	patchlev.h \
 	CHANGES COPYING README BUGS \
@@ -104,31 +107,33 @@ SRC =	patchlev.h \
 	tech.set \
 	config.hin install.sh mkdirs.sh makefile.in configure.in
 
+PROG	= $(THIS)$x
+
 DISTFILES = MANIFEST configure $(SRC)
 
-all:	$(THIS)
+all:	$(PROG)
 
-$(THIS): $(OBJS)
-	@ECHO_LD@$(LINK) $(CFLAGS) $(LDFLAGS) -o $(THIS) $(OBJS) $(LIBS)
+$(PROG): $(OBJS)
+	@ECHO_LD@$(LINK) $(CFLAGS) $(LDFLAGS) -o $(PROG) $(OBJS) $(LIBS)
 
 $(OBJS): config.h $(THIS).h patchlev.h
 
 install: all installdirs
-	$(INSTALL_PROGRAM) $(THIS) $(bindir)/$(THIS)
+	$(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
 	$(INSTALL_DATA) $(srcdir)/$(THIS).1 $(mandir)/$(THIS).$(manext)
 
 installdirs:
 	$(SHELL) ${srcdir}/mkdirs.sh $(bindir) $(mandir)
 
 uninstall:
-	rm -f $(bindir)/$(THIS)
+	rm -f $(bindir)/$(PROG)
 	rm -f $(mandir)/$(THIS).$(manext)
 
 mostlyclean:
 	rm -f *.[oi] core *~ *.BAK *.trace *.atac
 
 clean: mostlyclean
-	rm -f $(THIS)
+	rm -f $(PROG)
 
 distclean: clean
 	rm -f makefile config.log config.cache config.status config.h
@@ -136,11 +141,11 @@ distclean: clean
 realclean: distclean
 	rm -f tags TAGS # don't remove configure!
 
-tags:	$(C_SRC) $(HDRS)
-	ctags $(C_SRC) $(HDRS)
+@MAKE_LOWER_TAGS@tags:	$(C_SRC) $(HDRS)
+@MAKE_LOWER_TAGS@	ctags $(C_SRC) $(HDRS)
 
-TAGS:	$(C_SRC) $(HDRS)
-	etags $(C_SRC) $(HDRS)
+@MAKE_UPPER_TAGS@TAGS:	$(C_SRC) $(HDRS)
+@MAKE_UPPER_TAGS@	etags $(C_SRC) $(HDRS)
 
 # I keep my sources in RCS, and assign a symbolic release to the current patch
 # level.  The 'manifest' script knows how to build a list of files for a given
@@ -171,10 +176,10 @@ dist-shar: MANIFEST
 	shar -M -n`cat .fname` -opart -l50 `cat .files`
 	- rm -f .fname .files
 
-$(THIS).o:	config.h
+$(THIS)$o:	config.h
 
 lint:
 	$(LINT) $(CPPFLAGS) $(C_SRC)
 
-check: $(THIS)
+check: $(PROG)
 	@echo 'Sorry -- You must run this interactively.'
