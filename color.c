@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.27 2004/08/03 22:20:18 tom Exp $ */
+/* $Id: color.c,v 1.28 2006/11/26 17:19:40 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -641,8 +641,8 @@ tst_colors(MENU_ARGS)
     vt_clear(2);
     sprintf(txt_override_color, "%sable color-switching",
             do_colors ? "Dis" : "En");
-    title(0) && println("ISO 6429 colors");
-    title(2) && println("Choose test type:");
+    __(title(0), println("ISO 6429 colors"));
+    __(title(2), println("Choose test type:"));
   } while (menu(colormenu));
   return MENU_NOHOLD;
 }

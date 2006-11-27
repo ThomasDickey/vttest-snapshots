@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.4 2004/08/03 01:23:05 tom Exp $ */
+/* $Id: draw.c,v 1.6 2006/11/26 18:29:18 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -38,15 +38,15 @@ draw_box_outline(BOX *box, int mark)
 {
   int j;
 
-  for (j = box->top; j < box->bottom; j++) {
-    cup(j, box->left) && putchar(mark);
-    cup(j, box->right) && putchar(mark);
+  for (j = box->top; j <= box->bottom; j++) {
+    __(cup(j, box->left), putchar(mark));
+    __(cup(j, box->right), putchar(mark));
   }
   cup(box->top, box->left);
-  for (j = box->left; j <= box->right; j++)
+  for (j = box->left; j < box->right; j++)
     putchar(mark);
   cup(box->bottom, box->left);
-  for (j = box->left; j <= box->right; j++)
+  for (j = box->left; j < box->right; j++)
     putchar(mark);
 }
 

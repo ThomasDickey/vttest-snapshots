@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.17 2004/08/02 23:41:54 tom Exp $ */
+/* $Id: vt220.c,v 1.18 2006/11/26 17:30:11 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -447,8 +447,8 @@ tst_vt220_reports(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT220 Reports");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT220 Reports"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

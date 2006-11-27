@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.28 2005/01/08 01:14:47 tom Exp $ */
+/* $Id: charsets.c,v 1.29 2006/11/26 17:18:20 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -227,7 +227,7 @@ specify_any_Gx(int g)
 
   do {
     vt_clear(2);
-    title(0) && println("Choose character-set:");
+    __(title(0), println("Choose character-set:"));
   } while (menu(my_menu) && the_code < 0);
 
   current_Gx[g] = the_code;
@@ -294,8 +294,8 @@ tst_vt100_charsets(MENU_ARGS)
 
   int i, g, cset;
 
-  cup(1, 10) && printf("Selected as G0 (with SI)");
-  cup(1, 48) && printf("Selected as G1 (with SO)");
+  __(cup(1, 10), printf("Selected as G0 (with SI)"));
+  __(cup(1, 48), printf("Selected as G1 (with SO)"));
   for (cset = 0; cset < TABLESIZE(table); cset++) {
     int row = 3 + (4 * cset);
 
@@ -318,7 +318,7 @@ tst_vt100_charsets(MENU_ARGS)
     }
   }
   scs_normal();
-  cup(max_lines, 1) && printf("These are the installed character sets. ");
+  __(cup(max_lines, 1), printf("These are the installed character sets. "));
   return MENU_HOLD;
 }
 
@@ -336,7 +336,7 @@ tst_shift_in_out(MENU_ARGS)
   int i, cset;
   char buffer[80];
 
-  cup(1, 10) && printf("These are the G0 and G1 character sets.");
+  __(cup(1, 10), printf("These are the G0 and G1 character sets."));
   for (cset = 0; cset < 2; cset++) {
     int row = 3 + (4 * cset);
 
@@ -384,8 +384,8 @@ tst_vt220_locking(MENU_ARGS)
 
   int i, cset;
 
-  cup(1, 10) && tprintf("Locking shifts, with NRC %s:",
-                        national ? "enabled" : "disabled");
+  __(cup(1, 10), tprintf("Locking shifts, with NRC %s:",
+                         national ? "enabled" : "disabled"));
   for (cset = 0; cset < TABLESIZE(table); cset++) {
     int row = 3 + (4 * cset);
     int map = table[cset].mapped;
@@ -554,8 +554,8 @@ tst_characters(MENU_ARGS)
   if (get_level() > 1 || input_8bits || output_8bits) {
     do {
       vt_clear(2);
-      title(0) && printf("Character-Set Tests");
-      title(2) && println("Choose test type:");
+      __(title(0), printf("Character-Set Tests"));
+      __(title(2), println("Choose test type:"));
       sprintf(nrc_mesg, "%s National Replacement Character (NRC) mode",
               national ? "Disable" : "Enable");
       for (n = 0; n < 4; n++) {

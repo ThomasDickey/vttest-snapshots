@@ -1,6 +1,7 @@
-/* $Id: unix_io.c,v 1.20 2004/12/05 19:13:27 tom Exp $ */
+/* $Id: unix_io.c,v 1.21 2006/11/26 17:30:44 tom Exp $ */
 
 #include <stdarg.h>
+#include <unistd.h>
 #include <vttest.h>
 #include <esc.h>
 

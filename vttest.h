@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.70 2005/10/19 22:29:19 tom Exp $ */
+/* $Id: vttest.h,v 1.71 2006/11/26 17:16:52 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -158,6 +158,8 @@ extern jmp_buf intrenv;
 
 #define SHOW_SUCCESS "ok"
 #define SHOW_FAILURE "failed"
+
+#define __(a,b) (void)(a && b)
 
 #define TABLESIZE(table) (int)(sizeof(table)/sizeof(table[0]))
 

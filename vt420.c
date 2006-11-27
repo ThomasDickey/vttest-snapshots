@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.64 2004/08/03 01:21:06 tom Exp $ */
+/* $Id: vt420.c,v 1.67 2006/11/26 19:08:56 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -135,7 +135,7 @@ show_MultisessionStatus(char *report)
  * This control function moves the cursor backward one column.  If the cursor
  * is at the left margin, then all screen data within the margin moves one
  * column to the right.  The column that shifted past the right margin is lost.
- * 
+ *
  * Format:  ESC 6
  * Description:
  * DECBI adds a new column at the left margin with no visual attributes.  DECBI
@@ -279,26 +279,58 @@ tst_DECCKSR(MENU_ARGS, int Pid, char *the_csi)
 static int
 tst_DECCRA(MENU_ARGS)
 {
+#define adj_y 3
+#define adj_x 4
+#define adj_DECCRA " (down %d, right %d)\r\n", box.bottom + 1 - box.top, box.right + 1 - box.left, adj_y, adj_x
+#define msg_DECCRA(msg) "The %dx%d box " msg adj_DECCRA
   BOX box;
 
-  if (make_box_params(&box, 10, 30) < 0)
-    return MENU_NOHOLD;
-  box.top = 5;
-  box.left = 5;
-  draw_box_outline(&box, '*');
+  if (make_box_params(&box, 10, 30) == 0) {
+    box.top = 5;
+    box.left = 5;
+    draw_box_outline(&box, '*');
 
-  vt_move(max_lines - 3, 1);
-  println(the_title);
-  println("The box of *'s will be copied");
-  holdit();
+    vt_move(max_lines - 3, 1);
+    println(the_title);
+    tprintf(msg_DECCRA("of *'s will be copied"));
+    holdit();
 
-  deccra(box.top, box.left, box.bottom, box.right, 1,
-         box.top + 3, box.left + 4, 1);
+    deccra(box.top, box.left, box.bottom, box.right, 1,
+           box.top + adj_y, box.left + adj_x, 1);
 
-  vt_move(max_lines - 2, 1);
-  vt_clear(0);
+    vt_move(max_lines - 2, 1);
+    vt_clear(0);
 
-  println("The box should be copied, overlapping");
+    tprintf(msg_DECCRA("should be copied, overlapping"));
+    holdit();
+
+    ed(2);
+
+    make_box_params(&box, 10, 30);
+    box.top = 5;
+    box.left = 5;
+
+    sgr("0;7"); /* fill the box in reverse */
+    draw_box_filled(&box, '.');
+    sgr("4");   /* draw the outline in underlined-reverse */
+    draw_box_outline(&box, '*');
+    sgr("0");
+
+    vt_move(max_lines - 3, 1);
+    println(the_title);
+    tprintf(msg_DECCRA("of *'s will be copied"));
+    holdit();
+
+    sgr("0;5"); /* set blink, to check if that leaks through */
+    deccra(box.top, box.left, box.bottom, box.right, 1,
+           box.top + adj_y, box.left + adj_x, 1);
+    sgr("0");
+
+    vt_move(max_lines - 2, 1);
+    vt_clear(0);
+
+    tprintf(msg_DECCRA("should be copied, overlapping"));
+  }
   return MENU_HOLD;
 }
 
@@ -313,10 +345,10 @@ tst_DECDC(MENU_ARGS)
   int last = max_lines - 3;
 
   for (n = 1; n < last; n++) {
-    cup(n, last - n + 22) && printf("*");
-    cup(1, 1) && decdc(1);
+    __(cup(n, last - n + 22), printf("*"));
+    __(cup(1, 1), decdc(1));
   }
-  cup(1, 1) && decdc(20);
+  __(cup(1, 1), decdc(20));
 
   vt_move(last + 1, 1);
   println("If your terminal supports DECDC, there will be a column of *'s on the left");
@@ -348,10 +380,10 @@ tst_DECERA(MENU_ARGS)
  * This control function moves the column forward one column.  If the cursor is
  * at the right margin, then all screen data within the margins moves one
  * column to the left.  The column shifted past the left margin is lost.
- * 
+ *
  * Format: ESC 9
  * Description:
- * DECFI adds a new column at the right margin with no visual attributes. 
+ * DECFI adds a new column at the right margin with no visual attributes.
  * DECFI is not affected by the margins.  If the cursor is at the right border
  * of the page when the terminal receives DECFI, then the terminal ignores
  * DECFI.
@@ -409,8 +441,8 @@ tst_DECIC(MENU_ARGS)
   int last = max_lines - 3;
 
   for (n = 1; n < last; n++) {
-    cup(n, min_cols - 22 - last + n) && printf("*");
-    cup(1, 1) && decic(1);
+    __(cup(n, min_cols - 22 - last + n), printf("*"));
+    __(cup(1, 1), decic(1));
   }
   decic(20);
 
@@ -547,8 +579,8 @@ tst_DECRQSS(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Status-Strings Reports");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Status-Strings Reports"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -717,8 +749,8 @@ tst_PageFormat(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("Page Format Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("Page Format Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -743,8 +775,8 @@ tst_VT420_cursor(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Cursor-Movement Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Cursor-Movement Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -769,8 +801,8 @@ tst_VT420_editing(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Editing Sequence Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Editing Sequence Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -799,8 +831,8 @@ tst_VT420_keyboard_ctl(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Keyboard-Control Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Keyboard-Control Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -828,8 +860,8 @@ tst_VT420_rectangle(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Rectangular Area Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Rectangular Area Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -860,8 +892,8 @@ tst_VT420_report_device(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Device Status Reports (DSR)");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Device Status Reports (DSR)"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -885,8 +917,8 @@ tst_VT420_report_presentation(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Presentation State Reports");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Presentation State Reports"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   set_DECRPM(old_DECRPM);
   return MENU_NOHOLD;
@@ -907,8 +939,8 @@ tst_VT420_reports(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Reports");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Reports"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -929,8 +961,8 @@ tst_VT420_screen(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Screen-Display Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Screen-Display Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -958,8 +990,8 @@ tst_vt420(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT420 Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT420 Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
