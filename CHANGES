@@ -1,5 +1,14 @@
-$Id: CHANGES,v 1.105 2005/10/19 22:51:12 tom Exp $
+$Id: CHANGES,v 1.107 2006/11/26 18:30:46 tom Exp $
 -------------------------------------------------------------------------------
+
+20061126
+	add screen to DECCRA test to demonstrate if video attributes are
+	copied along with the window, or supplied from the current attributes.
+
+	use CF_XOPEN_SOURCE in configure script to get prototype for usleep()
+	on Linux.
+
+	updated config.guess, config.sub
 
 20051020
 	add suffix information to configure script to work with cygwin, etc.

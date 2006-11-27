@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.11 2004/08/03 23:12:00 tom Exp $ */
+/* $Id: vt320.c,v 1.12 2006/11/26 17:29:01 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -83,8 +83,8 @@ tst_device_status(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT320 Device Status Reports (DSR)");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT320 Device Status Reports (DSR)"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -344,7 +344,7 @@ tst_DECRQUPSS(MENU_ARGS)
   char *report;
   char *show;
 
-  vt_move(1, 1) && println("Testing DECRQUPSS/DECAUPSS Window Report");
+  __(vt_move(1, 1), println("Testing DECRQUPSS/DECAUPSS Window Report"));
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -637,8 +637,8 @@ tst_DECRPM(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("Request Mode (DECRQM)/Report Mode (DECRPM)");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("Request Mode (DECRQM)/Report Mode (DECRPM)"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -765,8 +765,8 @@ tst_vt320_DECRQSS(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT320 Status-String Reports");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT320 Status-String Reports"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -792,8 +792,8 @@ tst_vt320_cursor(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT320 Cursor-Movement Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT320 Cursor-Movement Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -814,8 +814,8 @@ tst_vt320_report_terminal(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT320 Terminal State Reports");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT320 Terminal State Reports"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -841,8 +841,8 @@ tst_vt320_report_presentation(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT320 Presentation State Reports");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT320 Presentation State Reports"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   set_DECRPM(old_DECRPM);
   return MENU_NOHOLD;
@@ -868,8 +868,8 @@ tst_vt320_reports(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT320 Reports");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT320 Reports"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -894,8 +894,8 @@ tst_PageMovement(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("Page Format Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("Page Format Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -917,8 +917,8 @@ tst_vt320_screen(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT320 Screen-Display Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT320 Screen-Display Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -942,8 +942,8 @@ tst_vt320(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("VT320 Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("VT320 Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

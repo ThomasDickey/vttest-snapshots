@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.84 2005/10/19 22:20:59 tom Exp $ */
+/* $Id: main.c,v 1.85 2006/11/26 17:21:21 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -284,27 +284,27 @@ tst_movements(MENU_ARGS)
       switch (i % 4) {
       case 0:
         /* draw characters as-is, for reference */
-        cup(region + 1, 1) && printf("%c", on_left[i]);
-        cup(region + 1, width) && printf("%c", on_right[i]);
+        __(cup(region + 1, 1), printf("%c", on_left[i]));
+        __(cup(region + 1, width), printf("%c", on_right[i]));
         printf("\n");
         break;
       case 1:
         /* simple wrapping */
-        cup(region, width) && printf("%c%c", on_right[i - 1], on_left[i]);
+        __(cup(region, width), printf("%c%c", on_right[i - 1], on_left[i]));
         /* backspace at right margin */
-        cup(region + 1, width) && printf("%c\010 %c", on_left[i], on_right[i]);
+        __(cup(region + 1, width), printf("%c\010 %c", on_left[i], on_right[i]));
         printf("\n");
         break;
       case 2:
         /* tab to right margin */
-        cup(region + 1, width) && printf("%c\010\010\011\011%c", on_left[i], on_right[i]);
-        cup(region + 1, 2) && printf("\010%c\n", on_left[i]);
+        __(cup(region + 1, width), printf("%c\010\010\011\011%c", on_left[i], on_right[i]));
+        __(cup(region + 1, 2), printf("\010%c\n", on_left[i]));
         break;
       default:
         /* newline at right margin */
-        cup(region + 1, width) && printf("\n");
-        cup(region, 1) && printf("%c", on_left[i]);
-        cup(region, width) && printf("%c", on_right[i]);
+        __(cup(region + 1, width), printf("\n"));
+        __(cup(region, 1), printf("%c", on_left[i]));
+        __(cup(region, width), printf("%c", on_right[i]));
         break;
       }
     }

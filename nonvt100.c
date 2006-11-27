@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.38 2004/08/01 23:14:11 tom Exp $ */
+/* $Id: nonvt100.c,v 1.39 2006/11/26 17:22:13 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -340,7 +340,7 @@ tst_SPA(MENU_ARGS)
 
         ech(min_cols);
 
-        cup(1, 1) && println(the_title);
+        __(cup(1, 1), println(the_title));
         cup(max_lines - 4, 1);
         printf("There %s be an solid box made of *'s in the middle of the screen.\n",
                erm_flag
@@ -369,8 +369,8 @@ tst_protected_area(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("Protected-Areas Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("Protected-Areas Tests"));
+    __(title(2), println("Choose test type:"));
     sprintf(erm_mesg, "%s ERM (erase mode)", erm_flag ? "Disable" : "Enable");
   } while (menu(my_menu));
   if (erm_flag)
@@ -432,8 +432,8 @@ tst_ecma48_curs(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("ISO-6429 (ECMA-48) Cursor-Movement");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("ISO-6429 (ECMA-48) Cursor-Movement"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -456,8 +456,8 @@ tst_ecma48_misc(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0) && printf("Miscellaneous ISO-6429 (ECMA-48) Tests");
-    title(2) && println("Choose test type:");
+    __(title(0), printf("Miscellaneous ISO-6429 (ECMA-48) Tests"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
