@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.17 2004/12/21 01:06:02 tom Exp $ */
+/* $Id: ttymodes.c,v 1.18 2007/01/07 16:52:34 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -75,28 +75,28 @@ disable_control_chars(TTY *modes)
     int n;
     int temp;
 #   ifdef HAVE_POSIX_VDISABLE
-      temp = _POSIX_VDISABLE;
+    temp = _POSIX_VDISABLE;
 #   else
-      errno = 0;
-      temp = fpathconf(0, _PC_VDISABLE);
-      if (temp == -1) {
-        if (errno != 0) {
-          restore_ttymodes();
-          fprintf(stderr, "Cannot disable special characters!\n");
-          exit(EXIT_FAILURE);
-        }
-        temp = 0377;
+    errno = 0;
+    temp = fpathconf(0, _PC_VDISABLE);
+    if (temp == -1) {
+      if (errno != 0) {
+        restore_ttymodes();
+        fprintf(stderr, "Cannot disable special characters!\n");
+        exit(EXIT_FAILURE);
       }
+      temp = 0377;
+    }
 #   endif
     for (n = 0; n < NCCS; n++)
       modes->c_cc[n] = temp;
 # else  /* USE_TERMIO */
 #   ifdef       VSWTCH
-      modes->c_cc[VSWTCH] = VDISABLE;
+    modes->c_cc[VSWTCH] = VDISABLE;
 #   endif
     modes->c_cc[VSUSP]  = VDISABLE;
 #   if defined (VDSUSP) && defined(NCCS) && VDSUSP < NCCS
-      modes->c_cc[VDSUSP]  = VDISABLE;
+    modes->c_cc[VDSUSP] = VDISABLE;
 #   endif
     modes->c_cc[VSTART] = VDISABLE;
     modes->c_cc[VSTOP]  = VDISABLE;

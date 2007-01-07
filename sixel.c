@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.7 2004/12/05 18:59:23 tom Exp $ */
+/* $Id: sixel.c,v 1.9 2007/01/07 17:03:13 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -32,12 +32,12 @@ decode_header(void)
   char *s;
 
   switch (sscanf(font_string+2, "%d;%d;%d;%d;%d;%d", &FontNumber, &StartingCharNum, &Pe, &Pcms, &Pw, &Pt)) {
-  case 0: FontNumber  = 0;
-  case 1: StartingCharNum = 0;
-  case 2: Pe   = 0;
-  case 3: Pcms = 0;
-  case 4: Pw   = 0;
-  case 5: Pt   = 0;
+  case 0: FontNumber  = 0;      /* FALLTHRU */
+  case 1: StartingCharNum = 0;  /* FALLTHRU */
+  case 2: Pe   = 0;             /* FALLTHRU */
+  case 3: Pcms = 0;             /* FALLTHRU */
+  case 4: Pw   = 0;             /* FALLTHRU */
+  case 5: Pt   = 0;             /* FALLTHRU */
   case 6:
     break;
   }
@@ -85,7 +85,7 @@ decode_header(void)
         if (is_final(*t)) {
           tmp[use++] = *t++;
           tmp[use] = '\0';
-          FontName = strcpy(malloc(use+1), tmp);
+          FontName = strcpy((char *) malloc(use+1), tmp);
           StartingCharPtr = t;
           break;
         }
@@ -227,7 +227,7 @@ setup_softchars(char *filename)
   int c;
   size_t len = 1024;
   size_t use = 0;
-  char *buffer = malloc(len);
+  char *buffer = (char *) malloc(len);
   char *s;
   char *first = 0;
   char *last = 0;
@@ -241,7 +241,7 @@ setup_softchars(char *filename)
   }
   while ((c = fgetc(fp)) != EOF) {
     if (use+1 >= len) {
-      buffer = realloc(buffer, len *= 2);
+      buffer = (char *) realloc(buffer, len *= 2);
     }
     buffer[use++] = (char) c;
   }

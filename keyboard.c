@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.31 2004/08/03 19:09:38 tom Exp $ */
+/* $Id: keyboard.c,v 1.32 2007/01/07 16:51:03 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -386,6 +386,7 @@ same_CTLKEY(char *response, CTLKEY *code)
   case ESC:
     if (*response++ != ESC)
       return FALSE;
+    /* FALLTHRU */
   default:
     break;
   }

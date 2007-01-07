@@ -1,10 +1,10 @@
-/* $Id: mouse.c,v 1.5 2004/12/05 19:01:05 tom Exp $ */
+/* $Id: mouse.c,v 1.7 2007/01/07 16:51:11 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
 
-#define MCHR(c) ((unsigned)((c) - ' ') & 0xff)
+#define MCHR(c) (int)((unsigned)((c) - ' ') & 0xff)
 
 #define isQuit(c) (((c) == 'q') || ((c) == 'Q'))
 #define isClear(c) ((c) == ' ')
@@ -101,7 +101,7 @@ static int show_locator_report(char *report, int row, int pixels)
    && (sscanf(report, "%d;%d;%d;%d&w", &Pe, &Pb, &Pr, &Pc) == 4
     || sscanf(report, "%d;%d;%d;%d;%d&w", &Pe, &Pb, &Pr, &Pc, &Pp) == 5)) {
     vt_move(row,10); vt_el(2);
-    show_result("%s - %s (%d,%d)", locator_event(Pe), locator_button(Pb), Pr, Pc);
+    show_result("%s - %s (%d,%d)", locator_event(Pe), locator_button((unsigned)Pb), Pr, Pc);
     vt_el(0);
     if (pixels) {
       if (pixels_high > 0 && pixels_wide > 0) {
@@ -238,7 +238,7 @@ first:
       int adj = 1;
       ToData(1); vt_el(2);
       show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
-      if (b & ~3) {
+      if (b & (unsigned)(~3)) {
         if (b & 4)
           printf(" shift");
         if (b & 8)
@@ -254,7 +254,7 @@ first:
       if (b != 3) {
         b += adj;
         printf(" button %u", b);
-        show_click(MCHR(report[3]), MCHR(report[2]), b + '0');
+        show_click(MCHR(report[3]), MCHR(report[2]), (int)(b + '0'));
       } else if (MCHR(report[2]) != x || MCHR(report[3]) != y) {
         printf(" release");
         show_click(MCHR(report[3]), MCHR(report[2]), '*');
@@ -335,7 +335,7 @@ test_mouse_hilite(MENU_ARGS)
 {
   const int first = 10;
   const int last  = 20;
-  unsigned y = 0, x = 0;
+  int y = 0, x = 0;
 
 first:
   vt_move(1,1);
@@ -371,7 +371,7 @@ first:
           do_csi("1;%u;%u;%d;%d;T", x, y, 10, 20);
           /* now, show the mouse-click */
           if (b < 3) b++;
-          show_click(y, x, b + '0');
+          show_click(y, x, (int)(b + '0'));
         }
         /* interpret the event */
         ToData(2); vt_el(2);
