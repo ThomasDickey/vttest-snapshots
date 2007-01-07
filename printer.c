@@ -1,4 +1,4 @@
-/* $Id: printer.c,v 1.5 1999/10/13 23:39:43 tom Exp $ */
+/* $Id: printer.c,v 1.6 2007/01/07 17:02:50 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -11,7 +11,7 @@ static int margin_lo;
 static int margin_hi;
 
 static void
-setup_printout(MENU_ARGS, int visible, char * whole)
+setup_printout(MENU_ARGS, int visible, const char * whole)
 {
   margin_lo = 7;
   margin_hi = max_lines - 5;

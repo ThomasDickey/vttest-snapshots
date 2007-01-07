@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.85 2006/11/26 17:21:21 tom Exp $ */
+/* $Id: main.c,v 1.87 2007/01/07 17:02:07 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -8,13 +8,33 @@
 
                   THE MAD PROGRAMMER STRIKES AGAIN!
 
-                   This software is (c) 1984 by QZ
-               Non-commercial use and copying allowed.
+  Copyright (c) 1984, Per Lindberg
+  All rights reserved.
 
-If you are developing a commercial product, and use this program to do
-it, and that product is successful, please send a sum of money of your
-choice to the address below.
+  Redistribution and use in source and binary forms, with or without
+  modification, are permitted provided that the following conditions are
+  met:
+  1.  Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+  2.  Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in
+      the documentation and/or other materials provided with the
+      distribution.
+  3.  Neither the name of Per Lindberg nor the names of contributors may
+      be used to endorse or promote products derived from this software
+      without specific prior written permission.
 
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+  A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+  OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+  DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+  THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include <vttest.h>
@@ -1178,7 +1198,7 @@ static char *
 push_menu(int number)
 {
   char *saved = current_menu;
-  current_menu = malloc(strlen(saved) + 10);
+  current_menu = (char *) malloc(strlen(saved) + 10);
   sprintf(current_menu, "%s%s%d", saved, *saved ? "." : "", number);
   return saved;
 }

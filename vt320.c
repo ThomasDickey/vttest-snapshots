@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.12 2006/11/26 17:29:01 tom Exp $ */
+/* $Id: vt320.c,v 1.13 2007/01/07 17:03:32 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -236,7 +236,7 @@ show_DECTABSR(char *report)
 {
   int pos = 3;                  /* skip "2$u" */
   int stop;
-  char *buffer = malloc(strlen(report));
+  char *buffer = (char *) malloc(strlen(report));
 
   *buffer = '\0';
   strcat(report, "/");  /* simplify scanning */

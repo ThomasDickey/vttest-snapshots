@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.54 2005/01/07 20:01:40 tom Exp $ */
+/* $Id: esc.h,v 1.56 2007/01/07 17:02:26 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -115,7 +115,7 @@ int cup(int pn1, int pn2);
 int decdc(int pn);
 int decic(int pn);
 int println(char *s);
-int tprintf(const char *fmt, ...);
+int tprintf(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
 void brc3(int pn1, int pn2, int pn3, int c);
@@ -186,7 +186,7 @@ void dsr(int pn);
 void ech(int pn);
 void ed(int pn);
 void el(int pn);
-void esc(char *s);
+void esc(const char *s);
 void extra_padding(int msecs);
 void holdit(void);
 void hpa(int pn);
@@ -208,7 +208,7 @@ void mc_printer_start(int flag);
 void nel(void);
 void padding(int msecs);
 void put_char(FILE *fp, int c);
-void put_string(FILE *fp, char *s);
+void put_string(FILE *fp, const char *s);
 void readnl(void);
 void rep(int pn);
 void reset_inchar(void);
@@ -218,7 +218,7 @@ void rm(char *ps);
 void s8c1t(int flag);
 void scs(int g, int c);
 void sd(int pn);
-void sgr(char *ps);
+void sgr(const char *ps);
 void sl(int pn);
 void sm(char *ps);
 void sr(int pn);

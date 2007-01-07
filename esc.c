@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.77 2005/10/19 20:26:17 tom Exp $ */
+/* $Id: esc.c,v 1.78 2007/01/07 17:02:19 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -153,7 +153,7 @@ put_char(FILE *fp, int c)
 }
 
 void
-put_string(FILE *fp, char *s)
+put_string(FILE *fp, const char *s)
 {
   while (*s != '\0')
     put_char(fp, (int) *s++);
@@ -288,7 +288,7 @@ send_char(int c)
 }
 
 void
-esc(char *s)
+esc(const char *s)
 {
   printf("%c%s", ESC, s);
 
@@ -939,7 +939,7 @@ sd(int pn)                      /* Scroll Down */
 }
 
 void
-sgr(char *ps)                   /* Select Graphic Rendition */
+sgr(const char *ps)             /* Select Graphic Rendition */
 {
   do_csi("%sm", ps);
   padding(2);

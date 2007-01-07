@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.71 2006/11/26 17:16:52 tom Exp $ */
+/* $Id: vttest.h,v 1.72 2007/01/07 16:43:08 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -298,7 +298,7 @@ extern void save_level(VTLEVEL *save);
 extern void scs_graphics(void);
 extern void scs_normal(void);
 extern void setup_softchars(char *filename);
-extern void show_result(const char *fmt, ...);
+extern void show_result(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 extern void vt_clear(int code);
 extern void vt_el(int code);
 extern void vt_hilite(int flag);
