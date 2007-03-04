@@ -1,5 +1,8 @@
-$Id: CHANGES,v 1.108 2007/01/07 15:55:59 tom Exp $
+$Id: CHANGES,v 1.109 2007/03/04 13:55:06 tom Exp $
 -------------------------------------------------------------------------------
+
+20070304
+	build-fix for Darwin 8.8 or OS X 10.4.x, (report by David Blanchard).
 
 20070107
 	contacted Per Lindberg (2007/1/2), received permission to change his

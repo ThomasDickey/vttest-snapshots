@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.18 2007/01/07 16:52:34 tom Exp $ */
+/* $Id: ttymodes.c,v 1.19 2007/03/04 13:50:41 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -201,6 +201,9 @@ void init_ttymodes(int pn)
 # endif
   set_ttymodes(&new_modes);
 # ifdef HAVE_FCNTL_H
+#  ifndef O_NDELAY
+#  define O_NDELAY O_NONBLOCK   /* O_NONBLOCK is POSIX */
+#  endif
   close(2);
   open("/dev/tty", O_RDWR|O_NDELAY);
 # endif
