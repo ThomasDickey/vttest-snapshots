@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.12 2006/11/26 17:33:09 tom Exp $
+dnl $Id: aclocal.m4,v 1.13 2007/12/16 15:27:12 tom Exp $
 dnl autoconf macros for vttest - T.E.Dickey
 dnl ---------------------------------------------------------------------------
 dnl ---------------------------------------------------------------------------
@@ -125,7 +125,7 @@ AC_MSG_RESULT($cf_cv_use_fionread)
 test $cf_cv_use_fionread = yes && AC_DEFINE(USE_FIONREAD)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_ATTRIBUTES version: 10 updated: 2005/05/28 13:16:28
+dnl CF_GCC_ATTRIBUTES version: 11 updated: 2007/07/29 09:55:12
 dnl -----------------
 dnl Test for availability of useful gcc __attribute__ directives to quiet
 dnl compiler warnings.  Though useful, not all are supported -- and contrary
@@ -152,7 +152,7 @@ if test "$GCC" = yes
 then
 	AC_CHECKING([for $CC __attribute__ directives])
 cat > conftest.$ac_ext <<EOF
-#line __oline__ "configure"
+#line __oline__ "${as_me-configure}"
 #include "confdefs.h"
 #include "conftest.h"
 #include "conftest.i"
@@ -214,7 +214,7 @@ if test "$GCC" = yes ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 20 updated: 2005/08/06 18:37:29
+dnl CF_GCC_WARNINGS version: 22 updated: 2007/07/29 09:55:12
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
@@ -239,7 +239,7 @@ AC_REQUIRE([CF_GCC_VERSION])
 CF_INTEL_COMPILER(GCC,INTEL_COMPILER,CFLAGS)
 
 cat > conftest.$ac_ext <<EOF
-#line __oline__ "configure"
+#line __oline__ "${as_me-configure}"
 int main(int argc, char *argv[[]]) { return (argv[[argc-1]] == 0) ; }
 EOF
 
@@ -260,7 +260,7 @@ then
 	AC_CHECKING([for $CC warning options])
 	cf_save_CFLAGS="$CFLAGS"
 	EXTRA_CFLAGS="-Wall"
-	for cf_opt in $1 \
+	for cf_opt in \
 		wd1419 \
 		wd1682 \
 		wd1683 \
@@ -451,12 +451,12 @@ fi
 test "$cf_cv_mixedcase" = yes && AC_DEFINE(MIXEDCASE_FILENAMES)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_MSG_LOG version: 3 updated: 1997/09/07 14:05:52
+dnl CF_MSG_LOG version: 4 updated: 2007/07/29 09:55:12
 dnl ----------
 dnl Write a debug message to config.log, along with the line number in the
 dnl configure script.
 AC_DEFUN([CF_MSG_LOG],[
-echo "(line __oline__) testing $* ..." 1>&AC_FD_CC
+echo "${as_me-configure}:__oline__: testing $* ..." 1>&AC_FD_CC
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_POSIX_C_SOURCE version: 6 updated: 2005/07/14 20:25:10
@@ -537,7 +537,7 @@ fi
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_POSIX_VDISABLE version: 4 updated: 2000/01/22 00:19:54
+dnl CF_POSIX_VDISABLE version: 5 updated: 2007/04/28 09:15:55
 dnl -----------------
 dnl Special test to workaround gcc 2.6.2, which cannot parse C-preprocessor
 dnl conditionals.
@@ -557,7 +557,7 @@ AC_CACHE_VAL(cf_cv_posix_vdisable,[
 #include <unistd.h>
 #endif
 #if defined(_POSIX_VDISABLE)
-int main() { exit(_POSIX_VDISABLE == -1); }
+int main() { ${cf_cv_main_return-return}(_POSIX_VDISABLE == -1); }
 #endif],
 	[cf_cv_posix_vdisable=yes],
 	[cf_cv_posix_vdisable=no],
@@ -658,11 +658,12 @@ AC_DEFUN([CF_UPPER],
 $1=`echo "$2" | sed y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%`
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_VERBOSE version: 2 updated: 1997/09/05 10:45:14
+dnl CF_VERBOSE version: 3 updated: 2007/07/29 09:55:12
 dnl ----------
 dnl Use AC_VERBOSE w/o the warnings
 AC_DEFUN([CF_VERBOSE],
 [test -n "$verbose" && echo "	$1" 1>&AC_FD_MSG
+CF_MSG_LOG([$1])
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_WITH_WARNINGS version: 5 updated: 2004/07/23 14:40:34
@@ -688,7 +689,7 @@ fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_XOPEN_SOURCE version: 24 updated: 2006/04/02 16:41:09
+dnl CF_XOPEN_SOURCE version: 25 updated: 2007/01/29 18:36:38
 dnl ---------------
 dnl Try to get _XOPEN_SOURCE defined properly that we can use POSIX functions,
 dnl or adapt to the vendor's definitions to get equivalent functionality,
@@ -722,7 +723,7 @@ hpux*) #(vi
 irix[[56]].*) #(vi
 	CPPFLAGS="$CPPFLAGS -D_SGI_SOURCE"
 	;;
-linux*|gnu*) #(vi
+linux*|gnu*|k*bsd*-gnu) #(vi
 	CF_GNU_SOURCE
 	;;
 mirbsd*) #(vi

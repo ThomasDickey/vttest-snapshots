@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.27 2004/08/03 01:20:43 tom Exp $ */
+/* $Id: setup.c,v 1.28 2007/12/16 15:45:14 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -269,7 +269,7 @@ tst_setup(MENU_ARGS)
   static char txt_padded[80] = "padding";
 
   static MENU my_menu[] = {
-    { "Return to main menu",                                 0 },
+    { "Exit",                                                0 },
     { "Setup terminal to original test-configuration",       setup_terminal },
     { txt_output,                                            toggle_8bit_out },
     { txt_input8,                                            toggle_8bit_in },
