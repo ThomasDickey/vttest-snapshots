@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.67 2006/11/26 19:08:56 tom Exp $ */
+/* $Id: vt420.c,v 1.77 2007/12/16 20:01:53 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -9,10 +9,63 @@
 #include <esc.h>
 #include <ttymodes.h>
 
+#define WHITE_ON_BLUE   "0;37;44"
+#define WHITE_ON_GREEN  "0;37;42"
+#define YELLOW_ON_BLACK "0;33;40"
+#define BLINK_REVERSE   "0;5;7"
+
 typedef struct {
   int mode;
   char *name;
 } MODES;
+
+static int do_lines = FALSE;
+static int do_colors = FALSE;
+
+/******************************************************************************/
+
+/*
+ * Allow user to test the same screens with/without lines.
+ */
+static int
+toggle_lines_mode(MENU_ARGS)
+{
+  do_lines = !do_lines;
+  return MENU_NOHOLD;
+}
+
+/*
+ * Allow user to test the same screens with/without colors.
+ * VT420's do not support ANSI colors; this is for testing xterm.
+ */
+static int
+toggle_color_mode(MENU_ARGS)
+{
+  do_colors = !do_colors;
+  return MENU_NOHOLD;
+}
+
+/*
+ * DECALN does not set attributes; we want a colored screen for some tests.
+ */
+static void
+fill_screen(void)
+{
+  int y, x;
+
+  if (do_colors) {
+    sgr(WHITE_ON_BLUE);
+    for (y = 0; y < max_lines - 4; ++y) {
+      cup(y + 1, 1);
+      for (x = 0; x < min_cols; ++x)
+        putchar('E');
+    }
+    /* make this a different color to show fill versus erase diffs */
+    sgr(WHITE_ON_GREEN);
+  } else {
+    decaln();   /* fill the screen */
+  }
+}
 
 /******************************************************************************/
 
@@ -213,11 +266,15 @@ tst_DECCARA(MENU_ARGS)
   int right = 45;
   int bottom = max_lines - 10;
 
+  if (do_colors)
+    sgr(WHITE_ON_BLUE);
+
   decsace(TRUE);
-  decaln();     /* fill the screen */
+  fill_screen();
   deccara(top, left, bottom, right, 7);   /* invert a rectangle) */
   deccara(top + 1, left + 1, bottom - 1, right - 1, 0);   /* invert a rectangle) */
 
+  sgr("0");
   vt_move(last, 1);
   vt_clear(0);
 
@@ -226,10 +283,11 @@ tst_DECCARA(MENU_ARGS)
   holdit();
 
   decsace(FALSE);
-  decaln();     /* fill the screen */
+  fill_screen();
   deccara(top, left, bottom, right, 7);   /* invert a rectangle) */
   deccara(top + 1, left + 1, bottom - 1, right - 1, 0);   /* invert a rectangle) */
 
+  sgr("0");
   vt_move(last, 1);
   vt_clear(0);
 
@@ -288,11 +346,18 @@ tst_DECCRA(MENU_ARGS)
   if (make_box_params(&box, 10, 30) == 0) {
     box.top = 5;
     box.left = 5;
-    draw_box_outline(&box, '*');
+
+    if (do_colors) {
+      sgr(WHITE_ON_BLUE);
+    } else {
+      sgr(BLINK_REVERSE);
+    }
+    draw_box_outline(&box, do_lines ? -1 : '*');
+    sgr("0");
 
     vt_move(max_lines - 3, 1);
     println(the_title);
-    tprintf(msg_DECCRA("of *'s will be copied"));
+    tprintf(msg_DECCRA("will be copied"));
     holdit();
 
     deccra(box.top, box.left, box.bottom, box.right, 1,
@@ -310,18 +375,27 @@ tst_DECCRA(MENU_ARGS)
     box.top = 5;
     box.left = 5;
 
-    sgr("0;7"); /* fill the box in reverse */
-    draw_box_filled(&box, '.');
-    sgr("4");   /* draw the outline in underlined-reverse */
-    draw_box_outline(&box, '*');
+    if (do_colors) {
+      sgr(YELLOW_ON_BLACK);
+    } else {
+      sgr("0;7");   /* fill the box in reverse */
+    }
+    draw_box_filled(&box, -1);
+
+    if (do_colors) {
+      sgr(WHITE_ON_BLUE);
+    } else {
+      sgr(BLINK_REVERSE);
+    }
+    draw_box_outline(&box, do_lines ? -1 : '*');
     sgr("0");
 
     vt_move(max_lines - 3, 1);
     println(the_title);
-    tprintf(msg_DECCRA("of *'s will be copied"));
+    tprintf(msg_DECCRA("will be copied"));
     holdit();
 
-    sgr("0;5"); /* set blink, to check if that leaks through */
+    sgr("0;4"); /* set underline, to check if that leaks through */
     deccra(box.top, box.left, box.bottom, box.right, 1,
            box.top + adj_y, box.left + adj_x, 1);
     sgr("0");
@@ -362,9 +436,10 @@ tst_DECDC(MENU_ARGS)
 static int
 tst_DECERA(MENU_ARGS)
 {
-  decaln();
+  fill_screen();
   decera(5, 5, max_lines - 10, min_cols - 5);
 
+  sgr("0");
   vt_move(max_lines - 3, 1);
   vt_clear(0);
 
@@ -420,13 +495,34 @@ tst_DECFI(MENU_ARGS)
 static int
 tst_DECFRA(MENU_ARGS)
 {
+  if (do_colors) {
+    sgr(WHITE_ON_BLUE);
+    vt_clear(2);
+    sgr(WHITE_ON_GREEN);
+  }
   decfra('*', 5, 5, max_lines - 10, min_cols - 5);
+
+  vt_move(max_lines - 3, 1);
+  if (do_colors) {
+    sgr("0");
+  }
+  vt_clear(0);
+
+  println(the_title);
+  println("There should be a rectangle of *'s in the middle of the screen.");
+  holdit();
+
+  if (do_colors) {
+    sgr(WHITE_ON_BLUE);
+  }
+  decfra(' ', 5, 5, max_lines - 10, min_cols - 5);
+  sgr("0");
 
   vt_move(max_lines - 3, 1);
   vt_clear(0);
 
   println(the_title);
-  println("There should be a rectangle filled in the middle of the screen.");
+  println("The rectangle of *'s should be gone.");
   return MENU_HOLD;
 }
 
@@ -535,10 +631,11 @@ tst_DECRARA(MENU_ARGS)
   int bottom = max_lines - 10;
 
   decsace(TRUE);
-  decaln();     /* fill the screen */
+  fill_screen();
   decrara(top, left, bottom, right, 7);   /* invert a rectangle) */
   decrara(top + 1, left + 1, bottom - 1, right - 1, 7);   /* invert a rectangle) */
 
+  sgr("0");
   vt_move(last, 1);
   vt_clear(0);
 
@@ -547,10 +644,11 @@ tst_DECRARA(MENU_ARGS)
   holdit();
 
   decsace(FALSE);
-  decaln();     /* fill the screen */
+  fill_screen();
   decrara(top, left, bottom, right, 7);   /* invert a rectangle) */
   decrara(top + 1, left + 1, bottom - 1, right - 1, 7);   /* invert a rectangle) */
 
+  sgr("0");
   vt_move(last, 1);
   vt_clear(0);
 
@@ -593,25 +691,50 @@ tst_DECSERA(MENU_ARGS)
 {
   int top = 5;
   int left = 5;
-  int right = 45;
+  int right = min_cols - 5;
   int bottom = max_lines - 10;
   int last = max_lines - 3;
 
-  decaln();
-  decsca(1);
-  decfra('E', top + 1, left + 1, bottom - 1, right - 1);
-  decsca(1);
-  decsera(top, left, bottom, right);  /* erase the inside */
+  fill_screen();
 
+  /*
+   * Fill an area slightly smaller than we will erase.
+   *
+   * That way (since the SGR color at this point differs from the color used to
+   * fill the screen), we can see whether the colors are modified by the erase,
+   * and if so, whether they come from the SGR color.
+   */
+  decsca(0);
+  decfra('*', top + 1, left + 1, bottom - 1, right - 1);
+  decsca(1);
+
+  sgr("0");
   vt_move(last, 1);
   vt_clear(0);
 
   println(the_title);
-  println("There should be an open rectangle formed by blanks on a background of E's");
-
+  tprintf("Rectangle %d,%d - %d,%d was filled using DECFRA\n",
+          top + 1,
+          left + 1,
+          bottom - 1,
+          right - 1);
   holdit();
-  decaln();
-  return MENU_NOHOLD;
+
+  sgr(WHITE_ON_GREEN);
+  decsera(top, left, bottom, right);  /* erase the inside */
+  decsca(0);
+
+  sgr("0");
+  vt_move(last, 1);
+  vt_clear(0);
+
+  println(the_title);
+  tprintf("Rectangle %d,%d - %d,%d is cleared using DECSERA\n",
+          top,
+          left,
+          bottom,
+          right);
+  return MENU_HOLD;
 }
 
 /* FIXME: use DECRQSS to get reports */
@@ -839,15 +962,16 @@ tst_VT420_keyboard_ctl(MENU_ARGS)
 
 /******************************************************************************/
 
-/*
- * These apply only to VT400's & above
- */
 static int
 tst_VT420_rectangle(MENU_ARGS)
 {
+  static char txt_override_lines[80];
+  static char txt_override_color[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
+      { txt_override_lines,                                  toggle_lines_mode, },
+      { txt_override_color,                                  toggle_color_mode, },
       { "Test Change-Attributes in Rectangular Area (DECCARA)", tst_DECCARA },
       { "Test Copy Rectangular area (DECCRA)",               tst_DECCRA },
       { "Test Erase Rectangular area (DECERA)",              tst_DECERA },
@@ -858,8 +982,21 @@ tst_VT420_rectangle(MENU_ARGS)
     };
   /* *INDENT-ON* */
 
+  /*
+   * Avoid confusion - terminal must be in VT420 mode to use these tests.
+   */
+  if (terminal_id() < 400) {
+    printf("Sorry, a real VT%d terminal doesn't implement rectangle operations\n",
+           terminal_id());
+    return MENU_HOLD;
+  }
+
   do {
     vt_clear(2);
+    sprintf(txt_override_lines, "%s line-drawing characters",
+            do_lines ? "Use" : "Do not use");
+    sprintf(txt_override_color, "%s background and rectangles (xterm)",
+            do_colors ? "Color" : "Do not color");
     __(title(0), printf("VT420 Rectangular Area Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
@@ -969,6 +1106,9 @@ tst_VT420_screen(MENU_ARGS)
 
 /******************************************************************************/
 
+/*
+ * These apply only to VT400's & above.
+ */
 int
 tst_vt420(MENU_ARGS)
 {

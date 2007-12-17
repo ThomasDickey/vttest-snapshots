@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.35 2005/10/19 21:16:25 tom Exp $ */
+/* $Id: xterm.c,v 1.36 2007/12/16 15:46:52 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -157,7 +157,7 @@ static int
 tst_altscrn(MENU_ARGS)
 {
   static MENU my_menu[] = {
-    { "Return to main menu",                                 0 },
+    { "Exit",                                                0 },
     { "Switch to/from alternate screen (xterm)",             test_altscrn_47 },
     { "Improved alternate screen (XFree86 xterm mode 1047)", test_altscrn_1047 },
     { "Better alternate screen (XFree86 xterm mode 1049)",   test_altscrn_1049 },
@@ -385,7 +385,7 @@ int
 tst_xterm(MENU_ARGS)
 {
   static MENU my_menu[] = {
-    { "Return to main menu",                                 0 },
+    { "Exit",                                                0 },
     { "Set window title",                                    test_window_name },
     { "Mouse features",                                      tst_mouse },
     { "Tektronix 4014 features",                             tst_tek4014 },

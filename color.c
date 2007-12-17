@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.28 2006/11/26 17:19:40 tom Exp $ */
+/* $Id: color.c,v 1.29 2007/12/16 15:45:44 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -624,7 +624,7 @@ tst_colors(MENU_ARGS)
   static char txt_override_color[80];
   /* *INDENT-OFF* */
   static MENU colormenu[] = {
-    { "Return to main menu",                                 0 },
+    { "Exit",                                                0 },
     { txt_override_color,                                    toggle_color_mode, },
     { "Display color test-pattern",                          show_test_pattern, },
     { "Test SGR-0 color reset",                              test_SGR_0, },

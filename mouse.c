@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.7 2007/01/07 16:51:11 tom Exp $ */
+/* $Id: mouse.c,v 1.8 2007/12/16 15:46:25 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -471,7 +471,7 @@ tst_dec_locator_events (MENU_ARGS)
   static char pixel_screensize[80];
 
   static MENU my_menu[] = {
-    { "Return to main menu",                                 0 },
+    { "Exit",                                                0 },
     { "One-Shot",                                            test_dec_locator_event },
     { "Repeated",                                            test_dec_locator_events },
     { "One-Shot (pixels)",                                   test_dec_locator_event_p },
@@ -508,7 +508,7 @@ int
 tst_mouse(MENU_ARGS)
 {
   static MENU my_menu[] = {
-    { "Return to main menu",                                 0 },
+    { "Exit",                                                0 },
     { "X10 Mouse Compatibility",                             test_X10_mouse },
     { "Normal Mouse Tracking",                               test_mouse_normal },
     { "Mouse Highlight Tracking",                            test_mouse_hilite },

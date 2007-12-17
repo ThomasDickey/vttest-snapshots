@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.9 2004/12/05 14:59:27 tom Exp $ */
+/* $Id: tek4014.c,v 1.10 2007/12/16 15:45:25 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -306,7 +306,7 @@ int
 tst_tek4014(MENU_ARGS)
 {
   static MENU my_menu[] = {
-    { "Return to main menu",                                 0 },
+    { "Exit",                                                0 },
     { "Clear screen",                                        tek_clear },
     { "'Hello World!' in each font",                         tek_hello },
     { "Get mouse-clicks, showing coordinates",               tek_mouse_coords },

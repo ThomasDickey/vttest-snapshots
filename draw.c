@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.6 2006/11/26 18:29:18 tom Exp $ */
+/* $Id: draw.c,v 1.8 2007/12/16 16:26:27 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -37,28 +37,53 @@ void
 draw_box_outline(BOX *box, int mark)
 {
   int j;
+  int tlc = (mark < 0) ? 'l' : mark;
+  int trc = (mark < 0) ? 'k' : mark;
+  int llc = (mark < 0) ? 'm' : mark;
+  int lrc = (mark < 0) ? 'j' : mark;
+  int vrt = (mark < 0) ? 'x' : mark;
+  int hrz = (mark < 0) ? 'q' : mark;
+  int dot;
 
-  for (j = box->top; j <= box->bottom; j++) {
-    __(cup(j, box->left), putchar(mark));
-    __(cup(j, box->right), putchar(mark));
+  if (mark < 0)
+    scs(0, '0');
+
+  for (j = box->top, dot = tlc; j < box->bottom; j++) {
+    __(cup(j, box->left), putchar(dot));
+    dot = vrt;
   }
-  cup(box->top, box->left);
-  for (j = box->left; j < box->right; j++)
-    putchar(mark);
-  cup(box->bottom, box->left);
-  for (j = box->left; j < box->right; j++)
-    putchar(mark);
+  for (j = box->top, dot = trc; j < box->bottom; j++) {
+    __(cup(j, box->right), putchar(dot));
+    dot = vrt;
+  }
+
+  cup(box->top, box->left + 1);
+  for (j = box->left + 1; j < box->right; j++)
+    putchar(hrz);
+
+  cup(box->bottom, box->left + 1);
+  for (j = box->left + 1; j < box->right; j++)
+    putchar(hrz);
+
+  __(cup(box->bottom, box->left), putchar(llc));
+  __(cup(box->bottom, box->right), putchar(lrc));
+
+  if (mark < 0)
+    scs(0, 'B');
 }
 
 void
 draw_box_filled(BOX *box, int mark)
 {
   int i, j;
+  int ch = (mark < 0) ? 'A' : mark;
 
   for (i = box->top; i < box->bottom; i++) {
     cup(i, box->left);
     for (j = box->left; j < box->right; j++) {
-      putchar(mark);
+      putchar(ch);
+      if (mark < 0)
+        ch = ((ch - 'A' + 1) % 26) + 'A';
     }
   }
 }

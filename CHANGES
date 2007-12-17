@@ -1,6 +1,14 @@
-$Id: CHANGES,v 1.109 2007/03/04 13:55:06 tom Exp $
+$Id: CHANGES,v 1.111 2007/12/16 17:35:56 tom Exp $
 -------------------------------------------------------------------------------
 
+20071216
+	modify VT420 rectangle tests to provide ANSI/ISO colors and
+	line-drawing as test-options.
+
+	miscellaneous updates to configure script macros.
+
+	updated config.guess, config.sub
+	
 20070304
 	build-fix for Darwin 8.8 or OS X 10.4.x, (report by David Blanchard).
 
