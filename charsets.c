@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.29 2006/11/26 17:18:20 tom Exp $ */
+/* $Id: charsets.c,v 1.32 2009/12/31 22:26:53 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -103,7 +103,7 @@ send32(int row, int upper)
   char buffer[33];
 
   for (col = 0; col <= 31; col++) {
-    buffer[col] = (row * 32 + upper + col);
+    buffer[col] = (char) (row * 32 + upper + col);
   }
   buffer[32] = 0;
   tprintf("%s", buffer);
@@ -147,7 +147,9 @@ sane_cs(int g)
 {
   return lookupCode(((g == 0) || (get_level() <= 1))
                     ? ASCII
-                    : British_Latin_1);   /* ...to get 8-bit codes 128-255 */
+                    : (get_level() < 3
+                       ? British
+                       : British_Latin_1));   /* ...to get 8-bit codes 128-255 */
 }
 
 /* reset given Gg back to sane setting */
@@ -452,6 +454,8 @@ tst_vt220_single(MENU_ARGS)
         tprintf("%3d: (", ch);
         esc(pass ? "O" : "N");  /* SS3 or SS2 */
         tprintf("%c", ch);
+        if (ch == 127 && !KnownCharsets[current_Gx[g]].allow96)
+          tprintf(" ");   /* DEL should have been eaten - skip past */
         tprintf(")");
       }
     }
@@ -487,7 +491,7 @@ parse_Sdesig(const char *source, int *offset)
       if (check <= limit
           && !strncmp(KnownCharsets[j].final, first, check)) {
         result = KnownCharsets[j].name;
-        *offset += check;
+        *offset += (int) check;
         break;
       }
     }

@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.13 2007/12/16 15:27:12 tom Exp $
+dnl $Id: aclocal.m4,v 1.15 2009/12/31 19:29:57 tom Exp $
 dnl autoconf macros for vttest - T.E.Dickey
 dnl ---------------------------------------------------------------------------
 dnl ---------------------------------------------------------------------------
@@ -31,7 +31,7 @@ ifelse($3,,[    :]dnl
 ])dnl
   ])])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CHECK_CACHE version: 10 updated: 2004/05/23 13:03:31
+dnl CF_CHECK_CACHE version: 11 updated: 2008/03/23 14:45:59
 dnl --------------
 dnl Check if we're accidentally using a cache from a different machine.
 dnl Derive the system name, as a check for reusing the autoconf cache.
@@ -62,11 +62,11 @@ test -n "$cf_cv_system_name" && AC_MSG_RESULT(Configuring for $cf_cv_system_name
 
 if test ".$system_name" != ".$cf_cv_system_name" ; then
 	AC_MSG_RESULT(Cached system name ($system_name) does not agree with actual ($cf_cv_system_name))
-	AC_ERROR("Please remove config.cache and try again.")
+	AC_MSG_ERROR("Please remove config.cache and try again.")
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_DISABLE_ECHO version: 10 updated: 2003/04/17 22:27:11
+dnl CF_DISABLE_ECHO version: 11 updated: 2009/12/13 13:16:57
 dnl ---------------
 dnl You can always use "make -n" to see the actual options, but it's hard to
 dnl pick out/analyze warning messages when the compile-line is long.
@@ -85,14 +85,14 @@ CF_ARG_DISABLE(echo,
 	[
     ECHO_LT='--silent'
     ECHO_LD='@echo linking [$]@;'
-    RULE_CC='	@echo compiling [$]<'
-    SHOW_CC='	@echo compiling [$]@'
+    RULE_CC='@echo compiling [$]<'
+    SHOW_CC='@echo compiling [$]@'
     ECHO_CC='@'
 ],[
     ECHO_LT=''
     ECHO_LD=''
-    RULE_CC='# compiling'
-    SHOW_CC='# compiling'
+    RULE_CC=''
+    SHOW_CC=''
     ECHO_CC=''
 ])
 AC_MSG_RESULT($enableval)
@@ -125,7 +125,7 @@ AC_MSG_RESULT($cf_cv_use_fionread)
 test $cf_cv_use_fionread = yes && AC_DEFINE(USE_FIONREAD)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_ATTRIBUTES version: 11 updated: 2007/07/29 09:55:12
+dnl CF_GCC_ATTRIBUTES version: 13 updated: 2009/08/11 20:19:56
 dnl -----------------
 dnl Test for availability of useful gcc __attribute__ directives to quiet
 dnl compiler warnings.  Though useful, not all are supported -- and contrary
@@ -171,26 +171,61 @@ extern void oops(char *,...) GCC_PRINTFLIKE(1,2) GCC_NORETURN;
 extern void foo(void) GCC_NORETURN;
 int main(int argc GCC_UNUSED, char *argv[[]] GCC_UNUSED) { return 0; }
 EOF
+	cf_printf_attribute=no
+	cf_scanf_attribute=no
 	for cf_attribute in scanf printf unused noreturn
 	do
 		CF_UPPER(cf_ATTRIBUTE,$cf_attribute)
 		cf_directive="__attribute__(($cf_attribute))"
 		echo "checking for $CC $cf_directive" 1>&AC_FD_CC
-		case $cf_attribute in
-		scanf|printf)
-		cat >conftest.h <<EOF
+
+		case $cf_attribute in #(vi
+		printf) #(vi
+			cf_printf_attribute=yes
+			cat >conftest.h <<EOF
 #define GCC_$cf_ATTRIBUTE 1
 EOF
 			;;
-		*)
-		cat >conftest.h <<EOF
+		scanf) #(vi
+			cf_scanf_attribute=yes
+			cat >conftest.h <<EOF
+#define GCC_$cf_ATTRIBUTE 1
+EOF
+			;;
+		*) #(vi
+			cat >conftest.h <<EOF
 #define GCC_$cf_ATTRIBUTE $cf_directive
 EOF
 			;;
 		esac
+
 		if AC_TRY_EVAL(ac_compile); then
 			test -n "$verbose" && AC_MSG_RESULT(... $cf_attribute)
 			cat conftest.h >>confdefs.h
+			case $cf_attribute in #(vi
+			printf) #(vi
+				if test "$cf_printf_attribute" = no ; then
+					cat >>confdefs.h <<EOF
+#define GCC_PRINTFLIKE(fmt,var) /* nothing */
+EOF
+				else
+					cat >>confdefs.h <<EOF
+#define GCC_PRINTFLIKE(fmt,var) __attribute__((format(printf,fmt,var)))
+EOF
+				fi
+				;;
+			scanf) #(vi
+				if test "$cf_scanf_attribute" = no ; then
+					cat >>confdefs.h <<EOF
+#define GCC_SCANFLIKE(fmt,var) /* nothing */
+EOF
+				else
+					cat >>confdefs.h <<EOF
+#define GCC_SCANFLIKE(fmt,var)  __attribute__((format(scanf,fmt,var)))
+EOF
+				fi
+				;;
+			esac
 		fi
 	done
 else
@@ -214,7 +249,7 @@ if test "$GCC" = yes ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 22 updated: 2007/07/29 09:55:12
+dnl CF_GCC_WARNINGS version: 24 updated: 2009/02/01 15:21:00
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
@@ -247,7 +282,6 @@ if test "$INTEL_COMPILER" = yes
 then
 # The "-wdXXX" options suppress warnings:
 # remark #1419: external declaration in primary source file
-# remark #1682: implicit conversion of a 64-bit integral type to a smaller integral type (potential portability problem)
 # remark #1683: explicit conversion of a 64-bit integral type to a smaller integral type (potential portability problem)
 # remark #1684: conversion from pointer to same-sized integral type (potential portability problem)
 # remark #193: zero used for undefined preprocessing identifier
@@ -255,19 +289,18 @@ then
 # remark #810: conversion from "int" to "Dimension={unsigned short}" may lose significant bits
 # remark #869: parameter "tw" was never referenced
 # remark #981: operands are evaluated in unspecified order
-# warning #269: invalid format string conversion
+# warning #279: controlling expression is constant
 
 	AC_CHECKING([for $CC warning options])
 	cf_save_CFLAGS="$CFLAGS"
 	EXTRA_CFLAGS="-Wall"
 	for cf_opt in \
 		wd1419 \
-		wd1682 \
 		wd1683 \
 		wd1684 \
 		wd193 \
-		wd279 \
 		wd593 \
+		wd279 \
 		wd810 \
 		wd869 \
 		wd981
@@ -309,7 +342,7 @@ then
 				;;
 			Winline) #(vi
 				case $GCC_VERSION in
-				3.3*)
+				[[34]].*)
 					CF_VERBOSE(feature is broken in gcc $GCC_VERSION)
 					continue;;
 				esac
@@ -689,7 +722,7 @@ fi
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_XOPEN_SOURCE version: 25 updated: 2007/01/29 18:36:38
+dnl CF_XOPEN_SOURCE version: 30 updated: 2009/12/30 08:32:55
 dnl ---------------
 dnl Try to get _XOPEN_SOURCE defined properly that we can use POSIX functions,
 dnl or adapt to the vendor's definitions to get equivalent functionality,
@@ -706,10 +739,16 @@ cf_XOPEN_SOURCE=ifelse($1,,500,$1)
 cf_POSIX_C_SOURCE=ifelse($2,,199506L,$2)
 
 case $host_os in #(vi
-aix[[45]]*) #(vi
+aix[[456]]*) #(vi
 	CPPFLAGS="$CPPFLAGS -D_ALL_SOURCE"
 	;;
-freebsd*) #(vi
+darwin[[0-8]].*) #(vi
+	CPPFLAGS="$CPPFLAGS -D_APPLE_C_SOURCE"
+	;;
+darwin*) #(vi
+	CPPFLAGS="$CPPFLAGS -D_DARWIN_C_SOURCE"
+	;;
+freebsd*|dragonfly*) #(vi
 	# 5.x headers associate
 	#	_XOPEN_SOURCE=600 with _POSIX_C_SOURCE=200112L
 	#	_XOPEN_SOURCE=500 with _POSIX_C_SOURCE=199506L
@@ -723,7 +762,7 @@ hpux*) #(vi
 irix[[56]].*) #(vi
 	CPPFLAGS="$CPPFLAGS -D_SGI_SOURCE"
 	;;
-linux*|gnu*|k*bsd*-gnu) #(vi
+linux*|gnu*|mint*|k*bsd*-gnu) #(vi
 	CF_GNU_SOURCE
 	;;
 mirbsd*) #(vi

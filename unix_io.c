@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.21 2006/11/26 17:30:44 tom Exp $ */
+/* $Id: unix_io.c,v 1.22 2009/12/31 22:29:01 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -138,7 +138,7 @@ get_reply(void)
 
   result[old_len++] = inchar();
   do {
-    new_len = read_buffer(result + old_len, sizeof(result) - 2 - old_len);
+    new_len = read_buffer(result + old_len, (int) sizeof(result) - 2 - old_len);
     old_len += new_len;
   } while (new_len != 0 && old_len < (BUF_SIZE - 2));
 
@@ -222,10 +222,10 @@ void
 zleep(int t)
 {
 #ifdef HAVE_USLEEP
-  unsigned msecs = t * 1000;
+  unsigned msecs = (unsigned) (t * 1000);
   usleep(msecs);
 #else
-  unsigned secs = t / 1000;
+  unsigned secs = (unsigned) (t / 1000);
   if (secs == 0)
     secs = 1;
   sleep(secs);  /* UNIX can only sleep whole seconds */
