@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.87 2007/01/07 17:02:07 tom Exp $ */
+/* $Id: main.c,v 1.88 2009/12/31 22:27:31 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1299,10 +1299,10 @@ chrprint2 (char *s, int row, int col)
     } else {
       sprintf(temp, "%c ", c);
     }
-    tracks += strlen(temp);
+    tracks += (int) strlen(temp);
     if ((tracks > min_cols) && (col > 1)) {
       vt_move(++result, col);
-      tracks = col + strlen(temp);
+      tracks = col + (int) strlen(temp);
     }
     fputs(temp, stdout);
   }
@@ -1373,8 +1373,8 @@ skip_digits(char *src)
 int
 strip_suffix(char *src, char *suffix)
 {
-  int have = strlen(src);
-  int want = strlen(suffix);
+  int have = (int) strlen(src);
+  int want = (int) strlen(suffix);
   if (have > want) {
     have -= want;
     if (!strcmp(src+have, suffix)) {
@@ -1394,7 +1394,7 @@ strip_terminator(char *src)
 {
   int ok = strip_suffix(src, st_input());
   if (!ok) {
-    int have = strlen(src);
+    int have = (int) strlen(src);
     if (have > 0 && (unsigned char)src[have-1] == ST) {
       ok = TRUE;
       src[--have] = '\0';

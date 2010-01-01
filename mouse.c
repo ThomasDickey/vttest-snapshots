@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.8 2007/12/16 15:46:25 tom Exp $ */
+/* $Id: mouse.c,v 1.9 2009/12/31 22:30:19 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -234,8 +234,8 @@ first:
     while ((report = skip_csi(report)) != 0
      && *report == 'M'
      && strlen(report) >= 4) {
-      unsigned b = MCHR(report[1]);
-      int adj = 1;
+      unsigned b = (unsigned) MCHR(report[1]);
+      unsigned adj = 1;
       ToData(1); vt_el(2);
       show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
       if (b & (unsigned)(~3)) {
@@ -259,8 +259,8 @@ first:
         printf(" release");
         show_click(MCHR(report[3]), MCHR(report[2]), '*');
       }
-      x = MCHR(report[2]);
-      y = MCHR(report[3]);
+      x = (unsigned) MCHR(report[2]);
+      y = (unsigned) MCHR(report[3]);
       report += 4;
     }
   }
@@ -362,7 +362,7 @@ first:
     if ((report = skip_csi(report)) != 0) {
       if (*report == 'M'
        && strlen(report) == 4) {
-        unsigned b = MCHR(report[1]);
+        unsigned b = (unsigned) MCHR(report[1]);
         b &= 7;
         x = MCHR(report[2]);
         y = MCHR(report[3]);

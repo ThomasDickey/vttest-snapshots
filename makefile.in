@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.36 2005/10/19 22:50:13 tom Exp $
+# $Id: makefile.in,v 1.37 2009/12/31 19:31:33 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -42,10 +42,10 @@ CPPFLAGS	= $(DEFINES) $(INCLUDES) @CPPFLAGS@
 .SUFFIXES: .c .i $o
 
 .c.i:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(CPP) -E -C $(CPPFLAGS) $< >$@
 .c$o:
-@RULE_CC@
+	@RULE_CC@
 	@ECHO_CC@$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
 
 C_SRC = \

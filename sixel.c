@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.9 2007/01/07 17:03:13 tom Exp $ */
+/* $Id: sixel.c,v 1.10 2009/12/31 22:28:01 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -137,7 +137,7 @@ display_char(FILE *fp, int chr)
     do {
       if (*s >= '?' && *s <= '~') {
         for (n = 0; n < 6; n++)
-          bits[n][bit] = ((*s - '?') & 1 << n) ? 'O' : '.';
+          bits[n][bit] = (char) (((*s - '?') & 1 << n) ? 'O' : '.');
         bit++;
       } else if ((*s == ';' || *s == '/') && bit) {
         for (n = 0; (n < 6) && (high++ < MatrixHigh); n++) {

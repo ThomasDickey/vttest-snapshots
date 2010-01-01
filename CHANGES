@@ -1,5 +1,19 @@
-$Id: CHANGES,v 1.111 2007/12/16 17:35:56 tom Exp $
+$Id: CHANGES,v 1.114 2009/12/31 19:29:35 tom Exp $
 -------------------------------------------------------------------------------
+
+20091231
+	add test-screens for setting/querying xterm fonts.
+
+	improve display for 94-item character set tests by assuming that
+	DEL would be ignored, and writing a blank after it rather than
+	allowing a ')' to be mapped in the selected character set.
+
+	check whether terminal is vt220 or vt320 to decide which Latin-1
+	flavor to use for initializing the character set tests.
+
+	miscellaneous fixes for configure script macros.
+
+	updated config.guess, config.sub
 
 20071216
 	modify VT420 rectangle tests to provide ANSI/ISO colors and
