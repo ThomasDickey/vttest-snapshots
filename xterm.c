@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.42 2010/01/01 00:01:43 tom Exp $ */
+/* $Id: xterm.c,v 1.43 2010/01/01 13:47:59 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -228,7 +228,7 @@ tst_report_font(MENU_ARGS)
     do_osc("50;?%d%c", n, BEL);
     report = instr();
     if (strchr(report, ';') != 0) {
-      printf("  %2d: ", n + 1);
+      printf("  %2d: ", n);
       row = chrprint2(report, row, col);
     }
   }
@@ -244,7 +244,7 @@ tst_report_font(MENU_ARGS)
     do_osc("50;?%c%d%c", n >= 0 ? '+' : '-', n >= 0 ? n : -n, BEL);
     report = instr();
     if (strchr(report, ';') != 0) {
-      printf("  %2d: ", n + 1);
+      printf("  %2d: ", n);
       row = chrprint2(report, row, col);
     } else if (n >= 0) {
       break;

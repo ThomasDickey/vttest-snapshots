@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.39 2006/11/26 17:22:13 tom Exp $ */
+/* $Id: nonvt100.c,v 1.40 2010/01/01 15:52:25 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -472,6 +472,7 @@ tst_nonvt100(MENU_ARGS)
       { "Test of VT220 features",                            tst_vt220 },
       { "Test of VT320 features",                            tst_vt320 },
       { "Test of VT420 features",                            tst_vt420 },
+      { "Test of VT520 features",                            tst_vt520 },
       { "Test ISO-6429 cursor-movement",                     tst_ecma48_curs },
       { "Test ISO-6429 colors",                              tst_colors },
       { "Test other ISO-6429 features",                      tst_ecma48_misc },

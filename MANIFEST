@@ -1,4 +1,4 @@
-MANIFEST for vttest, version d20091231
+MANIFEST for vttest, version d20100101
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -43,6 +43,7 @@ vt220.c                         vt220 tests
 vt320.c                         vt320 tests
 vt420.c                         vt420 tests
 vt52.c                          tests for VT52
+vt520.c                         vt520-specific tests
 vttest.1                        manual-page for VTTEST
 vttest.h                        renamed from header.h, common definitions of VTTEST
 xterm.c                         tests for xterm and clones

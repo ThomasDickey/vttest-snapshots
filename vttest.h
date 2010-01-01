@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.72 2007/01/07 16:43:08 tom Exp $ */
+/* $Id: vttest.h,v 1.73 2010/01/01 15:54:05 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -284,6 +284,7 @@ extern int tst_vt320_reports(MENU_ARGS);
 extern int tst_vt320_screen(MENU_ARGS);
 extern int tst_vt420(MENU_ARGS);
 extern int tst_vt52(MENU_ARGS);
+extern int tst_vt520(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
 extern int vt_move(int row, int col);
 extern void bye(void);
