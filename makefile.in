@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.37 2009/12/31 19:31:33 tom Exp $
+# $Id: makefile.in,v 1.39 2010/01/01 15:46:30 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -70,6 +70,7 @@ C_SRC = \
 	vt320.c \
 	vt420.c \
 	vt52.c \
+	vt520.c \
 	xterm.c
 H_SRC = \
 	vttest.h \
@@ -98,6 +99,7 @@ OBJS  = \
 	vt320$o \
 	vt420$o \
 	vt52$o \
+	vt520$o \
 	xterm$o
 
 SRC =	patchlev.h \

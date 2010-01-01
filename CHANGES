@@ -1,5 +1,10 @@
-$Id: CHANGES,v 1.114 2009/12/31 19:29:35 tom Exp $
+$Id: CHANGES,v 1.116 2010/01/01 16:20:35 tom Exp $
 -------------------------------------------------------------------------------
+
+20100101
+	add screen for vt520 features (DECSCUSR).
+
+	cosmetic for querying xterm-fonts.
 
 20091231
 	add test-screens for setting/querying xterm fonts.

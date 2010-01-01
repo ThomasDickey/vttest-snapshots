@@ -1,4 +1,4 @@
-$! $Id: vmsbuild.com,v 1.16 2004/11/05 10:12:37 tom Exp $
+$! $Id: vmsbuild.com,v 1.17 2010/01/01 15:45:54 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
@@ -24,11 +24,12 @@ $ write optf "setup.obj"
 $ write optf "sixel.obj"
 $ write optf "status.obj"
 $ write optf "tek4014.obj"
+$ write optf "vms_io.obj"
 $ write optf "vt220.obj"
 $ write optf "vt320.obj"
 $ write optf "vt420.obj"
 $ write optf "vt52.obj"
-$ write optf "vms_io.obj"
+$ write optf "vt520.obj"
 $ write optf "xterm.obj"
 $!
 $! Look for the compiler used
