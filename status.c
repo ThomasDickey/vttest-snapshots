@@ -1,4 +1,4 @@
-/* $Id: status.c,v 1.4 1996/09/09 23:46:53 tom Exp $ */
+/* $Id: status.c,v 1.5 2010/05/28 09:22:37 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -23,7 +23,7 @@ simple_statusline(MENU_ARGS)
 
   decssdt(2);
   decsasd(1);
-  printf(text);
+  printf("%s", text);
   decsasd(0);
   printf("There should be %s\r\n", text);
   holdit();

@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.77 2007/12/16 20:01:53 tom Exp $ */
+/* $Id: vt420.c,v 1.79 2010/05/28 09:22:37 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -116,7 +116,7 @@ show_DataIntegrity(char *report)
 {
   int pos = 0;
   int code = scanto(report, &pos, 'n');
-  char *show;
+  const char *show;
 
   switch (code) {
   case 70:
@@ -131,7 +131,7 @@ show_DataIntegrity(char *report)
   default:
     show = SHOW_FAILURE;
   }
-  show_result(show);
+  show_result("%s", show);
 }
 
 static void
@@ -159,7 +159,7 @@ show_MultisessionStatus(char *report)
   int pos = 0;
   int Ps1 = scan_any(report, &pos, 'n');
   int Ps2 = scanto(report, &pos, 'n');
-  char *show;
+  const char *show;
 
   switch (Ps1) {
   case 80:
@@ -298,7 +298,7 @@ tst_DECCARA(MENU_ARGS)
 }
 
 static int
-tst_DECCKSR(MENU_ARGS, int Pid, char *the_csi)
+tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi)
 {
   char *report;
   int pos = 0;
@@ -779,7 +779,7 @@ static int
 tst_DSR_macrospace(MENU_ARGS)
 {
   char *report;
-  char *show;
+  const char *show;
 
   vt_move(1, 1);
   printf("Testing DECMSR: %s\n", the_title);
@@ -798,7 +798,7 @@ tst_DSR_macrospace(MENU_ARGS)
   } else {
     show = SHOW_FAILURE;
   }
-  show_result(show);
+  show_result("%s", show);
 
   restore_ttymodes();
   vt_move(max_lines - 1, 1);

@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.28 2007/12/16 15:45:14 tom Exp $ */
+/* $Id: setup.c,v 1.29 2010/05/28 09:50:36 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -41,8 +41,8 @@ find_levels(void)
     cur_level =
     max_level = 0; /* must be a VT52 */
   } else if ((report = skip_csi(report)) == 0
-   || strncmp(report, "?6", 2)
-   || !isdigit(report[2])
+   || strncmp(report, "?6", (size_t) 2)
+   || !isdigit(CharOf(report[2]))
    || report[3] != ';') {
     cur_level =
     max_level = 1; /* must be a VT100 */
@@ -53,11 +53,11 @@ find_levels(void)
       decrqss("\"p");
       report = get_reply();
       if ((report = skip_dcs(report)) != 0
-       && isdigit(*report++) /* 0 or 1 (by observation, though 1 is an err) */
+       && isdigit(CharOf(*report++)) /* 0 or 1 (by observation, though 1 is an err) */
        && *report++ == '$'
        && *report++ == 'r'
        && *report++ == '6'
-       && isdigit(*report))
+       && isdigit(CharOf(*report)))
           cur_level = *report - '0';
     }
   }

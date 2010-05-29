@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.19 2007/03/04 13:50:41 tom Exp $ */
+/* $Id: ttymodes.c,v 1.20 2010/05/28 08:05:19 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -89,7 +89,7 @@ disable_control_chars(TTY *modes)
     }
 #   endif
     for (n = 0; n < NCCS; n++)
-      modes->c_cc[n] = temp;
+      modes->c_cc[n] = (unsigned char) temp;
 # else  /* USE_TERMIO */
 #   ifdef       VSWTCH
     modes->c_cc[VSWTCH] = VDISABLE;
@@ -170,7 +170,7 @@ void init_ttymodes(int pn)
     fflush(stdout);
 # if USE_POSIX_TERMIOS || USE_TERMIO
     tcgetattr(0, &old_modes);
-    speed_code = cfgetospeed(&old_modes);
+    speed_code = (int) cfgetospeed(&old_modes);
 # else
 #   if USE_SGTTY
       gtty(0, &old_modes);
@@ -195,7 +195,7 @@ void init_ttymodes(int pn)
   }
 # if USE_POSIX_TERMIOS || USE_TERMIO
   new_modes.c_iflag = BRKINT | old_modes.c_iflag;
-  new_modes.c_oflag &= ~tabs;
+  new_modes.c_oflag &= (unsigned) ~tabs;
 # else /* USE_SGTTY */
   new_modes.sg_flags = old_modes.sg_flags | CBREAK;
 # endif
@@ -237,7 +237,7 @@ set_tty_crmod(int enabled)
       memcpy(new_modes.c_cc, old_modes.c_cc, sizeof(new_modes.c_cc));
     } else {
       new_modes.c_iflag &= ~MASK_CRMOD;
-      new_modes.c_lflag &= ~ICANON;
+      new_modes.c_lflag &= (unsigned) ~ICANON;
       disable_control_chars(&new_modes);
     }
 # else
@@ -260,12 +260,12 @@ set_tty_echo(int enabled)
     if (enabled)
       new_modes.c_lflag |= ECHO;
     else
-      new_modes.c_lflag &= ~ECHO;
+      new_modes.c_lflag &= (unsigned) ~ECHO;
 # else /* USE_SGTTY */
     if (enabled)
       new_modes.sg_flags |= ECHO;
     else
-      new_modes.sg_flags &= ~ECHO;
+      new_modes.sg_flags &= (unsigned) ~ECHO;
 # endif
   set_ttymodes(&new_modes);
 #endif

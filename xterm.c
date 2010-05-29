@@ -1,8 +1,10 @@
-/* $Id: xterm.c,v 1.43 2010/01/01 13:47:59 tom Exp $ */
+/* $Id: xterm.c,v 1.44 2010/05/28 00:41:33 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
+
+#define Pause(secs) fflush(stdout); sleep(secs)
 
 static void
 check_rc(int row, int col)
@@ -287,11 +289,11 @@ test_modify_ops(MENU_ARGS)
 
   brc(2, 't');  /* iconify window */
   println("Iconify");
-  __(fflush(stdout), sleep(2));
+  Pause(2);
 
   brc(1, 't');  /* de-iconify window */
   println("De-Iconify");
-  __(fflush(stdout), sleep(1));
+  Pause(1);
 
   ed(2);
   for (n = 0; n <= 200; n += 5) {

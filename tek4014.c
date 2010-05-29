@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.10 2007/12/16 15:45:25 tom Exp $ */
+/* $Id: tek4014.c,v 1.12 2010/05/28 09:50:36 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -21,6 +21,8 @@
 #define GS  0x001D
 #define RS  0x001E
 #define US  0x001F
+
+static char empty[1];
 
 /*
  * Switch to/from tek4014/vt100 mode.
@@ -187,10 +189,10 @@ tek_mouse_coords(MENU_ARGS)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  report = "";
+  report = empty;
   println("Any key or mouse click twice to exit...");
   do {
-    strncpy(status, report, 5)[5] = 0;
+    strncpy(status, report, (size_t) 5)[5] = 0;
     /*
      * The graphics-in mode is reset each time users send a mouse click.  So we
      * set it in the loop.
@@ -245,10 +247,10 @@ tek_mouse_lines(MENU_ARGS)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  report = "";
+  report = empty;
   println("Any mouse click twice to exit...");
   do {
-    strncpy(status, report, 5)[5] = 0;
+    strncpy(status, report, (size_t) 5)[5] = 0;
     if (old_x >= 0 && old_y >= 0) {
       tek_point(0, old_y, old_x);
       tek_point(1, new_y, new_x);

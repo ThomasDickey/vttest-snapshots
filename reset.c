@@ -1,4 +1,4 @@
-/* $Id: reset.c,v 1.5 1996/09/28 12:36:27 tom Exp $ */
+/* $Id: reset.c,v 1.6 2010/05/28 09:22:37 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -77,7 +77,7 @@ tst_rst(MENU_ARGS)
 
   do {
     vt_clear(2);
-    title(0); printf(the_title);
+    title(0); printf("%s", the_title);
     title(2); println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;

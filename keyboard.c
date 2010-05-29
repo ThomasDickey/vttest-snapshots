@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.32 2007/01/07 16:51:03 tom Exp $ */
+/* $Id: keyboard.c,v 1.33 2010/05/28 08:47:53 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -65,7 +65,7 @@ static struct key {
     char c;
     int  row;
     int  col;
-    char *symbol;
+    const char *symbol;
 } VT100_keytab [] = {
     { ESC, 1,  0, "ESC" },
     { '1', 1,  6, "1" },    { '!', 1,  7, "!" },
@@ -182,15 +182,15 @@ static struct key {
 
 typedef struct {
     unsigned char prefix;
-    char *msg;
+    const char *msg;
 } CTLKEY;
 
 static struct curkey {
     CTLKEY curkeymsg[3];
     int  curkeyrow;
     int  curkeycol;
-    char *curkeysymbol;
-    char *curkeyname;
+    const char *curkeysymbol;
+    const char *curkeyname;
 } VT100_curkeytab [] = {
 
     /* A Reset,   A Set,     VT52  */
@@ -217,8 +217,8 @@ static struct fnckey {
     CTLKEY fnkeymsg[2];
     int  fnkeyrow;
     int  fnkeycol;
-    char *fnkeysymbol;
-    char *fnkeyname;
+    const char *fnkeysymbol;
+    const char *fnkeyname;
 } fnkeytab [] = {
 
     /* Normal,     VT100/VT52  */
@@ -259,8 +259,8 @@ static struct fnkey {
     CTLKEY fnkeymsg[4];
     int  fnkeyrow;
     int  fnkeycol;
-    char *fnkeysymbol;
-    char *fnkeyname;
+    const char *fnkeysymbol;
+    const char *fnkeyname;
 } num_keypadtab [] = {
 
   /* ANSI-num, ANSI-app,  VT52-nu,   VT52-ap,     r,  c,  symb   name        */
@@ -290,10 +290,10 @@ struct natkey {
     char natc;
     int  natrow;
     int  natcol;
-    char *natsymbol;
+    const char *natsymbol;
 };
 
-static int same_CTLKEY(char *response, CTLKEY *code);
+static int same_CTLKEY(const char *response, CTLKEY *code);
 
 static int
 find_cursor_key(char *curkeystr, int ckeymode)
@@ -372,15 +372,15 @@ default_layout(MENU_ARGS)
 }
 
 static int
-same_CTLKEY(char *response, CTLKEY *code)
+same_CTLKEY(const char *response, CTLKEY *code)
 {
   switch (code->prefix) {
   case CSI:
-    if ((response = skip_csi(response)) == 0)
+    if ((response = skip_csi_2(response)) == 0)
       return FALSE;
     break;
   case SS3:
-    if ((response = skip_ss3(response)) == 0)
+    if ((response = skip_ss3_2(response)) == 0)
       return FALSE;
     break;
   case ESC:
@@ -616,7 +616,7 @@ tst_ControlKeys(MENU_ARGS)
 
   static struct {
       int  ccount;
-      char *csymbol;
+      const char *csymbol;
   } ckeytab [] = {
       { 0, "NUL (CTRL-@ or CTRL-Space)" },
       { 0, "SOH (CTRL-A)" },
@@ -704,7 +704,7 @@ tst_CursorKeys(MENU_ARGS)
   char *curkeystr;
   VTLEVEL save;
 
-  static char *curkeymodes[3] = {
+  static const char *curkeymodes[3] = {
       "ANSI / Cursor key mode RESET",
       "ANSI / Cursor key mode SET",
       "VT52 Mode"
@@ -767,7 +767,7 @@ tst_EditingKeypad(MENU_ARGS)
   char *fnkeystr;
   VTLEVEL save;
 
-  static char *fnkeymodes[] = {
+  static const char *fnkeymodes[] = {
       "Normal mode",
       "VT100/VT52 mode (none should be recognized)"
   };
@@ -832,7 +832,7 @@ tst_FunctionKeys(MENU_ARGS)
   char *fnkeystr;
   VTLEVEL save;
 
-  static char *fnkeymodes[] = {
+  static const char *fnkeymodes[] = {
       "Normal mode (F6-F20, except xterm also F1-F5)",
       "VT100/VT52 mode (F11-F13 only)"
   };
@@ -897,7 +897,7 @@ tst_NumericKeypad(MENU_ARGS)
   char *fnkeystr;
   VTLEVEL save;
 
-  static char *fnkeymodes[4] = {
+  static const char *fnkeymodes[4] = {
       "ANSI Numeric mode",
       "ANSI Application mode",
       "VT52 Numeric mode",
@@ -981,7 +981,7 @@ static int
 tst_LED_Lights(MENU_ARGS)
 {
   int  i;
-  char *ledmsg[6], *ledseq[6];
+  const char *ledmsg[6], *ledseq[6];
 
   ledmsg[0] = "L1 L2 L3 L4"; ledseq[0] = "1;2;3;4";
   ledmsg[1] = "   L2 L3 L4"; ledseq[1] = "1;0;4;3;2";

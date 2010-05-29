@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.88 2009/12/31 22:27:31 tom Exp $ */
+/* $Id: main.c,v 1.91 2010/05/28 09:50:36 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -54,7 +54,8 @@ int tty_speed     = DEFAULT_SPEED; /* nominal speed, for padding */
 int use_padding   = FALSE;
 jmp_buf intrenv;
 
-static char *current_menu = "";
+static char empty[1];
+static char *current_menu = empty;
 
 static void
 usage(void)
@@ -84,7 +85,7 @@ main(int argc, char *argv[])
     };
 
   while (argc-- > 1) {
-    char *opt = *++argv;
+    const char *opt = *++argv;
     if (*opt == '-') {
       while (*++opt != '\0') {
         switch (*opt) {
@@ -121,7 +122,7 @@ main(int argc, char *argv[])
       for (n = 0; n < 3; n++) {
         if (!*p)
           break;
-        if ((m = strtol(p, &q, 10)) > 0) {
+        if ((m = (int) strtol(p, &q, 10)) > 0) {
           values[n] = m;
           p = q;
           if (*p)
@@ -197,7 +198,7 @@ tst_movements(MENU_ARGS)
   */
 
   int i, row, col, pass, width, hlfxtra;
-  char *ctext = "This is a correct sentence";
+  const char *ctext = "This is a correct sentence";
 
   set_tty_crmod(TRUE);  /* want to disable tab/space conversion */
 
@@ -435,8 +436,8 @@ tst_screen(MENU_ARGS)
 
   int i, j, cset, row, col, background;
 
-  static char *tststr = "*qx`";
-  static char *attr[5] = { ";0", ";1", ";4", ";5", ";7" };
+  static const char *tststr = "*qx`";
+  static const char *attr[5] = { ";0", ";1", ";4", ";5", ";7" };
 
   set_tty_crmod(TRUE);  /* want to disable tab/space conversion */
 
@@ -788,7 +789,7 @@ tst_bugs(MENU_ARGS)
     { "",                                                    0 }
   };
 
-  static char *hmsg[] = {
+  static const char *hmsg[] = {
   "Test of known bugs in the DEC VT100 series. The numbering of some of",
   "the bugs (A-F) refers to the article 'VT100 MAGIC' by Sami Tabih in",
   "the 'Proceedings of the DEC Users Society' at St. Louis, Missouri, May",
@@ -925,7 +926,7 @@ int
 bug_e(MENU_ARGS)
 {
   int i;
-  static char *rend[2] = { "m", "7m" };
+  static const char *rend[2] = { "m", "7m" };
   deccolm(TRUE);
   cup(1,1); decdwl();
   println("This test should put an 'X' at line 3 column 100.");
@@ -1163,14 +1164,14 @@ onterm(SIG_ARGS GCC_UNUSED)
 #endif
 
 int
-scanto(char *str, int *pos, int toc)
+scanto(const char *str, int *pos, int toc)
 {
   char c;
   int result = 0;
 
   while (toc != (c = str[(*pos)])) {
     *pos += 1;
-    if (isdigit(c)) result = result * 10 + c - '0';
+    if (isdigit(CharOf(c))) result = result * 10 + c - '0';
     else break;
   }
   if (c == toc) {
@@ -1194,21 +1195,21 @@ scan_any(char *str, int *pos, int toc)
   return value;
 }
 
-static char *
+static const char *
 push_menu(int number)
 {
-  char *saved = current_menu;
+  const char *saved = current_menu;
   current_menu = (char *) malloc(strlen(saved) + 10);
   sprintf(current_menu, "%s%s%d", saved, *saved ? "." : "", number);
   return saved;
 }
 
 static void
-pop_menu(char *saved)
+pop_menu(const char *saved)
 {
   if (current_menu && *current_menu)
     free(current_menu);
-  current_menu = saved;
+  current_menu = (char *) saved;
 }
 
 int
@@ -1248,8 +1249,8 @@ menu(MENU *table)
       for (choice = 0; choice <= tablesize; choice++) {
         vt_clear(2);
         if (table[choice].dispatch != 0) {
-          char *save = push_menu(choice);
-          char *name = table[choice].description;
+          const char *save = push_menu(choice);
+          const char *name = table[choice].description;
           if (LOG_ENABLED)
             fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
           if ((*table[choice].dispatch)(name) == MENU_HOLD)
@@ -1261,8 +1262,8 @@ menu(MENU *table)
     } else if (choice <= tablesize) {
       vt_clear(2);
       if (table[choice].dispatch != 0) {
-        char *save = push_menu(choice);
-        char *name = table[choice].description;
+        const char *save = push_menu(choice);
+        const char *name = table[choice].description;
         if (LOG_ENABLED)
           fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
         if ((*table[choice].dispatch)(name) != MENU_NOHOLD)
@@ -1279,8 +1280,7 @@ menu(MENU *table)
  * Return updated row-number based on the number of characters printed to the
  * screen, e.g., for test_report_ops() to handle very long results.
  */
-int
-chrprint2 (char *s, int row, int col)
+int chrprint2 (const char *s, int row, int col)
 {
   int i;
   int result = row;
@@ -1311,8 +1311,7 @@ chrprint2 (char *s, int row, int col)
   return result + 1;
 }
 
-void
-chrprint (char *s)
+void chrprint (const char *s)
 {
   chrprint2(s, 1, 1);
 }
@@ -1320,8 +1319,7 @@ chrprint (char *s)
 /*
  * Returns a pointer past the prefix, or null if no match is found
  */
-char *
-skip_prefix(char *prefix, char *input)
+char *skip_prefix(const char *prefix, char *input)
 {
   while (*prefix != '\0') {
     if (*prefix++ != *input++)
@@ -1355,13 +1353,56 @@ char *skip_ss3(char *input)
 }
 
 /*
+ * Variant with const params
+ */
+const char *skip_prefix_2(const char *prefix, const char *input)
+{
+  while (*prefix != '\0') {
+    if (*prefix++ != *input++)
+      return 0;
+  }
+  return input;
+}
+
+const char *skip_csi_2(const char *input)
+{
+  if ((unsigned char)*input == CSI) {
+    return input+1;
+  }
+  return skip_prefix_2(csi_input(), input);
+}
+
+const char *skip_dcs_2(const char *input)
+{
+  if ((unsigned char)*input == DCS) {
+        return input+1;
+  }
+  return skip_prefix_2(dcs_input(), input);
+}
+
+const char *skip_ss3_2(const char *input)
+{
+  if ((unsigned char)*input == SS3) {
+    return input+1;
+  }
+  return skip_prefix_2(ss3_input(), input);
+}
+
+/*
  * Returns a pointer past digits, or null if none are found
  */
-char *
-skip_digits(char *src)
+char *skip_digits(char *src)
 {
   char *base = src;
-  while (*src != '\0' && isdigit(*src))
+  while (*src != '\0' && isdigit(CharOf(*src)))
+    src++;
+  return (base == src) ? 0 : src;
+}
+
+const char *skip_digits_2(const char *src)
+{
+  const char *base = src;
+  while (*src != '\0' && isdigit(CharOf(*src)))
     src++;
   return (base == src) ? 0 : src;
 }
@@ -1371,7 +1412,7 @@ skip_digits(char *src)
  * we did this.
  */
 int
-strip_suffix(char *src, char *suffix)
+strip_suffix(char *src, const char *suffix)
 {
   int have = (int) strlen(src);
   int want = (int) strlen(suffix);
@@ -1406,7 +1447,7 @@ strip_terminator(char *src)
 }
 
 /* Parse the contents of a report from DECRQSS, returning the data as well */
-int parse_decrqss(char *report, char *func)
+int parse_decrqss(char *report, const char *func)
 {
   int code = -1;
   char *parse = report;
@@ -1414,9 +1455,9 @@ int parse_decrqss(char *report, char *func)
   if ((parse = skip_dcs(parse)) != 0
    && strip_terminator(parse)
    && strip_suffix(parse, func)) {
-    if (!strncmp(parse, "1$r", 3))
+    if (!strncmp(parse, "1$r", (size_t) 3))
       code = 1;
-    else if (!strncmp(parse, "0$r", 3))
+    else if (!strncmp(parse, "0$r", (size_t) 3))
       code = 0;
   }
 

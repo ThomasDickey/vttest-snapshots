@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.29 2007/12/16 15:45:44 tom Exp $ */
+/* $Id: color.c,v 1.31 2010/05/28 09:34:37 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -15,7 +15,7 @@
 #define COLOR_CYAN    6
 #define COLOR_WHITE   7
 
-static char *colors[MAX_COLORS] =
+static const char *colors[MAX_COLORS] =
 {
   "black",                      /* 30, 40 */
   "red",                        /* 31, 41 */
@@ -34,12 +34,13 @@ static int do_colors = TRUE;
  * got the background set to something different.
  */
 static void
-c_sgr(char *s)
+c_sgr(const char *s)
 {
   char temp[80];
-  char *t = strchr(strcpy(temp, s), '0');
+  char *t;
   int reset = FALSE;
 
+  (void) strcpy(temp, s);
   if (*temp == ';' || *temp == 0) {
     reset = TRUE;
   } else {
@@ -301,14 +302,14 @@ simple_bce_test(MENU_ARGS)
   BOX box1;
   BOX box2;
 
-  static char *text1[] =
+  static const char *text1[] =
   {
     "The screen background should be blue, with a box made of asterisks",
     " and this caption, in orange (non-bold yellow). ",
     " There should be no cells with the default foreground or background.",
     0
   };
-  static char *text2[] =
+  static const char *text2[] =
   {
     "The screen background should be black, with a box made of asterisks",
     " and this caption, in white (actually gray - it is not bold). ",
@@ -410,14 +411,14 @@ fancy_bce_test(MENU_ARGS)
   BOX box1;
   BOX box2;
 
-  static char *text1[] =
+  static const char *text1[] =
   {
     "The screen background should be blue, with a box made of asterisks",
     " and this caption, in orange (non-bold yellow). ",
     " There should be no cells with the default foreground or background.",
     0
   };
-  static char *text2[] =
+  static const char *text2[] =
   {
     "The screen background should be black, with a box made of asterisks",
     " and this caption, in white (actually gray - it is not bold). ",

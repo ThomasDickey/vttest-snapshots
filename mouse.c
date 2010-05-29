@@ -1,10 +1,10 @@
-/* $Id: mouse.c,v 1.9 2009/12/31 22:30:19 tom Exp $ */
+/* $Id: mouse.c,v 1.12 2010/05/28 10:03:00 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
 
-#define MCHR(c) (int)((unsigned)((c) - ' ') & 0xff)
+#define MCHR(c) (unsigned)((unsigned)((c) - ' ') & 0xff)
 
 #define isQuit(c) (((c) == 'q') || ((c) == 'Q'))
 #define isClear(c) ((c) == ' ')
@@ -17,7 +17,7 @@ static int pixels_high;
 static int pixels_wide;
 
 static void
-cat_button(char *dst, char *src)
+cat_button(char *dst, const char *src)
 {
   if (*dst != '\0') strcat(dst, ", ");
   strcat(dst, src);
@@ -40,10 +40,10 @@ locator_button(unsigned b)
   return result;
 }
 
-static char *
+static const char *
 locator_event(int e)
 {
-  char *result;
+  const char *result;
   switch (e) {
   case 0:  result = "locator unavailable"; break;
   case 1:  result = "request - received a DECRQLP"; break;
@@ -62,11 +62,11 @@ locator_event(int e)
 }
 
 static void
-show_click(int y, int x, int c)
+show_click(unsigned y, unsigned x, int c)
 {
-  cup(y,x);
+  cup((int) y,(int) x);
   putchar(c);
-  vt_move(y,x);
+  vt_move((int) y, (int) x);
   fflush(stdout);
 }
 
@@ -91,22 +91,26 @@ static void show_locator_rectangle(void)
   show_hilite(first, last);
 }
 
+#define SCALED(value,range) \
+      ((value * (unsigned) range + (unsigned) (range - 1)) / (unsigned) range)
+
 static int show_locator_report(char *report, int row, int pixels)
 {
-  int Pe, Pb, Pr, Pc, Pp;
+  int Pe, Pb, Pp;
+  unsigned Pr, Pc;
   int now = row;
 
   ToData(0); vt_el(2); chrprint(report);
   while ((report = skip_csi(report)) != 0
-   && (sscanf(report, "%d;%d;%d;%d&w", &Pe, &Pb, &Pr, &Pc) == 4
-    || sscanf(report, "%d;%d;%d;%d;%d&w", &Pe, &Pb, &Pr, &Pc, &Pp) == 5)) {
+   && (sscanf(report, "%d;%d;%u;%u&w", &Pe, &Pb, &Pr, &Pc) == 4
+    || sscanf(report, "%d;%d;%u;%u;%d&w", &Pe, &Pb, &Pr, &Pc, &Pp) == 5)) {
     vt_move(row,10); vt_el(2);
     show_result("%s - %s (%d,%d)", locator_event(Pe), locator_button((unsigned)Pb), Pr, Pc);
     vt_el(0);
     if (pixels) {
       if (pixels_high > 0 && pixels_wide > 0) {
-        Pr = (Pr * chars_high + pixels_high - 1) / pixels_high;
-        Pc = (Pc * chars_wide + pixels_wide - 1) / pixels_wide;
+        Pr = SCALED(Pr, pixels_high);
+        Pc = SCALED(Pc, pixels_wide);
         show_click(Pr, Pc, '*');
       }
     } else {
@@ -208,7 +212,7 @@ first:
 
 /* Normal Mouse Tracking */
 static void
-show_mouse_tracking(MENU_ARGS, char *the_mode)
+show_mouse_tracking(MENU_ARGS, const char *the_mode)
 {
   unsigned y = 0, x = 0;
 
@@ -234,7 +238,7 @@ first:
     while ((report = skip_csi(report)) != 0
      && *report == 'M'
      && strlen(report) >= 4) {
-      unsigned b = (unsigned) MCHR(report[1]);
+      unsigned b = MCHR(report[1]);
       unsigned adj = 1;
       ToData(1); vt_el(2);
       show_result("code 0x%x (%d,%d)", b, MCHR(report[3]), MCHR(report[2]));
@@ -259,8 +263,8 @@ first:
         printf(" release");
         show_click(MCHR(report[3]), MCHR(report[2]), '*');
       }
-      x = (unsigned) MCHR(report[2]);
-      y = (unsigned) MCHR(report[3]);
+      x = MCHR(report[2]);
+      y = MCHR(report[3]);
       report += 4;
     }
   }
@@ -335,7 +339,7 @@ test_mouse_hilite(MENU_ARGS)
 {
   const int first = 10;
   const int last  = 20;
-  int y = 0, x = 0;
+  unsigned y = 0, x = 0;
 
 first:
   vt_move(1,1);
@@ -362,7 +366,7 @@ first:
     if ((report = skip_csi(report)) != 0) {
       if (*report == 'M'
        && strlen(report) == 4) {
-        unsigned b = (unsigned) MCHR(report[1]);
+        unsigned b = MCHR(report[1]);
         b &= 7;
         x = MCHR(report[2]);
         y = MCHR(report[3]);
