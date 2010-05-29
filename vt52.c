@@ -1,11 +1,11 @@
-/* $Id: vt52.c,v 1.14 2004/08/03 01:21:13 tom Exp $ */
+/* $Id: vt52.c,v 1.15 2010/05/28 08:35:57 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
 #include <esc.h>
 
 static int
-testing(char *name, int row)
+testing(const char *name, int row)
 {
   printf("Testing %s. ", name);
   printf("A real VT%d will not recognize %s at this point", terminal_id(), name);
@@ -14,7 +14,7 @@ testing(char *name, int row)
 }
 
 static int
-isreturn(char *reply)
+isreturn(const char *reply)
 {
   return (*reply == '\r' || *reply == '\n');
 }
@@ -23,8 +23,8 @@ int
 tst_vt52(MENU_ARGS)
 {
   static struct {
-      char *rcode;
-      char *rmsg;
+      const char *rcode;
+      const char *rmsg;
   } resptable[] = {
       { "\033/A", " -- OK (VT50)" },
       { "\033/C", " -- OK (VT55)" },
@@ -38,7 +38,7 @@ tst_vt52(MENU_ARGS)
 
   int i,j;
   char *response;
-  char *temp;
+  const char *temp;
   VTLEVEL save;
 
   save_level(&save);

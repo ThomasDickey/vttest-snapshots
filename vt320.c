@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.13 2007/01/07 17:03:32 tom Exp $ */
+/* $Id: vt320.c,v 1.16 2010/05/28 09:50:36 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -12,7 +12,7 @@ show_Locator_Status(char *report)
 {
   int pos = 0;
   int code = scanto(report, &pos, 'n');
-  char *show;
+  const char *show;
 
   switch (code) {
   case 53:
@@ -27,7 +27,7 @@ show_Locator_Status(char *report)
   default:
     show = SHOW_FAILURE;
   }
-  show_result(show);
+  show_result("%s", show);
 }
 
 /*
@@ -217,7 +217,7 @@ show_DECCIR(char *report)
   show_result("Character set idents for G0...G3: ");
   println("");
   while (report[pos] != '\0') {
-    char *result = parse_Sdesig(report, &pos);
+    const char *result = parse_Sdesig(report, &pos);
     show_result("            %s\n", result);
     println("");
   }
@@ -268,7 +268,7 @@ any_decrqpsr(MENU_ARGS, int Ps)
   if ((report = skip_dcs(report)) != 0) {
     if (strip_terminator(report)
         && *report == Ps + '0'
-        && !strncmp(report + 1, "$u", 2)) {
+        && !strncmp(report + 1, "$u", (size_t) 2)) {
       show_result("%s (valid request)", SHOW_SUCCESS);
       switch (Ps) {
       case 1:
@@ -342,7 +342,7 @@ static int
 tst_DECRQUPSS(MENU_ARGS)
 {
   char *report;
-  char *show;
+  const char *show;
 
   __(vt_move(1, 1), println("Testing DECRQUPSS/DECAUPSS Window Report"));
 
@@ -364,7 +364,7 @@ tst_DECRQUPSS(MENU_ARGS)
   } else {
     show = SHOW_FAILURE;
   }
-  show_result(show);
+  show_result("%s", show);
 
   restore_ttymodes();
   vt_move(max_lines - 1, 1);
@@ -376,7 +376,7 @@ static int
 tst_DECRQTSR(MENU_ARGS)
 {
   char *report;
-  char *show;
+  const char *show;
 
   vt_move(1, 1);
   println("Testing Terminal State Reports (DECRQTSR/DECTSR)");
@@ -392,12 +392,12 @@ tst_DECRQTSR(MENU_ARGS)
 
   if ((report = skip_dcs(report)) != 0
       && strip_terminator(report)
-      && !strncmp(report, "1$s", 3)) {
+      && !strncmp(report, "1$s", (size_t) 3)) {
     show = SHOW_SUCCESS;
   } else {
     show = SHOW_FAILURE;
   }
-  show_result(show);
+  show_result("%s", show);
 
   restore_ttymodes();
   vt_move(max_lines - 1, 1);
@@ -418,7 +418,7 @@ set_DECRPM(int level)
 
 typedef struct {
   int mode;
-  char *name;
+  const char *name;
   int level;
 } DECRPM_DATA;
 
@@ -509,7 +509,7 @@ tst_DEC_DECRPM(MENU_ARGS)
   int j, Pa, Ps;
   char chr;
   char *report;
-  char *show;
+  const char *show;
   /* *INDENT-OFF* */
   DECRPM_DATA dec_modes[] = { /* this list is sorted by code, not name */
     DATA( DECCKM,  3 /* cursor keys */),
@@ -611,7 +611,7 @@ tst_DEC_DECRPM(MENU_ARGS)
     } else {
       show = SHOW_FAILURE;
     }
-    show_result(show);
+    show_result("%s", show);
   }
 
   restore_ttymodes();
@@ -650,10 +650,10 @@ tst_DECRPM(MENU_ARGS)
  * however I see "DCS 1 $ r" on a real VT420, consistently.
  */
 int
-any_decrqss(char *msg, char *func)
+any_decrqss(const char *msg, const char *func)
 {
   char *report;
-  char *show;
+  const char *show;
 
   vt_move(1, 1);
   printf("Testing DECRQSS: %s\n", msg);
@@ -676,7 +676,7 @@ any_decrqss(char *msg, char *func)
     show = SHOW_FAILURE;
     break;
   }
-  show_result(show);
+  show_result("%s", show);
 
   restore_ttymodes();
   vt_move(max_lines - 1, 1);

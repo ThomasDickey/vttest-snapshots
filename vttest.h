@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.73 2010/01/01 15:54:05 tom Exp $ */
+/* $Id: vttest.h,v 1.75 2010/05/28 23:24:34 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -159,6 +159,7 @@ extern jmp_buf intrenv;
 #define SHOW_SUCCESS "ok"
 #define SHOW_FAILURE "failed"
 
+#undef __
 #define __(a,b) (void)(a && b)
 
 #define TABLESIZE(table) (int)(sizeof(table)/sizeof(table[0]))
@@ -188,12 +189,12 @@ extern int sscanf(const char *src, const char *fmt, ...);
 extern long strtol(const char *src, char **dst, int base);
 #endif
 
-#define MENU_DECL    char *   the_title
-#define MENU_ARGS    char *   the_title GCC_UNUSED
-#define PASS_ARGS /* char * */the_title
+#define MENU_DECL    const char *   the_title
+#define MENU_ARGS    const char *   the_title GCC_UNUSED
+#define PASS_ARGS /* const char * */the_title
 
 typedef struct {
-  char *description;
+  const char *description;
   int (*dispatch)(MENU_ARGS);
 } MENU;
 
@@ -212,15 +213,20 @@ typedef struct {
 /* main.c */
 extern RETSIGTYPE onbrk(SIG_ARGS);
 extern RETSIGTYPE onterm(SIG_ARGS);
-extern char *parse_Sdesig(const char *source, int *offset);
 extern char *skip_csi(char *input);
 extern char *skip_dcs(char *input);
 extern char *skip_digits(char *src);
-extern char *skip_prefix(char *prefix, char *input);
+extern char *skip_prefix(const char *prefix, char *input);
 extern char *skip_ss3(char *input);
-extern int any_DSR(MENU_ARGS, char *text, void (*explain)(char *report));
+extern const char *parse_Sdesig(const char *source, int *offset);
+extern const char *skip_csi_2(const char *input);
+extern const char *skip_dcs_2(const char *input);
+extern const char *skip_digits_2(const char *src);
+extern const char *skip_prefix_2(const char *prefix, const char *input);
+extern const char *skip_ss3_2(const char *input);
+extern int any_DSR(MENU_ARGS, const char *text, void (*explain)(char *report));
 extern int any_decrqpsr(MENU_ARGS, int Ps);
-extern int any_decrqss(char *msg, char *func);
+extern int any_decrqss(const char *msg, const char *func);
 extern int bug_a(MENU_ARGS);
 extern int bug_b(MENU_ARGS);
 extern int bug_c(MENU_ARGS);
@@ -230,18 +236,18 @@ extern int bug_f(MENU_ARGS);
 extern int bug_l(MENU_ARGS);
 extern int bug_s(MENU_ARGS);
 extern int bug_w(MENU_ARGS);
-extern int chrprint2(char *s, int row, int col);
+extern int chrprint2(const char *s, int row, int col);
 extern int get_level(void);
 extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
 extern int not_impl(MENU_ARGS);
-extern int parse_decrqss(char *report, char *func);
+extern int parse_decrqss(char *report, const char *func);
 extern int scan_any(char *str, int *pos, int toc);
-extern int scanto(char *str, int *pos, int toc);
+extern int scanto(const char *str, int *pos, int toc);
 extern int set_DECRPM(int level);
 extern int set_level(int level);
 extern int setup_terminal(MENU_ARGS);
-extern int strip_suffix(char *src, char *suffix);
+extern int strip_suffix(char *src, const char *suffix);
 extern int strip_terminator(char *src);
 extern int terminal_id(void);
 extern int title(int offset);
@@ -288,7 +294,7 @@ extern int tst_vt520(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
 extern int vt_move(int row, int col);
 extern void bye(void);
-extern void chrprint(char *s);
+extern void chrprint(const char *s);
 extern void default_level(void);
 extern void do_scrolling(void);
 extern void enable_logging(void);
@@ -298,7 +304,7 @@ extern void restore_level(VTLEVEL *save);
 extern void save_level(VTLEVEL *save);
 extern void scs_graphics(void);
 extern void scs_normal(void);
-extern void setup_softchars(char *filename);
+extern void setup_softchars(const char *filename);
 extern void show_result(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 extern void vt_clear(int code);
 extern void vt_el(int code);

@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.32 2009/12/31 22:26:53 tom Exp $ */
+/* $Id: charsets.c,v 1.34 2010/05/28 09:20:59 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -48,8 +48,8 @@ static const struct {
   int allow96;    /* flag for 96-character sets (e.g., GR mapping) */
   int order;      /* check-column so we can mechanically-sort this table */
   int model;      /* 0=base, 2=vt220, 3=vt320, etc. */
-  char *final;    /* end of SCS string */
-  char *name;     /* the string we'll show the user */
+  const char *final;    /* end of SCS string */
+  const char *name;     /* the string we'll show the user */
 } KnownCharsets[] = {
   { ASCII,             0, 0, 0, "B",    "US ASCII" },
   { British,           0, 0, 0, "A",    "British" },
@@ -285,7 +285,7 @@ tst_vt100_charsets(MENU_ARGS)
    * SCS    (Select character Set)
    */
   /* *INDENT-OFF* */
-  static const struct { char code; char *msg; } table[] = {
+  static const struct { char code; const char *msg; } table[] = {
     { 'A', "UK / national" },
     { 'B', "US ASCII" },
     { '0', "Special graphics and line drawing" },
@@ -330,7 +330,7 @@ tst_shift_in_out(MENU_ARGS)
   /* Test of:
      SCS    (Select character Set)
    */
-  static char *label[] =
+  static const char *label[] =
   {
     "Selected as G0 (with SI)",
     "Selected as G1 (with SO)"
@@ -373,8 +373,8 @@ tst_vt220_locking(MENU_ARGS)
   static const struct {
     int upper;
     int mapped;
-    char *code;
-    char *msg;
+    const char *code;
+    const char *msg;
   } table[] = {
     { 1, 1, "~", "G1 into GR (LS1R)" },
     { 0, 2, "n", "G2 into GL (LS2)"  }, /* "{" vi */
@@ -477,17 +477,17 @@ tst_vt220_single(MENU_ARGS)
  * (But ECMA-48 hedges this by stating that the format in those cases is not
  * specified).
  */
-char *
+const char *
 parse_Sdesig(const char *source, int *offset)
 {
   int j;
   const char *first = source + (*offset);
-  char *result = 0;
-  unsigned limit = strlen(first);
+  const char *result = 0;
+  size_t limit = strlen(first);
 
   for (j = 0; j < TABLESIZE(KnownCharsets); ++j) {
     if (KnownCharsets[j].code != Unknown) {
-      unsigned check = strlen(KnownCharsets[j].final);
+      size_t check = strlen(KnownCharsets[j].final);
       if (check <= limit
           && !strncmp(KnownCharsets[j].final, first, check)) {
         result = KnownCharsets[j].name;

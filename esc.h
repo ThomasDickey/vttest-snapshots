@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.56 2007/01/07 17:02:26 tom Exp $ */
+/* $Id: esc.h,v 1.57 2010/05/28 08:20:00 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -114,7 +114,7 @@ char inchar(void);
 int cup(int pn1, int pn2);
 int decdc(int pn);
 int decic(int pn);
-int println(char *s);
+int println(const char *s);
 int tprintf(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
@@ -151,7 +151,7 @@ void deckbum(int flag);
 void deckpam(void);
 void deckpm(int flag);
 void deckpnm(void);
-void decll(char *ps);
+void decll(const char *ps);
 void decnkm(int flag);
 void decnrcm(int flag);
 void decom(int flag);
@@ -161,7 +161,7 @@ void decrara(int top, int left, int bottom, int right, int attr);
 void decrc(void);
 void decreqtparm(int pn);
 void decrqlp(int mode);
-void decrqss(char *pn);
+void decrqss(const char *pn);
 void decsace(int flag);
 void decsasd(int pn);
 void decsc(void);
@@ -179,9 +179,9 @@ void decstr(void);
 void decswl(void);
 void dectst(int pn);
 void dl(int pn);
-void do_csi(char *fmt, ...) GCC_PRINTFLIKE(1,2);
-void do_dcs(char *fmt, ...) GCC_PRINTFLIKE(1,2);
-void do_osc(char *fmt, ...) GCC_PRINTFLIKE(1,2);
+void do_csi(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+void do_dcs(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+void do_osc(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void dsr(int pn);
 void ech(int pn);
 void ed(int pn);
@@ -214,13 +214,13 @@ void rep(int pn);
 void reset_inchar(void);
 void ri(void);
 void ris(void);
-void rm(char *ps);
+void rm(const char *ps);
 void s8c1t(int flag);
 void scs(int g, int c);
 void sd(int pn);
 void sgr(const char *ps);
 void sl(int pn);
-void sm(char *ps);
+void sm(const char *ps);
 void sr(int pn);
 void srm(int flag);
 void su(int pn);

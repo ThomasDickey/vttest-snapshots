@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.78 2007/01/07 17:02:19 tom Exp $ */
+/* $Id: esc.c,v 1.79 2010/05/28 08:20:00 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -129,7 +129,7 @@ extra_padding(int msecs)
 }
 
 int
-println(char *s)
+println(const char *s)
 {
   printf("%s\r\n", s);
   if (LOG_ENABLED) {
@@ -210,7 +210,7 @@ tprintf(const char *fmt,...)
 
 /* CSI xxx */
 void
-do_csi(char *fmt,...)
+do_csi(const char *fmt,...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -231,7 +231,7 @@ do_csi(char *fmt,...)
 
 /* DCS xxx ST */
 void
-do_dcs(char *fmt,...)
+do_dcs(const char *fmt,...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -254,7 +254,7 @@ do_dcs(char *fmt,...)
 
 /* DCS xxx ST */
 void
-do_osc(char *fmt,...)
+do_osc(const char *fmt,...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -569,7 +569,7 @@ deckpnm(void)                   /* Keypad Numeric Mode */
 }
 
 void
-decll(char *ps)                 /* Load LEDs */
+decll(const char *ps)           /* Load LEDs */
 {
   do_csi("%sq", ps);
 }
@@ -644,7 +644,7 @@ decrqlp(int mode)               /* DECterm Request Locator Position */
 }
 
 void
-decrqss(char *pn)               /* VT200 Request Status-String */
+decrqss(const char *pn)         /* VT200 Request Status-String */
 {
   do_dcs("$q%s", pn);
 }
@@ -890,7 +890,7 @@ ris(void)                       /*  Reset to Initial State */
 }
 
 void
-rm(char *ps)                    /* Reset Mode */
+rm(const char *ps)              /* Reset Mode */
 {
   do_csi("%sl", ps);
 }
@@ -952,7 +952,7 @@ sl(int pn)                      /* Scroll Left */
 }
 
 void
-sm(char *ps)                    /* Set Mode */
+sm(const char *ps)              /* Set Mode */
 {
   do_csi("%sh", ps);
 }

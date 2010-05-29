@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.18 2006/11/26 17:30:11 tom Exp $ */
+/* $Id: vt220.c,v 1.20 2010/05/28 09:23:29 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -9,7 +9,7 @@
 #include <esc.h>
 
 int
-any_DSR(MENU_ARGS, char *text, void (*explain)(char *report))
+any_DSR(MENU_ARGS, const char *text, void (*explain)(char *report))
 {
   char *report;
 
@@ -40,9 +40,9 @@ any_DSR(MENU_ARGS, char *text, void (*explain)(char *report))
 }
 
 static void
-report_ok(char *ref, char *tst)
+report_ok(const char *ref, const char *tst)
 {
-  if ((tst = skip_csi(tst)) == 0)
+  if ((tst = skip_csi_2(tst)) == 0)
     tst = "?";
   show_result(!strcmp(ref, tst) ? SHOW_SUCCESS : SHOW_FAILURE);
 }
@@ -57,7 +57,7 @@ show_KeyboardStatus(char *report)
   int pos = 0;
   int code;
   int save;
-  char *show = SHOW_FAILURE;
+  const char *show = SHOW_FAILURE;
 
   if ((code = scanto(report, &pos, ';')) == 27
    && (code = scan_any(report, &pos, 'n')) != 0) {
@@ -95,7 +95,7 @@ show_KeyboardStatus(char *report)
     default:  show = "unknown";
     }
   }
-  show_result(show);
+  show_result("%s", show);
 
   /* vt420 implements additional parameters past those reported by the VT220 */
   save = pos;
@@ -108,15 +108,15 @@ show_KeyboardStatus(char *report)
     case 8: show = "keyboard busy"; break;
     default: show = "unknown keyboard status";
     }
-    show_result(show);
+    show_result("%s", show);
 
     vt_move(6,10);
-    switch (code = scan_any(report, &pos, 'n')) {
+    switch (scan_any(report, &pos, 'n')) {
     case 0:  show = "LK201"; break;
     case 1:  show = "LK401"; break;
     default: show = "unknown keyboard type";
     }
-    show_result(show);
+    show_result("%s", show);
   }
 }
 
@@ -125,7 +125,7 @@ show_PrinterStatus(char *report)
 {
   int pos = 0;
   int code = scanto(report, &pos, 'n');
-  char *show;
+  const char *show;
 
   switch (code) {
   case 13: show = "No printer"; break;
@@ -135,7 +135,7 @@ show_PrinterStatus(char *report)
   case 19: show = "Printer assigned to other session"; break;
   default: show = SHOW_FAILURE;
   }
-  show_result(show);
+  show_result("%s", show);
 }
 
 static void
@@ -143,14 +143,14 @@ show_UDK_Status(char *report)
 {
   int pos = 0;
   int code = scanto(report, &pos, 'n');
-  char *show;
+  const char *show;
 
   switch(code) {
   case 20: show = "UDKs unlocked"; break;
   case 21: show = "UDKs locked";   break;
   default: show = SHOW_FAILURE;
   }
-  show_result(show);
+  show_result("%s", show);
 }
 
 /* VT220 & up.
@@ -278,7 +278,7 @@ tst_DECUDK(MENU_ARGS)
   /* *INDENT-OFF* */
   static struct {
     int code;
-    char *name;
+    const char *name;
   } keytable[] = {
     /* xterm programs these: */
     { 11, "F1" },
@@ -306,7 +306,7 @@ tst_DECUDK(MENU_ARGS)
 
   for (key = 0; key < TABLESIZE(keytable); key++) {
     char temp[80];
-    char *s;
+    const char *s;
     temp[0] = '\0';
     for (s = keytable[key].name; *s; s++)
       sprintf(temp + strlen(temp), "%02x", *s & 0xff);

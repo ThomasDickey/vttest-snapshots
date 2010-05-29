@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.39 2010/01/01 15:46:30 tom Exp $
+# $Id: makefile.in,v 1.40 2010/05/28 07:59:28 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -23,6 +23,9 @@ INSTALL_DATA	= @INSTALL_DATA@
 LIBS		= @LIBS@
 CFLAGS		= @CFLAGS@ @EXTRA_CFLAGS@
 LDFLAGS 	= @LDFLAGS@
+
+CTAGS 		= @CTAGS@
+ETAGS 		= @ETAGS@
 
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
@@ -144,10 +147,10 @@ realclean: distclean
 	rm -f tags TAGS # don't remove configure!
 
 @MAKE_LOWER_TAGS@tags:	$(C_SRC) $(HDRS)
-@MAKE_LOWER_TAGS@	ctags $(C_SRC) $(HDRS)
+@MAKE_LOWER_TAGS@	$(CTAGS) $(C_SRC) $(HDRS)
 
 @MAKE_UPPER_TAGS@TAGS:	$(C_SRC) $(HDRS)
-@MAKE_UPPER_TAGS@	etags $(C_SRC) $(HDRS)
+@MAKE_UPPER_TAGS@	$(ETAGS) $(C_SRC) $(HDRS)
 
 # I keep my sources in RCS, and assign a symbolic release to the current patch
 # level.  The 'manifest' script knows how to build a list of files for a given

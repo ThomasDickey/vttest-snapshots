@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.10 2009/12/31 22:28:01 tom Exp $ */
+/* $Id: sixel.c,v 1.12 2010/05/28 09:50:36 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -10,12 +10,15 @@
 #define L_CURL '{'
 #define MAX_WIDTH 10
 
-static char *EraseCtl = "";
-static char *FontName = "";
-static char *StartingCharPtr = "";
-static char *TextCell = "";
-static char *WidthAttr = "";
-static char *font_string = "";
+static char empty[1];
+
+static const char *EraseCtl = "";
+static const char *FontName = "";
+static char *StartingCharPtr = empty;
+static const char *TextCell = "";
+static const char *WidthAttr = "";
+static char *font_string = empty;
+
 static int FontNumber;
 static int MatrixHigh;
 static int MatrixWide;
@@ -221,7 +224,7 @@ tst_cleanup(MENU_ARGS)
  * at the beginning (to accommodate the "font2xx" output format).
  */
 void
-setup_softchars(char *filename)
+setup_softchars(const char *filename)
 {
   FILE *fp;
   int c;
@@ -255,7 +258,7 @@ setup_softchars(char *filename)
       if (skip_dcs(s) != 0)
         first = s;
     } else {
-      if (!strncmp(s, st_input(), 2)) {
+      if (!strncmp(s, st_input(), (size_t) 2)) {
         last = s + 2;
         *last = '\0';
         break;

@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.8 2007/12/16 16:26:27 tom Exp $ */
+/* $Id: draw.c,v 1.9 2010/05/28 08:33:22 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -89,9 +89,9 @@ draw_box_filled(BOX *box, int mark)
 }
 
 static int
-next_word(char *s)
+next_word(const char *s)
 {
-  char *base;
+  const char *base;
   while (*s == ' ')
     s++;
   base = s;
@@ -101,7 +101,7 @@ next_word(char *s)
 }
 
 void
-draw_box_caption(BOX *box, int margin, char **c)
+draw_box_caption(BOX *box, int margin, const char **c)
 {
   int x0 = (box->left + margin);
   int y0 = (box->top + margin);
@@ -110,7 +110,7 @@ draw_box_caption(BOX *box, int margin, char **c)
   int x = x0;
   int y = y0;
   int t;
-  char *s;
+  const char *s;
 
   while ((s = *c++) != 0) {
     while ((t = *s++) != 0) {

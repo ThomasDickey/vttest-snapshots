@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.22 2009/12/31 22:29:01 tom Exp $ */
+/* $Id: unix_io.c,v 1.24 2010/05/28 09:54:51 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -33,7 +33,7 @@ char
 inchar(void)
 {
   int lval;
-  char ch = '\0';
+  int ch = '\0';
 
   fflush(stdout);
   lval = last_char;
@@ -43,7 +43,8 @@ inchar(void)
   signal(SIGALRM, give_up);
   alarm(60);    /* timeout after 1 minute, in case user's keyboard is hung */
 #endif
-  read(0, &ch, 1);
+  if (read(0, &ch, (size_t) 1) < 0)
+    ch = EOF;
 #ifdef HAVE_ALARM
   alarm(0);
 #endif
@@ -87,7 +88,7 @@ read_buffer(char *result, int want)
 #if USE_FIONREAD
   while (ioctl(0, FIONREAD, &l1), l1 > 0L) {
     while (l1-- > 0L) {
-      read(0, result + i, 1);
+      read(0, result + i, (size_t) 1);
       if (i++ >= want)
         goto out1;
     }
@@ -117,7 +118,7 @@ instr(void)
   int i = 0;
 
   result[i++] = inchar();
-  (void) read_buffer(result + i, sizeof(result) - 2);
+  (void) read_buffer(result + i, (int) sizeof(result) - 2);
 
   if (LOG_ENABLED) {
     fputs("Reply: ", log_fp);
@@ -184,9 +185,9 @@ inflush(void)
   int l1;
   ioctl(0, FIONREAD, &l1);
   while (l1-- > 0L)
-    read(0, &val, 1);
+    read(0, &val, (size_t) 1);
 #else
-  while (read(2, &val, 1) > 0) ;
+  while (read(2, &val, (size_t) 1) > 0) ;
 #endif
 #endif
 }
@@ -202,13 +203,16 @@ holdit(void)
 void
 readnl(void)
 {
-  char ch = '\0';
+  int ch = '\0';
 
   fflush(stdout);
   brkrd = FALSE;
   reading = TRUE;
   do {
-    read(0, &ch, 1);
+    if (read(0, &ch, (size_t) 1) < 0) {
+      ch = EOF;
+      break;
+    }
   } while (ch != '\n' && !brkrd);
   if (brkrd)
     give_up(SIGTERM);

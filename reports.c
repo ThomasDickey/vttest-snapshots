@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.28 2004/08/03 01:07:35 tom Exp $ */
+/* $Id: reports.c,v 1.31 2010/05/28 09:50:36 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -8,7 +8,7 @@
 static
 struct table {
     int key;
-    char *msg;
+    const char *msg;
 } paritytable[] = {
     { 1, "NONE" },
     { 4, "ODD"  },
@@ -79,14 +79,14 @@ struct table {
 };
 
 static int
-legend(int n, char *input, char *word, char *description)
+legend(int n, const char *input, const char *word, const char *description)
 {
   int i;
-  unsigned len = strlen(word);
+  size_t len = strlen(word);
   char buf[BUFSIZ];
 
   for (i = 0; input[i] != 0; i++) {
-    if ((i == 0 || !isalpha(input[i-1]))
+    if ((i == 0 || !isalpha(CharOf(input[i-1])))
      && !strncmp(word, input+i, len)) {
       sprintf(buf, "%-8s %-3s = %s", n ? "" : "Legend:", word, description);
       show_result("%s", buf);
@@ -97,7 +97,7 @@ legend(int n, char *input, char *word, char *description)
   return n;
 }
 
-static char *
+static const char *
 lookup(struct table t[], int k)
 {
   int i;
@@ -108,7 +108,7 @@ lookup(struct table t[], int k)
 }
 
 static int
-scan_DA(char *str, int *pos)
+scan_DA(const char *str, int *pos)
 {
   int save = *pos;
   int value = scanto(str, pos, ';');
@@ -127,9 +127,9 @@ static int
 tst_DA(MENU_ARGS)
 {
   int i, found;
-  char *report, *cmp;
+  const char *report, *cmp;
 
-  static char *attributes[][2] = { /* after CSI */
+  static const char *attributes[][2] = { /* after CSI */
     { "?1;0c",   "No options (vanilla VT100)" },
     { "?1;1c",   "VT100 with STP" },
     { "?1;2c",   "VT100 with AVO (could be a VT102)" },
@@ -172,7 +172,7 @@ tst_DA(MENU_ARGS)
   chrprint(report);
 
   found = FALSE;
-  if ((cmp = skip_csi(report)) != 0) {
+  if ((cmp = skip_csi_2(report)) != 0) {
     for (i = 0; *attributes[i][0] != '\0'; i++) {
       if (!strcmp(cmp, attributes[i][0])) {
         int n = 0;
@@ -181,7 +181,7 @@ tst_DA(MENU_ARGS)
         n = legend(n, attributes[i][1], "STP", "Processor Option");
         n = legend(n, attributes[i][1], "AVO", "Advanced Video Option");
         n = legend(n, attributes[i][1], "GPO", "Graphics Processor Option");
-        n = legend(n, attributes[i][1], "PP",  "Printer Port");
+        (void) legend(n, attributes[i][1], "PP",  "Printer Port");
         found = TRUE;
         break;
       }
@@ -272,7 +272,7 @@ tst_DA_2(MENU_ARGS)
   char *report;
   int Pp, Pv, Pc;
   char ch;
-  char *show = SHOW_FAILURE;
+  const char *show = SHOW_FAILURE;
   size_t n;
 
   vt_move(1,1); println("Testing Secondary Device Attributes (Firmware version)");
@@ -307,7 +307,7 @@ tst_DA_2(MENU_ARGS)
       }
     }
   }
-  show_result(show);
+  show_result("%s", show);
 
   restore_ttymodes();
   vt_move(max_lines-1,1);
@@ -321,7 +321,7 @@ static int
 tst_DA_3(MENU_ARGS)
 {
   char *report;
-  char *show;
+  const char *show;
 
   vt_move(1,1); println("Testing Tertiary Device Attributes (unit ID)");
 
@@ -339,7 +339,7 @@ tst_DA_3(MENU_ARGS)
   } else {
     show = SHOW_FAILURE;
   }
-  show_result(show);
+  show_result("%s", show);
 
   restore_ttymodes();
   vt_move(max_lines-1,1);
