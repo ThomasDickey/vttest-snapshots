@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.79 2010/05/28 09:22:37 tom Exp $ */
+/* $Id: vt420.c,v 1.80 2010/08/27 08:43:32 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -1061,8 +1061,8 @@ tst_VT420_report_presentation(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
-static int
-tst_VT420_reports(MENU_ARGS)
+int
+tst_vt420_reports(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
@@ -1122,7 +1122,7 @@ tst_vt420(MENU_ARGS)
       { "Test macro-definition (DECDMAC)",                   not_impl },
       { "Test page-format controls",                         tst_PageFormat },
       { "Test rectangular area functions",                   tst_VT420_rectangle },
-      { "Test reporting functions",                          tst_VT420_reports },
+      { "Test reporting functions",                          tst_vt420_reports },
       { "Test screen-display functions",                     tst_VT420_screen },
       { "",                                                  0 }
     };

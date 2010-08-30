@@ -1,0 +1,12 @@
+#! /bin/sh
+# prerm script for vttest
+
+set -e
+
+if [ $1 != "upgrade" ]; then
+	update-alternatives --remove vttest /usr/bin/vttest-cur
+fi
+
+#DEBHELPER#
+
+exit 0

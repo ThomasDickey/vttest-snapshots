@@ -1,5 +1,23 @@
--- $Id: CHANGES,v 1.120 2010/05/28 09:04:41 tom Exp $
+-- $Id: CHANGES,v 1.129 2010/08/30 07:59:10 tom Exp $
 -------------------------------------------------------------------------------
+
+20100830
+	+ modify mouse tests to show DECRPM results for the mouse modes, if
+	  DECRQM is enabled, i.e., level is VT300 and up.
+
+	+ modify mouse tests to work with xterm #262's UTF-8 coordinates.
+
+	+ add menu entries for xterm #224's focus-event and xterm #262's UTF-8
+	  coordinates.
+
+	+ add xterm-specific screen for DECRQM/DECRPM.
+
+	+ modify configure script to support program name-transformation
+	  options.
+
+	+ drop mkdirs.sh, use "mkdir -p".
+
+	+ add RPM and Debian package scripts, for testing.
 
 20100528
 	+ correct check of fflush return code, which interfered with demo of

@@ -1,4 +1,4 @@
-MANIFEST for vttest, version d20100528
+MANIFEST for vttest, version t20100830
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -22,7 +22,6 @@ install-sh                      install script, needed for configure
 keyboard.c                      test keyboard functions
 main.c                          main-program & most tests, for VTTEST
 makefile.in                     template for makefile
-mkdirs.sh                       mkinstalldirs script, from X11
 mouse.c                         mouse tests for xterm
 nonvt100.c                      non-VT100 tests
 patchlev.h                      patch-level of VTTEST
@@ -37,6 +36,7 @@ tek4014.c                       tektronix tests
 ttymodes.c                      module for changing tty modes
 ttymodes.h                      interface of ttymodes.c
 unix_io.c                       UNIX-specific I/O support
+utf8.c                          convert to/from UTF-8
 vms_io.c                        VMS I/O routines
 vmsbuild.com                    VMS DCL script for building VTTEST
 vt220.c                         vt220 tests
@@ -47,3 +47,19 @@ vt520.c                         vt520-specific tests
 vttest.1                        manual-page for VTTEST
 vttest.h                        renamed from header.h, common definitions of VTTEST
 xterm.c                         tests for xterm and clones
+package/debian                  subdirectory
+package/debian/changelog        build-script
+package/debian/compat           build-script
+package/debian/control          build-script
+package/debian/copyright        build-script
+package/debian/docs             build-script
+package/debian/postinst         build-script
+package/debian/preinst          build-script
+package/debian/prerm            build-script
+package/debian/rules            build-script
+package/debian/source           subdirectory
+package/debian/source/format    build-script
+package/debian                  subdirectory
+package/debian/watch            build-script
+package                         subdirectory
+package/vttest.spec             build-script

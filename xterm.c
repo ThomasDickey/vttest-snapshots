@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.44 2010/05/28 00:41:33 tom Exp $ */
+/* $Id: xterm.c,v 1.49 2010/08/28 15:15:22 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -480,6 +480,203 @@ test_window_name(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
+#define DATA(name,level) { name, #name, level }
+
+/*
+ * xterm's DECRQM codes are based on VT320/VT420/VT520, but there are a few
+ * conflicting modes (adapted from rxvt), as well as xterm's extensions.
+ * Those are reflected in the naming conventions.
+ *
+ * The names chosen here are short, to keep display alignment.
+ */
+#define XT_MSE_X10 9
+#define XT_TOOLBAR 10
+#define XT_CBLINK  12
+#define XT_SCRLBAR 30
+#define XT_FONTSWT 35
+#define XT_CURSES  41
+#define XT_MARBELL 44
+#define XT_REVWRAP 45
+#define XT_LOGGING 46
+#define XT_ALTSCRN 47
+#define XT_MSE_X11 1000
+#define XT_MSE_HL  1001
+#define XT_MSE_BTN 1002
+#define XT_MSE_ANY 1003
+#define XT_MSE_WIN 1004
+#define XT_MSE_UTF 1005
+#define XT_TTY_OUT 1010
+#define XT_SCRLKEY 1011
+#define XT_IN_8BIT 1034
+#define XT_NUMLOCK 1035
+#define XT_METAESC 1036
+#define XT_DELTDEL 1037
+#define XT_ALT_ESC 1039
+#define XT_KEEPSEL 1040
+#define XT_SELTCLP 1041
+#define XT_BELLURG 1042
+#define XT_POPBELL 1043
+#define XT_ALTS_47 1047
+#define XT_ALTS_48 1048
+#define XT_EXTSCRN 1049
+#define XT_KT_TCAP 1050
+#define XT_KT_SUN  1051
+#define XT_KT_HP   1052
+#define XT_KT_SCO  1053
+#define XT_KT_OLD  1060
+#define XT_KT_PC   1061
+#define RL_BTN1    2001
+#define RL_BTN2    2002
+#define RL_DBTN3   2003
+#define RL_BRACKET 2004
+#define RL_QUOTE   2005
+#define RL_LIT_NL  2006
+
+static int
+tst_xterm_DECRPM(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  RQM_DATA dec_modes[] = { /* this list is sorted by code, not name */
+    DATA( DECCKM,     3 /* cursor keys */),
+    DATA( DECANM,     3 /* ANSI */),
+    DATA( DECCOLM,    3 /* column */),
+    DATA( DECSCLM,    3 /* scrolling */),
+    DATA( DECSCNM,    3 /* screen */),
+    DATA( DECOM,      3 /* origin */),
+    DATA( DECAWM,     3 /* autowrap */),
+    DATA( DECARM,     3 /* autorepeat */),
+    DATA( XT_MSE_X10, 3 /* X10 mouse */),
+    DATA( XT_TOOLBAR, 3 /* rxvt toolbar vs DECEDM */),
+    DATA( DECLTM,     3 /* line transmit */),
+    DATA( XT_CBLINK,  3 /* att610: Start/stop blinking cursor */),
+    DATA( DECSCFDM,   3 /* space compression field delimiter */),
+    DATA( DECTEM,     3 /* transmission execution */),
+    DATA( DECEKEM,    3 /* edit key execution */),
+    DATA( DECPFF,     3 /* print form feed */),
+    DATA( DECPEX,     3 /* printer extent */),
+    DATA( DECTCEM,    3 /* text cursor enable */),
+    DATA( XT_SCRLBAR, 3 /* rxvt scrollbar */),
+    DATA( DECRLM,     5 /* left-to-right */),
+    DATA( XT_FONTSWT, 3 /* rxvt font-switching vs DECTEK */),
+    DATA( DECHEM,     5 /* Hebrew encoding */),
+    DATA( XT_CURSES,  3 /* curses hack */),
+    DATA( DECNRCM,    3 /* national replacement character set */),
+    DATA( DECGEPM,    3 /* graphics expanded print */),
+    DATA( XT_MARBELL, 3 /* margin bell vs DECGPCM */),
+    DATA( XT_REVWRAP, 3 /* reverse-wrap vs DECGPCS */),
+    DATA( XT_LOGGING, 3 /* logging vs DECGPBM */),
+    DATA( XT_ALTSCRN, 3 /* alternate screen vs DECGRPM */),
+    DATA( DEC131TM,   3 /* VT131 transmit */),
+    DATA( DECNAKB,    5 /* Greek/N-A Keyboard Mapping */),
+    DATA( DECHCCM,    3 /* horizontal cursor coupling (disabled) */),
+    DATA( DECVCCM,    3 /* vertical cursor coupling */),
+    DATA( DECPCCM,    3 /* page cursor coupling */),
+    DATA( DECNKM,     3 /* numeric keypad */),
+    DATA( DECBKM,     3 /* backarrow key */),
+    DATA( DECKBUM,    3 /* keyboard usage */),
+    DATA( DECVSSM,    4 /* vertical split */),
+    DATA( DECXRLM,    3 /* transmit rate linking */),
+    DATA( DECKPM,     4 /* keyboard positioning */),
+    DATA( DECNCSM,    5 /* no clearing screen on column change */),
+    DATA( DECRLCM,    5 /* right-to-left copy */),
+    DATA( DECCRTSM,   5 /* CRT save */),
+    DATA( DECARSM,    5 /* auto resize */),
+    DATA( DECMCM,     5 /* modem control */),
+    DATA( DECAAM,     5 /* auto answerback */),
+    DATA( DECCANSM,   5 /* conceal answerback */),
+    DATA( DECNULM,    5 /* null */),
+    DATA( DECHDPXM,   5 /* half duplex */),
+    DATA( DECESKM,    5 /* enable secondary keyboard language */),
+    DATA( DECOSCNM,   5 /* overscan */),
+    DATA( DECFWM,     5 /* framed windows */),
+    DATA( DECRPL,     5 /* review previous lines */),
+    DATA( DECHWUM,    5 /* host wake-up mode (CRT and energy saver) */),
+    DATA( DECATCUM,   5 /* alternate text color underline */),
+    DATA( DECATCBM,   5 /* alternate text color blink */),
+    DATA( DECBBSM,    5 /* bold and blink style */),
+    DATA( DECECM,     5 /* erase color */),
+    DATA( XT_MSE_X11, 3 /* VT200 mouse */),
+    DATA( XT_MSE_HL,  3 /* VT200 highlight mouse */),
+    DATA( XT_MSE_BTN, 3 /* button-event mouse */),
+    DATA( XT_MSE_ANY, 3 /* any-event mouse */),
+    DATA( XT_MSE_WIN, 3 /* focus-event mouse */),
+    DATA( XT_MSE_UTF, 3 /* extended mouse-coordinates */),
+    DATA( XT_TTY_OUT, 3 /* rxvt scroll tty output */),
+    DATA( XT_SCRLKEY, 3 /* rxvt scroll key */),
+    DATA( XT_IN_8BIT, 3 /* input eight bits */),
+    DATA( XT_NUMLOCK, 3 /* real num lock */),
+    DATA( XT_METAESC, 3 /* meta sends escape */),
+    DATA( XT_DELTDEL, 3 /* delete is del */),
+    DATA( XT_ALT_ESC, 3 /* alt sends escape */),
+    DATA( XT_KEEPSEL, 3 /* keep selection */),
+    DATA( XT_SELTCLP, 3 /* select to clipboard */),
+    DATA( XT_BELLURG, 3 /* bell is urgent */),
+    DATA( XT_POPBELL, 3 /* pop on bell */),
+    DATA( XT_ALTS_47, 3 /* first extended alt-screen */),
+    DATA( XT_EXTSCRN, 3 /* second extended alt-screen */),
+    DATA( RL_BTN1,    3 /* click1 emit Esc seq to move point*/),
+    DATA( RL_BTN2,    3 /* press2 emit Esc seq to move point*/),
+    DATA( RL_DBTN3,   3 /* Double click-3 deletes */),
+    DATA( RL_BRACKET, 3 /* Surround paste by escapes */),
+    DATA( RL_QUOTE,   3 /* Quote each char during paste */),
+    DATA( RL_LIT_NL,  3 /* Paste "\n" as C-j */),
+  };
+  /* *INDENT-ON* */
+
+  int old_DECRPM = set_DECRPM(3);
+  int code = any_RQM(PASS_ARGS, dec_modes, TABLESIZE(dec_modes), 1);
+
+  set_DECRPM(old_DECRPM);
+  return code;
+}
+
+/*
+ * Show mouse-modes, offered as an option in the mouse test-screens (since that
+ * is really where these can be tested).
+ */
+void
+show_mousemodes(void)
+{
+  /* *INDENT-OFF* */
+  RQM_DATA mouse_modes[] = { /* this list is sorted by code, not name */
+    DATA( XT_MSE_X10, 3 /* X10 mouse */),
+    DATA( XT_MSE_X11, 3 /* VT200 mouse */),
+    DATA( XT_MSE_HL,  3 /* VT200 highlight mouse */),
+    DATA( XT_MSE_BTN, 3 /* button-event mouse */),
+    DATA( XT_MSE_ANY, 3 /* any-event mouse */),
+    DATA( XT_MSE_WIN, 3 /* focus-event mouse */),
+    DATA( XT_MSE_UTF, 3 /* extended mouse-coordinates */),
+  };
+  /* *INDENT-ON* */
+
+  int old_DECRPM = set_DECRPM(3);
+  vt_clear(2);
+  (void) any_RQM("mouse modes", mouse_modes, TABLESIZE(mouse_modes), 1);
+  set_DECRPM(old_DECRPM);
+  holdit();
+}
+
+#undef DATA
+static int
+tst_xterm_reports(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+    { "Exit",                                                0 },
+    { "Test VT420 features",                                 tst_vt420_reports },
+    { "Request Mode (DECRQM)/Report Mode (DECRPM)",          tst_xterm_DECRPM },
+    { "",                                                    0 }
+  };
+  /* *INDENT-ON* */
+
+  do {
+    vt_clear(2);
+    __(title(0), println("XTERM miscellaneous reports"));
+    __(title(2), println("Choose test type:"));
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
 /*
  * xterm (and derived programs such as hpterm, dtterm, rxvt) are the most
  * widely used vt100 near-compatible terminal emulators (other than modem
@@ -492,6 +689,8 @@ tst_xterm(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
     { "Exit",                                                0 },
+    { "Test VT420 features",                                 tst_vt420 },
+    { "Test reporting functions",                            tst_xterm_reports },
     { "Set window title",                                    test_window_name },
     { "Font features",                                       tst_font },
     { "Mouse features",                                      tst_mouse },

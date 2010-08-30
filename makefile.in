@@ -1,8 +1,7 @@
-# $Id: makefile.in,v 1.40 2010/05/28 07:59:28 tom Exp $
+# $Id: makefile.in,v 1.43 2010/08/28 12:16:45 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
-RELEASE = 2
 
 #### Start of system configuration section. ####
 
@@ -19,6 +18,7 @@ LINT		= @LINT@
 INSTALL 	= @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
+transform	= @program_transform_name@
 
 LIBS		= @LIBS@
 CFLAGS		= @CFLAGS@ @EXTRA_CFLAGS@
@@ -38,18 +38,34 @@ manext		= 1
 
 SHELL		= /bin/sh
 
-DEFINES 	= -DHAVE_CONFIG_H -DRELEASE=$(RELEASE)
-INCLUDES	= -I. -I$(srcdir)
-CPPFLAGS	= $(DEFINES) $(INCLUDES) @CPPFLAGS@
+CPPFLAGS 	= -DHAVE_CONFIG_H -I. -I$(srcdir) @CPPFLAGS@
 
-.SUFFIXES: .c .i $o
+################################################################################
+.SUFFIXES : $o .i .html .$(manext) .cat .ps .pdf .txt
 
-.c.i:
-	@RULE_CC@
-	@ECHO_CC@$(CPP) -E -C $(CPPFLAGS) $< >$@
 .c$o:
 	@RULE_CC@
 	@ECHO_CC@$(CC) -c $(CPPFLAGS) $(CFLAGS) $<
+
+.c.i :
+	@RULE_CC@
+	@ECHO_CC@$(CPP) -C $(CPPFLAGS) $*.c >$@
+
+.$(manext).cat :
+	- nroff -man $(srcdir)/$(THIS).$(manext) >$@
+
+.$(manext).html :
+	GROFF_NO_SGR=stupid $(SHELL) -c "tbl $*.$(manext) | groff -Thtml -man" >$@
+
+.$(manext).ps :
+	$(SHELL) -c "tbl $*.$(manext) | groff -man" >$@
+
+.$(manext).txt :
+	GROFF_NO_SGR=stupid $(SHELL) -c "tbl $*.$(manext) | nroff -Tascii -man | col -bx" >$@
+
+.ps.pdf :
+	ps2pdf $*.ps
+################################################################################
 
 C_SRC = \
 	charsets.c \
@@ -69,6 +85,7 @@ C_SRC = \
 	tek4014.c \
 	ttymodes.c \
 	unix_io.c \
+	utf8.c \
 	vt220.c \
 	vt320.c \
 	vt420.c \
@@ -98,6 +115,7 @@ OBJS  = \
 	tek4014$o \
 	ttymodes$o \
 	unix_io$o \
+	utf8$o \
 	vt220$o \
 	vt320$o \
 	vt420$o \
@@ -110,7 +128,13 @@ SRC =	patchlev.h \
 	$(THIS).1 \
 	$(C_SRC) $(H_SRC) \
 	tech.set \
-	config.hin install.sh mkdirs.sh makefile.in configure.in
+	config.hin install.sh makefile.in configure.in
+
+TRANSFORM_BIN = sed 's/$x$$//'         |sed '$(transform)'|sed 's/$$/$x/'
+TRANSFORM_MAN = sed 's/\.$(manext)$$//'|sed '$(transform)'|sed 's/$$/.$(manext)/'
+
+actual_bin = `echo $(THIS)$x        | $(TRANSFORM_BIN)`
+actual_man = `echo $(THIS).$(manext)| $(TRANSFORM_MAN)`
 
 PROG	= $(THIS)$x
 
@@ -124,15 +148,17 @@ $(PROG): $(OBJS)
 $(OBJS): config.h $(THIS).h patchlev.h
 
 install: all installdirs
-	$(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
-	$(INSTALL_DATA) $(srcdir)/$(THIS).1 $(mandir)/$(THIS).$(manext)
+	$(INSTALL_PROGRAM) $(PROG) $(bindir)/$(actual_bin)
+	$(INSTALL_DATA) $(srcdir)/$(THIS).1 $(mandir)/$(actual_man)
 
-installdirs:
-	$(SHELL) ${srcdir}/mkdirs.sh $(bindir) $(mandir)
+installdirs: $(bindir) $(mandir)
+
+$(bindir) $(mandir) :
+	mkdir -p $@
 
 uninstall:
-	rm -f $(bindir)/$(PROG)
-	rm -f $(mandir)/$(THIS).$(manext)
+	rm -f $(bindir)/$(actual_bin)
+	rm -f $(mandir)/$(actual_man)
 
 mostlyclean:
 	rm -f *.[oi] core *~ *.BAK *.trace *.atac
@@ -156,7 +182,6 @@ realclean: distclean
 # level.  The 'manifest' script knows how to build a list of files for a given
 # revision.
 MANIFEST: patchlev.h
-#	manifest -rv$(RELEASE)`fgrep PATCHLEVEL patchlev.h | sed -e s'/^[^0-9]*/_/'`
 	manifest -rd`fgrep PATCH_DATE patchlev.h | sed -e s'/^[^0-9]*//'`
 
 dist: MANIFEST
@@ -182,6 +207,17 @@ dist-shar: MANIFEST
 	- rm -f .fname .files
 
 $(THIS)$o:	config.h
+
+################################################################################
+docs :: $(THIS).html \
+	$(THIS).pdf \
+	$(THIS).ps \
+	$(THIS).txt
+$(THIS).html : $(THIS).$(manext)
+$(THIS).pdf : $(THIS).ps
+$(THIS).ps : $(THIS).$(manext)
+$(THIS).txt : $(THIS).$(manext)
+################################################################################
 
 lint:
 	$(LINT) $(CPPFLAGS) $(C_SRC)

@@ -1,11 +1,11 @@
-# $Id: descrip.mms,v 1.16 2004/11/03 02:26:37 tom Exp $
+# $Id: descrip.mms,v 1.17 2010/08/28 12:21:13 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
 
 #### Start of system configuration section. ####
 
-DEFINES = /Define=(STDC_HEADERS,RELEASE=2)
+DEFINES = /Define=(STDC_HEADERS)
 CFLAGS	= /Listing /Include=([]) $(DEFINES)
 
 #### End of system configuration section. ####
@@ -28,11 +28,13 @@ C_SRC = \
 	tek4014.c \
 	ttymodes.c \
 	unix_io.c \
+	utf8.c \
 	vms_io.c \
 	vt220.c \
 	vt320.c \
 	vt420.c \
 	vt52.c \
+	vt520.c \
 	xterm.c
 H_SRC = \
 	vttest.h \
@@ -55,11 +57,13 @@ OBJS = \
 	sixel.obj, \
 	status.obj, \
 	tek4014.obj, \
+	utf8.obj, \
 	vms_io.obj, \
 	vt220.obj, \
 	vt320.obj, \
 	vt420.obj, \
 	vt52.obj, \
+	vt520.obj, \
 	xterm.obj
 
 SRC =	patchlev.h \
