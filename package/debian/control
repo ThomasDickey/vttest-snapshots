@@ -1,0 +1,19 @@
+Source: vttest-cur
+Maintainer: Thomas E. Dickey <dickey@invisible-island.net>
+Section: utils
+Priority: optional
+Standards-Version: 3.8.4
+Build-Depends: debhelper (>= 5)
+Homepage: http://invisible-island.net/vttest/
+
+Package: vttest-cur
+Architecture: any
+Description: pattern scanning and text processing language
+ Vttest is a program designed to test the functionality of a VT100
+ terminal (or emulator thereof).  It tests both display (escape sequence
+ handling) and keyboard.
+ .
+ The program is menu-driven and contains full on-line operating
+ instructions.  To run a given menu-item, you must enter its number.  You
+ can run all menu-items (for a given level) by entering an asterisk, i.e,
+ `*'.

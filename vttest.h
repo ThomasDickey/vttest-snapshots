@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.75 2010/05/28 23:24:34 tom Exp $ */
+/* $Id: vttest.h,v 1.79 2010/08/28 14:59:31 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -204,13 +204,18 @@ typedef struct {
   int output_8bits;
 } VTLEVEL;
 
+typedef struct {
+  int mode;
+  const char *name;
+  int level;
+} RQM_DATA;
+
 #define MENU_NOHOLD 0
 #define MENU_HOLD   1
 #define MENU_MERGE  2
 
 #define TITLE_LINE  3
 
-/* main.c */
 extern RETSIGTYPE onbrk(SIG_ARGS);
 extern RETSIGTYPE onterm(SIG_ARGS);
 extern char *skip_csi(char *input);
@@ -225,6 +230,7 @@ extern const char *skip_digits_2(const char *src);
 extern const char *skip_prefix_2(const char *prefix, const char *input);
 extern const char *skip_ss3_2(const char *input);
 extern int any_DSR(MENU_ARGS, const char *text, void (*explain)(char *report));
+extern int any_RQM(MENU_ARGS, RQM_DATA *table, int tablesize, int private);
 extern int any_decrqpsr(MENU_ARGS, int Ps);
 extern int any_decrqss(const char *msg, const char *func);
 extern int bug_a(MENU_ARGS);
@@ -237,6 +243,8 @@ extern int bug_l(MENU_ARGS);
 extern int bug_s(MENU_ARGS);
 extern int bug_w(MENU_ARGS);
 extern int chrprint2(const char *s, int row, int col);
+extern int conv_to_utf32(unsigned *target, const char *source, unsigned limit);
+extern int conv_to_utf8(unsigned char *target, unsigned source, unsigned limit);
 extern int get_level(void);
 extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
@@ -289,6 +297,7 @@ extern int tst_vt320_report_presentation(MENU_ARGS);
 extern int tst_vt320_reports(MENU_ARGS);
 extern int tst_vt320_screen(MENU_ARGS);
 extern int tst_vt420(MENU_ARGS);
+extern int tst_vt420_reports(MENU_ARGS);
 extern int tst_vt52(MENU_ARGS);
 extern int tst_vt520(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
@@ -305,6 +314,7 @@ extern void save_level(VTLEVEL *save);
 extern void scs_graphics(void);
 extern void scs_normal(void);
 extern void setup_softchars(const char *filename);
+extern void show_mousemodes(void);
 extern void show_result(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 extern void vt_clear(int code);
 extern void vt_el(int code);

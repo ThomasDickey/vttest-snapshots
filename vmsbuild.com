@@ -1,4 +1,4 @@
-$! $Id: vmsbuild.com,v 1.17 2010/01/01 15:45:54 tom Exp $
+$! $Id: vmsbuild.com,v 1.19 2010/08/28 12:17:47 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
@@ -7,9 +7,8 @@ $!	VAX-C version 3.2
 $!
 $!	Build the option-file
 $!
-$ release := 2
 $ open/write optf vms_link.opt
-$ write optf "Identification=""VtTest ''release'.7"""
+$ write optf "Identification=""VtTest 2.7"""
 $ write optf "charsets.obj"
 $ write optf "color.obj"
 $ write optf "draw.obj"
@@ -24,6 +23,7 @@ $ write optf "setup.obj"
 $ write optf "sixel.obj"
 $ write optf "status.obj"
 $ write optf "tek4014.obj"
+$ write optf "utf8.obj"
 $ write optf "vms_io.obj"
 $ write optf "vt220.obj"
 $ write optf "vt320.obj"
@@ -42,7 +42,7 @@ $ then
 $  arch = "__alpha__=1"
 $  comp  = "__decc__=1"
 $  CFLAGS = "/prefix=all"
-$  DEFS = ",HAVE_ALARM"
+$  DEFS = "HAVE_ALARM"
 $  if f$trnlnm("SYS").eqs."" then define sys sys$library:
 $ endif
 $!
@@ -51,7 +51,7 @@ $ then
 $  arch = "__ia64__=1"
 $  comp  = "__decc__=1"
 $  CFLAGS = "/prefix=all"
-$  DEFS = ",HAVE_ALARM,USE_IEEE_FLOAT"
+$  DEFS = "HAVE_ALARM,USE_IEEE_FLOAT"
 $  if f$trnlnm("SYS").eqs."" then define sys sys$library:
 $ endif
 $!
@@ -61,7 +61,7 @@ $  arch = "__vax__=1"
 $  if f$search("SYS$SYSTEM:DECC$COMPILER.EXE").eqs.""
 $   then
 $    if f$trnlnm("SYS").eqs."" then define sys sys$library:
-$    DEFS = ",HAVE_SYS_ERRLIST"
+$    DEFS = "HAVE_SYS_ERRLIST"
 $    write optf "sys$library:vaxcrtl.exe/share"
 $    if f$search("SYS$SYSTEM:VAXC.EXE").eqs.""
 $     then
@@ -105,7 +105,7 @@ $
 $ if f$search("SYS$SYSTEM:MMS.EXE").eqs.""
 $  then
 $
-$   CFLAGS := 'CFLAGS/Diagnostics /Define=("RELEASE=''RELEASE'''DEFS'") /Include=([])
+$   CFLAGS := 'CFLAGS/Diagnostics /Define=("''DEFS'") /Include=([])
 $
 $	if "''p1'" .nes. "" then goto 'p1
 $
@@ -125,10 +125,12 @@ $	call make setup
 $	call make sixel
 $	call make status
 $	call make tek4014
+$	call make utf8
 $	call make vt220
 $	call make vt320
 $	call make vt420
 $	call make vt52
+$	call make vt520
 $	call make vms_io
 $	call make xterm
 $

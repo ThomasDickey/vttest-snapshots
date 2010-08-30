@@ -1,0 +1,5 @@
+vttest-cur (2.7.20100830) unstable; urgency=low
+
+  * Add package scripts to upstream source, for test-builds.
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Thu, 26 Aug 2010 04:45:46 -0400

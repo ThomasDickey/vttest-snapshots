@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.16 2010/05/28 09:50:36 tom Exp $ */
+/* $Id: vt320.c,v 1.20 2010/08/28 15:17:03 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -416,43 +416,14 @@ set_DECRPM(int level)
   return result;
 }
 
-typedef struct {
-  int mode;
-  const char *name;
-  int level;
-} DECRPM_DATA;
-
 #define DATA(name,level) { name, #name, level }
 
-static int
-tst_ISO_DECRPM(MENU_ARGS)
+int
+any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
 {
-  int j, Pa, Ps;
+  int j, row, Pa, Ps;
   char chr;
   char *report;
-  /* *INDENT-OFF* */
-  DECRPM_DATA ansi_modes[] = { /* this list is sorted by code, not name */
-    DATA( GATM, 3 /* guarded area transfer (disabled) */),
-    DATA( KAM,  3 /* keyboard action */),
-    DATA( CRM,  3 /* control representation (setup) */),
-    DATA( IRM,  3 /* insert/replace */),
-    DATA( SRTM, 3 /* status reporting transfer (disabled) */),
-    DATA( ERM,  9 /* erasure mode (non-DEC) */),
-    DATA( VEM,  3 /* vertical editing (disabled) */),
-    DATA( BDSM, 9 /* bi-directional support mode (non-DEC) */),
-    DATA( DCSM, 9 /* device component select mode (non-DEC) */),
-    DATA( HEM,  3 /* horizontal editing (disabled) */),
-    DATA( PUM,  3 /* positioning unit (disabled) */),
-    DATA( SRM,  3 /* send/receive */),
-    DATA( FEAM, 3 /* format effector action (disabled) */),
-    DATA( FETM, 3 /* format effector transfer (disabled) */),
-    DATA( MATM, 3 /* multiple area transfer (disabled) */),
-    DATA( TTM,  3 /* transfer termination (disabled) */),
-    DATA( SATM, 3 /* selected area transfer (disabled) */),
-    DATA( TSM,  3 /* tabulation stop (disabled) */),
-    DATA( EBM,  3 /* editing boundary (disabled) */),
-    DATA( LNM,  3 /* line feed/new line */) };
-  /* *INDENT-ON* */
 
   vt_move(1, 1);
   printf("Testing %s\n", the_title);
@@ -460,18 +431,32 @@ tst_ISO_DECRPM(MENU_ARGS)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  for (j = 0; j < TABLESIZE(ansi_modes); j++) {
-    if (use_DECRPM < ansi_modes[j].level)
+  for (j = row = 0; j < tablesize; j++) {
+    if (use_DECRPM < table[j].level)
       continue;
-    do_csi("%d$p", ansi_modes[j].mode);
+
+    if (++row >= max_lines - 3) {
+      restore_ttymodes();
+      vt_move(max_lines - 1, 1);
+      holdit();
+      vt_clear(2);
+      vt_move(row = 2, 1);
+      set_tty_raw(TRUE);
+      set_tty_echo(FALSE);
+    }
+
+    do_csi((private ? "?%d$p" : "%d$p"), table[j].mode);
     report = instr();
-    printf("\n      %3d: %-10s", ansi_modes[j].mode, ansi_modes[j].name);
+    printf("\n     %4d: %-10s", table[j].mode, table[j].name);
     if (LOG_ENABLED)
-      fprintf(log_fp, "Testing %s\n", ansi_modes[j].name);
+      fprintf(log_fp, "Testing %s\n", table[j].name);
     chrprint(report);
     if ((report = skip_csi(report)) != 0
-        && sscanf(report, "%d;%d$%c", &Pa, &Ps, &chr) == 3
-        && Pa == ansi_modes[j].mode
+        && sscanf(report, (private
+                           ? "?%d;%d$%c"
+                           : "%d;%d$%c"),
+                  &Pa, &Ps, &chr) == 3
+        && Pa == table[j].mode
         && chr == 'y') {
       switch (Ps) {
       case 0:
@@ -504,14 +489,40 @@ tst_ISO_DECRPM(MENU_ARGS)
 }
 
 static int
+tst_ISO_DECRPM(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  RQM_DATA ansi_modes[] = { /* this list is sorted by code, not name */
+    DATA( GATM, 3 /* guarded area transfer (disabled) */),
+    DATA( KAM,  3 /* keyboard action */),
+    DATA( CRM,  3 /* control representation (setup) */),
+    DATA( IRM,  3 /* insert/replace */),
+    DATA( SRTM, 3 /* status reporting transfer (disabled) */),
+    DATA( ERM,  9 /* erasure mode (non-DEC) */),
+    DATA( VEM,  3 /* vertical editing (disabled) */),
+    DATA( BDSM, 9 /* bi-directional support mode (non-DEC) */),
+    DATA( DCSM, 9 /* device component select mode (non-DEC) */),
+    DATA( HEM,  3 /* horizontal editing (disabled) */),
+    DATA( PUM,  3 /* positioning unit (disabled) */),
+    DATA( SRM,  3 /* send/receive */),
+    DATA( FEAM, 3 /* format effector action (disabled) */),
+    DATA( FETM, 3 /* format effector transfer (disabled) */),
+    DATA( MATM, 3 /* multiple area transfer (disabled) */),
+    DATA( TTM,  3 /* transfer termination (disabled) */),
+    DATA( SATM, 3 /* selected area transfer (disabled) */),
+    DATA( TSM,  3 /* tabulation stop (disabled) */),
+    DATA( EBM,  3 /* editing boundary (disabled) */),
+    DATA( LNM,  3 /* line feed/new line */) };
+  /* *INDENT-ON* */
+
+  return any_RQM(PASS_ARGS, ansi_modes, TABLESIZE(ansi_modes), 0);
+}
+
+static int
 tst_DEC_DECRPM(MENU_ARGS)
 {
-  int j, Pa, Ps;
-  char chr;
-  char *report;
-  const char *show;
   /* *INDENT-OFF* */
-  DECRPM_DATA dec_modes[] = { /* this list is sorted by code, not name */
+  RQM_DATA dec_modes[] = { /* this list is sorted by code, not name */
     DATA( DECCKM,  3 /* cursor keys */),
     DATA( DECANM,  3 /* ANSI */),
     DATA( DECCOLM, 3 /* column */),
@@ -569,54 +580,7 @@ tst_DEC_DECRPM(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
-  vt_move(1, 1);
-  printf("Testing %s\n", the_title);
-
-  set_tty_raw(TRUE);
-  set_tty_echo(FALSE);
-
-  for (j = 0; j < TABLESIZE(dec_modes); j++) {
-    if (use_DECRPM < dec_modes[j].level)
-      continue;
-    do_csi("?%d$p", dec_modes[j].mode);
-    report = instr();
-    printf("\n      %3d: %-10s", dec_modes[j].mode, dec_modes[j].name);
-    if (LOG_ENABLED)
-      fprintf(log_fp, "Testing %s\n", dec_modes[j].name);
-    chrprint(report);
-    if ((report = skip_csi(report)) != 0
-        && sscanf(report, "?%d;%d$%c", &Pa, &Ps, &chr) == 3
-        && Pa == dec_modes[j].mode
-        && chr == 'y') {
-      switch (Ps) {
-      case 0:
-        show = "unknown";
-        break;
-      case 1:
-        show = "set";
-        break;
-      case 2:
-        show = "reset";
-        break;
-      case 3:
-        show = "permanently set";
-        break;
-      case 4:
-        show = "permanently reset";
-        break;
-      default:
-        show = "?";
-        break;
-      }
-    } else {
-      show = SHOW_FAILURE;
-    }
-    show_result("%s", show);
-  }
-
-  restore_ttymodes();
-  vt_move(max_lines - 1, 1);
-  return MENU_HOLD;
+  return any_RQM(PASS_ARGS, dec_modes, TABLESIZE(dec_modes), 1);
 }
 
 #undef DATA
