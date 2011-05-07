@@ -1,5 +1,10 @@
--- $Id: CHANGES,v 1.129 2010/08/30 07:59:10 tom Exp $
+-- $Id: CHANGES,v 1.131 2011/05/06 22:58:28 tom Exp $
 -------------------------------------------------------------------------------
+
+20110506
+	+ add some VT520-level menus, e.g., for DSR, DECRQSS.
+
+	+ add VT220 test for DSR Operating Status Report.
 
 20100830
 	+ modify mouse tests to show DECRPM results for the mouse modes, if
