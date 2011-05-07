@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.79 2010/08/28 14:59:31 tom Exp $ */
+/* $Id: vttest.h,v 1.80 2011/05/06 21:00:47 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -21,10 +21,10 @@
 #endif
 
 #ifndef GCC_UNUSED
-#define GCC_UNUSED /* ARGSUSED */
+#define GCC_UNUSED  /* ARGSUSED */
 #endif
 
-#define SIG_ARGS int sig	/* FIXME: configure-test */
+#define SIG_ARGS int sig  /* FIXME: configure-test */
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -56,7 +56,7 @@
 #      ifdef VMS
          /* FIXME */
 #      else
-         please fix me
+please fix me
 #      endif
 #    endif
 #  endif
@@ -103,7 +103,7 @@
 #endif
 
 #ifdef HAVE_SYS_FILIO_H
-#  include <sys/filio.h>	/* FIONREAD */
+#  include <sys/filio.h>        /* FIONREAD */
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -167,7 +167,7 @@ extern jmp_buf intrenv;
 #define DEFAULT_SPEED 9600
 
 #if !defined(__GNUC__) && !defined(__attribute__)
-#define __attribute__(p) /* nothing */
+#define __attribute__(p)  /* nothing */
 #endif
 
 #define GCC_PRINTFLIKE(fmt,var) __attribute__((format(printf,fmt,var)))
@@ -178,14 +178,14 @@ extern void perror(const char *s);
 extern int _flsbuf(int c, FILE *s);
 extern int fclose(FILE *s);
 extern int fflush(FILE *s);
-extern int fprintf(FILE *s, const char *fmt, ...);
+extern int fprintf(FILE *s, const char *fmt,...);
 extern int fgetc(FILE *s);
 extern int fputc(int c, FILE *s);
 extern int fputs(char *p, FILE *s);
 extern int ioctl(int fd, unsigned long mask, void *p);
-extern int printf(const char *fmt, ...);
-extern int scanf(const char *fmt, ...);
-extern int sscanf(const char *src, const char *fmt, ...);
+extern int printf(const char *fmt,...);
+extern int scanf(const char *fmt,...);
+extern int sscanf(const char *src, const char *fmt,...);
 extern long strtol(const char *src, char **dst, int base);
 #endif
 
@@ -195,7 +195,7 @@ extern long strtol(const char *src, char **dst, int base);
 
 typedef struct {
   const char *description;
-  int (*dispatch)(MENU_ARGS);
+  int (*dispatch) (MENU_ARGS);
 } MENU;
 
 typedef struct {
@@ -229,8 +229,8 @@ extern const char *skip_dcs_2(const char *input);
 extern const char *skip_digits_2(const char *src);
 extern const char *skip_prefix_2(const char *prefix, const char *input);
 extern const char *skip_ss3_2(const char *input);
-extern int any_DSR(MENU_ARGS, const char *text, void (*explain)(char *report));
-extern int any_RQM(MENU_ARGS, RQM_DATA *table, int tablesize, int private);
+extern int any_DSR(MENU_ARGS, const char *text, void (*explain) (char *report));
+extern int any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private);
 extern int any_decrqpsr(MENU_ARGS, int Ps);
 extern int any_decrqss(const char *msg, const char *func);
 extern int bug_a(MENU_ARGS);
@@ -288,18 +288,24 @@ extern int tst_softchars(MENU_ARGS);
 extern int tst_statusline(MENU_ARGS);
 extern int tst_tek4014(MENU_ARGS);
 extern int tst_vt220(MENU_ARGS);
+extern int tst_vt220_device_status(MENU_ARGS);
 extern int tst_vt220_reports(MENU_ARGS);
 extern int tst_vt220_screen(MENU_ARGS);
 extern int tst_vt320(MENU_ARGS);
 extern int tst_vt320_DECRQSS(MENU_ARGS);
 extern int tst_vt320_cursor(MENU_ARGS);
+extern int tst_vt320_device_status(MENU_ARGS);
 extern int tst_vt320_report_presentation(MENU_ARGS);
 extern int tst_vt320_reports(MENU_ARGS);
 extern int tst_vt320_screen(MENU_ARGS);
 extern int tst_vt420(MENU_ARGS);
+extern int tst_vt420_DECRQSS(MENU_ARGS);
+extern int tst_vt420_device_status(MENU_ARGS);
+extern int tst_vt420_report_presentation(MENU_ARGS);
 extern int tst_vt420_reports(MENU_ARGS);
 extern int tst_vt52(MENU_ARGS);
 extern int tst_vt520(MENU_ARGS);
+extern int tst_vt520_reports(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
 extern int vt_move(int row, int col);
 extern void bye(void);
@@ -315,7 +321,7 @@ extern void scs_graphics(void);
 extern void scs_normal(void);
 extern void setup_softchars(const char *filename);
 extern void show_mousemodes(void);
-extern void show_result(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+extern void show_result(const char *fmt,...) GCC_PRINTFLIKE(1,2);
 extern void vt_clear(int code);
 extern void vt_el(int code);
 extern void vt_hilite(int flag);

@@ -1,3 +1,9 @@
+vttest-cur (2.7.20110506) unstable; urgency=low
+
+  * Add DECRQSS for VT520
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Fri, 06 May 2011 15:12:07 -0400
+
 vttest-cur (2.7.20100830) unstable; urgency=low
 
   * Add package scripts to upstream source, for test-builds.

@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.20 2010/05/28 09:23:29 tom Exp $ */
+/* $Id: vt220.c,v 1.22 2011/05/07 12:42:48 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -9,11 +9,12 @@
 #include <esc.h>
 
 int
-any_DSR(MENU_ARGS, const char *text, void (*explain)(char *report))
+any_DSR(MENU_ARGS, const char *text, void (*explain) (char *report))
 {
   char *report;
+  unsigned pmode = (unsigned) ((*text == '?') ? 1 : 0);
 
-  vt_move(1,1);
+  vt_move(1, 1);
   printf("Testing DSR: %s\n", the_title);
 
   set_tty_raw(TRUE);
@@ -21,13 +22,13 @@ any_DSR(MENU_ARGS, const char *text, void (*explain)(char *report))
 
   do_csi("%s", text);
   report = get_reply();
-  vt_move(3,10);
+  vt_move(3, 10);
   chrprint(report);
   if ((report = skip_csi(report)) != 0
-   && strlen(report) > 2
-   && *report++ == '?') {
+      && strlen(report) > (1 + pmode)
+      && (!pmode || (*report++ == '?'))) {
     if (explain != 0)
-      (*explain)(report);
+      (*explain) (report);
     else
       show_result(SHOW_SUCCESS);
   } else {
@@ -35,7 +36,7 @@ any_DSR(MENU_ARGS, const char *text, void (*explain)(char *report))
   }
 
   restore_ttymodes();
-  vt_move(max_lines-1, 1);
+  vt_move(max_lines - 1, 1);
   return MENU_HOLD;
 }
 
@@ -60,7 +61,8 @@ show_KeyboardStatus(char *report)
   const char *show = SHOW_FAILURE;
 
   if ((code = scanto(report, &pos, ';')) == 27
-   && (code = scan_any(report, &pos, 'n')) != 0) {
+      && (code = scan_any(report, &pos, 'n')) != 0) {
+    /* *INDENT-OFF* */
     switch(code) {
     case  1:  show = "North American/ASCII"; break;
     case  2:  show = "British";              break;
@@ -94,6 +96,8 @@ show_KeyboardStatus(char *report)
     case 40:  show = "Latin American";       break; /* vt5XX */
     default:  show = "unknown";
     }
+    /* *INDENT-ON* */
+
   }
   show_result("%s", show);
 
@@ -101,21 +105,27 @@ show_KeyboardStatus(char *report)
   save = pos;
   code = scan_any(report, &pos, 'n');
   if (save != pos) {
-    vt_move(5,10);
+    vt_move(5, 10);
+    /* *INDENT-OFF* */
     switch(code) {
-    case 0: show = "keyboard ready"; break;
-    case 3: show = "no keyboard"; break;
-    case 8: show = "keyboard busy"; break;
+    case 0:  show = "keyboard ready"; break;
+    case 3:  show = "no keyboard";    break;
+    case 8:  show = "keyboard busy";  break;
     default: show = "unknown keyboard status";
     }
+    /* *INDENT-ON* */
+
     show_result("%s", show);
 
-    vt_move(6,10);
+    vt_move(6, 10);
+    /* *INDENT-OFF* */
     switch (scan_any(report, &pos, 'n')) {
     case 0:  show = "LK201"; break;
     case 1:  show = "LK401"; break;
     default: show = "unknown keyboard type";
     }
+    /* *INDENT-ON* */
+
     show_result("%s", show);
   }
 }
@@ -126,15 +136,17 @@ show_PrinterStatus(char *report)
   int pos = 0;
   int code = scanto(report, &pos, 'n');
   const char *show;
-
+  /* *INDENT-OFF* */
   switch (code) {
-  case 13: show = "No printer"; break;
-  case 10: show = "Printer ready"; break;
+  case 13: show = "No printer";        break;
+  case 10: show = "Printer ready";     break;
   case 11: show = "Printer not ready"; break;
-  case 18: show = "Printer busy"; break;
+  case 18: show = "Printer busy";      break;
   case 19: show = "Printer assigned to other session"; break;
   default: show = SHOW_FAILURE;
   }
+  /* *INDENT-ON* */
+
   show_result("%s", show);
 }
 
@@ -144,12 +156,14 @@ show_UDK_Status(char *report)
   int pos = 0;
   int code = scanto(report, &pos, 'n');
   const char *show;
-
+  /* *INDENT-OFF* */
   switch(code) {
   case 20: show = "UDKs unlocked"; break;
   case 21: show = "UDKs locked";   break;
   default: show = SHOW_FAILURE;
   }
+  /* *INDENT-ON* */
+
   show_result("%s", show);
 }
 
@@ -162,10 +176,10 @@ tst_S8C1T(MENU_ARGS)
   int flag = input_8bits;
   int pass;
 
-  vt_move(1,1);
+  vt_move(1, 1);
   println(the_title);
 
-  vt_move(5,1);
+  vt_move(5, 1);
   println("This tests the VT200+ control sequence to direct the terminal to emit 8-bit");
   println("control-sequences instead of <esc> sequences.");
 
@@ -175,7 +189,8 @@ tst_S8C1T(MENU_ARGS)
   for (pass = 0; pass < 2; pass++) {
     flag = !flag;
     s8c1t(flag);
-    cup(1,1); dsr(6);
+    cup(1, 1);
+    dsr(6);
     report = instr();
     vt_move(10 + pass * 3, 1);
     printf("8-bit controls %s: ", flag ? "enabled" : "disabled");
@@ -184,7 +199,7 @@ tst_S8C1T(MENU_ARGS)
   }
 
   restore_ttymodes();
-  vt_move(max_lines-1,1);
+  vt_move(max_lines - 1, 1);
   return MENU_HOLD;
 }
 
@@ -215,35 +230,43 @@ tst_DECSCA(MENU_ARGS)
 
       for (j = 0; j <= 2; j++) {
         for (i = 1; i < tmar; i++) {
-          cup(i, lmar - tmar + (i+j)); printf("*");
-          cup(i, rmar + tmar - (i+j)); printf("*");
+          cup(i, lmar - tmar + (i + j));
+          printf("*");
+          cup(i, rmar + tmar - (i + j));
+          printf("*");
         }
         for (i = bmar + 1; i < max_lines; i++) {
-          cup(i, lmar + bmar - i + j); printf("*");
-          cup(i, rmar - bmar + i - j); printf("*");
+          cup(i, lmar + bmar - i + j);
+          printf("*");
+          cup(i, rmar - bmar + i - j);
+          printf("*");
         }
-        cup(max_lines/2, min_cols/2);
+        cup(max_lines / 2, min_cols / 2);
         decsed(j);
       }
 
-      for (i = rmar+1; i <= min_cols; i++) {
-        cup(tmar, i);        printf("*");
-        cup(max_lines/2, i); printf("*");
+      for (i = rmar + 1; i <= min_cols; i++) {
+        cup(tmar, i);
+        printf("*");
+        cup(max_lines / 2, i);
+        printf("*");
       }
-      cup(max_lines/2, min_cols/2);
-      decsel(0); /* after the cursor */
+      cup(max_lines / 2, min_cols / 2);
+      decsel(0);  /* after the cursor */
 
       for (i = 1; i < lmar; i++) {
-        cup(tmar, i);        printf("*");
-        cup(max_lines/2, i); printf("*");
+        cup(tmar, i);
+        printf("*");
+        cup(max_lines / 2, i);
+        printf("*");
       }
-      cup(max_lines/2, min_cols/2);
-      decsel(1); /* before the cursor */
+      cup(max_lines / 2, min_cols / 2);
+      decsel(1);  /* before the cursor */
 
-      cup(tmar, min_cols/2);
-      decsel(2); /* the whole line */
+      cup(tmar, min_cols / 2);
+      decsel(2);  /* the whole line */
 
-      vt_move(max_lines-3, 1);
+      vt_move(max_lines - 3, 1);
       vt_clear(0);
       println("If your terminal supports DEC protected areas (DECSCA, DECSED, DECSEL),");
       println("there will be an solid box made of *'s in the middle of the screen.");
@@ -261,7 +284,7 @@ tst_DECSCA(MENU_ARGS)
 static int
 tst_DECTCEM(MENU_ARGS)
 {
-  vt_move(1,1);
+  vt_move(1, 1);
   rm("?25");
   println("The cursor should be invisible");
   holdit();
@@ -274,7 +297,6 @@ static int
 tst_DECUDK(MENU_ARGS)
 {
   int key;
-
   /* *INDENT-OFF* */
   static struct {
     int code;
@@ -313,7 +335,7 @@ tst_DECUDK(MENU_ARGS)
     do_dcs("1;1|%d/%s", keytable[key].code, temp);
   }
 
-  vt_move(1,1);
+  vt_move(1, 1);
   println(the_title);
   println("Press 'q' to quit.  Function keys should echo their labels.");
   println("(On a DEC terminal you must press SHIFT as well).");
@@ -325,15 +347,15 @@ tst_DECUDK(MENU_ARGS)
     char *report = instr();
     if (*report == 'q')
       break;
-    vt_move(5,10);
+    vt_move(5, 10);
     vt_clear(0);
     chrprint(report);
   }
 
-  do_dcs("0"); /* clear all keys */
+  do_dcs("0");  /* clear all keys */
 
   restore_ttymodes();
-  vt_move(max_lines-1,1);
+  vt_move(max_lines - 1, 1);
   return MENU_HOLD;
 }
 
@@ -356,6 +378,33 @@ tst_DSR_userkeys(MENU_ARGS)
   return any_DSR(PASS_ARGS, "?25n", show_UDK_Status);
 }
 
+static void
+show_OperatingStatus(char *report)
+{
+  int pos = 0;
+  int Ps1 = scan_any(report, &pos, 'n');
+  int Ps2 = scanto(report, &pos, 'n');
+  const char *show;
+
+  switch (Ps1) {
+  case 0:
+    show = "Terminal is in good operating condition";
+    break;
+  case 3:
+    show = "Terminal has a malfunction";
+    break;
+  default:
+    show = SHOW_FAILURE;
+  }
+  show_result(show, Ps2);
+}
+
+static int
+tst_DSR_operating_status(MENU_ARGS)
+{
+  return any_DSR(PASS_ARGS, "5n", show_OperatingStatus);
+}
+
 /*
  * VT200 and up
  *
@@ -372,11 +421,11 @@ tst_ECH(MENU_ARGS)
   decaln();
   for (i = 1; i <= max_lines; i++) {
     cup(i, min_cols - i - 2);
-    do_csi("X"); /* make sure default-parameter works */
+    do_csi("X");  /* make sure default-parameter works */
     cup(i, min_cols - i - 1);
     printf("*");
     ech(min_cols);
-    printf("*"); /* this should be adjacent, in the upper-right corner */
+    printf("*");  /* this should be adjacent, in the upper-right corner */
   }
 
   vt_move(last, 1);
@@ -391,21 +440,26 @@ tst_ECH(MENU_ARGS)
 
 /******************************************************************************/
 
-static int
-tst_device_status(MENU_ARGS)
+int
+tst_vt220_device_status(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test Keyboard Status",                              tst_DSR_keyboard },
+      { "Test Operating Status",                             tst_DSR_operating_status },
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
       { "",                                                  0 }
     };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); printf("VT220 Device Status Reports");
-    title(2); println("Choose test type:");
+    title(0);
+    printf("VT220 Device Status Reports");
+    title(2);
+    println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -415,6 +469,7 @@ tst_device_status(MENU_ARGS)
 int
 tst_vt220_screen(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test Send/Receive mode (SRM)",                      tst_SRM },
@@ -423,11 +478,14 @@ tst_vt220_screen(MENU_ARGS)
       { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
       { "",                                                  0 }
     };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); printf("VT220 Screen-Display Tests");
-    title(2); println("Choose test type:");
+    title(0);
+    printf("VT220 Screen-Display Tests");
+    title(2);
+    println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }
@@ -440,7 +498,7 @@ tst_vt220_reports(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test Device Status Report (DSR)",                   tst_device_status },
+      { "Test Device Status Report (DSR)",                   tst_vt220_device_status },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
@@ -458,6 +516,7 @@ tst_vt220_reports(MENU_ARGS)
 int
 tst_vt220(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test reporting functions",                          tst_vt220_reports },
@@ -469,11 +528,14 @@ tst_vt220(MENU_ARGS)
       { "Test User-Defined Keys (DECUDK)",                   tst_DECUDK },
       { "",                                                  0 }
     };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); printf("VT220 Tests");
-    title(2); println("Choose test type:");
+    title(0);
+    printf("VT220 Tests");
+    title(2);
+    println("Choose test type:");
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

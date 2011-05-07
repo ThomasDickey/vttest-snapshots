@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.49 2010/08/28 15:15:22 tom Exp $ */
+/* $Id: xterm.c,v 1.50 2011/05/06 19:37:24 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -663,7 +663,7 @@ tst_xterm_reports(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
     { "Exit",                                                0 },
-    { "Test VT420 features",                                 tst_vt420_reports },
+    { "Test VT520 features",                                 tst_vt520_reports },
     { "Request Mode (DECRQM)/Report Mode (DECRPM)",          tst_xterm_DECRPM },
     { "",                                                    0 }
   };
@@ -689,7 +689,7 @@ tst_xterm(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
     { "Exit",                                                0 },
-    { "Test VT420 features",                                 tst_vt420 },
+    { "Test VT520 features",                                 tst_vt520 },
     { "Test reporting functions",                            tst_xterm_reports },
     { "Set window title",                                    test_window_name },
     { "Font features",                                       tst_font },

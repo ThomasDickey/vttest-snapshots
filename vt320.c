@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.20 2010/08/28 15:17:03 tom Exp $ */
+/* $Id: vt320.c,v 1.21 2011/05/06 20:46:55 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -66,12 +66,13 @@ tst_DSR_cursor(MENU_ARGS)
 
 /******************************************************************************/
 
-static int
-tst_device_status(MENU_ARGS)
+int
+tst_vt320_device_status(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
+      { "Test VT220 features",                               tst_vt220_device_status },
       { "Test Keyboard Status",                              tst_DSR_keyboard },
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
@@ -821,7 +822,7 @@ tst_vt320_reports(MENU_ARGS)
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test VT220 features",                               tst_vt220_reports },
-      { "Test Device Status Report (DSR)",                   tst_device_status },
+      { "Test Device Status Report (DSR)",                   tst_vt320_device_status },
       { "Test Presentation State Reports",                   tst_vt320_report_presentation },
       { "Test Terminal State Reports",                       tst_vt320_report_terminal },
       { "Test User-Preferred Supplemental Set (DECAUPSS)",   tst_DECRQUPSS },

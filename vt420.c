@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.80 2010/08/27 08:43:32 tom Exp $ */
+/* $Id: vt420.c,v 1.81 2011/05/06 20:47:43 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -658,8 +658,8 @@ tst_DECRARA(MENU_ARGS)
   return MENU_HOLD;
 }
 
-static int
-tst_DECRQSS(MENU_ARGS)
+int
+tst_vt420_DECRQSS(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
@@ -1007,12 +1007,13 @@ tst_VT420_rectangle(MENU_ARGS)
 
 /* UDK and rectangle-checksum status are available only on VT400 */
 
-static int
-tst_VT420_report_device(MENU_ARGS)
+int
+tst_vt420_device_status(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
+      { "Test VT320 features",                               tst_vt320_device_status },
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
       { "Test Keyboard Status",                              tst_DSR_keyboard },
@@ -1037,15 +1038,15 @@ tst_VT420_report_device(MENU_ARGS)
 
 /******************************************************************************/
 
-static int
-tst_VT420_report_presentation(MENU_ARGS)
+int
+tst_vt420_report_presentation(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test VT320 features",                               tst_vt320_report_presentation },
       { "Request Mode (DECRQM)/Report Mode (DECRPM)",        tst_DECRPM },
-      { "Status-String Report (DECRQSS)",                    tst_DECRQSS },
+      { "Status-String Report (DECRQSS)",                    tst_vt420_DECRQSS },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
@@ -1068,8 +1069,8 @@ tst_vt420_reports(MENU_ARGS)
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test VT320 features",                               tst_vt320_reports },
-      { "Test Presentation State Reports",                   tst_VT420_report_presentation },
-      { "Test Device Status Reports (DSR)",                  tst_VT420_report_device },
+      { "Test Presentation State Reports",                   tst_vt420_report_presentation },
+      { "Test Device Status Reports (DSR)",                  tst_vt420_device_status },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
