@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.24 2010/05/28 09:54:51 tom Exp $ */
+/* $Id: unix_io.c,v 1.25 2011/05/16 09:01:40 David.Kutalek Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -34,6 +34,7 @@ inchar(void)
 {
   int lval;
   int ch = '\0';
+  char one_byte = '\0';
 
   fflush(stdout);
   lval = last_char;
@@ -43,8 +44,10 @@ inchar(void)
   signal(SIGALRM, give_up);
   alarm(60);    /* timeout after 1 minute, in case user's keyboard is hung */
 #endif
-  if (read(0, &ch, (size_t) 1) < 0)
+  if (read(0, &one_byte, (size_t) 1) < 0)
     ch = EOF;
+  else
+    ch = (int) one_byte;
 #ifdef HAVE_ALARM
   alarm(0);
 #endif
@@ -204,14 +207,17 @@ void
 readnl(void)
 {
   int ch = '\0';
+  char one_byte = '\0';
 
   fflush(stdout);
   brkrd = FALSE;
   reading = TRUE;
   do {
-    if (read(0, &ch, (size_t) 1) < 0) {
+    if (read(0, &one_byte, (size_t) 1) < 0) {
       ch = EOF;
       break;
+    } else {
+      ch = (int) one_byte;
     }
   } while (ch != '\n' && !brkrd);
   if (brkrd)

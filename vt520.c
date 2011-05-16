@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.3 2011/05/07 12:23:15 tom Exp $ */
+/* $Id: vt520.c,v 1.5 2011/05/16 09:42:51 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -8,6 +8,33 @@
 #include <draw.h>
 #include <esc.h>
 #include <ttymodes.h>
+
+/******************************************************************************/
+
+static struct {
+  int code;
+  const char *text;
+} tbl_decscusr[] = {
+
+  {
+    1, "The cursor should be a blinking rectangle"
+  },
+  {
+    0, "The cursor should be a blinking rectangle"
+  },
+  {
+    2, "The cursor should be a nonblinking rectangle"
+  },
+  {
+    3, "The cursor should be a blinking underline"
+  },
+  {
+    4, "The cursor should be a nonblinking underline"
+  },
+  {
+    2, "The cursor should be a rectangle again"
+  }
+};
 
 /******************************************************************************/
 
@@ -25,24 +52,15 @@ decscusr(int parm)
 static int
 tst_DECSCUSR(MENU_ARGS)
 {
+  size_t n;
+
   vt_move(1, 1);
-  decscusr(1);
-  println("The cursor should be a blinking rectangle");
-  holdit();
-  decscusr(0);
-  println("The cursor should be a blinking rectangle");
-  holdit();
-  decscusr(2);
-  println("The cursor should be a nonblinking rectangle");
-  holdit();
-  decscusr(3);
-  println("The cursor should be a blinking underline");
-  holdit();
-  decscusr(4);
-  println("The cursor should be a nonblinking underline");
-  holdit();
-  decscusr(2);
-  println("The cursor should be a rectangle again");
+  for (n = 0; n < TABLESIZE(tbl_decscusr); ++n) {
+    if (n != 0)
+      holdit();
+    decscusr(tbl_decscusr[n].code);
+    println(tbl_decscusr[n].text);
+  }
   return MENU_HOLD;
 }
 
@@ -211,7 +229,17 @@ rpt_DECSZS(MENU_ARGS)
 static int
 rpt_DECSCUSR(MENU_ARGS)
 {
-  return any_decrqss(the_title, " p");
+  size_t n;
+
+  vt_move(1, 1);
+  for (n = 0; n < TABLESIZE(tbl_decscusr); ++n) {
+    if (n != 0)
+      holdit();
+    vt_clear(2);
+    decscusr(tbl_decscusr[n].code);
+    (void) any_decrqss(tbl_decscusr[n].text, " q");
+  }
+  return MENU_HOLD;
 }
 
 static int
