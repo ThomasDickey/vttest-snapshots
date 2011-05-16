@@ -1,5 +1,6 @@
-vttest-cur (2.7.20110506) unstable; urgency=low
+vttest-cur (2.7.20110516) unstable; urgency=low
 
+  * bug-fix for big-endian machines
   * Add DECRQSS for VT520
 
  -- Thomas E. Dickey <dickey@invisible-island.net>  Fri, 06 May 2011 15:12:07 -0400
