@@ -1,8 +1,8 @@
 Summary: vttest - test VT100-type terminal
 %define AppProgram vttest
-%define AppPatched 20110516
+%define AppPatched 20110705
 %define AppVersion 2.7.%{AppPatched}
-# $XTermId: vttest.spec,v 1.7 2011/05/16 09:04:21 tom Exp $
+# $XTermId: vttest.spec,v 1.8 2011/07/05 21:48:12 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: 1
