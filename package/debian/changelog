@@ -1,4 +1,4 @@
-vttest-cur (2.7.20110516) unstable; urgency=low
+vttest-cur (2.7.20110705) unstable; urgency=low
 
   * bug-fix for big-endian machines
   * Add DECRQSS for VT520

@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.12 2010/05/28 09:50:36 tom Exp $ */
+/* $Id: sixel.c,v 1.13 2011/07/05 21:43:38 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -286,7 +286,7 @@ tst_softchars(MENU_ARGS)
 {
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Download the soft characters",                      tst_DECDLD },
+      { "Download the soft characters (DECDLD)",             tst_DECDLD },
       { "Examine the soft characters",                       tst_display },
       { "Clear the soft characters",                         tst_cleanup },
       { "",                                                  0 }

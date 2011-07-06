@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.81 2011/05/06 20:47:43 tom Exp $ */
+/* $Id: vt420.c,v 1.82 2011/07/05 21:43:54 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -664,7 +664,7 @@ tst_vt420_DECRQSS(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test VT320 features",                               tst_vt320_DECRQSS },
+      { "Test VT320 features (DECRQSS)",                     tst_vt320_DECRQSS },
       { "Select attribute change extent (DECSACE)",          rpt_DECSACE },
       { "Set number of lines per screen (DECSNLS)",          rpt_DECSNLS },
       { "Set left and right margins (DECSLRM)",              rpt_DECSLRM },

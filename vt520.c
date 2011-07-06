@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.5 2011/05/16 09:42:51 tom Exp $ */
+/* $Id: vt520.c,v 1.6 2011/07/05 21:42:50 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -166,22 +166,22 @@ tst_VT520_hardware_DECRQSS(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test VT420 features",                               tst_vt420_DECRQSS },
-      { "CRT Saver Timing",                                  rpt_DECCRTST },
-      { "Down Line Load Allocation",                         rpt_DECDLDA },
-      { "Energy Save Timing",                                rpt_DECSEST },
-      { "Select Communication Port",                         rpt_DECSCP },
-      { "Select Communication Speed",                        rpt_DECSCS },
-      { "Select Digital Printed Data Type",                  rpt_DECSDPT },
-      { "Select Disconnect Delay Time",                      rpt_DECSDDT },
-      { "Select Flow Control Type",                          rpt_DECSFC },
-      { "Select Printer Type",                               rpt_DECSPRTT },
-      { "Select ProPrinter Character Set",                   rpt_DECSPPCS },
-      { "Select Set-Up Language",                            rpt_DECSSL },
-      { "Session Page Memory Allocation",                    rpt_DECSPMA },
-      { "Set Port Parameter",                                rpt_DECSPP },
-      { "Set Scroll Speed",                                  rpt_DECSSCLS },
-      { "Set Transmit Rate Limit",                           rpt_DECSTRL },
+      { "Test VT420 features (DECRQSS)",                     tst_vt420_DECRQSS },
+      { "CRT Saver Timing (DECCRTST)",                       rpt_DECCRTST },
+      { "Down Line Load Allocation (DECDLDA)",               rpt_DECDLDA },
+      { "Energy Save Timing (DECSEST)",                      rpt_DECSEST },
+      { "Select Communication Port (DECSCP)",                rpt_DECSCP },
+      { "Select Communication Speed (DECSCS)",               rpt_DECSCS },
+      { "Select Digital Printed Data Type (DECSDPT)",        rpt_DECSDPT },
+      { "Select Disconnect Delay Time (DECSDDT)",            rpt_DECSDDT },
+      { "Select Flow Control Type (DECSFC)",                 rpt_DECSFC },
+      { "Select Printer Type (DECSPRTT)",                    rpt_DECSPRTT },
+      { "Select ProPrinter Character Set (DECSPPCS)",        rpt_DECSPPCS },
+      { "Select Set-Up Language (DECSSL)",                   rpt_DECSSL },
+      { "Session Page Memory Allocation (DECSPMA)",          rpt_DECSPMA },
+      { "Set Port Parameter (DECSPP)",                       rpt_DECSPP },
+      { "Set Scroll Speed (DECSSCLS)",                       rpt_DECSSCLS },
+      { "Set Transmit Rate Limit (DECSTRL)",                 rpt_DECSTRL },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
@@ -278,19 +278,19 @@ tst_VT520_DECRQSS(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Test VT420 features",                               tst_vt420_DECRQSS },
+      { "Test VT420 features (DECRQSS)",                     tst_vt420_DECRQSS },
       { "Test Hardware-oriented features",                   tst_VT520_hardware_DECRQSS },
-      { "Alternate Text Color",                              rpt_DECATR },
-      { "Assign Color",                                      rpt_DECAC },
-      { "Select Auto Repeat Rate",                           rpt_DECARR },
-      { "Select Color Lookup Table",                         rpt_DECSTGLT },
-      { "Select Zero Symbol",                                rpt_DECSZS },
-      { "Set Cursor Style",                                  rpt_DECSCUSR },
-      { "Set Key Click Volume",                              rpt_DECSKCV },
-      { "Set Lock Key Style",                                rpt_DECSLCK },
-      { "Set Margin Bell Volume",                            rpt_DECSMBV },
-      { "Set Warning Bell Volume",                           rpt_DECSWBV },
-      { "Terminal Mode Emulation",                           rpt_DECTME },
+      { "Alternate Text Color (DECATR)",                     rpt_DECATR },
+      { "Assign Color (DECAC)",                              rpt_DECAC },
+      { "Select Auto Repeat Rate (DECARR)",                  rpt_DECARR },
+      { "Select Color Lookup Table (DECSTGLT)",              rpt_DECSTGLT },
+      { "Select Zero Symbol (DECSZS)",                       rpt_DECSZS },
+      { "Set Cursor Style (DECSCUSR)",                       rpt_DECSCUSR },
+      { "Set Key Click Volume (DECSKCV)",                    rpt_DECSKCV },
+      { "Set Lock Key Style (DECSLCK)",                      rpt_DECSLCK },
+      { "Set Margin Bell Volume (DECSMBV)",                  rpt_DECSMBV },
+      { "Set Warning Bell Volume (DECSWBV)",                 rpt_DECSWBV },
+      { "Terminal Mode Emulation (DECTME)",                  rpt_DECTME },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
