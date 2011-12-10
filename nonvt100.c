@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.40 2010/01/01 15:52:25 tom Exp $ */
+/* $Id: nonvt100.c,v 1.43 2011/12/07 01:34:17 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -371,7 +371,7 @@ tst_protected_area(MENU_ARGS)
     vt_clear(2);
     __(title(0), printf("Protected-Areas Tests"));
     __(title(2), println("Choose test type:"));
-    sprintf(erm_mesg, "%s ERM (erase mode)", erm_flag ? "Disable" : "Enable");
+    sprintf(erm_mesg, "%s ERM (erase mode)", STR_ENABLE(erm_flag));
   } while (menu(my_menu));
   if (erm_flag)
     toggle_ERM(PASS_ARGS);
@@ -438,7 +438,7 @@ tst_ecma48_curs(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
-static int
+int
 tst_ecma48_misc(MENU_ARGS)
 {
   /* *INDENT-OFF* */

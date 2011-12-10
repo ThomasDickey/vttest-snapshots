@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.19 2010/08/29 19:26:24 tom Exp $ */
+/* $Id: mouse.c,v 1.32 2011/12/10 15:19:15 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -12,12 +12,41 @@
 
 #define ToData(n)  vt_move(4 + n, 10)
 
-static int do_ExtMouse;
+typedef enum {
+  cDFT = 0,
+  cUTF = 1005,
+  cSGR = 1006,
+  cURX = 1015
+} COORDS;
+
+static int do_ExtCoords;
 static int do_FocusEvent;
 static int chars_high;
 static int chars_wide;
 static int pixels_high;
 static int pixels_wide;
+
+static const char *
+nameOfExtCoords(int code)
+{
+  const char *result;
+
+  switch (code) {
+  case cUTF:
+    result = "UTF-8";
+    break;
+  case cSGR:
+    result = "SGR";
+    break;
+  case cURX:
+    result = "urxvt-style";
+    break;
+  default:
+    result = "normal";
+    break;
+  }
+  return result;
+}
 
 static void
 show_mousehelp(void)
@@ -33,26 +62,220 @@ xterm_coord(char *source, int *pos)
 {
   unsigned result;
 
-  if (do_ExtMouse) {
-    int used;
-    char *real_src = source + *pos;
-    unsigned limit = (unsigned) strlen(real_src);
+  switch (do_ExtCoords) {
+  case cUTF:
+    {
+      int used;
+      char *real_src = source + *pos;
+      unsigned limit = (unsigned) strlen(real_src);
 
-    used = conv_to_utf32((unsigned *) 0, real_src, limit);
-    if (used > 0) {
-      (void) conv_to_utf32(&result, real_src, limit);
-      *pos += used;
-      if (result > ' ')
-        result -= ' ';
-      else
+      used = conv_to_utf32((unsigned *) 0, real_src, limit);
+      if (used > 0) {
+        (void) conv_to_utf32(&result, real_src, limit);
+        *pos += used;
+        if (result > ' ')
+          result -= ' ';
+        else
+          result = 0;
+      } else {
         result = 0;
-    } else {
-      result = 0;
+      }
     }
+    break;
+  case cSGR:
+    result = 0;
+    break;
+  case cURX:
+    result = 0;
+    break;
+  default:
+    {
+      result = MCHR(source[*pos]);
+      *pos += 1;
+    }
+    break;
+  }
+  return result;
+}
 
-  } else {
-    result = MCHR(source[*pos]);
-    *pos += 1;
+static unsigned
+sgr_param(char **report, int final, unsigned offset)
+{
+  unsigned result = 0;
+
+  if (*report != 0) {
+    char *base = *report;
+    char *endp = 0;
+    long value = strtol(base, &endp, 10);
+
+    if (value >= (long) offset
+        && (endp == 0
+            || (*endp == 0 || *endp == ';' || *endp == final))) {
+      result = (unsigned) value - offset;
+      if (endp != 0) {
+        if (*endp == ';')
+          ++endp;
+        *report = endp;
+      } else {
+        *report = base + strlen(base);
+      }
+    } else {
+      *report = 0;
+      result = offset;
+    }
+  }
+
+  return result;
+}
+
+static char *
+skip_params(char *report)
+{
+  return report + strspn(report, "0123456789;");
+}
+
+/*
+ * Parse the mouse position report.  This is the usual case, containing the 'M'
+ * response (as well as variations on it).
+ */
+static char *
+parse_mouse_M(char *report, unsigned *b, unsigned *x, unsigned *y)
+{
+  char *result = 0;
+  char *finalp;
+
+  if ((report = skip_csi(report)) != 0) {
+    switch (do_ExtCoords) {
+    default:
+    case cUTF:
+      if (*report == 'M'
+          && strlen(report) >= 4) {
+        int pos = 2;
+        *b = MCHR(report[1]);
+        *x = xterm_coord(report, &pos);
+        *y = xterm_coord(report, &pos);
+        result = report + pos;
+      }
+      break;
+    case cSGR:
+      if (*report++ == '<') {
+        finalp = skip_params(report);
+        if (*finalp == 'M') {
+          /* pressed */
+          *b = sgr_param(&report, 'M', 0);
+          *x = sgr_param(&report, 'M', 0);
+          *y = sgr_param(&report, 'M', 0);
+          result = ++finalp;
+        } else if (*finalp == 'm') {
+          /* released */
+          *b = sgr_param(&report, 'm', 0);
+          *x = sgr_param(&report, 'm', 0);
+          *y = sgr_param(&report, 'm', 0);
+          result = ++finalp;
+        }
+      }
+      break;
+    case cURX:
+      finalp = skip_params(report);
+      if (*finalp == 'M') {
+        *b = sgr_param(&report, 'M', 32);
+        *x = sgr_param(&report, 'M', 0);
+        *y = sgr_param(&report, 'M', 0);
+        result = ++finalp;
+      }
+      break;
+    }
+  }
+  return result;
+}
+
+/*
+ * Parse the mouse report, looking for the 'T' response, which is part of
+ * mouse highlight-tracking.
+ */
+static char *
+parse_mouse_T(char *report,
+              unsigned *start_x,
+              unsigned *start_y,
+              unsigned *end_x,
+              unsigned *end_y,
+              unsigned *mouse_x,
+              unsigned *mouse_y)
+{
+  char *result = 0;
+  char *finalp;
+
+  if ((report = skip_csi(report)) != 0) {
+    switch (do_ExtCoords) {
+    default:
+    case cUTF:
+      if (*report == 'M'
+          && strlen(report) >= 7) {
+        int pos = 1;
+        *start_x = xterm_coord(report, &pos);
+        *start_y = xterm_coord(report, &pos);
+        *end_x = xterm_coord(report, &pos);
+        *end_y = xterm_coord(report, &pos);
+        *mouse_x = xterm_coord(report, &pos);
+        *mouse_y = xterm_coord(report, &pos);
+        result = report + pos;
+      }
+      break;
+    case cSGR:
+      if (*report++ != '<')
+        break;
+      /* FALLTHRU */
+    case cURX:
+      finalp = skip_params(report);
+      if (*finalp == 'T') {
+        *start_x = sgr_param(&report, 'T', 0);
+        *start_y = sgr_param(&report, 'T', 0);
+        *end_x = sgr_param(&report, 'T', 0);
+        *end_y = sgr_param(&report, 'T', 0);
+        *mouse_x = sgr_param(&report, 'T', 0);
+        *mouse_y = sgr_param(&report, 'T', 0);
+        result = ++finalp;
+      }
+      break;
+    }
+  }
+  return result;
+}
+
+/*
+ * Parse the mouse report, looking for the 't' response, which is part of mouse
+ * highlight-tracking.
+ */
+static char *
+parse_mouse_t(char *report, unsigned *x, unsigned *y)
+{
+  char *result = 0;
+  char *finalp;
+
+  if ((report = skip_csi(report)) != 0) {
+    switch (do_ExtCoords) {
+    default:
+    case cUTF:
+      if (*report == 't'
+          && strlen(report) >= 3) {
+        int pos = 1;
+        *x = xterm_coord(report, &pos);
+        *y = xterm_coord(report, &pos);
+      }
+      break;
+    case cSGR:
+      if (*report++ != '<')
+        break;
+      /* FALLTHRU */
+    case cURX:
+      finalp = skip_params(report);
+      if (*finalp == 't') {
+        *x = sgr_param(&report, 't', 0);
+        *y = sgr_param(&report, 't', 0);
+        result = ++finalp;
+      }
+      break;
+    }
   }
   return result;
 }
@@ -303,6 +526,7 @@ static void
 show_mouse_tracking(MENU_ARGS, const char *the_mode)
 {
   unsigned y = 0, x = 0;
+  unsigned b, xx, yy;
 
 first:
   vt_move(1, 1);
@@ -331,14 +555,8 @@ first:
     vt_el(2);
     chrprint(report);
 
-    while ((report = skip_csi(report)) != 0
-           && *report == 'M'
-           && strlen(report) >= 4) {
-      unsigned b = MCHR(report[1]);
+    while ((report = parse_mouse_M(report, &b, &xx, &yy)) != 0) {
       unsigned adj = 1;
-      int pos = 2;
-      unsigned xx = xterm_coord(report, &pos);
-      unsigned yy = xterm_coord(report, &pos);
 
       ToData(1);
       vt_el(2);
@@ -440,6 +658,7 @@ test_mouse_hilite(MENU_ARGS)
 {
   const int first = 10;
   const int last = 20;
+  unsigned b;
   unsigned y = 0, x = 0;
   unsigned start_x, end_x;
   unsigned start_y, end_y;
@@ -461,6 +680,7 @@ first:
 
   for (;;) {
     char *report = instr();
+
     if (isQuit(*report)) {
       break;
     } else if (isReport(*report)) {
@@ -469,73 +689,59 @@ first:
     } else if (isClear(*report)) {
       goto first;
     }
+
     show_hilite(first, last);
     ToData(1);
     vt_el(2);
     chrprint(report);
-    if ((report = skip_csi(report)) != 0) {
-      if (*report == 'M'
-          && strlen(report) >= 4) {
-        unsigned b = MCHR(report[1]);
 
-        b &= 7;
-        pos = 2;
-        x = xterm_coord(report, &pos);
-        y = xterm_coord(report, &pos);
-        if (b != 3) {
-          /* send the xterm the highlighting range (it MUST be done first) */
-          do_csi("1;%u;%u;%d;%d;T", x, y, 10, 20);
-          /* now, show the mouse-click */
-          if (b < 3)
-            b++;
-          show_click(y, x, (int) (b + '0'));
-        }
-        /* interpret the event */
-        ToData(2);
-        vt_el(2);
-        show_result("tracking: code 0x%x (%d,%d)", b, y, x);
-        fflush(stdout);
-      } else if (*report == 'T' && strlen(report) == 7) {
-        /* interpret the event */
-        ToData(2);
-        vt_el(2);
-
-        pos = 1;
-        start_x = xterm_coord(report, &pos);
-        start_y = xterm_coord(report, &pos);
-        end_x = xterm_coord(report, &pos);
-        end_y = xterm_coord(report, &pos);
-        mouse_x = xterm_coord(report, &pos);
-        mouse_y = xterm_coord(report, &pos);
-
-        show_result("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
-                    start_y, start_x,
-                    end_y, end_x,
-                    mouse_y, mouse_x);
-        if (start_y != y
-            || start_x != x)
-          show_click(start_y, start_x, 's');
-        if (end_y != y
-            || end_x != x)
-          show_click(end_y, end_x, 'e');
-        if (mouse_y != y
-            || mouse_x != x)
-          show_click(mouse_y, mouse_x, 'm');
-      } else if (*report == 't' && strlen(report) == 3) {
-        /* interpret the event */
-        ToData(2);
-        vt_el(2);
-
-        pos = 1;
-        end_x = xterm_coord(report, &pos);
-        end_y = xterm_coord(report, &pos);
-
-        show_result("done: end(%d,%d)",
-                    end_y, end_x);
-        if (end_y != y
-            || end_x != x)
-          show_click(end_y, end_x, 'e');
+    if (parse_mouse_M(report, &b, &x, &y) != 0) {
+      b &= 7;
+      pos = 2;
+      if (b != 3) {
+        /* send the xterm the highlighting range (it MUST be done first) */
+        do_csi("1;%u;%u;%d;%d;T", x, y, 10, 20);
+        /* now, show the mouse-click */
+        if (b < 3)
+          b++;
+        show_click(y, x, (int) (b + '0'));
       }
+      /* interpret the event */
+      ToData(2);
+      vt_el(2);
+      show_result("tracking: code 0x%x (%d,%d)", b, y, x);
+      fflush(stdout);
+    } else if (parse_mouse_T(report,
+                             &start_x, &start_y,
+                             &end_x, &end_y,
+                             &mouse_x, &mouse_y)) {
+      /* interpret the event */
+      ToData(2);
+      vt_el(2);
+
+      show_result("done: start(%d,%d), end(%d,%d), mouse(%d,%d)",
+                  start_y, start_x,
+                  end_y, end_x,
+                  mouse_y, mouse_x);
+      if (start_y != y
+          || start_x != x)
+        show_click(start_y, start_x, 's');
+      if (end_y != y
+          || end_x != x)
+        show_click(end_y, end_x, 'e');
+      if (mouse_y != y
+          || mouse_x != x)
+        show_click(mouse_y, mouse_x, 'm');
+    } else if (parse_mouse_t(report, &end_x, &end_y)) {
+      /* interpret the event */
+      ToData(2);
+      vt_el(2);
+
+      show_result("done: end(%d,%d)",
+                  end_y, end_x);
+      if (end_y != y
+          || end_x != x)
+        show_click(end_y, end_x, 'e');
     }
   }
 
@@ -558,6 +764,8 @@ test_mouse_normal(MENU_ARGS)
 static int
 test_X10_mouse(MENU_ARGS)
 {
+  unsigned b, x, y;
+
 first:
   vt_move(1, 1);
   ed(0);
@@ -582,15 +790,10 @@ first:
     ToData(0);
     vt_el(2);
     chrprint(report);
-    if ((report = skip_csi(report)) != 0
-        && *report == 'M'
-        && strlen(report) >= 4) {
-      int pos = 2;
-      int x = (int) xterm_coord(report, &pos);
-      int y = (int) xterm_coord(report, &pos);
-      cup(y, x);
-      printf("%u", MCHR(report[1]) + 1);
-      vt_move(y, x);
+    if ((report = parse_mouse_M(report, &b, &x, &y)) != 0) {
+      cup((int) y, (int) x);
+      printf("%u", b + 1);
+      vt_move((int) y, (int) x);
       fflush(stdout);
     }
   }
@@ -643,16 +846,46 @@ tst_dec_locator_events(MENU_ARGS)
 }
 
 /*
- * The "extended-mouse" control allows sending coordinates larger than 8-bits.
+ * Cycle through the different flavors of mouse-coordinates which are
+ * recognized by xterm.
  */
 static int
-toggle_ExtMouse(MENU_ARGS)
+toggle_ExtCoords(MENU_ARGS)
 {
-  do_ExtMouse = !do_ExtMouse;
-  if (do_ExtMouse)
-    sm("?1005");
-  else
-    rm("?1005");
+  int old_ExtCoords = do_ExtCoords;
+  char buffer[80];
+
+  switch (do_ExtCoords) {
+  case cUTF:
+    do_ExtCoords = cSGR;
+    break;
+  case cSGR:
+    do_ExtCoords = cURX;
+    break;
+  case cURX:
+    do_ExtCoords = cDFT;
+    break;
+  default:
+    do_ExtCoords = cUTF;
+    break;
+  }
+
+  if (LOG_ENABLED) {
+    fprintf(log_fp, "Toggle: from %s to %s\n",
+            nameOfExtCoords(old_ExtCoords),
+            nameOfExtCoords(do_ExtCoords));
+  }
+
+  if (old_ExtCoords) {
+    sprintf(buffer, "?%d", old_ExtCoords);
+    rm(buffer);
+  }
+
+  if (do_ExtCoords) {
+    sprintf(buffer, "?%d", do_ExtCoords);
+    sm(buffer);
+  }
+
   return MENU_NOHOLD;
 }
 
@@ -677,12 +910,12 @@ toggle_FocusEvent(MENU_ARGS)
 int
 tst_mouse(MENU_ARGS)
 {
-  static char txt_ExtMouse[80];
+  static char txt_Utf8Mouse[80];
   static char txt_FocusEvent[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
     { "Exit",                                                0 },
-    { txt_ExtMouse,                                          toggle_ExtMouse },
+    { txt_Utf8Mouse,                                         toggle_ExtCoords },
     { txt_FocusEvent,                                        toggle_FocusEvent },
     { "X10 Mouse Compatibility",                             test_X10_mouse },
     { "Normal Mouse Tracking",                               test_mouse_normal },
@@ -696,8 +929,7 @@ tst_mouse(MENU_ARGS)
 
   do {
     vt_clear(2);
-    sprintf(txt_ExtMouse, "Mode: %s coordinates",
-            do_ExtMouse ? "UTF-8" : "normal");
+    sprintf(txt_Utf8Mouse, "Mode: %s coordinates", nameOfExtCoords(do_ExtCoords));
     sprintf(txt_FocusEvent, "Mode: %sFocus-event",
             do_FocusEvent ? "" : "no");
     __(title(0), println("XTERM mouse features"));

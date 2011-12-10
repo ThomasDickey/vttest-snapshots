@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.80 2011/05/06 21:00:47 tom Exp $ */
+/* $Id: vttest.h,v 1.84 2011/12/07 22:17:59 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -166,6 +166,10 @@ extern jmp_buf intrenv;
 
 #define DEFAULT_SPEED 9600
 
+#define STR_ENABLE(flag)     ((flag) ? "Disable" : "Enable")
+#define STR_ENABLED(flag)    ((flag) ? "enabled" : "disabled")
+#define STR_START(flag)      ((flag) ? "Stop" : "Start")
+
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(p)  /* nothing */
 #endif
@@ -273,6 +277,7 @@ extern int tst_bugs(MENU_ARGS);
 extern int tst_characters(MENU_ARGS);
 extern int tst_colors(MENU_ARGS);
 extern int tst_doublesize(MENU_ARGS);
+extern int tst_ecma48_misc(MENU_ARGS);
 extern int tst_insdel(MENU_ARGS);
 extern int tst_keyboard(MENU_ARGS);
 extern int tst_keyboard_layout(char *scs_params);

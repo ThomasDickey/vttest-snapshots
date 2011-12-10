@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.12 2010/05/28 09:50:36 tom Exp $ */
+/* $Id: tek4014.c,v 1.13 2011/12/06 10:34:05 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -102,11 +102,11 @@ tek_point(int pen, int y, int x)
     sprintf(temp, "%c", GS);
   }
   sprintf(temp + strlen(temp), "%c%c%c%c%c",
-         0x20 | (((y & HIBITS) >> SHIFTHI) & FIVEBITS),
-         0x60 | (((y & TWOBITS) << SHIFTLO) | (x & TWOBITS)), /* tests/sets lo_y */
-         0x60 | (((y & LOBITS) >> SHIFTLO) & FIVEBITS), /* sets lo_y */
-         0x20 | (((x & HIBITS) >> SHIFTHI) & FIVEBITS),
-         0x40 | (((x & LOBITS) >> SHIFTLO) & FIVEBITS)); /* must be last */
+          0x20 | (((y & HIBITS) >> SHIFTHI) & FIVEBITS),
+          0x60 | (((y & TWOBITS) << SHIFTLO) | (x & TWOBITS)),  /* tests/sets lo_y */
+          0x60 | (((y & LOBITS) >> SHIFTLO) & FIVEBITS),  /* sets lo_y */
+          0x20 | (((x & HIBITS) >> SHIFTHI) & FIVEBITS),
+          0x40 | (((x & LOBITS) >> SHIFTLO) & FIVEBITS));   /* must be last */
   fprintf(stdout, "%s", temp);
   if (LOG_ENABLED) {
     fprintf(log_fp, "*Set point (%d,%d)\n", y, x);
@@ -132,7 +132,7 @@ log_mouse_click(char *report)
     int new_y = tek_coord(report, 3);
     fprintf(log_fp, "Report: ");
     if ((report[0] & 0x80) != 0
-     && strchr("lmrLMR", report[0] & 0x7f) != 0) {
+        && strchr("lmrLMR", report[0] & 0x7f) != 0) {
       fprintf(log_fp, "mouse %c", report[0] & 0x7f);
     } else {
       fprintf(log_fp, "key %d", CharOf(report[0]));
@@ -207,7 +207,7 @@ tek_mouse_coords(MENU_ARGS)
      */
     printf("\r\n");
     if ((report[0] & 0x80) != 0
-     && strchr("lmrLMR", report[0] & 0x7f) != 0) {
+        && strchr("lmrLMR", report[0] & 0x7f) != 0) {
       printf("mouse %c:", report[0] & 0x7f);
     } else {
       printf("key: %d", CharOf(report[0]));
@@ -307,6 +307,7 @@ tek_grid_demo(MENU_ARGS)
 int
 tst_tek4014(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
     { "Exit",                                                0 },
     { "Clear screen",                                        tek_clear },
@@ -316,11 +317,12 @@ tst_tek4014(MENU_ARGS)
     { "Draw a grid",                                         tek_grid_demo },
     { "",                                                    0 }
   };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); println("XTERM/tek4014 features");
-    title(2); println("Choose test type:");
+    __(title(0), println("XTERM/tek4014 features"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

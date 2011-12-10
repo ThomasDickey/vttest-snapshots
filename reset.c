@@ -1,4 +1,4 @@
-/* $Id: reset.c,v 1.6 2010/05/28 09:22:37 tom Exp $ */
+/* $Id: reset.c,v 1.7 2011/12/06 10:43:28 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -8,7 +8,7 @@ static int did_reset = FALSE;
 int
 tst_DECSTR(MENU_ARGS)
 {
-  vt_move(1,1);
+  vt_move(1, 1);
   println(the_title);
   println("(VT220 & up)");
   println("");
@@ -21,7 +21,7 @@ tst_DECSTR(MENU_ARGS)
 static int
 tst_DECTST(MENU_ARGS)
 {
-  vt_move(1,1);
+  vt_move(1, 1);
   println(the_title);
   println("");
 
@@ -34,8 +34,8 @@ tst_DECTST(MENU_ARGS)
 
   vt_clear(2);
   dectst(1);
-  zleep(5000);          /* Wait 5.0 seconds */
-  vt_move(10,1);
+  zleep(5000);  /* Wait 5.0 seconds */
+  vt_move(10, 1);
   println("If the built-in confidence test found any errors, a code");
   printf("%s", "is visible above. ");
 
@@ -46,14 +46,14 @@ tst_DECTST(MENU_ARGS)
 static int
 tst_RIS(MENU_ARGS)
 {
-  vt_move(1,1);
+  vt_move(1, 1);
   println(the_title);
   println("(VT100 & up, not recommended)");
   println("");
-  printf ("The terminal will now be RESET. ");
+  printf("The terminal will now be RESET. ");
   holdit();
   ris();
-  zleep(5000);          /* Wait 5.0 seconds */
+  zleep(5000);  /* Wait 5.0 seconds */
 
   did_reset = TRUE;
   reset_level();
@@ -65,6 +65,7 @@ tst_RIS(MENU_ARGS)
 int
 tst_rst(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Reset to Initial State (RIS)",                      tst_RIS },
@@ -72,13 +73,14 @@ tst_rst(MENU_ARGS)
       { "Soft Terminal Reset (DECSTR)",                      tst_DECSTR },
       { "",                                                  0 }
     };
+  /* *INDENT-ON* */
 
   did_reset = FALSE;
 
   do {
     vt_clear(2);
-    title(0); printf("%s", the_title);
-    title(2); println("Choose test type:");
+    __(title(0), printf("%s", the_title));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

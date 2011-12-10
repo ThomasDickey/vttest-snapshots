@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.34 2010/05/28 09:20:59 tom Exp $ */
+/* $Id: charsets.c,v 1.36 2011/12/06 01:56:12 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -387,7 +387,7 @@ tst_vt220_locking(MENU_ARGS)
   int i, cset;
 
   __(cup(1, 10), tprintf("Locking shifts, with NRC %s:",
-                         national ? "enabled" : "disabled"));
+                         STR_ENABLED(national)));
   for (cset = 0; cset < TABLESIZE(table); cset++) {
     int row = 3 + (4 * cset);
     int map = table[cset].mapped;
@@ -443,7 +443,7 @@ tst_vt220_single(MENU_ARGS)
     vt_clear(2);
     cup(1, 1);
     tprintf("Testing single-shift G%d into GL (SS%d) with NRC %s\n",
-            g, g, national ? "enabled" : "disabled");
+            g, g, STR_ENABLED(national));
     tprintf("G%d is %s", g, KnownCharsets[current_Gx[g]].name);
 
     do_scs(g);
@@ -561,7 +561,7 @@ tst_characters(MENU_ARGS)
       __(title(0), printf("Character-Set Tests"));
       __(title(2), println("Choose test type:"));
       sprintf(nrc_mesg, "%s National Replacement Character (NRC) mode",
-              national ? "Disable" : "Enable");
+              STR_ENABLE(national));
       for (n = 0; n < 4; n++) {
         sprintf(whatis_Gx[n], "Specify G%d (now %s)",
                 n, KnownCharsets[current_Gx[n]].name);

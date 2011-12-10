@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.22 2011/05/07 12:42:48 tom Exp $ */
+/* $Id: vt220.c,v 1.23 2011/12/06 01:56:27 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -193,7 +193,7 @@ tst_S8C1T(MENU_ARGS)
     dsr(6);
     report = instr();
     vt_move(10 + pass * 3, 1);
-    printf("8-bit controls %s: ", flag ? "enabled" : "disabled");
+    printf("8-bit controls %s: ", STR_ENABLED(flag));
     chrprint(report);
     report_ok("1;1R", report);
   }

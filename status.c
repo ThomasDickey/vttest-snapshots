@@ -1,4 +1,4 @@
-/* $Id: status.c,v 1.5 2010/05/28 09:22:37 tom Exp $ */
+/* $Id: status.c,v 1.6 2011/12/06 10:35:44 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -7,8 +7,8 @@
 static void
 restore_status(void)
 {
-  decsasd(0); /* main display */
-  decssdt(1); /* indicator (default) */
+  decsasd(0);   /* main display */
+  decssdt(1);   /* indicator (default) */
   restore_ttymodes();
 }
 
@@ -17,7 +17,7 @@ simple_statusline(MENU_ARGS)
 {
   static char text[] = "TEXT IN THE STATUS LINE";
 
-  vt_move(1,1);
+  vt_move(1, 1);
   println("This is a simple test of the status-line");
   println("");
 
@@ -43,7 +43,7 @@ simple_statusline(MENU_ARGS)
 static int
 SGR_statusline(MENU_ARGS)
 {
-  vt_move(1,1);
+  vt_move(1, 1);
   println("This test writes SGR controls to the status-line");
   holdit();
 
@@ -51,7 +51,7 @@ SGR_statusline(MENU_ARGS)
   decsasd(1);
 
   el(2);
-  cup(1,1);
+  cup(1, 1);
   sgr("1");
   printf("BOLD text ");
   sgr("0");
@@ -86,17 +86,19 @@ SGR_statusline(MENU_ARGS)
 int
 tst_statusline(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Simple Status line Test",                           simple_statusline },
       { "Test Graphic-Rendition in Status line",             SGR_statusline },
       { "",                                                  0 }
     };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); println(the_title);
-    title(2); println("Choose test type:");
+    __(title(0), println(the_title));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

@@ -1,3 +1,9 @@
+vttest-cur (2.7.20111210) unstable; urgency=low
+
+  * Add mouse tests for SGR 1006, 1015
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Thu, 08 Dec 2011 20:24:31 -0500
+
 vttest-cur (2.7.20110705) unstable; urgency=low
 
   * bug-fix for big-endian machines

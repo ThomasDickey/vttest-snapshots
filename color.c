@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.31 2010/05/28 09:34:37 tom Exp $ */
+/* $Id: color.c,v 1.34 2011/12/07 01:39:44 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -477,6 +477,19 @@ test_color_insdel(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
+/*
+ * Test the other ECMA-48 features with color setup.
+ */
+static int
+test_ecma48_misc(MENU_ARGS)
+{
+  set_test_colors();
+
+  tst_ecma48_misc(PASS_ARGS);
+  reset_colors();
+  return MENU_NOHOLD;
+}
+
 static int
 test_color_screen(MENU_ARGS)
 {
@@ -632,6 +645,7 @@ tst_colors(MENU_ARGS)
     { "Test BCE-style clear line/display (ED, EL)",          simple_bce_test, },
     { "Test BCE-style clear line/display (ECH, Indexing)",   fancy_bce_test, },
     { "Test of VT102-style features with BCE (Insert/Delete Char/Line)", test_color_insdel, },
+    { "Test other ISO-6429 features with BCE",               test_ecma48_misc },
     { "Test of screen features with BCE",                    test_color_screen, },
     { "Test of screen features with ISO 6429 SGR 22-27 codes", test_iso_6429_sgr, },
     { "", 0 }
@@ -640,8 +654,7 @@ tst_colors(MENU_ARGS)
 
   do {
     vt_clear(2);
-    sprintf(txt_override_color, "%sable color-switching",
-            do_colors ? "Dis" : "En");
+    sprintf(txt_override_color, "%s color-switching", STR_ENABLE(do_colors));
     __(title(0), println("ISO 6429 colors"));
     __(title(2), println("Choose test type:"));
   } while (menu(colormenu));
