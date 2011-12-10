@@ -1,5 +1,12 @@
--- $Id: CHANGES,v 1.133 2011/07/05 21:45:35 tom Exp $
+-- $Id: CHANGES,v 1.136 2011/12/10 15:19:15 tom Exp $
 -------------------------------------------------------------------------------
+
+20111210
+	+ modify mouse menu's selection of coordinate mode to include xterm's
+	  1006 and urxvt's 1015 controls.
+
+	+ add menu entry to allow miscellaneous ECMA-48 such as SD/SU to
+	  be tested with colors.
 
 20110705
 	+ fill in DEC mnemonics on some menus.

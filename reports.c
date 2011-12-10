@@ -1,10 +1,10 @@
-/* $Id: reports.c,v 1.31 2010/05/28 09:50:36 tom Exp $ */
+/* $Id: reports.c,v 1.32 2011/12/06 10:27:15 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
 #include <esc.h>
 #include <ctype.h>
-
+/* *INDENT-OFF* */
 static
 struct table {
     int key;
@@ -77,6 +77,7 @@ struct table {
     {  46, "ASCII Terminal emulation (WYSE,TVI,...)" }, /* vt500 */
     {  -1, "" }
 };
+/* *INDENT-ON* */
 
 static int
 legend(int n, const char *input, const char *word, const char *description)
@@ -86,12 +87,12 @@ legend(int n, const char *input, const char *word, const char *description)
   char buf[BUFSIZ];
 
   for (i = 0; input[i] != 0; i++) {
-    if ((i == 0 || !isalpha(CharOf(input[i-1])))
-     && !strncmp(word, input+i, len)) {
+    if ((i == 0 || !isalpha(CharOf(input[i - 1])))
+        && !strncmp(word, input + i, len)) {
       sprintf(buf, "%-8s %-3s = %s", n ? "" : "Legend:", word, description);
       show_result("%s", buf);
       println("");
-      return n+1;
+      return n + 1;
     }
   }
   return n;
@@ -102,9 +103,10 @@ lookup(struct table t[], int k)
 {
   int i;
   for (i = 0; t[i].key != -1; i++) {
-    if (t[i].key == k) return(t[i].msg);
+    if (t[i].key == k)
+      return (t[i].msg);
   }
-  return("BAD VALUE");
+  return ("BAD VALUE");
 }
 
 static int
@@ -128,7 +130,7 @@ tst_DA(MENU_ARGS)
 {
   int i, found;
   const char *report, *cmp;
-
+  /* *INDENT-OFF* */
   static const char *attributes[][2] = { /* after CSI */
     { "?1;0c",   "No options (vanilla VT100)" },
     { "?1;1c",   "VT100 with STP" },
@@ -159,14 +161,16 @@ tst_DA(MENU_ARGS)
     { "?63;1;3;4;6;8;9;15;16;29c", "DXterm" },
     { "", "" }
   };
+  /* *INDENT-ON* */
 
-  vt_move(1,1);
+  vt_move(1, 1);
   println("Test of Device Attributes report (what are you)");
 
   set_tty_raw(TRUE);
   da();
   report = get_reply();
-  vt_move(3,1);
+
+  vt_move(3, 1);
   vt_el(0);
   printf("Report is: ");
   chrprint(report);
@@ -181,7 +185,7 @@ tst_DA(MENU_ARGS)
         n = legend(n, attributes[i][1], "STP", "Processor Option");
         n = legend(n, attributes[i][1], "AVO", "Advanced Video Option");
         n = legend(n, attributes[i][1], "GPO", "Graphics Processor Option");
-        (void) legend(n, attributes[i][1], "PP",  "Printer Port");
+        (void) legend(n, attributes[i][1], "PP", "Printer Port");
         found = TRUE;
         break;
       }
@@ -239,7 +243,8 @@ tst_DA(MENU_ARGS)
     show_result(" -- Unknown response, refer to the manual");
 
   restore_ttymodes();
-  vt_move(max_lines-1,1);
+
+  vt_move(max_lines - 1, 1);
   return MENU_HOLD;
 }
 
@@ -255,6 +260,7 @@ tst_DA(MENU_ARGS)
 static int
 tst_DA_2(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static const struct {
     int Pp;
     const char *name;
@@ -268,6 +274,7 @@ tst_DA_2(MENU_ARGS)
     { 64,  "VT520" },
     { 65,  "VT525" },
   };
+  /* *INDENT-ON* */
 
   char *report;
   int Pp, Pv, Pc;
@@ -275,16 +282,18 @@ tst_DA_2(MENU_ARGS)
   const char *show = SHOW_FAILURE;
   size_t n;
 
-  vt_move(1,1); println("Testing Secondary Device Attributes (Firmware version)");
+  vt_move(1, 1);
+  println("Testing Secondary Device Attributes (Firmware version)");
 
   set_tty_raw(TRUE);
   do_csi(">c"); /* or "CSI > 0 c" */
   report = get_reply();
-  vt_move(3,10);
+
+  vt_move(3, 10);
   chrprint(report);
   if ((report = skip_csi(report)) != 0) {
     if (sscanf(report, ">%d;%d;%d%c", &Pp, &Pv, &Pc, &ch) == 4
-     && ch == 'c') {
+        && ch == 'c') {
       const char *name = "unknown";
       show = SHOW_SUCCESS;
       for (n = 0; n < TABLESIZE(tbl); n++) {
@@ -293,9 +302,13 @@ tst_DA_2(MENU_ARGS)
           break;
         }
       }
-      vt_move(4,10); printf("Pp=%d (%s)", Pp, name);
-      vt_move(5,10); printf("Pv=%d, firmware version %d.%d", Pv, Pv/10, Pv%10);
-      vt_move(6,10);
+      vt_move(4, 10);
+      printf("Pp=%d (%s)", Pp, name);
+
+      vt_move(5, 10);
+      printf("Pv=%d, firmware version %d.%d", Pv, Pv / 10, Pv % 10);
+
+      vt_move(6, 10);
       switch (Pp) {
       case 64:
       case 65:
@@ -310,7 +323,8 @@ tst_DA_2(MENU_ARGS)
   show_result("%s", show);
 
   restore_ttymodes();
-  vt_move(max_lines-1,1);
+
+  vt_move(max_lines - 1, 1);
   return MENU_HOLD;
 }
 
@@ -323,18 +337,20 @@ tst_DA_3(MENU_ARGS)
   char *report;
   const char *show;
 
-  vt_move(1,1); println("Testing Tertiary Device Attributes (unit ID)");
+  vt_move(1, 1);
+  println("Testing Tertiary Device Attributes (unit ID)");
 
   set_tty_raw(TRUE);
   do_csi("=c"); /* or "CSI = 0 c" */
   report = get_reply();
-  vt_move(3,10);
+
+  vt_move(3, 10);
   chrprint(report);
   if ((report = skip_dcs(report)) != 0
-   && strip_terminator(report) != 0
-   && *report++ == '!'
-   && *report++ == '|'
-   && strlen(report) != 0) {
+      && strip_terminator(report) != 0
+      && *report++ == '!'
+      && *report++ == '|'
+      && strlen(report) != 0) {
     show = SHOW_SUCCESS;
   } else {
     show = SHOW_FAILURE;
@@ -342,7 +358,8 @@ tst_DA_3(MENU_ARGS)
   show_result("%s", show);
 
   restore_ttymodes();
-  vt_move(max_lines-1,1);
+
+  vt_move(max_lines - 1, 1);
   return MENU_HOLD;
 }
 
@@ -356,12 +373,15 @@ tst_DECREQTPARM(MENU_ARGS)
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
-  vt_move(2,1);
+
+  vt_move(2, 1);
   println("Test of the \"Request Terminal Parameters\" feature, argument 0.");
-  vt_move(3,1);
+
+  vt_move(3, 1);
   decreqtparm(0);
   report = get_reply();
-  vt_move(5,1);
+
+  vt_move(5, 1);
   vt_el(0);
   printf("Report is: ");
   chrprint(report);
@@ -370,11 +390,12 @@ tst_DECREQTPARM(MENU_ARGS)
     report = cmp;
 
   if (strlen(report) < 14
-   || report[0] != '2'
-   || report[1] != ';')
+      || report[0] != '2'
+      || report[1] != ';')
     println(" -- Bad format");
   else {
     reportpos = 2;
+    /* *INDENT-EQLS* */
     parity = scanto(report, &reportpos, ';');
     nbits  = scanto(report, &reportpos, ';');
     xspeed = scanto(report, &reportpos, ';');
@@ -382,24 +403,28 @@ tst_DECREQTPARM(MENU_ARGS)
     clkmul = scanto(report, &reportpos, ';');
     flags  = scanto(report, &reportpos, 'x');
 
-    if (parity == 0 || nbits == 0 || clkmul == 0) println(" -- Bad format");
-    else                                          println(" -- OK");
+    if (parity == 0 || nbits == 0 || clkmul == 0)
+      println(" -- Bad format");
+    else
+      println(" -- OK");
 
     show_result(
-      "This means: Parity %s, %s bits, xmitspeed %s, recvspeed %s.\n",
-      lookup(paritytable, parity),
-      lookup(nbitstable, nbits),
-      lookup(speedtable, xspeed),
-      lookup(speedtable, rspeed));
+                 "This means: Parity %s, %s bits, xmitspeed %s, recvspeed %s.\n",
+                 lookup(paritytable, parity),
+                 lookup(nbitstable, nbits),
+                 lookup(speedtable, xspeed),
+                 lookup(speedtable, rspeed));
     show_result("(CLoCk MULtiplier = %d, STP option flags = %d)\n", clkmul, flags);
   }
 
-  vt_move(10,1);
+  vt_move(10, 1);
   println("Test of the \"Request Terminal Parameters\" feature, argument 1.");
-  vt_move(11,1);
-  decreqtparm(1);       /* Does the same as decreqtparm(0), reports "3" */
+
+  vt_move(11, 1);
+  decreqtparm(1);   /* Does the same as decreqtparm(0), reports "3" */
   report2 = get_reply();
-  vt_move(13,1);
+
+  vt_move(13, 1);
   vt_el(0);
   printf("Report is: ");
   chrprint(report2);
@@ -408,14 +433,16 @@ tst_DECREQTPARM(MENU_ARGS)
     report2 = cmp;
 
   if (strlen(report2) < 1
-   || report2[0] != '3')
+      || report2[0] != '3')
     println(" -- Bad format");
   else {
     report2[0] = '2';
-    if (!strcmp(report,report2)) println(" -- OK");
-    else                         println(" -- Bad format");
+    if (!strcmp(report, report2))
+      println(" -- OK");
+    else
+      println(" -- Bad format");
   }
-  vt_move(max_lines,1);
+  vt_move(max_lines, 1);
 
   restore_ttymodes();
   return MENU_HOLD;
@@ -428,12 +455,15 @@ tst_DSR(MENU_ARGS)
   char *report, *cmp;
 
   set_tty_raw(TRUE);
-  vt_move(1,1);
+
+  vt_move(1, 1);
   printf("Test of Device Status Report 5 (report terminal status).");
-  vt_move(2,1);
+
+  vt_move(2, 1);
   dsr(5);
   report = get_reply();
-  vt_move(2,1);
+
+  vt_move(2, 1);
   vt_el(0);
   printf("Report is: ");
   chrprint(report);
@@ -448,18 +478,20 @@ tst_DSR(MENU_ARGS)
   else
     show_result(" -- Unknown response!");
 
-  vt_move(4,1);
+  vt_move(4, 1);
   println("Test of Device Status Report 6 (report cursor position).");
-  vt_move(5,1);
+
+  vt_move(5, 1);
   dsr(6);
   report = get_reply();
-  vt_move(5,1);
+
+  vt_move(5, 1);
   vt_el(0);
   printf("Report is: ");
   chrprint(report);
 
   if ((cmp = skip_csi(report)) != 0)
-    found = !strcmp(cmp,"5;1R");
+    found = !strcmp(cmp, "5;1R");
   else
     found = 0;
 
@@ -468,7 +500,7 @@ tst_DSR(MENU_ARGS)
   else
     show_result(" -- Unknown response!");
 
-  vt_move(max_lines-1,1);
+  vt_move(max_lines - 1, 1);
   restore_ttymodes();
   return MENU_HOLD;
 }
@@ -478,21 +510,24 @@ tst_ENQ(MENU_ARGS)
 {
   char *report;
 
-  vt_move(5,1);
+  vt_move(5, 1);
   println("This is a test of the ANSWERBACK MESSAGE. (To load the A.B.M.");
   println("see the TEST KEYBOARD part of this program). Below here, the");
   println("current answerback message in your terminal should be");
   println("displayed. Finish this test with RETURN.");
-  vt_move(10,1);
+
+  vt_move(10, 1);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
   inflush();
-  printf("%c", 5); /* ENQ */
+  printf("%c", 5);  /* ENQ */
   report = get_reply();
-  vt_move(10,1);
+
+  vt_move(10, 1);
   chrprint(report);
-  vt_move(12,1);
+
+  vt_move(12, 1);
 
   restore_ttymodes();
   return MENU_HOLD;
@@ -503,28 +538,39 @@ tst_NLM(MENU_ARGS)
 {
   char *report;
 
-  vt_move(1,1);
+  vt_move(1, 1);
   println("Test of LineFeed/NewLine mode.");
-  vt_move(3,1);
+
+  vt_move(3, 1);
   sm("20");
   set_tty_crmod(FALSE);
   printf("NewLine mode set. Push the RETURN key: ");
   report = instr();
-  vt_move(4,1);
+
+  vt_move(4, 1);
   vt_el(0);
   chrprint(report);
-  if (!strcmp(report, "\015\012")) show_result(" -- OK");
-  else                             show_result(" -- Not expected");
-  vt_move(6,1);
+
+  if (!strcmp(report, "\015\012"))
+    show_result(" -- OK");
+  else
+    show_result(" -- Not expected");
+
+  vt_move(6, 1);
   rm("20");
   printf("NewLine mode reset. Push the RETURN key: ");
   report = instr();
-  vt_move(7,1);
+
+  vt_move(7, 1);
   vt_el(0);
   chrprint(report);
-  if (!strcmp(report, "\015")) show_result(" -- OK");
-  else                         show_result(" -- Not expected");
-  vt_move(9,1);
+
+  if (!strcmp(report, "\015"))
+    show_result(" -- OK");
+  else
+    show_result(" -- Not expected");
+
+  vt_move(9, 1);
 
   restore_ttymodes();
   return MENU_HOLD;
@@ -534,6 +580,7 @@ tst_NLM(MENU_ARGS)
 int
 tst_reports(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                                   0 },
       { "<ENQ> (AnswerBack Message)",                             tst_ENQ },
@@ -545,11 +592,12 @@ tst_reports(MENU_ARGS)
       { "Request Terminal Parameters (DECREQTPARM)  VT100",       tst_DECREQTPARM },
       { "",                                                       0 }
     };
+  /* *INDENT-ON* */
 
   do {
     vt_clear(2);
-    title(0); printf("Terminal Reports/Responses");
-    title(2); println("Choose test type:");
+    __(title(0), printf("Terminal Reports/Responses"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

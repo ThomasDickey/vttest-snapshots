@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.15 2010/05/28 08:35:57 tom Exp $ */
+/* $Id: vt52.c,v 1.16 2011/12/06 09:27:22 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -10,7 +10,7 @@ testing(const char *name, int row)
   printf("Testing %s. ", name);
   printf("A real VT%d will not recognize %s at this point", terminal_id(), name);
   println("");
-  return row+1;
+  return row + 1;
 }
 
 static int
@@ -22,6 +22,7 @@ isreturn(const char *reply)
 int
 tst_vt52(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static struct {
       const char *rcode;
       const char *rmsg;
@@ -35,108 +36,112 @@ tst_vt52(MENU_ARGS)
       { "\033/Z", " -- OK (means VT100 emulating VT52)" },
       { "",       " -- Unknown response"}
   };
+  /* *INDENT-ON* */
 
-  int i,j;
+  int i, j;
   char *response;
   const char *temp;
   VTLEVEL save;
 
   save_level(&save);
-  set_level(0);  /* Reset ANSI (VT100) mode, Set VT52 mode  */
-  vt52home();    /* Cursor home     */
-  vt52ed();      /* Erase to end of screen  */
-  vt52home();    /* Cursor home     */
-  for (i = 0; i <= max_lines-1; i++) {
+  set_level(0); /* Reset ANSI (VT100) mode, Set VT52 mode  */
+  vt52home();   /* Cursor home     */
+  vt52ed();     /* Erase to end of screen  */
+  vt52home();   /* Cursor home     */
+  for (i = 0; i <= max_lines - 1; i++) {
     for (j = 0; j <= 9; j++)
-    printf("%s", "FooBar ");
+      printf("%s", "FooBar ");
     println("Bletch");
   }
-  vt52home();  /* Cursor home     */
-  vt52ed();    /* Erase to end of screen  */
+  vt52home();   /* Cursor home     */
+  vt52ed();     /* Erase to end of screen  */
 
-  vt52cup(7,47);
+  vt52cup(7, 47);
   printf("nothing more.");
-  for (i = 1; i <= 10; i++) printf("THIS SHOULD GO AWAY! ");
+  for (i = 1; i <= 10; i++)
+    printf("THIS SHOULD GO AWAY! ");
   for (i = 1; i <= 5; i++) {
-    vt52cup(1,1);
+    vt52cup(1, 1);
     printf("%s", "Back scroll (this should go away)");
-    vt52ri();           /* Reverse LineFeed (with backscroll!)  */
+    vt52ri();   /* Reverse LineFeed (with backscroll!)  */
   }
-  vt52cup(12,60);
-  vt52ed();    /* Erase to end of screen  */
+  vt52cup(12, 60);
+  vt52ed();     /* Erase to end of screen  */
   for (i = 2; i <= 6; i++) {
-    vt52cup(i,1);
-    vt52el();           /* Erase to end of line */
+    vt52cup(i, 1);
+    vt52el();   /* Erase to end of line */
   }
 
-  for (i = 2; i <= max_lines-1; i++) {
-    vt52cup(i,70); printf("%s", "**Foobar");
+  for (i = 2; i <= max_lines - 1; i++) {
+    vt52cup(i, 70);
+    printf("%s", "**Foobar");
   }
-  vt52cup(max_lines-1,10);
-  for (i = max_lines-1; i >= 2; i--) {
+  vt52cup(max_lines - 1, 10);
+  for (i = max_lines - 1; i >= 2; i--) {
     printf("%s", "*");
-    printf("%c", 8);    /* BS */
-    vt52ri();           /* Reverse LineFeed (LineStarve)        */
+    printf("%c", 8);  /* BS */
+    vt52ri();   /* Reverse LineFeed (LineStarve)        */
   }
-  vt52cup(1,70);
+  vt52cup(1, 70);
   for (i = 70; i >= 10; i--) {
     printf("%s", "*");
-    vt52cub1(); vt52cub1(); /* Cursor Left */
+    vt52cub1();
+    vt52cub1(); /* Cursor Left */
   }
-  vt52cup(max_lines,10);
+  vt52cup(max_lines, 10);
   for (i = 10; i <= 70; i++) {
     printf("%s", "*");
-    printf("%c", 8);    /* BS */
-    vt52cuf1();         /* Cursor Right */
+    printf("%c", 8);  /* BS */
+    vt52cuf1(); /* Cursor Right */
   }
-  vt52cup(2,11);
-  for (i = 2; i <= max_lines-1; i++) {
+  vt52cup(2, 11);
+  for (i = 2; i <= max_lines - 1; i++) {
     printf("%s", "!");
-    printf("%c", 8);    /* BS */
-    vt52cud1();         /* Cursor Down  */
+    printf("%c", 8);  /* BS */
+    vt52cud1(); /* Cursor Down  */
   }
-  vt52cup(max_lines-1,69);
-  for (i = max_lines-1; i >= 2; i--) {
+  vt52cup(max_lines - 1, 69);
+  for (i = max_lines - 1; i >= 2; i--) {
     printf("%s", "!");
-    printf("%c", 8);    /* BS */
-    vt52cuu1();         /* Cursor Up    */
+    printf("%c", 8);  /* BS */
+    vt52cuu1(); /* Cursor Up    */
   }
-  for (i = 2; i <= max_lines-1; i++) {
-    vt52cup(i,71);
-    vt52el();           /* Erase to end of line */
+  for (i = 2; i <= max_lines - 1; i++) {
+    vt52cup(i, 71);
+    vt52el();   /* Erase to end of line */
   }
 
-  vt52cup(10,16);
+  vt52cup(10, 16);
   printf("%s", "The screen should be cleared, and have a centered");
-  vt52cup(11,16);
+  vt52cup(11, 16);
   printf("%s", "rectangle of \"*\"s with \"!\"s on the inside to the");
-  vt52cup(12,16);
+  vt52cup(12, 16);
   printf("%s", "left and right. Only this, and");
-  vt52cup(13,16);
+  vt52cup(13, 16);
   holdit();
 
-  vt52home();  /* Cursor home     */
-  vt52ed();  /* Erase to end of screen  */
+  vt52home();   /* Cursor home     */
+  vt52ed();     /* Erase to end of screen  */
   printf("%s", "This is the normal character set:");
-  for (j =  0; j <=  1; j++) {
+  for (j = 0; j <= 1; j++) {
     vt52cup(3 + j, 16);
     for (i = 0; i <= 47; i++)
-    printf("%c", 32 + i + 48 * j);
+      printf("%c", 32 + i + 48 * j);
   }
-  vt52cup(6,1);
+  vt52cup(6, 1);
   printf("%s", "This is the special graphics character set:");
   esc("F");     /* Select Special Graphics character set        */
-  for (j =  0; j <=  1; j++) {
+  for (j = 0; j <= 1; j++) {
     vt52cup(8 + j, 16);
     for (i = 0; i <= 47; i++)
-    printf("%c", 32 + i + 48 * j);
+      printf("%c", 32 + i + 48 * j);
   }
   esc("G");     /* Select ASCII character set   */
-  vt52cup(12,1);
+  vt52cup(12, 1);
   holdit();
 
-  vt52home();  /* Cursor home     */
-  vt52ed();    /* Erase to end of screen  */
+  vt52home();   /* Cursor home     */
+  vt52ed();     /* Erase to end of screen  */
   println("Test of terminal response to IDENTIFY command");
 
   /*
@@ -155,7 +160,7 @@ tst_vt52(MENU_ARGS)
 
   printf("Response was");
   chrprint(response);
-  for(i = 0; resptable[i].rcode[0] != '\0'; i++) {
+  for (i = 0; resptable[i].rcode[0] != '\0'; i++) {
     if (!strcmp(response, resptable[i].rcode)) {
       show_result("%s", resptable[i].rmsg);
       break;
@@ -172,18 +177,18 @@ tst_vt52(MENU_ARGS)
    */
   if (terminal_id() >= 200) {
     int row = 8;
-    set_level(0);  /* Reset ANSI (VT100) mode, Set VT52 mode  */
+    set_level(0);   /* Reset ANSI (VT100) mode, Set VT52 mode  */
     println("Verify operating level after restoring ANSI mode");
-    esc("<");    /* Enter ANSI mode (VT100 mode) */
+    esc("<");   /* Enter ANSI mode (VT100 mode) */
     set_tty_raw(TRUE);
-    if (save.cur_level >= 3) { /* VT340 implements DECRQSS */
-      vt_move(row,1);
+    if (save.cur_level >= 3) {  /* VT340 implements DECRQSS */
+      vt_move(row, 1);
       row = testing("DECSCL", row);
       println("You should have to press return to continue:");
       println("");
       decrqss("\"p");
       response = get_reply();
-      vt_move(++row,10);
+      vt_move(++row, 10);
       printf("Response was");
       chrprint(response);
       if (isreturn(response)) {
@@ -198,13 +203,13 @@ tst_vt52(MENU_ARGS)
     }
 
     if (save.cur_level >= 2) {
-      vt_move(++row,1);
+      vt_move(++row, 1);
       row = testing("S8C1T", row);
       s8c1t(1);
-      cup(1,1);
+      cup(1, 1);
       dsr(6);
       response = instr();
-      vt_move(row,10);
+      vt_move(row, 10);
       printf("Response to CUP(1,1)/DSR(6)");
       chrprint(response);
       if ((temp = skip_prefix(csi_input(), response)) != 0) {
@@ -216,9 +221,9 @@ tst_vt52(MENU_ARGS)
           show_result(SHOW_FAILURE);
         }
       } else {
-        input_8bits = FALSE;    /* we expect this anyway */
+        input_8bits = FALSE;  /* we expect this anyway */
         if ((temp = skip_prefix(csi_input(), response)) != 0
-         && !strcmp("1;1R", temp)) {
+            && !strcmp("1;1R", temp)) {
           show_result(SHOW_SUCCESS);
         } else {
           printf("unknown response --");

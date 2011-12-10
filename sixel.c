@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.13 2011/07/05 21:43:38 tom Exp $ */
+/* $Id: sixel.c,v 1.14 2011/12/06 10:41:39 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -34,42 +34,94 @@ decode_header(void)
   int Pe, Pcms, Pw, Pt;
   char *s;
 
-  switch (sscanf(font_string+2, "%d;%d;%d;%d;%d;%d", &FontNumber, &StartingCharNum, &Pe, &Pcms, &Pw, &Pt)) {
-  case 0: FontNumber  = 0;      /* FALLTHRU */
-  case 1: StartingCharNum = 0;  /* FALLTHRU */
-  case 2: Pe   = 0;             /* FALLTHRU */
-  case 3: Pcms = 0;             /* FALLTHRU */
-  case 4: Pw   = 0;             /* FALLTHRU */
-  case 5: Pt   = 0;             /* FALLTHRU */
+  switch (sscanf(font_string + 2,
+                 "%d;%d;%d;%d;%d;%d",
+                 &FontNumber, &StartingCharNum, &Pe, &Pcms, &Pw, &Pt)) {
+  case 0:
+    FontNumber = 0;
+    /* FALLTHRU */
+  case 1:
+    StartingCharNum = 0;
+    /* FALLTHRU */
+  case 2:
+    Pe = 0;
+    /* FALLTHRU */
+  case 3:
+    Pcms = 0;
+    /* FALLTHRU */
+  case 4:
+    Pw = 0;
+    /* FALLTHRU */
+  case 5:
+    Pt = 0;
+    /* FALLTHRU */
   case 6:
     break;
   }
 
   switch (Pcms) {
-  case 1: MatrixWide =  0;  MatrixHigh =  0; break; /* illegal */
-  case 2: MatrixWide =  5;  MatrixHigh = 10; break;
-  case 3: MatrixWide =  6;  MatrixHigh = 10; break;
+  case 1:
+    MatrixWide = 0;
+    MatrixHigh = 0;
+    break;      /* illegal */
+  case 2:
+    MatrixWide = 5;
+    MatrixHigh = 10;
+    break;
+  case 3:
+    MatrixWide = 6;
+    MatrixHigh = 10;
+    break;
   case 0:
-  case 4: MatrixWide =  7;  MatrixHigh = 10; break;
-  default: MatrixWide = Pcms; MatrixHigh = 10; break; /* 5 thru 10 */
+  case 4:
+    MatrixWide = 7;
+    MatrixHigh = 10;
+    break;
+  default:
+    MatrixWide = Pcms;
+    MatrixHigh = 10;
+    break;      /* 5 thru 10 */
   }
 
   switch (Pe) {
-  case 0: EraseCtl = "this DRCS set"; break;
-  case 1: EraseCtl = "only reloaded chars"; break;
-  case 2: EraseCtl = "all chars in all DRCS sets"; break;
-  default: EraseCtl = "?"; break;
+  case 0:
+    EraseCtl = "this DRCS set";
+    break;
+  case 1:
+    EraseCtl = "only reloaded chars";
+    break;
+  case 2:
+    EraseCtl = "all chars in all DRCS sets";
+    break;
+  default:
+    EraseCtl = "?";
+    break;
   }
 
   switch (Pw) {
-  case  0: /* FALLTHRU */
-  case  1:  WidthAttr =  "80 cols, 24 lines"; break;
-  case  2:  WidthAttr = "132 cols, 24 lines"; break;
-  case 11:  WidthAttr =  "80 cols, 36 lines"; break;
-  case 12:  WidthAttr = "132 cols, 36 lines"; break;
-  case 21:  WidthAttr =  "80 cols, 24 lines"; break;
-  case 22:  WidthAttr = "132 cols, 48 lines"; break;
-  default:  WidthAttr = "?"; break;
+  case 0:
+    /* FALLTHRU */
+  case 1:
+    WidthAttr = "80 cols, 24 lines";
+    break;
+  case 2:
+    WidthAttr = "132 cols, 24 lines";
+    break;
+  case 11:
+    WidthAttr = "80 cols, 36 lines";
+    break;
+  case 12:
+    WidthAttr = "132 cols, 36 lines";
+    break;
+  case 21:
+    WidthAttr = "80 cols, 24 lines";
+    break;
+  case 22:
+    WidthAttr = "132 cols, 48 lines";
+    break;
+  default:
+    WidthAttr = "?";
+    break;
   }
 
   if (Pt == 2)
@@ -88,7 +140,7 @@ decode_header(void)
         if (is_final(*t)) {
           tmp[use++] = *t++;
           tmp[use] = '\0';
-          FontName = strcpy((char *) malloc(use+1), tmp);
+          FontName = strcpy((char *) malloc(use + 1), tmp);
           StartingCharPtr = t;
           break;
         }
@@ -120,9 +172,9 @@ static void
 display_head(FILE *fp)
 {
   fprintf(fp, "Font %d:%s, Matrix %dx%d (%s, %s)\n",
-    FontNumber, FontName, MatrixWide, MatrixHigh, WidthAttr, TextCell);
+          FontNumber, FontName, MatrixWide, MatrixHigh, WidthAttr, TextCell);
   fprintf(fp, "Start %d, Erase %s\n",
-    StartingCharNum, EraseCtl);
+          StartingCharNum, EraseCtl);
 }
 
 static int
@@ -160,7 +212,7 @@ tst_DECDLD(MENU_ARGS)
 {
   char *s;
 
-  vt_move(1,1);
+  vt_move(1, 1);
   printf("Working...\n");
   for (s = font_string; *s; s++) {
     putchar(*s);
@@ -173,7 +225,7 @@ tst_DECDLD(MENU_ARGS)
   padding(20);
   printf("...done ");
 
-  printf("%c*%s", ESC, FontName); /* designate G2 as the DRCS font */
+  printf("%c*%s", ESC, FontName);   /* designate G2 as the DRCS font */
   padding(4);
   fflush(stdout);
 
@@ -185,7 +237,7 @@ tst_display(MENU_ARGS)
 {
   int d, c = -1;
 
-  vt_move(1,1);
+  vt_move(1, 1);
   display_head(stdout);
   println("");
   println("Press any key to display its soft-character.  Repeat a key to quit.");
@@ -196,11 +248,11 @@ tst_display(MENU_ARGS)
   do {
     d = c;
     c = inchar();
-    vt_move(6,1);
+    vt_move(6, 1);
     vt_clear(0);
     if (display_char(stdout, c)) {
       println("");
-      printf("Render: %cN%c", ESC, c); /* use SS2 to invoke G2 into GL */
+      printf("Render: %cN%c", ESC, c);  /* use SS2 to invoke G2 into GL */
     }
   } while (c != d);
 
@@ -235,7 +287,7 @@ setup_softchars(const char *filename)
   char *first = 0;
   char *last = 0;
   int save_8bits = input_8bits;
-  input_8bits = FALSE; /* use the 7-bit input-parsing */
+  input_8bits = FALSE;  /* use the 7-bit input-parsing */
 
   /* read the file into memory */
   if ((fp = fopen(filename, "r")) == 0) {
@@ -243,7 +295,7 @@ setup_softchars(const char *filename)
     exit(EXIT_FAILURE);
   }
   while ((c = fgetc(fp)) != EOF) {
-    if (use+1 >= len) {
+    if (use + 1 >= len) {
       buffer = (char *) realloc(buffer, len *= 2);
     }
     buffer[use++] = (char) c;
@@ -271,8 +323,7 @@ setup_softchars(const char *filename)
     fprintf(stderr, "Not a vtXXX font description: %s\n", filename);
     exit(EXIT_FAILURE);
   }
-  for (s = buffer; (*s++ = *first++) != '\0'; )
-    ;
+  for (s = buffer; (*s++ = *first++) != '\0';) ;
   if (LOG_ENABLED && first != 0)
     fprintf(log_fp, "Font String:\n%s\n", buffer);
 
@@ -284,6 +335,7 @@ setup_softchars(const char *filename)
 int
 tst_softchars(MENU_ARGS)
 {
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Download the soft characters (DECDLD)",             tst_DECDLD },
@@ -291,16 +343,17 @@ tst_softchars(MENU_ARGS)
       { "Clear the soft characters",                         tst_cleanup },
       { "",                                                  0 }
     };
+  /* *INDENT-ON* */
 
-  vt_move(1,1);
+  vt_move(1, 1);
   if (font_string == 0 || *font_string == 0) {
     printf("You did not specify a font-file with the -f option\n");
     return MENU_HOLD;
   }
   do {
     vt_clear(2);
-    title(0); printf("Soft Character Sets");
-    title(2); println("Choose test type:");
+    __(title(0), printf("Soft Character Sets"));
+    __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

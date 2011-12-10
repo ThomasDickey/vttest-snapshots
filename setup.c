@@ -1,11 +1,11 @@
-/* $Id: setup.c,v 1.29 2010/05/28 09:50:36 tom Exp $ */
+/* $Id: setup.c,v 1.31 2011/12/06 10:36:26 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
 
-static int cur_level = -1; /* current operating level (VT100=1) */
-static int max_level = -1; /* maximum operating level */
+static int cur_level = -1;      /* current operating level (VT100=1) */
+static int max_level = -1;      /* maximum operating level */
 
 static int
 check_8bit_toggle(void)
@@ -13,13 +13,16 @@ check_8bit_toggle(void)
   char *report;
 
   set_tty_raw(TRUE);
-  cup(1,1); dsr(6);
-  padding(5); /* FIXME: may not be needed */
+
+  cup(1, 1);
+  dsr(6);
+  padding(5);   /* FIXME: may not be needed */
   report = get_reply();
+
   restore_ttymodes();
 
   if ((report = skip_csi(report)) != 0
-   && !strcmp(report, "1;1R"))
+      && !strcmp(report, "1;1R"))
     return TRUE;
   return FALSE;
 }
@@ -39,26 +42,26 @@ find_levels(void)
   report = get_reply();
   if (!strcmp(report, "\033/Z")) {
     cur_level =
-    max_level = 0; /* must be a VT52 */
+      max_level = 0;  /* must be a VT52 */
   } else if ((report = skip_csi(report)) == 0
-   || strncmp(report, "?6", (size_t) 2)
-   || !isdigit(CharOf(report[2]))
-   || report[3] != ';') {
+             || strncmp(report, "?6", (size_t) 2)
+             || !isdigit(CharOf(report[2]))
+             || report[3] != ';') {
     cur_level =
-    max_level = 1; /* must be a VT100 */
-  } else { /* "CSI ? 6 x ; ..." */
+      max_level = 1;  /* must be a VT100 */
+  } else {      /* "CSI ? 6 x ; ..." */
     cur_level =
-    max_level = report[2] - '0'; /* VT220=2, VT320=3, VT420=4 */
+      max_level = report[2] - '0';  /* VT220=2, VT320=3, VT420=4 */
     if (max_level >= 4) {
       decrqss("\"p");
       report = get_reply();
       if ((report = skip_dcs(report)) != 0
-       && isdigit(CharOf(*report++)) /* 0 or 1 (by observation, though 1 is an err) */
-       && *report++ == '$'
-       && *report++ == 'r'
-       && *report++ == '6'
-       && isdigit(CharOf(*report)))
-          cur_level = *report - '0';
+          && isdigit(CharOf(*report++))   /* 0 or 1 (by observation, though 1 is an err) */
+          &&*report++ == '$'
+          && *report++ == 'r'
+          && *report++ == '6'
+          && isdigit(CharOf(*report)))
+        cur_level = *report - '0';
     }
   }
 
@@ -76,9 +79,9 @@ toggle_DECSCL(MENU_ARGS)
   int request = cur_level;
 
   if (max_level <= 1) {
-    vt_move(1,1);
+    vt_move(1, 1);
     printf("Sorry, terminal supports only VT%d", terminal_id());
-    vt_move(max_lines-1,1);
+    vt_move(max_lines - 1, 1);
     return MENU_HOLD;
   }
 
@@ -117,7 +120,7 @@ toggle_8bit_in(MENU_ARGS)
   if (!check_8bit_toggle()) {
     input_8bits = old;
     vt_clear(2);
-    vt_move(1,1);
+    vt_move(1, 1);
     println("Sorry, this terminal does not support 8-bit input controls");
     return MENU_HOLD;
   }
@@ -137,7 +140,7 @@ toggle_8bit_out(MENU_ARGS)
   if (!check_8bit_toggle()) {
     output_8bits = old;
     vt_clear(2);
-    vt_move(1,1);
+    vt_move(1, 1);
     println("Sorry, this terminal does not support 8-bit output controls");
     return MENU_HOLD;
   }
@@ -168,9 +171,9 @@ restore_level(VTLEVEL *save)
 {
   set_level(save->cur_level);
   if (cur_level > 1
-   && save->input_8bits != input_8bits) /* just in case level didn't change */
+      && save->input_8bits != input_8bits)  /* just in case level didn't change */
     s8c1t(save->input_8bits);
-  output_8bits = save->output_8bits; /* in case we thought this was VT100 */
+  output_8bits = save->output_8bits;  /* in case we thought this was VT100 */
 }
 
 void
@@ -182,8 +185,8 @@ save_level(VTLEVEL *save)
 
   if (LOG_ENABLED)
     fprintf(log_fp, "save_level(%d) in=%d, out=%d\n", cur_level,
-        input_8bits ? 8 : 7,
-        output_8bits ? 8 : 7);
+            input_8bits ? 8 : 7,
+            output_8bits ? 8 : 7);
 }
 
 int
@@ -208,15 +211,15 @@ set_level(int request)
 
   if (request != cur_level) {
     if (request == 0) {
-      rm("?2");      /* Reset ANSI (VT100) mode, Set VT52 mode  */
-      input_8bits  = FALSE;
+      rm("?2"); /* Reset ANSI (VT100) mode, Set VT52 mode  */
+      input_8bits = FALSE;
       output_8bits = FALSE;
     } else {
       if (cur_level == 0) {
-        esc("<");    /* Enter ANSI mode (VT100 mode) */
+        esc("<");   /* Enter ANSI mode (VT100 mode) */
       }
       if (request == 1) {
-        input_8bits  = FALSE;
+        input_8bits = FALSE;
         output_8bits = FALSE;
       }
       if (request > 1)
@@ -231,8 +234,8 @@ set_level(int request)
 
   if (LOG_ENABLED)
     fprintf(log_fp, "...set_level(%d) in=%d, out=%d\n", cur_level,
-        input_8bits ? 8 : 7,
-        output_8bits ? 8 : 7);
+            input_8bits ? 8 : 7,
+            output_8bits ? 8 : 7);
 
   return TRUE;
 }
@@ -267,7 +270,7 @@ tst_setup(MENU_ARGS)
   static char txt_DECSCL[80] = "DECSCL";
   static char txt_logging[80] = "logging";
   static char txt_padded[80] = "padding";
-
+  /* *INDENT-OFF* */
   static MENU my_menu[] = {
     { "Exit",                                                0 },
     { "Setup terminal to original test-configuration",       setup_terminal },
@@ -278,6 +281,7 @@ tst_setup(MENU_ARGS)
     { txt_padded,                                            toggle_Padding },
     { "",                                                    0 }
   };
+  /* *INDENT-ON* */
 
   if (cur_level < 0)
     find_levels();
@@ -286,13 +290,13 @@ tst_setup(MENU_ARGS)
     sprintf(txt_output, "Send %d-bit controls", output_8bits ? 8 : 7);
     sprintf(txt_input8, "Receive %d-bit controls", input_8bits ? 8 : 7);
     sprintf(txt_DECSCL, "Operating level %d (VT%d)",
-        cur_level, cur_level ? cur_level * 100 : 52);
-    sprintf(txt_logging, "Logging %s", LOG_ENABLED ? "enabled" : "disabled");
-    sprintf(txt_padded, "Padding %s", use_padding ? "enabled" : "disabled");
+            cur_level, cur_level ? cur_level * 100 : 52);
+    sprintf(txt_logging, "Logging %s", STR_ENABLED(LOG_ENABLED));
+    sprintf(txt_padded, "Padding %s", STR_ENABLED(use_padding));
 
     vt_clear(2);
-    title(0); println("Modify test-parameters");
-    title(2); println("Select a number to modify it:");
+    __(title(0), println("Modify test-parameters"));
+    __(title(2), println("Select a number to modify it:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
 }

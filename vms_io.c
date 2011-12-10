@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.22 2004/11/05 10:11:43 tom Exp $ */
+/* $Id: vms_io.c,v 1.23 2011/12/02 09:43:36 tom Exp $ */
 
 #define DEBUG
 
@@ -15,28 +15,28 @@
 #include <iodef.h>
 #include <ttdef.h>
 #include <tt2def.h>
-#include <cvtdef.h>                     /* for float constants          */
+#include <cvtdef.h>   /* for float constants          */
 
-typedef struct  {
-        unsigned short int status;      /* I/O completion status */
-        unsigned short int count;       /* byte transfer count   */
-        int dev_dep_data;               /* device dependant data */
-        } QIO_SB;                       /* This is a QIO I/O Status Block */
+typedef struct {
+  unsigned short int status;    /* I/O completion status */
+  unsigned short int count;     /* byte transfer count   */
+  int dev_dep_data;             /* device dependant data */
+} QIO_SB;                       /* This is a QIO I/O Status Block */
 
-#define NIBUF   1024                    /* Input buffer size            */
-#define NOBUF   1024                    /* MM says big buffers win!     */
-#define EFN     0                       /* Event flag                   */
+#define NIBUF   1024  /* Input buffer size            */
+#define NOBUF   1024  /* MM says big buffers win!     */
+#define EFN     0   /* Event flag                   */
 
-static char     obuf[NOBUF];            /* Output buffer                */
-static int      nobuf;                  /* # of bytes in above          */
-static char     ibuf[NIBUF];            /* Input buffer                 */
-static int      nibuf;                  /* # of bytes in above          */
-static int      oldmode[3];             /* Old TTY mode bits            */
-static int      newmode[3];             /* New TTY mode bits            */
-static short    iochan;                 /* TTY I/O channel              */
+static char obuf[NOBUF];        /* Output buffer                */
+static int nobuf;               /* # of bytes in above          */
+static char ibuf[NIBUF];        /* Input buffer                 */
+static int nibuf;               /* # of bytes in above          */
+static int oldmode[3];          /* Old TTY mode bits            */
+static int newmode[3];          /* New TTY mode bits            */
+static short iochan;            /* TTY I/O channel              */
 
-static int      in_flags;
-static int      cr_flag = TRUE;
+static int in_flags;
+static int cr_flag = TRUE;
 
 static void
 give_up(int status)
@@ -50,6 +50,7 @@ give_up(int status)
 static int
 lookup_speed(int code)
 {
+  /* *INDENT-OFF* */
   static struct {
     int code;
     int speed;
@@ -77,6 +78,8 @@ lookup_speed(int code)
     ,{TT$C_BAUD_115200, 115200 }
 #endif
   };
+  /* *INDENT-ON* */
+
   int n;
   int speed = DEFAULT_SPEED;
   for (n = 0; n < TABLESIZE(table); n++) {
@@ -103,7 +106,8 @@ read_vms_tty(int length, int timed)
 {
   int status;
   QIO_SB iosb;
-  int term[2] = {0,0};
+  int term[2] =
+  {0, 0};
   int my_flags = IO$_READLBLK | in_flags;
   int timeout = 0;
 
@@ -111,10 +115,10 @@ read_vms_tty(int length, int timed)
     return;
   if (length > 1) {
     my_flags |= IO$M_TIMED;
-    timeout = 1; /* seconds */
+    timeout = 1;  /* seconds */
   }
   if (timed)
-    timeout = 2; /* seconds */
+    timeout = 2;  /* seconds */
 
 #ifdef DEBUG
   if (LOG_ENABLED) {
@@ -123,18 +127,18 @@ read_vms_tty(int length, int timed)
   }
 #endif
   status = sys$qiow(EFN, iochan, my_flags,
-    &iosb, 0, 0, ibuf, length, timeout, term, 0, 0);
+                    &iosb, 0, 0, ibuf, length, timeout, term, 0, 0);
 #ifdef DEBUG
   if (LOG_ENABLED) {
     fprintf(log_fp,
-          "read: st=%d, cnt=%#x, dev=%#x\n",
-          iosb.status, iosb.count, iosb.dev_dep_data);
+            "read: st=%d, cnt=%#x, dev=%#x\n",
+            iosb.status, iosb.count, iosb.dev_dep_data);
     fflush(log_fp);
   }
 #endif
 
   if (status != SS$_NORMAL
-   || iosb.status == SS$_ENDOFFILE)
+      || iosb.status == SS$_ENDOFFILE)
     give_up(status);
 
   nibuf = iosb.count + (iosb.dev_dep_data >> 16);
@@ -142,7 +146,8 @@ read_vms_tty(int length, int timed)
 
 /******************************************************************************/
 
-void reset_inchar(void)
+void
+reset_inchar(void)
 {
   /* FIXME */
 }
@@ -181,10 +186,10 @@ instr(void)
   static char result[1024];
 
   result[0] = inchar();
-  zleep(100); /* Wait 0.1 seconds */
+  zleep(100);   /* Wait 0.1 seconds */
   fflush(stdout);
-  read_vms_tty (sizeof(result)-3, FALSE);
-  memcpy(result+1, ibuf, nibuf);
+  read_vms_tty(sizeof(result) - 3, FALSE);
+  memcpy(result + 1, ibuf, nibuf);
   result[1 + nibuf] = '\0';
 
   if (LOG_ENABLED) {
@@ -193,7 +198,7 @@ instr(void)
     fputs("\n", log_fp);
   }
 
-  return(result);
+  return (result);
 }
 
 /*
@@ -209,10 +214,10 @@ get_reply(void)
   static char result[256];
 
   result[0] = inchar();
-  zleep(100); /* Wait 0.1 seconds */
+  zleep(100);   /* Wait 0.1 seconds */
   fflush(stdout);
-  read_vms_tty (sizeof(result)-3, TRUE);
-  memcpy(result+1, ibuf, nibuf);
+  read_vms_tty(sizeof(result) - 3, TRUE);
+  memcpy(result + 1, ibuf, nibuf);
   result[1 + nibuf] = '\0';
 
   if (LOG_ENABLED) {
@@ -221,7 +226,7 @@ get_reply(void)
     fputs("\n", log_fp);
   }
 
-  return(result);
+  return (result);
 }
 
 /*
@@ -234,7 +239,7 @@ inputline(char *s)
     int ch;
     char *d = s;
     while ((ch = getchar()) != EOF && ch != '\n') {
-      if ((d - s) < BUFSIZ-2)
+      if ((d - s) < BUFSIZ - 2)
         *d++ = ch;
     }
     *d = 0;
@@ -268,8 +273,7 @@ void
 readnl(void)
 {
   fflush(stdout);
-  while (inchar() != '\n')
-    ;
+  while (inchar() != '\n') ;
 }
 
 /*
@@ -278,12 +282,12 @@ readnl(void)
 void
 zleep(int t)
 {
-  float seconds = t/1000.;
-	unsigned flags = 0;
+  float seconds = t / 1000.;
+  unsigned flags = 0;
 #ifdef USE_IEEE_FLOAT
-	unsigned type = CVT$K_IEEE_S;
+  unsigned type = CVT$K_IEEE_S;
 #else
-	unsigned type = CVT$K_VAX_F;
+  unsigned type = CVT$K_VAX_F;
 #endif
   lib$wait(&seconds, &flags, &type);
 }
@@ -299,6 +303,7 @@ init_ttymodes(int pn)
   QIO_SB iosb;
   int status;
 
+  /* *INDENT-EQLS* */
   odsc.dsc$a_pointer = "TT";
   odsc.dsc$w_length  = strlen(odsc.dsc$a_pointer);
   odsc.dsc$b_dtype   = DSC$K_DTYPE_T;
@@ -307,6 +312,7 @@ init_ttymodes(int pn)
   idsc.dsc$b_class   = DSC$K_CLASS_S;
 
   do {
+    /* *INDENT-EQLS* */
     idsc.dsc$a_pointer = odsc.dsc$a_pointer;
     idsc.dsc$w_length  = odsc.dsc$w_length;
     odsc.dsc$a_pointer = &oname[0];
@@ -314,11 +320,11 @@ init_ttymodes(int pn)
 
     status = lib$sys_trnlog(&idsc, &odsc.dsc$w_length, &odsc);
     if (status != SS$_NORMAL
-     && status != SS$_NOTRAN)
+        && status != SS$_NOTRAN)
       give_up(status);
     if (oname[0] == 0x1B) {
       odsc.dsc$a_pointer += 4;
-      odsc.dsc$w_length  -= 4;
+      odsc.dsc$w_length -= 4;
     }
   } while (status == SS$_NORMAL);
 
@@ -327,39 +333,40 @@ init_ttymodes(int pn)
     give_up(status);
 
   status = sys$qiow(EFN, iochan, IO$_SENSEMODE, &iosb, 0, 0,
-    oldmode, sizeof(oldmode), 0, 0, 0, 0);
+                    oldmode, sizeof(oldmode), 0, 0, 0, 0);
   if (status != SS$_NORMAL
-  || iosb.status != SS$_NORMAL)
+      || iosb.status != SS$_NORMAL)
     give_up(status);
 #ifdef DEBUG
   if (LOG_ENABLED)
     fprintf(log_fp,
-          "sense: st=%d, cnt=%#x, dev=%#x\n",
-          iosb.status, iosb.count, iosb.dev_dep_data);
+            "sense: st=%d, cnt=%#x, dev=%#x\n",
+            iosb.status, iosb.count, iosb.dev_dep_data);
 #endif
 
   newmode[0] = oldmode[0];
   newmode[1] = oldmode[1] | TT$M_EIGHTBIT;
-  newmode[1] &= ~(TT$M_TTSYNC|TT$M_HOSTSYNC);
+  newmode[1] &= ~(TT$M_TTSYNC | TT$M_HOSTSYNC);
 
   /* FIXME: this assumes we're doing IO$_SETCHAR */
   newmode[2] = oldmode[2] | TT2$M_PASTHRU;
 
   status = sys$qiow(EFN, iochan, IO$_SETMODE, &iosb, 0, 0,
-    newmode, sizeof(newmode), 0, 0, 0, 0);
+                    newmode, sizeof(newmode), 0, 0, 0, 0);
   if (status != SS$_NORMAL
-  || iosb.status != SS$_NORMAL)
+      || iosb.status != SS$_NORMAL)
     give_up(status);
 
-  max_lines = (newmode[1]>>24);
-  min_cols  = newmode[0]>>16;
+  max_lines = (newmode[1] >> 24);
+  min_cols = newmode[0] >> 16;
   tty_speed = lookup_speed(iosb.count & 0xff);
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "TTY modes %#x, %#x, %#x\n", oldmode[0], oldmode[1], oldmode[2]);
+    fprintf(log_fp, "TTY modes %#x, %#x, %#x\n", oldmode[0], oldmode[1],
+            oldmode[2]);
     fprintf(log_fp, "iosb.count = %#x\n", iosb.count);
     fprintf(log_fp, "iosb.dev_dep_data = %#x\n", iosb.dev_dep_data);
-        fprintf(log_fp, "TTY speed = %d\n", tty_speed);
+    fprintf(log_fp, "TTY speed = %d\n", tty_speed);
   }
 }
 
@@ -371,7 +378,7 @@ restore_ttymodes(void)
 {
   outflush();
   in_flags = 0;
-  cr_flag  = TRUE;
+  cr_flag = TRUE;
 }
 
 void
@@ -381,9 +388,9 @@ close_tty(void)
   QIO_SB iosb;
 
   status = sys$qiow(EFN, iochan, IO$_SETMODE, &iosb, 0, 0,
-            oldmode, sizeof(oldmode), 0, 0, 0, 0);
+                    oldmode, sizeof(oldmode), 0, 0, 0, 0);
   if (status == SS$_IVCHAN)
-    return; /* already closed it */
+    return;     /* already closed it */
   (void) sys$dassgn(iochan);
 }
 
