@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.6 2011/07/05 21:42:50 tom Exp $ */
+/* $Id: vt520.c,v 1.7 2012/03/25 19:15:55 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -233,11 +233,13 @@ rpt_DECSCUSR(MENU_ARGS)
 
   vt_move(1, 1);
   for (n = 0; n < TABLESIZE(tbl_decscusr); ++n) {
+    char expected[10];
     if (n != 0)
       holdit();
     vt_clear(2);
     decscusr(tbl_decscusr[n].code);
-    (void) any_decrqss(tbl_decscusr[n].text, " q");
+    sprintf(expected, "%d", tbl_decscusr[n].code ? tbl_decscusr[n].code : 1);
+    (void) any_decrqss2(tbl_decscusr[n].text, " q", expected);
   }
   return MENU_HOLD;
 }
