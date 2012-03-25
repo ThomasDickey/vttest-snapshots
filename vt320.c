@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.21 2011/05/06 20:46:55 tom Exp $ */
+/* $Id: vt320.c,v 1.22 2012/03/25 19:20:04 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -615,10 +615,11 @@ tst_DECRPM(MENU_ARGS)
  * however I see "DCS 1 $ r" on a real VT420, consistently.
  */
 int
-any_decrqss(const char *msg, const char *func)
+any_decrqss2(const char *msg, const char *func, const char *expected)
 {
   char *report;
   const char *show;
+  char buffer[80];
 
   vt_move(1, 1);
   printf("Testing DECRQSS: %s\n", msg);
@@ -632,7 +633,12 @@ any_decrqss(const char *msg, const char *func)
   chrprint(report);
   switch (parse_decrqss(report, func)) {
   case 1:
-    show = "ok (valid request)";
+    if (expected && strcmp(expected, report)) {
+      sprintf(buffer, "ok (expect '%s', actual '%s')", expected, report);
+      show = buffer;
+    } else {
+      show = "ok (valid request)";
+    }
     break;
   case 0:
     show = "invalid request";
@@ -646,6 +652,12 @@ any_decrqss(const char *msg, const char *func)
   restore_ttymodes();
   vt_move(max_lines - 1, 1);
   return MENU_HOLD;
+}
+
+int
+any_decrqss(const char *msg, const char *func)
+{
+  return any_decrqss2(msg, func, (const char *) 0);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.84 2011/12/07 22:17:59 tom Exp $ */
+/* $Id: vttest.h,v 1.85 2012/03/25 18:39:06 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -237,6 +237,7 @@ extern int any_DSR(MENU_ARGS, const char *text, void (*explain) (char *report));
 extern int any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private);
 extern int any_decrqpsr(MENU_ARGS, int Ps);
 extern int any_decrqss(const char *msg, const char *func);
+extern int any_decrqss2(const char *msg, const char *func, const char *expected);
 extern int bug_a(MENU_ARGS);
 extern int bug_b(MENU_ARGS);
 extern int bug_c(MENU_ARGS);
