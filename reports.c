@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.32 2011/12/06 10:27:15 tom Exp $ */
+/* $Id: reports.c,v 1.33 2012/04/04 09:24:44 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -544,7 +544,7 @@ tst_NLM(MENU_ARGS)
   vt_move(3, 1);
   sm("20");
   set_tty_crmod(FALSE);
-  printf("NewLine mode set. Push the RETURN key: ");
+  tprintf("NewLine mode set. Push the RETURN key: ");
   report = instr();
 
   vt_move(4, 1);
@@ -558,7 +558,7 @@ tst_NLM(MENU_ARGS)
 
   vt_move(6, 1);
   rm("20");
-  printf("NewLine mode reset. Push the RETURN key: ");
+  tprintf("NewLine mode reset. Push the RETURN key: ");
   report = instr();
 
   vt_move(7, 1);

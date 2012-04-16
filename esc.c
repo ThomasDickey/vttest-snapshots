@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.79 2010/05/28 08:20:00 tom Exp $ */
+/* $Id: esc.c,v 1.81 2012/04/04 09:11:04 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -10,61 +10,64 @@ static int soft_scroll;
 
 /******************************************************************************/
 
-static char csi_7[] =
+static int pending_decstbm;
+static int pending_decslrm;
+
+static const char csi_7[] =
 {ESC, '[', 0};
 
-static unsigned char csi_8[] =
+static const unsigned char csi_8[] =
 {0x9b, 0};
 
-char *
+const char *
 csi_input(void)
 {
-  return input_8bits ? (char *) csi_8 : csi_7;
+  return input_8bits ? (const char *) csi_8 : csi_7;
 }
 
-char *
+const char *
 csi_output(void)
 {
-  return output_8bits ? (char *) csi_8 : csi_7;
+  return output_8bits ? (const char *) csi_8 : csi_7;
 }
 
 /******************************************************************************/
 
-static char dcs_7[] =
+static const char dcs_7[] =
 {ESC, 'P', 0};
 
-static unsigned char dcs_8[] =
+static const unsigned char dcs_8[] =
 {0x90, 0};
 
-char *
+const char *
 dcs_input(void)
 {
-  return input_8bits ? (char *) dcs_8 : dcs_7;
+  return input_8bits ? (const char *) dcs_8 : dcs_7;
 }
 
-char *
+const char *
 dcs_output(void)
 {
-  return output_8bits ? (char *) dcs_8 : dcs_7;
+  return output_8bits ? (const char *) dcs_8 : dcs_7;
 }
 
 /******************************************************************************/
 
-static char osc_7[] =
+static const char osc_7[] =
 {ESC, ']', 0};
-static unsigned char osc_8[] =
+static const unsigned char osc_8[] =
 {0x9d, 0};
 
-char *
+const char *
 osc_input(void)
 {
-  return input_8bits ? (char *) osc_8 : osc_7;
+  return input_8bits ? (const char *) osc_8 : osc_7;
 }
 
-char *
+const char *
 osc_output(void)
 {
-  return output_8bits ? (char *) osc_8 : osc_7;
+  return output_8bits ? (const char *) osc_8 : osc_7;
 }
 
 /******************************************************************************/
@@ -732,11 +735,47 @@ decssdt(int pn)                 /* VT200 Select status line type */
 void
 decstbm(int pn1, int pn2)       /* Set Top and Bottom Margins */
 {
-  if (pn1 || pn2)
+  if (pn1 || pn2) {
     brc2(pn1, pn2, 'r');
-  else
+    pending_decstbm = 1;
+  } else {
     esc("[r");
-  /* Good for >24-line terminals */
+    pending_decstbm = 0;
+  }
+}
+
+/*
+ * Reset top/bottom margins, but only if we set them to non-default.
+ */
+void
+reset_decstbm(void)
+{
+  if (pending_decstbm) {
+    decstbm(0, 0);
+  }
+}
+
+void
+decslrm(int pn1, int pn2)       /* Set Left and Right Margins */
+{
+  if (pn1 || pn2) {
+    brc2(pn1, pn2, 's');
+    pending_decslrm = 1;
+  } else {
+    esc("[s");
+    pending_decslrm = 0;
+  }
+}
+
+/*
+ * Reset left/right margins, but only if we set them to non-default.
+ */
+void
+reset_decslrm(void)
+{
+  if (pending_decslrm) {
+    decslrm(0, 0);
+  }
 }
 
 void

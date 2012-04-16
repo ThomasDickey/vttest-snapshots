@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.82 2011/07/05 21:43:54 tom Exp $ */
+/* $Id: vt420.c,v 1.111 2012/04/15 22:28:13 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -19,10 +19,222 @@ typedef struct {
   char *name;
 } MODES;
 
+typedef enum {
+  marNone = -1,
+  marReset = 0,
+  marFirst = 1,
+  marLast = 2,
+  marMiddle = 3,
+  marEnd
+} MARS;
+
 static int do_lines = FALSE;
 static int do_colors = FALSE;
 
 /******************************************************************************/
+
+static int lrmm_flag;
+
+static MARS lr_marg_flag;
+static int lr_marg1, lr_marg2;
+static MARS tb_marg_flag;
+static int tb_marg1, tb_marg2;
+
+static char lrmm_mesg[80];
+static char lr_marg_mesg[80];
+static char tb_marg_mesg[80];
+
+static int
+toggle_LRMM(MENU_ARGS)
+{
+  lrmm_flag = !lrmm_flag;
+  if (lrmm_flag)
+    sm("?69");
+  else
+    rm("?69");
+  return MENU_NOHOLD;
+}
+
+/*
+ * The message tells what margins will be used in the test, not what their
+ * value is while drawing the menu (since actually setting margins would
+ * interfere with the menu).
+ */
+static int
+toggle_STBM(MENU_ARGS)
+{
+  switch (++tb_marg_flag) {
+  default:
+    tb_marg_flag = marReset;
+    tb_marg1 = 0;
+    tb_marg2 = 0;
+    strcpy(tb_marg_mesg, "Top/Bottom margins are reset");
+    break;
+  case marFirst:
+    tb_marg1 = 1;
+    tb_marg2 = max_lines / 2;
+    strcpy(tb_marg_mesg, "Top/Bottom margins are set to top half of screen");
+    break;
+  case marLast:
+    tb_marg1 = max_lines / 2;
+    tb_marg2 = max_lines;
+    strcpy(tb_marg_mesg,
+           "Top/Bottom margins are set to bottom half of screen");
+    break;
+  case marMiddle:
+    tb_marg1 = max_lines / 4;
+    tb_marg2 = (3 * max_lines) / 4;
+    strcpy(tb_marg_mesg,
+           "Top/Bottom margins are set to middle half of screen");
+    break;
+  }
+  return MENU_NOHOLD;
+}
+
+static int
+toggle_SLRM(MENU_ARGS)
+{
+  switch (++lr_marg_flag) {
+  default:
+    lr_marg_flag = marReset;
+    lr_marg1 = 0;
+    lr_marg2 = 0;
+    strcpy(lr_marg_mesg, "Left/right margins are reset");
+    break;
+  case marFirst:
+    lr_marg1 = 1;
+    lr_marg2 = min_cols / 2;
+    strcpy(lr_marg_mesg, "Left/right margins are set to left half of screen");
+    break;
+  case marLast:
+    lr_marg1 = min_cols / 2;
+    lr_marg2 = min_cols;
+    strcpy(lr_marg_mesg,
+           "Left/right margins are set to right half of screen");
+    break;
+  case marMiddle:
+    lr_marg1 = min_cols / 4;
+    lr_marg2 = (3 * min_cols) / 4;
+    strcpy(lr_marg_mesg,
+           "Left/right margins are set to middle half of screen");
+    break;
+  }
+  return MENU_NOHOLD;
+}
+
+/*
+ * Fill area outside margins with given character, to help show that changes
+ * are limited to the area within margins.
+ */
+static void
+fill_outside(int ch)
+{
+  int row, col;
+
+  for (row = 1; row <= max_lines; ++row) {
+    if (row < tb_marg1 ||
+        row > tb_marg2 ||
+        lr_marg1 > 1 ||
+        lr_marg2 < min_cols) {
+      int first = 1;
+      int next = 0;
+
+      for (col = 1; col <= min_cols; ++col) {
+        if ((lrmm_flag && lr_marg1 && col < lr_marg1) ||
+            (lrmm_flag && lr_marg2 && col > lr_marg2) ||
+            (tb_marg1 != 0 && row < tb_marg1) ||
+            (tb_marg2 != 0 && row > tb_marg2)) {
+          if (first || (next != col)) {
+            cup(row, col);
+            first = 0;
+            next = col + 1;
+          }
+          putchar(ch);
+          ++next;
+        }
+      }
+    }
+  }
+}
+
+static void
+test_with_margins(int enable)
+{
+  if (enable) {
+    fill_outside('.');
+    decstbm(tb_marg1, tb_marg2);
+    decslrm(lr_marg1, lr_marg2);
+  } else {
+    decstbm(0, 0);
+    decslrm(0, 0);
+  }
+}
+
+static void
+ruler(int row)
+{
+  int col;
+  vt_move(row, 1);
+  for (col = 1; col <= min_cols; ++col) {
+    int ch = (((col % 10) == 0)
+              ? ('0' + (col / 10) % 10)
+              : (((col % 5) == 0)
+                 ? '+'
+                 : '-'));
+    putchar(ch);
+  }
+  putchar('\n');
+}
+
+/*
+ * Fill the area within margins with a test pattern.  The top line is numbers,
+ * the bottom line is alphas.  In between, use asterisks.
+ */
+static void
+fill_margins(void)
+{
+  int top = tb_marg1 ? tb_marg1 : 1;
+  int bot = tb_marg2 ? tb_marg2 : max_lines;
+  int lft = (lrmm_flag && lr_marg1) ? lr_marg1 : 1;
+  int rgt = (lrmm_flag && lr_marg2) ? lr_marg2 : min_cols;
+  int row, col;
+
+  decawm(FALSE);  /* do this to allow writing in lower-right */
+  for (row = top; row <= bot; ++row) {
+    cup(row, lft);
+    for (col = lft; col <= rgt; ++col) {
+      if (row == top) {
+        putchar((col - lft) % 10 + '0');
+      } else if (row == bot) {
+        putchar((col - lft) % 26 + 'a');
+      } else {
+        putchar('*');
+      }
+    }
+  }
+  decawm(TRUE);
+}
+
+#define DATA(name,level) { name, #name, level }
+
+static int
+show_DECLRMM(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  RQM_DATA dec_modes[] = { /* this list is sorted by code, not name */
+    DATA( DECLRMM, 4 /* left/right margin mode */),
+  };
+  /* *INDENT-ON* */
+
+  int code;
+  int old_DECRPM = set_DECRPM(4);
+
+  code = any_RQM(PASS_ARGS, dec_modes, TABLESIZE(dec_modes), 1);
+  set_DECRPM(old_DECRPM);
+  return code;
+}
+
+#undef DATA
 
 /*
  * Allow user to test the same screens with/without lines.
@@ -200,16 +412,28 @@ tst_DECBI(MENU_ARGS)
 {
   int n, m;
   int last = max_lines - 4;
-  int final = min_cols / 4;
+  int final;
+  int top;
+  int lft;
+  int rgt;
+
+  test_with_margins(1);
+
+  top = tb_marg1 ? tb_marg1 : 1;
+  lft = (lrmm_flag && lr_marg1) ? lr_marg1 : 1;
+  rgt = (lrmm_flag && lr_marg2) ? lr_marg2 : min_cols;
+
+  final = (rgt - lft + 1) / 4;
 
   for (n = final; n > 0; n--) {
-    cup(1, 1);
+    cup(top, lft);
     if (n != final) {
       for (m = 0; m < 4; m++)
         decbi();
     }
     printf("%3d", n);
   }
+  test_with_margins(0);
 
   vt_move(last, 1);
   vt_clear(0);
@@ -408,6 +632,12 @@ tst_DECCRA(MENU_ARGS)
   return MENU_HOLD;
 }
 
+static int
+marker_of(int n)
+{
+  return (n - 1) % 26 + 'a';
+}
+
 /*
  * VT400 & up.
  * Delete column.
@@ -417,15 +647,88 @@ tst_DECDC(MENU_ARGS)
 {
   int n;
   int last = max_lines - 3;
+  int base_row;
+  int base_col;
+  int left_col;
+  int top;
+  int bot;
+  int lft;
+  int final_dc;
+  char mark_1st = 0;
+  char mark_2nd = 0;
+
+  test_with_margins(1);
+  top = tb_marg1 ? tb_marg1 : 1;
+  bot = tb_marg2 ? tb_marg2 : (last - 1);
+  lft = (lrmm_flag && lr_marg1) ? lr_marg1 : 1;
+
+  /*
+   * Adjustments so that most of the initial line (before shifting) passes
+   * through the area within margins.
+   */
+  switch (lr_marg_flag) {
+  default:
+    base_col = (2 * last);
+    left_col = 1;
+    break;
+  case marFirst:
+    base_col = (min_cols / 2);
+    left_col = 1;
+    break;
+  case marMiddle:
+    base_col = (3 * min_cols) / 4;
+    left_col = min_cols / 4;
+    break;
+  case marLast:
+    base_col = min_cols + 0;
+    left_col = min_cols / 2;
+    break;
+  }
+
+  final_dc = base_col - 1;
+
+  if (tb_marg_flag == marLast) {
+    base_row = max_lines / 2;
+  } else {
+    base_row = 0;
+  }
 
   for (n = 1; n < last; n++) {
-    __(cup(n, last - n + 22), printf("*"));
-    __(cup(1, 1), decdc(1));
-  }
-  __(cup(1, 1), decdc(20));
+    int row = base_row + n;
+    int col = base_col - n;
 
+    if (row <= last) {
+      int mark = marker_of(n);
+
+      if (row >= top && row <= bot && row < last) {
+        mark_2nd = (char) mark;
+        if (mark_1st == 0) {
+          mark_1st = (char) mark;
+        }
+      }
+
+      __(cup(row, col), putchar(mark));
+      if (top > 1 || (lrmm_flag && lft > 1)) {
+        __(cup(1, 1), decdc(1));  /* outside margins, should be ignored */
+        __(cup(row, col), putchar(mark));
+      }
+      if (final_dc-- > 0)
+        __(cup(top, lft), decdc(1));
+    }
+  }
+  if (final_dc > left_col)
+    __(cup(top, lft), decdc(final_dc - left_col));
+  test_with_margins(0);
+
+  ruler(last);
   vt_move(last + 1, 1);
-  println("If your terminal supports DECDC, there will be a column of *'s on the left");
+  vt_clear(0);
+
+  if (lrmm_flag)
+    tprintf("If your terminal supports DECDC, letters %c-%c are on column %d\n",
+            mark_1st, mark_2nd, lft);
+  else
+    println("There should be a diagonal of letters from left near bottom to middle at top");
   return MENU_HOLD;
 }
 
@@ -449,6 +752,157 @@ tst_DECERA(MENU_ARGS)
 }
 
 /*
+ * This is two tests:  IND (index) and RI (reverse index).  For each test, we
+ * start by filling the area inside (including) the margins with a test
+ * pattern, and then after the user presses "return", update the screen so that
+ * only one line of the test-pattern should remain visible.
+ */
+static int
+tst_IND_RI(MENU_ARGS)
+{
+  int hold_row, hold_col;       /* where to put "Push RETURN" */
+  int row;
+  int top = tb_marg1 ? tb_marg1 : 1;
+  int bot = tb_marg2 ? tb_marg2 : max_lines;
+  int lft = (lrmm_flag && lr_marg1) ? lr_marg1 : 1;
+  int rgt = (lrmm_flag && lr_marg2) ? lr_marg2 : min_cols;
+
+  switch (tb_marg_flag) {
+  default:
+    hold_row = max_lines / 2;
+    break;
+  case marFirst:
+    hold_row = bot + 1;
+    break;
+  case marLast:
+    hold_row = 1;
+    break;
+  }
+
+  hold_col = 1;
+  if (lrmm_flag) {
+    switch (lr_marg_flag) {
+    default:
+      break;
+    case marFirst:
+      hold_col = rgt + 1;
+      break;
+    case marMiddle:
+      hold_col = lft;
+      break;
+    }
+  }
+
+  test_with_margins(1);
+
+  fill_margins();
+
+  vt_move(hold_row, hold_col);
+  holdit();
+
+  cup(bot, (lft + rgt) / 2);
+  for (row = top; row < bot; ++row)
+    ind();
+
+  vt_move(hold_row, hold_col);
+  printf("\"abcd...\" should be at top. ");
+  vt_move(hold_row + 1, hold_col);
+  holdit();
+
+  fill_margins();
+  fill_outside('.');
+
+  vt_move(hold_row, hold_col);
+  holdit();
+
+  cup(top, (lft + rgt) / 2);
+  for (row = top; row < bot; ++row)
+    ri();
+
+  vt_move(hold_row, hold_col);
+  printf("\"0123...\" should be at bottom. ");
+  vt_move(hold_row + 1, hold_col);
+  holdit();
+
+  test_with_margins(0);
+
+  return MENU_NOHOLD;
+}
+
+/*
+ * Check to see if ASCII formatting controls (BS, HT, CR) are affected by
+ * left/right margins.  Do this by starting after the left-margin, and
+ * backspacing "before" the left margin.  Then fill the margins with a usable
+ * test pattern.  After that, use tabs to go to the right margin, adding
+ * another usable test (+), and use carriage returns to go to the left margin,
+ * adding another usable test (-).
+ */
+static int
+tst_ASCII_format(MENU_ARGS)
+{
+  int last = max_lines - 4;
+  int top;
+  int bot;
+  int lft;
+  int rgt;
+  int n;
+  int tab;
+  int size;
+
+  test_with_margins(1);
+
+  top = tb_marg1 ? tb_marg1 : 1;
+  bot = tb_marg2 ? tb_marg2 : last - 1;
+  lft = (lrmm_flag && lr_marg1) ? lr_marg1 : 1;
+  rgt = (lrmm_flag && lr_marg2) ? lr_marg2 : min_cols;
+
+  /*
+   * This should stop at the left margin, and the result overwritten by a
+   * fill-pattern.
+   */
+  cup(top, rgt);
+  for (n = 0; n < rgt; ++n) {
+    printf("*%c%c", BS, BS);
+  }
+
+  /*
+   * Fill the margins with a repeating pattern.  Do it twice, to force it to
+   * scroll up.
+   */
+  size = 2 * (rgt - lft + 1) * (bot - top + 1);
+  for (n = 0; n < size; ++n) {
+    int ch = ((n % 10) ? ((n % 10) + '0') : '_');
+    putchar(ch);
+  }
+
+  /*
+   * Mark the margins with '-' (left) and '+' (right).
+   */
+  cup(top, lft);
+  for (n = top; n <= bot; ++n) {
+    putchar('-');
+    for (tab = 0; tab < (rgt - lft + 16) / 8; ++tab) {
+      putchar(TAB);
+    }
+    putchar('+');
+    if (n < bot) {
+      putchar(CR);
+      putchar(LF);
+    }
+  }
+
+  test_with_margins(0);
+
+  vt_move(last, 1);
+  vt_clear(0);
+
+  ruler(last);
+  println(the_title);
+  println("A repeating \"0123456789_\" pattern should fall within the -/+ margins");
+  return MENU_HOLD;
+}
+
+/*
  * VT400 & up.
  *
  * DECFI - Forward Index
@@ -468,16 +922,28 @@ tst_DECFI(MENU_ARGS)
 {
   int n, m;
   int last = max_lines - 4;
-  int final = min_cols / 4;
+  int final;
+  int top;
+  int lft;
+  int rgt;
+
+  test_with_margins(1);
+
+  top = tb_marg1 ? tb_marg1 : 1;
+  lft = (lrmm_flag && lr_marg1) ? lr_marg1 : 1;
+  rgt = (lrmm_flag && lr_marg2) ? lr_marg2 : min_cols;
+
+  final = (rgt - lft + 1) / 4;
 
   for (n = 1; n <= final; n++) {
-    cup(1, min_cols - 3);
+    cup(top, rgt - 3);
     printf("%3d", n);   /* leaves cursor in rightmost column */
     if (n != final) {
       for (m = 0; m < 4; m++)
         decfi();
     }
   }
+  test_with_margins(0);
 
   vt_move(last, 1);
   vt_clear(0);
@@ -485,6 +951,77 @@ tst_DECFI(MENU_ARGS)
   println(the_title);
   println("If your terminal supports DECFI (forward index), then the top row");
   printf("should be numbered 1 through %d.\n", final);
+  return MENU_HOLD;
+}
+
+/*
+ * Demonstrate whether cursor movement is limited by margins.  VT420 manual
+ * says that CUU/CUD will stop on the margins, but if outside the margins
+ * will proceed to the page border.  So we can test this by
+ *
+ * a) moving to the margin, and cursor up/down toward the border, placing a
+ * marker at the end of the cursor movement (to overwrite a prior marker placed
+ * explicitly on the border).
+ *
+ * b) repeat the process, going from the border into the area within margins.
+ *
+ * c) Even for the no-margins case, this is useful, since it demonstrates
+ * whether the cursor forces scrolling.
+ */
+static int
+tst_cursor_margins(MENU_ARGS)
+{
+  BOX box;
+  int last = max_lines - 4;
+  int row;
+  int col;
+
+  test_with_margins(1);
+
+  box.top = tb_marg1 ? tb_marg1 : 1;
+  box.bottom = tb_marg2 ? tb_marg2 : max_lines;
+  box.left = (lrmm_flag && lr_marg1 ? lr_marg1 : 1);
+  box.right = (lrmm_flag && lr_marg2 ? lr_marg2 : min_cols);
+  draw_box_outline(&box, '*');
+
+  for (row = box.top; row <= box.bottom; ++row) {
+    cup(row, box.left);
+    for (col = box.left; col > 0; col--) {
+      cub(1);
+    }
+    putchar('l');
+  }
+
+  for (row = box.top; row <= box.bottom; ++row) {
+    cup(row, box.right);
+    for (col = box.right; col <= min_cols; col++) {
+      cuf(1);
+    }
+    putchar('r');
+  }
+
+  for (col = box.left; col <= box.right; ++col) {
+    cup(box.top, col);
+    for (row = box.top; row > 0; row--) {
+      cuu(1);
+    }
+    putchar('u');
+  }
+
+  for (col = box.left; col <= box.right; ++col) {
+    cup(box.bottom, col);
+    for (row = box.bottom; row <= max_lines; row++) {
+      cud(1);
+    }
+    putchar('d');
+  }
+
+  test_with_margins(0);
+  vt_move(last, 1);
+  vt_clear(0);
+
+  println(the_title);
+  println("A box of *'s should appear on screen border, overwritten for margins (u/d/l/r)");
   return MENU_HOLD;
 }
 
@@ -535,15 +1072,90 @@ tst_DECIC(MENU_ARGS)
 {
   int n;
   int last = max_lines - 3;
+  int base_row;
+  int base_col;
+  int last_col;
+  int top;
+  int bot;
+  int lft;
+  int rgt;
+  int final_ic;
+  char mark_1st = 0;
+  char mark_2nd = 0;
+
+  test_with_margins(1);
+  top = tb_marg1 ? tb_marg1 : 1;
+  bot = tb_marg2 ? tb_marg2 : (last - 1);
+  lft = (lrmm_flag && lr_marg1) ? lr_marg1 : 1;
+  rgt = (lrmm_flag && lr_marg2) ? lr_marg2 : min_cols;
+
+  /*
+   * Adjustments so that most of the initial line (before shifting) passes
+   * through the area within margins.
+   */
+  switch (lr_marg_flag) {
+  default:
+    base_col = (2 * last);
+    last_col = min_cols - 1;
+    break;
+  case marFirst:
+    base_col = 0;
+    last_col = min_cols / 2 - 1;
+    break;
+  case marMiddle:
+    base_col = min_cols / 4;
+    last_col = (3 * min_cols) / 4 - 1;
+    break;
+  case marLast:
+    base_col = (min_cols / 2);
+    last_col = min_cols - 1;
+    break;
+  }
+
+  final_ic = base_col;
+
+  if (tb_marg_flag == marLast) {
+    base_row = max_lines / 2;
+  } else {
+    base_row = 0;
+  }
 
   for (n = 1; n < last; n++) {
-    __(cup(n, min_cols - 22 - last + n), printf("*"));
-    __(cup(1, 1), decic(1));
-  }
-  decic(20);
+    int row = base_row + n;
+    int col = base_col + n;
 
+    if (row < last) {
+      int mark = marker_of(n);
+
+      if (row >= top && row <= bot && row < last) {
+        mark_2nd = (char) mark;
+        if (mark_1st == 0) {
+          mark_1st = (char) mark;
+        }
+      }
+
+      __(cup(row, col), putchar(mark));
+      if (top > 1 || (lrmm_flag && lft > 1)) {
+        __(cup(1, 1), decic(1));  /* outside margins, should be ignored */
+        __(cup(row, col), putchar(mark));
+      }
+      if (final_ic++ <= last_col)
+        __(cup(top, lft), decic(1));
+    }
+  }
+  if (final_ic <= last_col)
+    decic(last_col - final_ic);
+  test_with_margins(0);
+
+  ruler(last);
   vt_move(last + 1, 1);
-  println("If your terminal supports DECIC, there will be a column of *'s on the right");
+  vt_clear(0);
+
+  if (lrmm_flag)
+    tprintf("If your terminal supports DECIC, letters %c-%c are on column %d\n",
+            mark_1st, mark_2nd, rgt);
+  else
+    println("There should be a diagonal of letters from left near top to middle at bottom");
   return MENU_HOLD;
 }
 
@@ -864,8 +1476,6 @@ tst_PageFormat(MENU_ARGS)
       { "Test set columns per page (DECSCPP)",               not_impl },
       { "Test columns mode (DECCOLM)",                       not_impl },
       { "Test set lines per page (DECSLPP)",                 not_impl },
-      { "Test set left and right margins (DECSLRM)",         not_impl },
-      { "Test set vertical split-screen (DECVSSM)",          not_impl },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
@@ -890,21 +1500,63 @@ tst_VT420_cursor(MENU_ARGS)
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test VT320 features",                               tst_vt320_cursor },
+      { lrmm_mesg,                                           toggle_LRMM },
+      { tb_marg_mesg,                                        toggle_STBM },
+      { lr_marg_mesg,                                        toggle_SLRM },
       { "Test Back Index (DECBI)",                           tst_DECBI },
       { "Test Forward Index (DECFI)",                        tst_DECFI },
+      { "Test cursor movement within margins",               tst_cursor_margins },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
+
+  tb_marg_flag = marNone;
+  toggle_STBM(PASS_ARGS);
+
+  lr_marg_flag = marNone;
+  toggle_SLRM(PASS_ARGS);
 
   do {
     vt_clear(2);
     __(title(0), printf("VT420 Cursor-Movement Tests"));
     __(title(2), println("Choose test type:"));
+    sprintf(lrmm_mesg, "%s DECLRMM (left/right mode)", STR_ENABLE(lrmm_flag));
   } while (menu(my_menu));
+
+  if (tb_marg_flag > marReset)
+    decstbm(0, 0);
+
+  if (lr_marg_flag > marReset) {
+    if (!lrmm_flag)
+      toggle_LRMM(PASS_ARGS);
+    decslrm(0, 0);
+  }
+
+  if (lrmm_flag)
+    toggle_LRMM(PASS_ARGS);
+
   return MENU_NOHOLD;
 }
 
 /******************************************************************************/
+
+static int
+show_DECSTBM(MENU_ARGS)
+{
+  int code;
+  decstbm(tb_marg1, tb_marg2);
+  code = rpt_DECSTBM(PASS_ARGS);
+  return code;
+}
+
+static int
+show_DECSLRM(MENU_ARGS)
+{
+  int code;
+  decslrm(lr_marg1, lr_marg2);
+  code = rpt_DECSLRM(PASS_ARGS);
+  return code;
+}
 
 /*
  * The main vt100 module tests IRM, DL, IL, DCH, ICH, ED, EL
@@ -916,17 +1568,45 @@ tst_VT420_editing(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
+      { lrmm_mesg,                                           toggle_LRMM },
+      { "Show DECRQM response for DECLRMM",                  show_DECLRMM },
+      { "Show DECRQSS response for DECSTBM",                 show_DECSTBM },
+      { "Show DECRQSS response for DECSLRM",                 show_DECSLRM },
+      { tb_marg_mesg,                                        toggle_STBM },
+      { lr_marg_mesg,                                        toggle_SLRM },
       { "Test Delete Column (DECDC)",                        tst_DECDC },
       { "Test Insert Column (DECIC)",                        tst_DECIC },
+      { "Test vertical scrolling (IND, RI)",                 tst_IND_RI },
+      { "Test ASCII formatting (BS, CR, TAB)",               tst_ASCII_format },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
+
+  tb_marg_flag = marNone;
+  toggle_STBM(PASS_ARGS);
+
+  lr_marg_flag = marNone;
+  toggle_SLRM(PASS_ARGS);
 
   do {
     vt_clear(2);
     __(title(0), printf("VT420 Editing Sequence Tests"));
     __(title(2), println("Choose test type:"));
+    sprintf(lrmm_mesg, "%s DECLRMM (left/right mode)", STR_ENABLE(lrmm_flag));
   } while (menu(my_menu));
+
+  if (tb_marg_flag > marReset)
+    decstbm(0, 0);
+
+  if (lr_marg_flag > marReset) {
+    if (!lrmm_flag)
+      toggle_LRMM(PASS_ARGS);
+    decslrm(0, 0);
+  }
+
+  if (lrmm_flag)
+    toggle_LRMM(PASS_ARGS);
+
   return MENU_NOHOLD;
 }
 

@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.50 2011/05/06 19:37:24 tom Exp $ */
+/* $Id: xterm.c,v 1.52 2012/04/04 09:22:09 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -43,14 +43,14 @@ test_altscrn_47(MENU_ARGS)
   println("The next screen will be filled with E's down to the prompt.");
   vt_move(7, 5);
   decsc();
-  vt_move(max_lines - 2, 1);
+  cup(max_lines - 2, 1);
   holdit();
 
   sm("?47");
   decaln();     /* fill the screen */
   vt_move(15, 7);
   decsc();
-  vt_move(max_lines - 2, 1);
+  cup(max_lines - 2, 1);
   ed(0);
   holdit();
 
@@ -79,14 +79,14 @@ test_altscrn_1047(MENU_ARGS)
   decsc();
   vt_move(9, 7);  /* move away from the place we saved with DECSC */
   sm("?1048");  /* this saves the cursor position */
-  vt_move(max_lines - 2, 1);
+  cup(max_lines - 2, 1);
   holdit();
 
   sm("?1047");
   decaln();     /* fill the screen */
   vt_move(15, 7);
   decsc();
-  vt_move(max_lines - 2, 1);
+  cup(max_lines - 2, 1);
   ed(0);
   holdit();
 
@@ -114,12 +114,12 @@ test_altscrn_1049(MENU_ARGS)
   println("unless titeInhibit resource is set, or alternate-screen is disabled.");
   vt_move(7, 5);
   decsc();
-  vt_move(max_lines - 2, 1);
+  cup(max_lines - 2, 1);
   holdit();     /* cursor location will be one line down */
 
   sm("?1049");  /* this saves the cursor location */
   decaln();     /* fill the screen */
-  vt_move(max_lines - 2, 1);
+  cup(max_lines - 2, 1);
   ed(0);
   holdit();
 
@@ -574,7 +574,7 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( DECNKM,     3 /* numeric keypad */),
     DATA( DECBKM,     3 /* backarrow key */),
     DATA( DECKBUM,    3 /* keyboard usage */),
-    DATA( DECVSSM,    4 /* vertical split */),
+    DATA( DECLRMM,    4 /* left/right margin mode */),
     DATA( DECXRLM,    3 /* transmit rate linking */),
     DATA( DECKPM,     4 /* keyboard positioning */),
     DATA( DECNCSM,    5 /* no clearing screen on column change */),

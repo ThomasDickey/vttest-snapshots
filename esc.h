@@ -1,11 +1,15 @@
-/* $Id: esc.h,v 1.57 2010/05/28 08:20:00 tom Exp $ */
+/* $Id: esc.h,v 1.61 2012/04/10 08:43:01 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
 
-#define BEL 0007
-#define SO  0016       /* 14 */
-#define SI  0017       /* 15 */
+#define BEL 0007  /* ^G */
+#define BS  0010  /* \b */
+#define TAB 0011  /* \t */
+#define LF  0012  /* \n */
+#define CR  0015  /* \r */
+#define SO  0016  /* 14 */
+#define SI  0017  /* 15 */
 #define ESC 0033
 #define CSI 0233
 #define SS3 0217
@@ -17,95 +21,95 @@
  * in ECMA-48.  The ones noted as "non-DEC" are not implemented in any of
  * DEC's terminals.
  */
-#define GATM      1    /* guarded area transfer (disabled) */
-#define KAM       2    /* keyboard action */
-#define CRM       3    /* control representation (setup) */
-#define IRM       4    /* insert/replace */
-#define SRTM      5    /* status reporting transfer (disabled) */
-#define ERM       6    /* erasure mode (non-DEC) */
-#define VEM       7    /* vertical editing (disabled) */
-#define BDSM      8    /* bi-directional support mode (non-DEC) */
-#define DCSM      9    /* device component select mode (non-DEC) */
-#define HEM      10    /* horizontal editing (disabled) */
-#define PUM      11    /* positioning unit (disabled) */
-#define SRM      12    /* send/receive */
-#define FEAM     13    /* format effector action (disabled) */
-#define FETM     14    /* format effector transfer (disabled) */
-#define MATM     15    /* multiple area transfer (disabled) */
-#define TTM      16    /* transfer termination (disabled) */
-#define SATM     17    /* selected area transfer (disabled) */
-#define TSM      18    /* tabulation stop (disabled) */
-#define EBM      19    /* editing boundary (disabled) */
-#define LNM      20    /* line feed/new line */
+#define GATM      1   /* guarded area transfer (disabled) */
+#define KAM       2   /* keyboard action */
+#define CRM       3   /* control representation (setup) */
+#define IRM       4   /* insert/replace */
+#define SRTM      5   /* status reporting transfer (disabled) */
+#define ERM       6   /* erasure mode (non-DEC) */
+#define VEM       7   /* vertical editing (disabled) */
+#define BDSM      8   /* bi-directional support mode (non-DEC) */
+#define DCSM      9   /* device component select mode (non-DEC) */
+#define HEM      10   /* horizontal editing (disabled) */
+#define PUM      11   /* positioning unit (disabled) */
+#define SRM      12   /* send/receive */
+#define FEAM     13   /* format effector action (disabled) */
+#define FETM     14   /* format effector transfer (disabled) */
+#define MATM     15   /* multiple area transfer (disabled) */
+#define TTM      16   /* transfer termination (disabled) */
+#define SATM     17   /* selected area transfer (disabled) */
+#define TSM      18   /* tabulation stop (disabled) */
+#define EBM      19   /* editing boundary (disabled) */
+#define LNM      20   /* line feed/new line */
 
 /* DEC private modes for DECRQM, DECRPM, SM and RM, based on list from
  * VT520 reference manual, as well as dec_term_function_checklist.ps from
  * Shuford's archive.
  */
-#define DECCKM    1    /* cursor keys */
-#define DECANM    2    /* ANSI */
-#define DECCOLM   3    /* column */
-#define DECSCLM   4    /* scrolling */
-#define DECSCNM   5    /* screen */
-#define DECOM     6    /* origin */
-#define DECAWM    7    /* autowrap */
-#define DECARM    8    /* autorepeat */
-#define DECEDM   10    /* edit */
-#define DECLTM   11    /* line transmit */
-#define DECSCFDM 13    /* space compression field delimiter */
-#define DECTEM   14    /* transmission execution */
-#define DECEKEM  16    /* edit key execution */
-#define DECPFF   18    /* print form feed */
-#define DECPEX   19    /* printer extent */
-#define DECTCEM  25    /* text cursor enable */
-#define DECRLM   34    /* left-to-right */
-#define DECTEK   35    /* 4010/4014 emulation */
-#define DECHEM   36    /* Hebrew encoding */
-#define DECNRCM  42    /* national replacement character set */
-#define DECGEPM  43    /* graphics expanded print */
-#define DECGPCM  44    /* graphics print color */
-#define DECGPCS  45    /* graphics print color syntax */
-#define DECGPBM  46    /* graphics print background */
-#define DECGRPM  47    /* graphics rotated print */
-#define DEC131TM 53    /* VT131 transmit */
-#define DECNAKB  57    /* Greek/N-A Keyboard Mapping */
-#define DECHCCM  60    /* horizontal cursor coupling (disabled) */
-#define DECVCCM  61    /* vertical cursor coupling */
-#define DECPCCM  64    /* page cursor coupling */
-#define DECNKM   66    /* numeric keypad */
-#define DECBKM   67    /* backarrow key */
-#define DECKBUM  68    /* keyboard usage */
-#define DECVSSM  69    /* vertical split */
-#define DECXRLM  73    /* transmit rate linking */
-#define DECKPM   81    /* keyboard positioning */
-#define DECNCSM  95    /* no clearing screen on column change */
-#define DECRLCM  96    /* right-to-left copy */
-#define DECCRTSM 97    /* CRT save */
-#define DECARSM  98    /* auto resize */
-#define DECMCM   99    /* modem control */
-#define DECAAM   100   /* auto answerback */
-#define DECCANSM 101   /* conceal answerback */
-#define DECNULM  102   /* null */
-#define DECHDPXM 103   /* half duplex */
-#define DECESKM  104   /* enable secondary keyboard language */
-#define DECOSCNM 106   /* overscan */
-#define DECFWM   111   /* framed windows */
-#define DECRPL   112   /* review previous lines */
-#define DECHWUM  113   /* host wake-up mode (CRT and energy saver) */
-#define DECATCUM 114   /* alternate text color underline */
-#define DECATCBM 115   /* alternate text color blink */
-#define DECBBSM  116   /* bold and blink style */
-#define DECECM   117   /* erase color */
+#define DECCKM    1   /* cursor keys */
+#define DECANM    2   /* ANSI */
+#define DECCOLM   3   /* column */
+#define DECSCLM   4   /* scrolling */
+#define DECSCNM   5   /* screen */
+#define DECOM     6   /* origin */
+#define DECAWM    7   /* autowrap */
+#define DECARM    8   /* autorepeat */
+#define DECEDM   10   /* edit */
+#define DECLTM   11   /* line transmit */
+#define DECSCFDM 13   /* space compression field delimiter */
+#define DECTEM   14   /* transmission execution */
+#define DECEKEM  16   /* edit key execution */
+#define DECPFF   18   /* print form feed */
+#define DECPEX   19   /* printer extent */
+#define DECTCEM  25   /* text cursor enable */
+#define DECRLM   34   /* left-to-right */
+#define DECTEK   35   /* 4010/4014 emulation */
+#define DECHEM   36   /* Hebrew encoding */
+#define DECNRCM  42   /* national replacement character set */
+#define DECGEPM  43   /* graphics expanded print */
+#define DECGPCM  44   /* graphics print color */
+#define DECGPCS  45   /* graphics print color syntax */
+#define DECGPBM  46   /* graphics print background */
+#define DECGRPM  47   /* graphics rotated print */
+#define DEC131TM 53   /* VT131 transmit */
+#define DECNAKB  57   /* Greek/N-A Keyboard Mapping */
+#define DECHCCM  60   /* horizontal cursor coupling (disabled) */
+#define DECVCCM  61   /* vertical cursor coupling */
+#define DECPCCM  64   /* page cursor coupling */
+#define DECNKM   66   /* numeric keypad */
+#define DECBKM   67   /* backarrow key */
+#define DECKBUM  68   /* keyboard usage */
+#define DECLRMM  69   /* left/right margin mode */
+#define DECXRLM  73   /* transmit rate linking */
+#define DECKPM   81   /* keyboard positioning */
+#define DECNCSM  95   /* no clearing screen on column change */
+#define DECRLCM  96   /* right-to-left copy */
+#define DECCRTSM 97   /* CRT save */
+#define DECARSM  98   /* auto resize */
+#define DECMCM   99   /* modem control */
+#define DECAAM   100  /* auto answerback */
+#define DECCANSM 101  /* conceal answerback */
+#define DECNULM  102  /* null */
+#define DECHDPXM 103  /* half duplex */
+#define DECESKM  104  /* enable secondary keyboard language */
+#define DECOSCNM 106  /* overscan */
+#define DECFWM   111  /* framed windows */
+#define DECRPL   112  /* review previous lines */
+#define DECHWUM  113  /* host wake-up mode (CRT and energy saver) */
+#define DECATCUM 114  /* alternate text color underline */
+#define DECATCBM 115  /* alternate text color blink */
+#define DECBBSM  116  /* bold and blink style */
+#define DECECM   117  /* erase color */
 
 /* esc.c */
-char *csi_input(void);
-char *csi_output(void);
-char *dcs_input(void);
-char *dcs_output(void);
+const char *csi_input(void);
+const char *csi_output(void);
+const char *dcs_input(void);
+const char *dcs_output(void);
 char *get_reply(void);
 char *instr(void);
-char *osc_input(void);
-char *osc_output(void);
+const char *osc_input(void);
+const char *osc_output(void);
 char *ss3_input(void);
 char *ss3_output(void);
 char *st_input(void);
@@ -115,7 +119,7 @@ int cup(int pn1, int pn2);
 int decdc(int pn);
 int decic(int pn);
 int println(const char *s);
-int tprintf(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+int tprintf(const char *fmt,...) GCC_PRINTFLIKE(1,2);
 void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
 void brc3(int pn1, int pn2, int pn3, int c);
@@ -172,6 +176,7 @@ void decsed(int pn1);
 void decsel(int pn1);
 void decsera(int top, int left, int bottom, int right);
 void decsle(int mode);
+void decslrm(int pn1, int pn2);
 void decsnls(int pn);
 void decssdt(int pn);
 void decstbm(int pn1, int pn2);
@@ -179,9 +184,9 @@ void decstr(void);
 void decswl(void);
 void dectst(int pn);
 void dl(int pn);
-void do_csi(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
-void do_dcs(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
-void do_osc(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+void do_csi(const char *fmt,...) GCC_PRINTFLIKE(1,2);
+void do_dcs(const char *fmt,...) GCC_PRINTFLIKE(1,2);
+void do_osc(const char *fmt,...) GCC_PRINTFLIKE(1,2);
 void dsr(int pn);
 void ech(int pn);
 void ed(int pn);
@@ -211,6 +216,8 @@ void put_char(FILE *fp, int c);
 void put_string(FILE *fp, const char *s);
 void readnl(void);
 void rep(int pn);
+void reset_decstbm(void);
+void reset_decslrm(void);
 void reset_inchar(void);
 void ri(void);
 void ris(void);

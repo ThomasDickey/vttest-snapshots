@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.23 2011/12/02 09:43:36 tom Exp $ */
+/* $Id: vms_io.c,v 1.26 2012/04/04 09:02:35 tom Exp $ */
 
 #define DEBUG
 
@@ -265,7 +265,7 @@ void
 holdit(void)
 {
   inflush();
-  printf("Push <RETURN>");
+  tprintf("Push <RETURN>");
   readnl();
 }
 

@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.85 2012/03/25 18:39:06 tom Exp $ */
+/* $Id: vttest.h,v 1.86 2012/04/03 21:04:11 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -255,6 +255,7 @@ extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
 extern int not_impl(MENU_ARGS);
 extern int parse_decrqss(char *report, const char *func);
+extern int rpt_DECSTBM(MENU_ARGS);
 extern int scan_any(char *str, int *pos, int toc);
 extern int scanto(const char *str, int *pos, int toc);
 extern int set_DECRPM(int level);

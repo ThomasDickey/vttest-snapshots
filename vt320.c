@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.22 2012/03/25 19:20:04 tom Exp $ */
+/* $Id: vt320.c,v 1.26 2012/04/04 09:20:47 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -438,7 +438,7 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
 
     if (++row >= max_lines - 3) {
       restore_ttymodes();
-      vt_move(max_lines - 1, 1);
+      cup(max_lines - 1, 1);
       holdit();
       vt_clear(2);
       vt_move(row = 2, 1);
@@ -557,7 +557,7 @@ tst_DEC_DECRPM(MENU_ARGS)
     DATA( DECNKM,  3 /* numeric keypad */),
     DATA( DECBKM,  3 /* backarrow key */),
     DATA( DECKBUM, 3 /* keyboard usage */),
-    DATA( DECVSSM, 4 /* vertical split */),
+    DATA( DECLRMM, 4 /* left/right margin mode */),
     DATA( DECXRLM, 3 /* transmit rate linking */),
     DATA( DECKPM,  4 /* keyboard positioning */),
     DATA( DECNCSM, 5 /* no clearing screen on column change */),
@@ -629,6 +629,10 @@ any_decrqss2(const char *msg, const char *func, const char *expected)
 
   decrqss(func);
   report = get_reply();
+
+  reset_decstbm();
+  reset_decslrm();
+
   vt_move(3, 10);
   chrprint(report);
   switch (parse_decrqss(report, func)) {
@@ -696,7 +700,7 @@ rpt_DECSSDT(MENU_ARGS)
   return any_decrqss(the_title, "$~");
 }
 
-static int
+int
 rpt_DECSTBM(MENU_ARGS)
 {
   return any_decrqss(the_title, "r");

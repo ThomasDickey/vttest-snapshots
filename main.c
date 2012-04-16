@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.94 2011/12/06 10:17:57 tom Exp $ */
+/* $Id: main.c,v 1.96 2012/04/15 15:32:28 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -42,17 +42,17 @@
 #include <esc.h>
 
 /* *INDENT-EQLS* */
-FILE *log_fp     = 0;
+FILE *log_fp    = 0;
 int brkrd;
 int reading;
 int log_disabled = FALSE;
-int max_lines    = 24;
-int max_cols     = 132;
-int min_cols     = 80;
-int input_8bits  = FALSE;
+int max_lines   = 24;
+int max_cols    = 132;
+int min_cols    = 80;
+int input_8bits = FALSE;
 int output_8bits = FALSE;
-int tty_speed    = DEFAULT_SPEED;  /* nominal speed, for padding */
-int use_padding  = FALSE;
+int tty_speed   = DEFAULT_SPEED;  /* nominal speed, for padding */
+int use_padding = FALSE;
 jmp_buf intrenv;
 
 static char empty[1];
@@ -355,14 +355,16 @@ tst_movements(MENU_ARGS)
         /* simple wrapping */
         __(cup(region, width), printf("%c%c", on_right[i - 1], on_left[i]));
         /* backspace at right margin */
-        __(cup(region + 1, width), printf("%c\010 %c", on_left[i], on_right[i]));
+        __(cup(region + 1, width), printf("%c%c %c",
+                                          on_left[i], BS, on_right[i]));
         printf("\n");
         break;
       case 2:
         /* tab to right margin */
-        __(cup(region + 1, width), printf("%c\010\010\011\011%c",
-                                          on_left[i], on_right[i]));
-        __(cup(region + 1, 2), printf("\010%c\n", on_left[i]));
+        __(cup(region + 1, width), printf("%c%c%c%c%c%c",
+                                          on_left[i], BS, BS,
+                                          TAB, TAB, on_right[i]));
+        __(cup(region + 1, 2), printf("%c%c\n", BS, on_left[i]));
         break;
       default:
         /* newline at right margin */
@@ -390,13 +392,13 @@ tst_movements(MENU_ARGS)
   println("A B C D E F G H I");
   for (i = 1; i < 10; i++) {
     printf("%c", '@' + i);
-    do_csi("2\010C");   /* Two forward, one backspace */
+    do_csi("2%cC", BS);   /* Two forward, one backspace */
   }
   println("");
   /* Now put CR in CUF sequence. */
   printf("A ");
   for (i = 2; i < 10; i++)
-    printf("%s\015%dC%c", csi_output(), 2 * i - 2, '@' + i);
+    printf("%s%c%dC%c", csi_output(), CR, 2 * i - 2, '@' + i);
   println("");
   /* Now put VT in CUU sequence. */
   rm("20");
@@ -476,7 +478,7 @@ tst_screen(MENU_ARGS)
      - TBC     (Tabulation Clear)
      - HTS     (Horizontal Tabulation Set)
      - SM RM   (Set/Reset mode): - 80/132 chars
-     .                           - Origin: Realtive/absolute
+     .                           - Origin: Relative/absolute
      .                           - Scroll: Smooth/jump
      .                           - Wraparound
      - SGR     (Select Graphic Rendition)
@@ -527,7 +529,7 @@ tst_screen(MENU_ARGS)
   tbc(2);       /* no-op */
   cup(1, 1);
   for (col = 1; col <= min_cols - 2; col += 6)
-    printf("\t*");
+    printf("%c*", TAB);
   cup(2, 2);
   for (col = 2; col <= min_cols - 2; col += 6)
     printf("     *");
@@ -905,7 +907,7 @@ tst_insdel(MENU_ARGS)
     println("below:");
     println("");
     for (i = 'Z'; i >= 'A'; i--) {
-      printf("%c\010", i);
+      printf("%c%c", i, BS);
       ich(2);
     }
     cup(10, 1);
@@ -1725,7 +1727,7 @@ my_vfprintf(FILE *fp, va_list ap, const char *fmt)
  * Show a test-result, optionally logging it as well.
  */
 void
-show_result(const char *fmt, ...)
+show_result(const char *fmt,...)
 {
   va_list ap;
 
