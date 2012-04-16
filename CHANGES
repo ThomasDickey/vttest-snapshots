@@ -1,5 +1,24 @@
--- $Id: CHANGES,v 1.137 2012/03/25 19:21:45 tom Exp $
+-- $Id: CHANGES,v 1.144 2012/04/15 22:19:23 tom Exp $
 -------------------------------------------------------------------------------
+
+20120415
+	+ add test-screen for index/reverse index with left/right margins.
+
+	+ ensure that status-line is turned off when exiting status-line test.
+
+	+ add test-screen for VT420 & up for ASCII formatting controls with
+	  margins.
+
+	+ modify DECFI/DECBI tests to work with margins.
+
+	+ add menu entries for setting/showing the top/bottom and left/right
+	  margins, to modify the behavior of the DECIC/DECDC tests.
+
+	+ add menu entries for setting/showing DECLRMM state, needed for
+	  DECIC/DECDC tests.
+
+	+ change mnemomic DECVSSM to DECLRMM to reflect the latter's usage in
+	  vt420 and vt510 manuals.
 
 20120325
 	+ modify DECRQSS test for DECSCUSR to show if the response is as

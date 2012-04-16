@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.16 2011/12/06 09:27:22 tom Exp $ */
+/* $Id: vt52.c,v 1.17 2012/04/15 15:42:52 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -7,9 +7,13 @@
 static int
 testing(const char *name, int row)
 {
-  printf("Testing %s. ", name);
-  printf("A real VT%d will not recognize %s at this point", terminal_id(), name);
-  println("");
+  char buffer[1024];
+
+  sprintf(buffer,
+          "Testing %s. "
+          "A real VT%d will not recognize %s at this point",
+          name, terminal_id(), name);
+  println(buffer);
   return row + 1;
 }
 

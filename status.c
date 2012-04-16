@@ -1,4 +1,4 @@
-/* $Id: status.c,v 1.6 2011/12/06 10:35:44 tom Exp $ */
+/* $Id: status.c,v 1.7 2012/04/12 14:57:28 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -100,5 +100,6 @@ tst_statusline(MENU_ARGS)
     __(title(0), println(the_title));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
+  decssdt(0);
   return MENU_NOHOLD;
 }

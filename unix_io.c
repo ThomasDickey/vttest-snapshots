@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.25 2011/05/16 09:01:40 David.Kutalek Exp $ */
+/* $Id: unix_io.c,v 1.28 2012/04/04 09:02:07 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -199,7 +199,7 @@ void
 holdit(void)
 {
   inflush();
-  printf("Push <RETURN>");
+  tprintf("Push <RETURN>");
   readnl();
 }
 
