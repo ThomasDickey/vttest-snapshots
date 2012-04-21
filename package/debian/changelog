@@ -1,4 +1,4 @@
-vttest-cur (2.7.20120415) unstable; urgency=low
+vttest-cur (2.7.20120420) unstable; urgency=low
 
   * Add tests for DECLRMM left/right margin mode.
   * Improve DECSCUSR/DECRQSS test.

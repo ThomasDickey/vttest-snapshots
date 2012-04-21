@@ -1,7 +1,13 @@
--- $Id: CHANGES,v 1.144 2012/04/15 22:19:23 tom Exp $
+-- $Id: CHANGES,v 1.146 2012/04/20 23:26:28 tom Exp $
 -------------------------------------------------------------------------------
 
-20120415
+20120420
+	+ modify menu functions to provide for multipage menus, e.g., in the
+	  character set choices for vt420 and vt520 on a 24-line screen.
+
+	+ modify tests related to left/right margins to allow color to be set,
+	  as xterm-feature.
+
 	+ add test-screen for index/reverse index with left/right margins.
 
 	+ ensure that status-line is turned off when exiting status-line test.
