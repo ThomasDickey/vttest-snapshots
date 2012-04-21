@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.86 2012/04/03 21:04:11 tom Exp $ */
+/* $Id: vttest.h,v 1.87 2012/04/19 08:42:53 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -329,6 +329,7 @@ extern void scs_normal(void);
 extern void setup_softchars(const char *filename);
 extern void show_mousemodes(void);
 extern void show_result(const char *fmt,...) GCC_PRINTFLIKE(1,2);
+extern void slowly(void);
 extern void vt_clear(int code);
 extern void vt_el(int code);
 extern void vt_hilite(int flag);

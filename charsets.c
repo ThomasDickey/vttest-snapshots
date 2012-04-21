@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.36 2011/12/06 01:56:12 tom Exp $ */
+/* $Id: charsets.c,v 1.37 2012/04/20 23:22:11 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -197,7 +197,7 @@ lookup_Gx(MENU_ARGS)
 }
 
 static void
-specify_any_Gx(int g)
+specify_any_Gx(MENU_ARGS, int g)
 {
   MENU my_menu[TABLESIZE(KnownCharsets) + 2];
   int n, m;
@@ -229,7 +229,8 @@ specify_any_Gx(int g)
 
   do {
     vt_clear(2);
-    __(title(0), println("Choose character-set:"));
+    __(title(0), println(the_title));
+    __(title(2), println("Choose character-set:"));
   } while (menu(my_menu) && the_code < 0);
 
   current_Gx[g] = the_code;
@@ -246,28 +247,28 @@ toggle_nrc(MENU_ARGS)
 static int
 specify_G0(MENU_ARGS)
 {
-  specify_any_Gx(0);
+  specify_any_Gx(PASS_ARGS, 0);
   return MENU_NOHOLD;
 }
 
 static int
 specify_G1(MENU_ARGS)
 {
-  specify_any_Gx(1);
+  specify_any_Gx(PASS_ARGS, 1);
   return MENU_NOHOLD;
 }
 
 static int
 specify_G2(MENU_ARGS)
 {
-  specify_any_Gx(2);
+  specify_any_Gx(PASS_ARGS, 2);
   return MENU_NOHOLD;
 }
 
 static int
 specify_G3(MENU_ARGS)
 {
-  specify_any_Gx(3);
+  specify_any_Gx(PASS_ARGS, 3);
   return MENU_NOHOLD;
 }
 

@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.96 2012/04/15 15:32:28 tom Exp $ */
+/* $Id: main.c,v 1.99 2012/04/20 23:13:33 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1419,67 +1419,124 @@ pop_menu(const char *saved)
   current_menu = (char *) saved;
 }
 
+#define end_of_menu(table, number) \
+        (table[number].description[0] == '\0')
+
+static void
+show_entry(MENU *table, int number)
+{
+  printf("          %d%c %s\n", number,
+         (table[number].dispatch == not_impl) ? '*' : '.',
+         table[number].description);
+}
+
+static int
+next_menu(MENU *table, int top, int size)
+{
+  int last;
+  int next = top + size;
+  for (last = top; last <= next && !end_of_menu(table, last); ++last) {
+    ;
+  }
+  return (last >= next) ? next : top;
+}
+
+static int
+prev_menu(int top, int size)
+{
+  return (top > 1) ? (top - size) : top;
+}
+
 int
 menu(MENU *table)
 {
   int i, tablesize, choice;
   char c;
   char storage[BUFSIZ];
+  int pagesize = max_lines - 7 - TITLE_LINE;
+  int pagetop = 1;
+  int redraw = FALSE;
 
-  println("");
   tablesize = 0;
-  for (i = 0; table[i].description[0] != '\0'; i++) {
-    printf("          %d%c %s\n", i,
-           table[i].dispatch == not_impl ? '*' : '.', table[i].description);
+  for (i = 0; !end_of_menu(table, i); i++) {
     tablesize++;
   }
   tablesize--;
 
-  printf("\n          Enter choice number (0 - %d): ", tablesize);
   for (;;) {
-    char *s = storage;
-    inputline(s);
-    choice = 0;
-    while ((c = *s++) != '\0') {
-      if (c == '*') {
-        choice = -1;
+    vt_move(6, 1);
+    vt_clear(0);
+
+    println("");
+    show_entry(table, 0);
+    for (i = 0; i < pagesize; i++) {
+      int j = pagetop + i;
+      if (end_of_menu(table, j))
         break;
-      } else if (c >= '0' && c <= '9') {
-        choice = 10 * choice + c - '0';
-      } else {
-        choice = tablesize + 1;
-        break;
-      }
+      show_entry(table, pagetop + i);
     }
 
-    if (choice < 0) {
-      for (choice = 0; choice <= tablesize; choice++) {
+    printf("\n          Enter choice number (0 - %d): ", tablesize);
+    for (;;) {
+      char *s = storage;
+      inputline(s);
+      choice = 0;
+      redraw = FALSE;
+      while ((c = *s++) != '\0') {
+        if (c == '*') {
+          choice = -1;
+          break;
+        } else if (c == '?') {
+          redraw = TRUE;
+          break;
+        } else if (tablesize > pagesize && c == 'n') {
+          pagetop = next_menu(table, pagetop, pagesize);
+          redraw = TRUE;
+          break;
+        } else if (tablesize > pagesize && c == 'p') {
+          pagetop = prev_menu(pagetop, pagesize);
+          redraw = TRUE;
+          break;
+        } else if (c >= '0' && c <= '9') {
+          choice = 10 * choice + c - '0';
+        } else {
+          choice = tablesize + 1;
+          break;
+        }
+      }
+
+      if (redraw)
+        break;
+
+      if (choice < 0) {
+        for (choice = 0; choice <= tablesize; choice++) {
+          vt_clear(2);
+          if (table[choice].dispatch != 0) {
+            const char *save = push_menu(choice);
+            const char *name = table[choice].description;
+            if (LOG_ENABLED)
+              fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
+            if ((*table[choice].dispatch) (name) == MENU_HOLD)
+              holdit();
+            pop_menu(save);
+          }
+        }
+        return 1;
+      } else if (choice <= tablesize) {
         vt_clear(2);
         if (table[choice].dispatch != 0) {
           const char *save = push_menu(choice);
           const char *name = table[choice].description;
           if (LOG_ENABLED)
             fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
-          if ((*table[choice].dispatch) (name) == MENU_HOLD)
+          if ((*table[choice].dispatch) (name) != MENU_NOHOLD)
             holdit();
           pop_menu(save);
         }
+        return (table[choice].dispatch != 0);
       }
-      return 1;
-    } else if (choice <= tablesize) {
-      vt_clear(2);
-      if (table[choice].dispatch != 0) {
-        const char *save = push_menu(choice);
-        const char *name = table[choice].description;
-        if (LOG_ENABLED)
-          fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
-        if ((*table[choice].dispatch) (name) != MENU_NOHOLD)
-          holdit();
-        pop_menu(save);
-      }
-      return (table[choice].dispatch != 0);
+      printf("          Bad choice, try again: ");
     }
-    printf("          Bad choice, try again: ");
   }
 }
 
@@ -1744,6 +1801,18 @@ show_result(const char *fmt,...)
     va_end(ap);
     fputc('\n', log_fp);
   }
+}
+
+/*
+ * Use this to make some complex stuff (such as scrolling) slow enough to see.
+ */
+void
+slowly(void)
+{
+#ifdef HAVE_USLEEP
+  fflush(stdout);
+  zleep(100);
+#endif
 }
 
 /*
