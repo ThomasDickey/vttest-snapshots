@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.99 2012/04/20 23:13:33 tom Exp $ */
+/* $Id: main.c,v 1.104 2012/05/04 20:57:12 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -51,6 +51,7 @@ int max_cols    = 132;
 int min_cols    = 80;
 int input_8bits = FALSE;
 int output_8bits = FALSE;
+int slow_motion = FALSE;
 int tty_speed   = DEFAULT_SPEED;  /* nominal speed, for padding */
 int use_padding = FALSE;
 jmp_buf intrenv;
@@ -61,7 +62,8 @@ static char *current_menu = empty;
 static void
 usage(void)
 {
-  fprintf(stderr, "Usage: vttest [-l] [-p] [-8] [-f font] [24x80.132]\n");
+  fprintf(stderr,
+          "Usage: vttest [-l] [-p] [-s] [-8] [-f font] [24x80.132]\n");
   exit(EXIT_FAILURE);
 }
 
@@ -106,6 +108,9 @@ main(int argc, char *argv[])
           break;
         case 'p':
           use_padding = TRUE;
+          break;
+        case 's':
+          slow_motion = TRUE;
           break;
         case '8':
           output_8bits = TRUE;
@@ -546,8 +551,8 @@ tst_screen(MENU_ARGS)
     ed(2);      /* VT100 clears screen on SM3/RM3, but not obviously, so... */
     cup(1, 1);
     tbc(3);
-    for (col = 1; col <= max_cols; col += 8) {
-      cuf(8);
+    for (col = 1; col <= max_cols; col += TABWIDTH) {
+      cuf(TABWIDTH);
       hts();
     }
     cup(1, 1);
@@ -768,8 +773,8 @@ tst_doublesize(MENU_ARGS)
   /* Set vanilla tabs for next test */
   cup(1, 1);
   tbc(3);
-  for (col = 1; col <= max_cols; col += 8) {
-    cuf(8);
+  for (col = 1; col <= max_cols; col += TABWIDTH) {
+    cuf(TABWIDTH);
     hts();
   }
   deccolm(FALSE);
@@ -1674,6 +1679,15 @@ skip_digits(char *src)
   return (base == src) ? 0 : src;
 }
 
+char *
+skip_xdigits(char *src)
+{
+  char *base = src;
+  while (*src != '\0' && isxdigit(CharOf(*src)))
+    src++;
+  return (base == src) ? 0 : src;
+}
+
 const char *
 skip_digits_2(const char *src)
 {
@@ -1809,10 +1823,12 @@ show_result(const char *fmt,...)
 void
 slowly(void)
 {
+  if (slow_motion) {
 #ifdef HAVE_USLEEP
-  fflush(stdout);
-  zleep(100);
+    fflush(stdout);
+    zleep(100);
 #endif
+  }
 }
 
 /*

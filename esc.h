@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.61 2012/04/10 08:43:01 tom Exp $ */
+/* $Id: esc.h,v 1.64 2012/04/26 00:32:04 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -156,6 +156,7 @@ void deckpam(void);
 void deckpm(int flag);
 void deckpnm(void);
 void decll(const char *ps);
+void decncsm(int flag);
 void decnkm(int flag);
 void decnrcm(int flag);
 void decom(int flag);
@@ -172,10 +173,12 @@ void decsc(void);
 void decsca(int pn1);
 void decsclm(int flag);
 void decscnm(int flag);
+void decscpp(int cols);
 void decsed(int pn1);
 void decsel(int pn1);
 void decsera(int top, int left, int bottom, int right);
 void decsle(int mode);
+void decslpp(int rows);
 void decslrm(int pn1, int pn2);
 void decsnls(int pn);
 void decssdt(int pn);
@@ -195,6 +198,7 @@ void esc(const char *s);
 void extra_padding(int msecs);
 void holdit(void);
 void hpa(int pn);
+void hpr(int pn);
 void hts(void);
 void hvp(int pn1, int pn2);
 void ich(int pn);
@@ -233,6 +237,7 @@ void srm(int flag);
 void su(int pn);
 void tbc(int pn);
 void vpa(int pn);
+void vpr(int pn);
 void vt52cub1(void);
 void vt52cud1(void);
 void vt52cuf1(void);

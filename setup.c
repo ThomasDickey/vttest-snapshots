@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.31 2011/12/06 10:36:26 tom Exp $ */
+/* $Id: setup.c,v 1.32 2012/04/22 14:48:15 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -107,6 +107,13 @@ static int
 toggle_Padding(MENU_ARGS)
 {
   use_padding = !use_padding;
+  return MENU_NOHOLD;
+}
+
+static int
+toggle_Slowly(MENU_ARGS)
+{
+  slow_motion = !slow_motion;
   return MENU_NOHOLD;
 }
 
@@ -270,6 +277,7 @@ tst_setup(MENU_ARGS)
   static char txt_DECSCL[80] = "DECSCL";
   static char txt_logging[80] = "logging";
   static char txt_padded[80] = "padding";
+  static char txt_slowly[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
     { "Exit",                                                0 },
@@ -279,6 +287,7 @@ tst_setup(MENU_ARGS)
     { txt_DECSCL,                                            toggle_DECSCL },
     { txt_logging,                                           toggle_Logging },
     { txt_padded,                                            toggle_Padding },
+    { txt_slowly,                                            toggle_Slowly },
     { "",                                                    0 }
   };
   /* *INDENT-ON* */
@@ -293,6 +302,7 @@ tst_setup(MENU_ARGS)
             cur_level, cur_level ? cur_level * 100 : 52);
     sprintf(txt_logging, "Logging %s", STR_ENABLED(LOG_ENABLED));
     sprintf(txt_padded, "Padding %s", STR_ENABLED(use_padding));
+    sprintf(txt_slowly, "Slow-movement/scrolling %s", STR_ENABLED(slow_motion));
 
     vt_clear(2);
     __(title(0), println("Modify test-parameters"));

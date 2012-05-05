@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.34 2011/12/07 01:39:44 tom Exp $ */
+/* $Id: color.c,v 1.35 2012/04/26 23:11:39 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -27,7 +27,7 @@ static const char *colors[MAX_COLORS] =
   "white"                       /* 37, 47 */
 };
 
-static int do_colors = TRUE;
+int do_colors = FALSE;
 
 /*
  * Pick an unusual color combination for testing, just in case the user's
@@ -68,7 +68,7 @@ c_sgr(const char *s)
  * written by people who don't bother reading standards).
  */
 static void
-reset_colors(void)
+reset_all_colors(void)
 {
   sgr("0;40;37;39;49");
   sgr("0");
@@ -216,7 +216,7 @@ show_test_pattern(MENU_ARGS)
 {
   int i, j, k;
 
-  reset_colors();
+  reset_all_colors();
   ed(2);
   cup(1, 1);
   printf("There are %d color combinations", MAX_COLORS * MAX_COLORS);
@@ -252,11 +252,11 @@ show_test_pattern(MENU_ARGS)
         set_color_pair(j, i);
         cup(k + 4 + i, (j + 1) * 8 + 1);
         printf("Hello");
-        reset_colors();
+        reset_all_colors();
       }
     }
   }
-  reset_colors();
+  reset_all_colors();
   cup(max_lines - 1, 1);
   return MENU_HOLD;
 }
@@ -343,7 +343,7 @@ simple_bce_test(MENU_ARGS)
   cup(max_lines - 1, 1);
   holdit();
 
-  reset_colors();
+  reset_all_colors();
   return MENU_NOHOLD;
 }
 
@@ -452,7 +452,7 @@ fancy_bce_test(MENU_ARGS)
   cup(max_lines - 1, 1);
   holdit();
 
-  reset_colors();
+  reset_all_colors();
   return MENU_NOHOLD;
 }
 
@@ -473,7 +473,7 @@ test_color_insdel(MENU_ARGS)
    * for insert/delete, since it doesn't modify SGR.
    */
   tst_insdel(PASS_ARGS);
-  reset_colors();
+  reset_all_colors();
   return MENU_NOHOLD;
 }
 
@@ -486,7 +486,7 @@ test_ecma48_misc(MENU_ARGS)
   set_test_colors();
 
   tst_ecma48_misc(PASS_ARGS);
-  reset_colors();
+  reset_all_colors();
   return MENU_NOHOLD;
 }
 
@@ -497,7 +497,7 @@ test_color_screen(MENU_ARGS)
 
   do_scrolling();
   show_graphic_rendition();
-  reset_colors();
+  reset_all_colors();
   return MENU_NOHOLD;
 }
 
@@ -566,7 +566,7 @@ test_iso_6429_sgr(MENU_ARGS)
   printf("Dark background. ");
   holdit();
 
-  reset_colors();
+  reset_all_colors();
   return MENU_NOHOLD;
 }
 
@@ -584,35 +584,35 @@ test_SGR_0(MENU_ARGS)
   println("");
   println("");
 
-  reset_colors();
+  reset_all_colors();
   printf("You should see only black:");
   sgr("30;40");
   printf("SGR 30 and SGR 40 don't work");
-  reset_colors();
+  reset_all_colors();
   println(":up to here");
 
-  reset_colors();
+  reset_all_colors();
   printf("You should see only white:");
   sgr("37;47");
   printf("SGR 37 and SGR 47 don't work");
-  reset_colors();
+  reset_all_colors();
   println(":up to here");
 
-  reset_colors();
+  reset_all_colors();
   printf("You should see text here: ");
   sgr("30;40");
   sgr("0");
   printf("SGR 0 reset works (explicit 0)");
   println("");
 
-  reset_colors();
+  reset_all_colors();
   printf("................and here: ");
   sgr("37;47");
   sgr("");
   printf("SGR 0 reset works (default param)");
   println("");
 
-  reset_colors();
+  reset_all_colors();
   holdit();
   return MENU_NOHOLD;
 }
@@ -620,7 +620,7 @@ test_SGR_0(MENU_ARGS)
 /*
  * Allow user to test the same screens w/o colors.
  */
-static int
+int
 toggle_color_mode(MENU_ARGS)
 {
   do_colors = !do_colors;
@@ -635,7 +635,6 @@ toggle_color_mode(MENU_ARGS)
 int
 tst_colors(MENU_ARGS)
 {
-  static char txt_override_color[80];
   /* *INDENT-OFF* */
   static MENU colormenu[] = {
     { "Exit",                                                0 },
@@ -652,11 +651,16 @@ tst_colors(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
+  do_colors = TRUE;
+
   do {
     vt_clear(2);
     sprintf(txt_override_color, "%s color-switching", STR_ENABLE(do_colors));
     __(title(0), println("ISO 6429 colors"));
     __(title(2), println("Choose test type:"));
   } while (menu(colormenu));
+
+  do_colors = FALSE;
+
   return MENU_NOHOLD;
 }

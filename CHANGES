@@ -1,7 +1,36 @@
--- $Id: CHANGES,v 1.146 2012/04/20 23:26:28 tom Exp $
+-- $Id: CHANGES,v 1.156 2012/05/05 15:29:21 tom Exp $
 -------------------------------------------------------------------------------
 
-20120420
+20120505
+	+ modify vt420 rectangle menu to allow testing with applications which
+	  misreport their operating level, e.g., Reflection which states that
+	  it is a vt340.  The menu title shows "should not work" if the
+	  terminal says its operating level is below VT4xx.
+
+	+ add menu-entries for DECOM/DECLRMM to vt420 rectangle menu.
+
+	+ add menu-entries for DECOM/DECLRMM to vt420 cursor-movement menu.
+
+	+ add menu-entries for DECOM/DECLRMM to vt420 editing-controls menu.
+
+	+ add HPR and VPR test-screens.
+
+	+ add vt520 cursor-movement menu; most of the vt520's new features were
+	  based on ISO-6429 but allow for DECOM and DECLRMM interactions.
+
+	+ implement DECSCPP and DECSLPP test-screens.
+
+	+ add test-screen for DECNCSM.
+
+	+ add "-s" command-line option to initialize the time-delay feature.
+
+	+ add setup-menu feature to control whether a time delay is added in
+	  selected repeated cursor-movement and scrolling operations to make
+	  their behavior easier to see.
+
+	+ correct scanning of DECCKSR response; result is hexadecimal not
+	  decimal.
+
 	+ modify menu functions to provide for multipage menus, e.g., in the
 	  character set choices for vt420 and vt520 on a 24-line screen.
 
@@ -26,7 +55,6 @@
 	+ change mnemomic DECVSSM to DECLRMM to reflect the latter's usage in
 	  vt420 and vt510 manuals.
 
-20120325
 	+ modify DECRQSS test for DECSCUSR to show if the response is as
 	  expected.
 
