@@ -1,10 +1,11 @@
-/* $Id: vt320.c,v 1.26 2012/04/04 09:20:47 tom Exp $ */
+/* $Id: vt320.c,v 1.28 2012/04/25 10:51:29 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
  */
 #include <vttest.h>
 #include <ttymodes.h>
+#include <draw.h>
 #include <esc.h>
 
 static void
@@ -859,6 +860,91 @@ tst_vt320_reports(MENU_ARGS)
 
 /* vt340/vt420 & up */
 static int
+tst_DECSCPP(MENU_ARGS)
+{
+  static const int table[] =
+  {-1, 80, 80, 132};
+  size_t n;
+  char temp[80];
+  int last = max_lines - 4;
+
+  for (n = 0; n < TABLESIZE(table); ++n) {
+    int width = (table[n] < 0) ? min_cols : table[n];
+
+    vt_clear(2);
+    decaln();
+    decscpp(table[n]);
+    vt_move(last, 1);
+    ruler(last, width);
+    vt_clear(0);
+    sprintf(temp, "Screen should be filled (%d of %d columns)", min_cols, width);
+    println(temp);
+    holdit();
+
+  }
+  decscpp(-1);
+  vt_move(last, 1);
+  vt_clear(0);
+  println("Screen is reset to original width");
+
+  return MENU_HOLD;
+}
+
+static int
+tst_DECSLPP(MENU_ARGS)
+{
+  static const int table[] =
+  {24, 25, 36, 48, 72, 144};
+  size_t n;
+  char temp[80];
+  int last = max_lines - 4;
+
+  for (n = 0; n < TABLESIZE(table); ++n) {
+    int high = (table[n] < 0) ? min_cols : table[n];
+
+    vt_clear(2);
+    decaln();
+    decslpp(table[n]);
+    vt_move(last, 1);
+    ruler(last, min_cols);
+    vt_clear(0);
+    sprintf(temp, "Screen should be filled (%d of %d rows)", max_lines, high);
+    println(temp);
+    holdit();
+
+  }
+  decslpp(max_lines);
+  vt_move(last, 1);
+  vt_clear(0);
+  println("Screen is reset to original height");
+
+  return MENU_HOLD;
+}
+
+static int
+tst_PageFormat(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test set columns per page (DECSCPP)",               tst_DECSCPP },
+      { "Test set lines per page (DECSLPP)",                 tst_DECSLPP },
+      { "",                                                  0 }
+    };
+  /* *INDENT-ON* */
+
+  do {
+    vt_clear(2);
+    __(title(0), printf("Page Format Tests"));
+    __(title(2), println("Choose test type:"));
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+
+/* vt340/vt420 & up */
+static int
 tst_PageMovement(MENU_ARGS)
 {
   /* *INDENT-OFF* */
@@ -914,6 +1000,7 @@ tst_vt320(MENU_ARGS)
       { "Exit",                                              0 },
       { "Test VT220 features",                               tst_vt220 },
       { "Test cursor-movement",                              tst_vt320_cursor },
+      { "Test page-format controls",                         tst_PageFormat },
       { "Test page-movement controls",                       tst_PageMovement },
       { "Test reporting functions",                          tst_vt320_reports },
       { "Test screen-display functions",                     tst_vt320_screen },

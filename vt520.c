@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.7 2012/03/25 19:15:55 tom Exp $ */
+/* $Id: vt520.c,v 1.10 2012/04/26 10:57:03 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -35,6 +35,108 @@ static struct {
     2, "The cursor should be a rectangle again"
   }
 };
+
+/******************************************************************************/
+static int
+tst_vt520_cursor(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test VT420 features",                               tst_vt420_cursor },
+      { origin_mode_mesg,                                    toggle_DECOM },
+      { lrmm_mesg,                                           toggle_LRMM },
+      { tb_marg_mesg,                                        toggle_STBM },
+      { lr_marg_mesg,                                        toggle_SLRM },
+      { txt_override_color,                                  toggle_color_mode, },
+      { "Test Character-Position-Absolute (HPA)",            tst_HPA },
+      { "Test Cursor-Back-Tab (CBT)",                        tst_CBT },
+      { "Test Cursor-Character-Absolute (CHA)",              tst_CHA },
+      { "Test Cursor-Horizontal-Index (CHT)",                tst_CHT },
+      { "Test Horizontal-Position-Relative (HPR)",           tst_HPR },
+      { "Test Line-Position-Absolute (VPA)",                 tst_VPA },
+      { "Test Next-Line (CNL)",                              tst_CNL },
+      { "Test Previous-Line (CPL)",                          tst_CPL },
+      { "Test Vertical-Position-Relative (VPR)",             tst_VPR },
+      { "",                                                  0 }
+    };
+  /* *INDENT-ON* */
+
+  setup_vt420_cursor(PASS_ARGS);
+
+  do {
+    vt_clear(2);
+    __(title(0), printf("VT520 Cursor-Movement"));
+    __(title(2), println("Choose test type:"));
+    menus_vt420_cursor();
+  } while (menu(my_menu));
+
+  finish_vt420_cursor(PASS_ARGS);
+
+  return MENU_NOHOLD;
+}
+
+/******************************************************************************/
+/*
+ * VT500 & up
+ *
+ * Test if terminal can control whether the screen is cleared when changing
+ * DECCOLM.
+ */
+static int
+tst_DECNCSM(MENU_ARGS)
+{
+  int last = max_lines - 4;
+  char temp[80];
+
+  decaln();
+  deccolm(FALSE);
+  vt_move(last, 1);
+  ruler(last, min_cols);
+  vt_clear(0);
+  sprintf(temp, "Screen should be cleared (%d-columns)", min_cols);
+  println(temp);
+  holdit();
+
+  decaln();
+  deccolm(TRUE);
+  vt_move(last, 1);
+  ruler(last, max_cols);
+  vt_clear(0);
+  sprintf(temp, "Screen should be cleared (%d-columns)", max_cols);
+  println(temp);
+  holdit();
+
+  decncsm(TRUE);
+
+  decaln();
+  deccolm(FALSE);
+  vt_move(last, 1);
+  ruler(last, min_cols);
+  vt_clear(0);
+  sprintf(temp, "Screen should be filled (%d-columns)", min_cols);
+  println(temp);
+  holdit();
+
+  decaln();
+  deccolm(TRUE);
+  vt_move(last, 1);
+  ruler(last, max_cols);
+  vt_clear(0);
+  sprintf(temp, "Screen should be filled (%d of %d-columns)", min_cols, max_cols);
+  println(temp);
+  holdit();
+
+  decncsm(FALSE);
+  deccolm(FALSE);
+  vt_move(last, 1);
+  ruler(last, min_cols);
+  vt_clear(0);
+  sprintf(temp, "Screen should be cleared (%d-columns)", min_cols);
+  println(temp);
+
+  return MENU_HOLD;
+}
 
 /******************************************************************************/
 
@@ -360,6 +462,7 @@ tst_vt520_screen(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
+      { "Test No Clear on Column Change (DECNCSM)",          tst_DECNCSM },
       { "Test Set Cursor Style (DECSCUSR)",                  tst_DECSCUSR },
       { "",                                                  0 }
     };
@@ -385,7 +488,7 @@ tst_vt520(MENU_ARGS)
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test VT420 features",                               tst_vt420 },
-      { "Test cursor-movement",                              not_impl },
+      { "Test cursor-movement",                              tst_vt520_cursor },
       { "Test editing sequences",                            not_impl },
       { "Test keyboard-control",                             not_impl },
       { "Test reporting functions",                          tst_vt520_reports },

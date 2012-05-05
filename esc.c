@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.81 2012/04/04 09:11:04 tom Exp $ */
+/* $Id: esc.c,v 1.85 2012/05/01 09:45:43 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -278,14 +278,28 @@ do_osc(const char *fmt,...)
   }
 }
 
-static void
-send_char(int c)
+void
+print_chr(int c)
 {
   printf("%c", c);
 
   if (LOG_ENABLED) {
     fprintf(log_fp, "Send: ");
     put_char(log_fp, c);
+    fputs("\n", log_fp);
+  }
+}
+
+void
+print_str(const char *s)
+{
+  printf("%s", s);
+
+  if (LOG_ENABLED) {
+    fprintf(log_fp, "Send: ");
+    while (*s) {
+      put_char(log_fp, *s++);
+    }
     fputs("\n", log_fp);
   }
 }
@@ -433,6 +447,15 @@ decbkm(int flag)                /* VT400: Backarrow key */
     sm("?67");  /* backspace */
   else
     rm("?67");  /* delete */
+}
+
+void
+decncsm(int flag)               /* VT500: DECNCSM no clear on DECCOLM */
+{
+  if (flag)
+    sm("?95");  /* no clear */
+  else
+    rm("?95");  /* clear */
 }
 
 void
@@ -720,6 +743,27 @@ decsle(int mode)                /* DECterm Select Locator Events */
   do_csi("%d'{", mode);
 }
 
+void                            /* VT300 Set columns per page */
+decscpp(int cols)
+{
+  if (cols >= 0) {
+    do_csi("%d$|", cols);
+  } else {
+    do_csi("$|");
+  }
+}
+
+void                            /* VT300 Set lines per page */
+decslpp(int rows)
+{
+  /*
+   * DEC defines 24, 25, 36, 48, 72 and 144.
+   * XTerm uses codes up to 24 for window operations,
+   * and 24 and up for this feature.
+   */
+  do_csi("%dt", rows);
+}
+
 void
 decsnls(int pn)                 /* VT400 Select number of lines per screen */
 {
@@ -826,9 +870,15 @@ ech(int pn)                     /* Erase character(s) */
 }
 
 void
-hpa(int pn)                     /* Character Position Absolute */
+hpa(int pn)                     /* HPA - Horizontal Position Absolute */
 {
   brc(pn, '`');
+}
+
+void
+hpr(int pn)                     /* HPR - Horizontal Position Relative */
+{
+  brc(pn, 'a');
 }
 
 void
@@ -967,7 +1017,7 @@ scs(int g, int c)               /* Select character Set */
   sprintf(temp, "%c%c", g ? '(' : ')', 'B');
   esc(temp);
 
-  send_char(g ? SO : SI);
+  print_chr(g ? SO : SI);
   padding(4);
 }
 
@@ -1049,9 +1099,15 @@ il(int pn)                      /* Insert line */
 }
 
 void
-vpa(int pn)                     /* Line Position Absolute */
+vpa(int pn)                     /* Vertical Position Absolute */
 {
   brc(pn, 'd');
+}
+
+void
+vpr(int pn)                     /* Vertical Position Relative */
+{
+  brc(pn, 'e');
 }
 
 void

@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.9 2010/05/28 08:33:22 tom Exp $ */
+/* $Id: draw.c,v 1.10 2012/04/25 09:20:48 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -146,4 +146,20 @@ draw_box_caption(BOX *box, int margin, const char **c)
       y++;
     }
   }
+}
+
+void
+ruler(int row, int width)
+{
+  int col;
+  vt_move(row, 1);
+  for (col = 1; col <= width; ++col) {
+    int ch = (((col % 10) == 0)
+              ? ('0' + (col / 10) % 10)
+              : (((col % 5) == 0)
+                 ? '+'
+                 : '-'));
+    putchar(ch);
+  }
+  putchar('\n');
 }
