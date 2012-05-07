@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.95 2012/05/04 19:52:34 tom Exp $ */
+/* $Id: vttest.h,v 1.96 2012/05/06 19:32:34 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -179,7 +179,13 @@ extern jmp_buf intrenv;
 #define __attribute__(p)  /* nothing */
 #endif
 
-#define GCC_PRINTFLIKE(fmt,var) __attribute__((format(printf,fmt,var)))
+#ifndef GCC_PRINTFLIKE
+#define GCC_PRINTFLIKE(fmt,var)   /* nothing */
+#endif
+
+#ifndef GCC_UNUSED
+#define GCC_UNUSED  /* nothing */
+#endif
 
 /* my SunOS 4.1.x doesn't have prototyped headers */
 #if defined(__GNUC__) && defined(sun) && !defined(__SVR4)

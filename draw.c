@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.10 2012/04/25 09:20:48 tom Exp $ */
+/* $Id: draw.c,v 1.11 2012/05/06 14:13:23 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -27,9 +27,9 @@ int
 make_box_params(BOX *box, int vmargin, int hmargin)
 {
   box->top = vmargin;
-  box->bottom = max_lines - vmargin;
+  box->bottom = get_bottom_margin(max_lines) - vmargin;
   box->left = hmargin;
-  box->right = min_cols - hmargin;
+  box->right = get_right_margin() - hmargin;
   return check_box_params(box);
 }
 

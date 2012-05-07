@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.85 2012/05/01 09:45:43 tom Exp $ */
+/* $Id: esc.c,v 1.86 2012/05/06 19:09:13 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -786,6 +786,36 @@ decstbm(int pn1, int pn2)       /* Set Top and Bottom Margins */
     esc("[r");
     pending_decstbm = 0;
   }
+}
+
+void
+np(void)                        /* NP - next page */
+{
+  do_csi("U");
+}
+
+void
+pp(void)                        /* PP - previous page */
+{
+  do_csi("V");
+}
+
+void
+ppa(int n)                      /* PPA - Page Position Absolute */
+{
+  do_csi("%d P", n);
+}
+
+void
+ppb(int n)                      /* PPB - Page Position Backward */
+{
+  do_csi("%d R", n);
+}
+
+void
+ppr(int n)                      /* PPR - Page Position Relative */
+{
+  do_csi("%d Q", n);
 }
 
 /*

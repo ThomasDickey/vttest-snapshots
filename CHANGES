@@ -1,7 +1,9 @@
--- $Id: CHANGES,v 1.156 2012/05/05 15:29:21 tom Exp $
+-- $Id: CHANGES,v 1.157 2012/05/06 19:52:00 tom Exp $
 -------------------------------------------------------------------------------
 
-20120505
+20120506
+	+ build-fix in case compiler does not recognize gcc's __attribute__.
+
 	+ modify vt420 rectangle menu to allow testing with applications which
 	  misreport their operating level, e.g., Reflection which states that
 	  it is a vt340.  The menu title shows "should not work" if the
