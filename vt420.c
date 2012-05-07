@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.152 2012/05/05 14:55:11 tom Exp $ */
+/* $Id: vt420.c,v 1.160 2012/05/06 14:25:44 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -381,6 +381,40 @@ fill_margins(void)
   decawm(TRUE);
 }
 
+static void
+setup_rectangle(BOX *box, int last)
+{
+  box->top = 5;
+  box->left = 5;
+  box->right = min_cols - 5;
+  box->bottom = max_lines - 10;
+
+  if (origin_mode) {
+    int top = get_top_margin();
+    int lft = get_left_margin();
+    int rgt = get_right_margin();
+    int bot = get_bottom_margin(last - 1);
+    int wide = (rgt - lft + 1);
+    int high = (bot - top + 1);
+
+    if (high > 20) {
+      box->top = 5;
+      box->bottom = high - 10;
+    } else {
+      box->top = 2;
+      box->bottom = high - 2;
+    }
+
+    if (wide > 20) {
+      box->left = 5;
+      box->right = wide - 5;
+    } else {
+      box->left = 2;
+      box->right = wide - 2;
+    }
+  }
+}
+
 #define DATA(name,level) { name, #name, level }
 
 static int
@@ -656,10 +690,9 @@ static int
 tst_DECCARA(MENU_ARGS)
 {
   int last = max_lines - 4;
-  int top = 5;
-  int left = 5;
-  int right = 45;
-  int bottom = max_lines - 10;
+  BOX box;
+
+  setup_rectangle(&box, last);
 
   test_with_margins(1);
 
@@ -667,9 +700,10 @@ tst_DECCARA(MENU_ARGS)
 
   decsace(TRUE);
   fill_screen();
-  deccara(top, left, bottom, right, 7);   /* invert a rectangle) */
-  deccara(top + 1, left + 1, bottom - 1, right - 1, 0);   /* invert a rectangle) */
+  deccara(box.top, box.left, box.bottom, box.right, 7);   /* invert a rectangle) */
+  deccara(box.top + 1, box.left + 1, box.bottom - 1, box.right - 1, 0);   /* invert a rectangle) */
 
+  test_with_margins(0);
   sgr("0");
   vt_move(last, 1);
   vt_clear(0);
@@ -678,10 +712,11 @@ tst_DECCARA(MENU_ARGS)
   println("There should be an open rectangle formed by reverse-video E's");
   holdit();
 
+  test_with_margins(2);
   decsace(FALSE);
   fill_screen();
-  deccara(top, left, bottom, right, 7);   /* invert a rectangle) */
-  deccara(top + 1, left + 1, bottom - 1, right - 1, 0);   /* invert a rectangle) */
+  deccara(box.top, box.left, box.bottom, box.right, 7);   /* invert a rectangle) */
+  deccara(box.top + 1, box.left + 1, box.bottom - 1, box.right - 1, 0);   /* invert a rectangle) */
 
   sgr("0");
 
@@ -741,8 +776,11 @@ tst_DECCRA(MENU_ARGS)
 #define adj_DECCRA " (down %d, right %d)\r\n", box.bottom + 1 - box.top, box.right + 1 - box.left, adj_y, adj_x
 #define msg_DECCRA(msg) "The %dx%d box " msg adj_DECCRA
   BOX box;
+  int hmargin = origin_mode ? ((get_right_margin() * 3) / 8) : 30;
+  int vmargin = origin_mode ? ((get_bottom_margin(max_lines) * 2) / 5) : 10;
+  int last = max_lines - 3;
 
-  if (make_box_params(&box, 10, 30) == 0) {
+  if (make_box_params(&box, vmargin, hmargin) == 0) {
     box.top = 5;
     box.left = 5;
 
@@ -756,29 +794,31 @@ tst_DECCRA(MENU_ARGS)
     draw_box_outline(&box, do_lines ? -1 : '*');
     sgr("0");
 
-    vt_move(max_lines - 3, 1);
+    test_with_margins(0);
+
+    vt_move(last, 1);
     println(the_title);
     tprintf(msg_DECCRA("will be copied"));
     holdit();
+
+    test_with_margins(2);
 
     deccra(box.top, box.left, box.bottom, box.right, 1,
            box.top + adj_y, box.left + adj_x, 1);
 
     test_with_margins(0);
 
-    vt_move(max_lines - 2, 1);
+    vt_move(last, 1);
     vt_clear(0);
 
     tprintf(msg_DECCRA("should be copied, overlapping"));
     holdit();
 
-    ed(2);
+    test_with_margins(2);
 
-    make_box_params(&box, 10, 30);
+    make_box_params(&box, vmargin, hmargin);
     box.top = 5;
     box.left = 5;
-
-    test_with_margins(1);
 
     if (do_colors) {
       set_colors(YELLOW_ON_BLACK);
@@ -797,12 +837,12 @@ tst_DECCRA(MENU_ARGS)
 
     test_with_margins(0);
 
-    vt_move(max_lines - 3, 1);
+    vt_move(last, 1);
     println(the_title);
     tprintf(msg_DECCRA("will be copied"));
     holdit();
 
-    test_with_margins(1);
+    test_with_margins(2);
 
     sgr("0;4"); /* set underline, to check if that leaks through */
     deccra(box.top, box.left, box.bottom, box.right, 1,
@@ -811,7 +851,7 @@ tst_DECCRA(MENU_ARGS)
 
     test_with_margins(0);
 
-    vt_move(max_lines - 2, 1);
+    vt_move(last, 1);
     vt_clear(0);
 
     tprintf(msg_DECCRA("should be copied, overlapping"));
@@ -967,21 +1007,31 @@ tst_DECDC(MENU_ARGS)
 static int
 tst_DECERA(MENU_ARGS)
 {
+  int last = max_lines - 3;
+  BOX box;
+
+  setup_rectangle(&box, last);
+
   fill_screen();
 
   test_with_margins(1);
 
-  decera(5, 5, max_lines - 10, min_cols - 5);
+  set_colors(WHITE_ON_GREEN);
+
+  decera(box.top, box.left, box.bottom, box.right);
 
   sgr("0");
 
   test_with_margins(0);
 
-  vt_move(max_lines - 3, 1);
+  vt_move(last, 1);
   vt_clear(0);
 
   println(the_title);
-  println("There should be a rectangle cleared in the middle of the screen.");
+  if (origin_mode)
+    println("There should be a rectangle cleared in the middle of the margins.");
+  else
+    println("There should be a rectangle cleared in the middle of the screen.");
   return MENU_HOLD;
 }
 
@@ -1653,32 +1703,44 @@ tst_other_margins(MENU_ARGS)
 static int
 tst_DECFRA(MENU_ARGS)
 {
+  int last = max_lines - 3;
+  BOX box;
+
+  setup_rectangle(&box, last);
+
   test_with_margins(1);
 
   if (do_colors) {
     set_colors(WHITE_ON_BLUE);
-    vt_clear(2);
+    vt_clear(2);  /* xterm fills the whole screen's background */
     set_colors(WHITE_ON_GREEN);
   }
-  decfra('*', 5, 5, max_lines - 10, min_cols - 5);
+  decfra('*', box.top, box.left, box.bottom, box.right);
 
   set_colors("0");
 
   test_with_margins(0);
 
-  vt_move(max_lines - 3, 1);
+  vt_move(last, 1);
   vt_clear(0);
 
   println(the_title);
-  println("There should be a rectangle of *'s in the middle of the screen.");
+  if (origin_mode)
+    println("There should be a rectangle of *'s in the middle of the margins.");
+  else
+    println("There should be a rectangle of *'s in the middle of the screen.");
   holdit();
+
+  test_with_margins(2);
 
   set_colors(WHITE_ON_BLUE);
 
-  decfra(' ', 5, 5, max_lines - 10, min_cols - 5);
+  decfra(' ', box.top, box.left, box.bottom, box.right);
   sgr("0");
 
-  vt_move(max_lines - 3, 1);
+  test_with_margins(0);
+
+  vt_move(last, 1);
   vt_clear(0);
 
   println(the_title);
@@ -1912,18 +1974,17 @@ static int
 tst_DECRARA(MENU_ARGS)
 {
   int last = max_lines - 4;
-  int top = 5;
-  int left = 5;
-  int right = 45;
-  int bottom = max_lines - 10;
+  BOX box;
+
+  setup_rectangle(&box, last);
 
   decsace(TRUE);
   fill_screen();
 
   test_with_margins(1);
 
-  decrara(top, left, bottom, right, 7);   /* invert a rectangle) */
-  decrara(top + 1, left + 1, bottom - 1, right - 1, 7);   /* invert a rectangle) */
+  decrara(box.top, box.left, box.bottom, box.right, 7);   /* invert a rectangle) */
+  decrara(box.top + 1, box.left + 1, box.bottom - 1, box.right - 1, 7);   /* invert a rectangle) */
 
   sgr("0");
 
@@ -1941,8 +2002,8 @@ tst_DECRARA(MENU_ARGS)
 
   test_with_margins(1);
 
-  decrara(top, left, bottom, right, 7);   /* invert a rectangle) */
-  decrara(top + 1, left + 1, bottom - 1, right - 1, 7);   /* invert a rectangle) */
+  decrara(box.top, box.left, box.bottom, box.right, 7);   /* invert a rectangle) */
+  decrara(box.top + 1, box.left + 1, box.bottom - 1, box.right - 1, 7);   /* invert a rectangle) */
 
   sgr("0");
 
@@ -1988,11 +2049,10 @@ tst_vt420_DECRQSS(MENU_ARGS)
 static int
 tst_DECSERA(MENU_ARGS)
 {
-  int top = 5;
-  int left = 5;
-  int right = min_cols - 5;
-  int bottom = max_lines - 10;
   int last = max_lines - 3;
+  BOX box;
+
+  setup_rectangle(&box, last);
 
   /*
    * Part 1: clear the borders of a rectangle, leaving protect inner rectangle.
@@ -2010,9 +2070,9 @@ tst_DECSERA(MENU_ARGS)
    * fill the screen), we can see whether the colors are modified by the erase,
    * and if so, whether they come from the SGR color.
    */
-  decfra('*', top, left, bottom, right);
+  decfra('*', box.top, box.left, box.bottom, box.right);
   decsca(1);
-  decfra('*', top + 1, left + 1, bottom - 1, right - 1);
+  decfra('*', box.top + 1, box.left + 1, box.bottom - 1, box.right - 1);
   decsca(0);
 
   sgr("0");
@@ -2024,17 +2084,17 @@ tst_DECSERA(MENU_ARGS)
 
   println(the_title);
   tprintf("Rectangle %d,%d - %d,%d was filled using DECFRA\n",
-          top,
-          left,
-          bottom,
-          right);
+          box.top,
+          box.left,
+          box.bottom,
+          box.right);
   holdit();
 
   test_with_margins(2);   /* reenable but do not paint margins */
 
   set_colors(WHITE_ON_BLUE);
 
-  decsera(top, left, bottom, right);  /* erase the border */
+  decsera(box.top, box.left, box.bottom, box.right);  /* erase the border */
 
   sgr("0");
 
@@ -2045,10 +2105,10 @@ tst_DECSERA(MENU_ARGS)
 
   println(the_title);
   tprintf("Border %d,%d - %d,%d is cleared using DECSERA\n",
-          top,
-          left,
-          bottom,
-          right);
+          box.top,
+          box.left,
+          box.bottom,
+          box.right);
   holdit();
 
   /*
@@ -2069,9 +2129,9 @@ tst_DECSERA(MENU_ARGS)
    * and if so, whether they come from the SGR color.
    */
   decsca(1);
-  decfra('*', top, left, bottom, right);
+  decfra('*', box.top, box.left, box.bottom, box.right);
   decsca(0);
-  decfra('*', top + 1, left + 1, bottom - 1, right - 1);
+  decfra('*', box.top + 1, box.left + 1, box.bottom - 1, box.right - 1);
 
   sgr("0");
 
@@ -2082,17 +2142,17 @@ tst_DECSERA(MENU_ARGS)
 
   println(the_title);
   tprintf("Rectangle %d,%d - %d,%d was filled using DECFRA\n",
-          top,
-          left,
-          bottom,
-          right);
+          box.top,
+          box.left,
+          box.bottom,
+          box.right);
   holdit();
 
   test_with_margins(2);   /* reenable but do not paint margins */
 
   set_colors(WHITE_ON_BLUE);
 
-  decsera(top, left, bottom, right);  /* erase inside border */
+  decsera(box.top, box.left, box.bottom, box.right);  /* erase inside border */
 
   sgr("0");
 
@@ -2103,10 +2163,10 @@ tst_DECSERA(MENU_ARGS)
 
   println(the_title);
   tprintf("Inside %d,%d - %d,%d is cleared using DECSERA\n",
-          top + 1,
-          left + 1,
-          bottom - 1,
-          right - 1);
+          box.top + 1,
+          box.left + 1,
+          box.bottom - 1,
+          box.right - 1);
 
   return MENU_HOLD;
 }

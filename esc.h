@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.64 2012/04/26 00:32:04 tom Exp $ */
+/* $Id: esc.h,v 1.65 2012/05/06 19:08:45 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -215,13 +215,18 @@ void mc_printer_assign(int flag);
 void mc_printer_controller(int flag);
 void mc_printer_start(int flag);
 void nel(void);
+void np(void);
 void padding(int msecs);
+void pp(void);
+void ppa(int pn);
+void ppb(int pn);
+void ppr(int pn);
 void put_char(FILE *fp, int c);
 void put_string(FILE *fp, const char *s);
 void readnl(void);
 void rep(int pn);
-void reset_decstbm(void);
 void reset_decslrm(void);
+void reset_decstbm(void);
 void reset_inchar(void);
 void ri(void);
 void ris(void);

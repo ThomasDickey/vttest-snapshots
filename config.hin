@@ -1,4 +1,4 @@
-/* $Id: config.hin,v 1.11 2004/08/02 23:39:47 tom Exp $ */
+/* $Id: config.hin,v 1.12 2012/05/06 19:30:05 tom Exp $ */
 
 /* define this if you have the alarm() function */
 #undef HAVE_ALARM
@@ -50,6 +50,9 @@
 
 /* define this if we can use ioctl(,FIONREAD,) */
 #undef USE_FIONREAD
+
+/* define this for GCC's __attribute__((printf)) */
+#undef GCC_PRINTFLIKE
 
 /* define this for GCC's __attribute__((unused)) */
 #undef GCC_UNUSED
