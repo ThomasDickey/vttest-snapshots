@@ -1,5 +1,11 @@
--- $Id: CHANGES,v 1.157 2012/05/06 19:52:00 tom Exp $
+-- $Id: CHANGES,v 1.158 2012/06/03 16:52:19 tom Exp $
 -------------------------------------------------------------------------------
+
+20120603
+	+ change cursor-position before IL/DL in 
+	  "Test of VT102-style features with BCE (Insert/Delete Char/Line)"
+	  to demonstrate whether the terminal sets the cursor to the first
+	  column as a side-effect, as noted in VT220 reference manual.
 
 20120506
 	+ build-fix in case compiler does not recognize gcc's __attribute__.

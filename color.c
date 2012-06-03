@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.35 2012/04/26 23:11:39 tom Exp $ */
+/* $Id: color.c,v 1.36 2012/06/03 16:16:03 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -179,7 +179,7 @@ show_line_deletions(void)
     printf("   row %3d: this is some text", row);
   }
   for (row = 7; row <= max_lines; row += 2 /* 3 - deletion */ ) {
-    cup(row, 1);
+    cup(row, 8);
     dl(1);
     putchar('*');   /* cursor should be in column 1 */
   }
@@ -202,7 +202,7 @@ show_line_insertions(void)
     printf("   row %3d: this is some text", row);
   }
   for (row = 7; row <= max_lines; row += 3 /* 2 + insertion */ ) {
-    cup(row, 1);
+    cup(row, 8);
     il(1);
     putchar('*');   /* cursor should be in column 1 */
   }
