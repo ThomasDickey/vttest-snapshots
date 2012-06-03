@@ -1,3 +1,9 @@
+vttest-cur (2.7.20120603) unstable; urgency=low
+
+  * minor change to show if cursor goes to first column on IL/DL
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sun, 03 Jun 2012 12:55:59 -0400
+
 vttest-cur (2.7.20120506) unstable; urgency=low
 
   * Add tests for DECLRMM left/right margin mode.
