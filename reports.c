@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.33 2012/04/04 09:24:44 tom Exp $ */
+/* $Id: reports.c,v 1.34 2013/08/09 22:09:15 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -452,6 +452,7 @@ static int
 tst_DSR(MENU_ARGS)
 {
   int found;
+  int origin;
   char *report, *cmp;
 
   set_tty_raw(TRUE);
@@ -481,24 +482,45 @@ tst_DSR(MENU_ARGS)
   vt_move(4, 1);
   println("Test of Device Status Report 6 (report cursor position).");
 
-  vt_move(5, 1);
-  dsr(6);
-  report = get_reply();
+  for (origin = 0; origin < 2; ++origin) {
+    if (origin) {
+      sm("?6");
+      decstbm(4, max_lines - 6);
+    }
+    vt_move(5, 1);
+    dsr(6);
+    report = get_reply();
 
-  vt_move(5, 1);
-  vt_el(0);
-  printf("Report is: ");
-  chrprint(report);
+    vt_move(5, 1);
+    vt_el(0);
+    printf("Report is: ");
+    chrprint(report);
 
-  if ((cmp = skip_csi(report)) != 0)
-    found = !strcmp(cmp, "5;1R");
-  else
-    found = 0;
+    if ((cmp = skip_csi(report)) != 0) {
+      found = (!strcmp(cmp, "5;1R")
+               ? 1
+               : ((!strcmp(cmp, "8;1R") && origin)
+                  ? 2
+                  : 0));
+    } else {
+      found = 0;
+    }
 
-  if (found)
-    show_result(" -- OK");
-  else
-    show_result(" -- Unknown response!");
+    switch (found) {
+    case 2:
+      show_result(" -- Ignores origin mode");
+      break;
+    case 1:
+      show_result(" -- OK");
+      break;
+    default:
+      show_result(" -- Unknown response!");
+      break;
+    }
+  }
+
+  rm("?6");
+  decstbm(0, 0);
 
   vt_move(max_lines - 1, 1);
   restore_ttymodes();

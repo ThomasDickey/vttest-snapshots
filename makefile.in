@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.43 2010/08/28 12:16:45 tom Exp $
+# $Id: makefile.in,v 1.44 2013/08/09 23:06:14 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -30,9 +30,13 @@ ETAGS 		= @ETAGS@
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 
-bindir		= $(DESTDIR)@bindir@
-mandir		= $(DESTDIR)@mandir@/man$(manext)
+bindir		= @bindir@
+datarootdir	= @datarootdir@
+mandir		= @mandir@
 manext		= 1
+
+BINDIR		= $(DESTDIR)$(bindir)
+MANDIR		= $(DESTDIR)$(mandir)/man$(manext)
 
 #### End of system configuration section. ####
 
@@ -148,17 +152,17 @@ $(PROG): $(OBJS)
 $(OBJS): config.h $(THIS).h patchlev.h
 
 install: all installdirs
-	$(INSTALL_PROGRAM) $(PROG) $(bindir)/$(actual_bin)
-	$(INSTALL_DATA) $(srcdir)/$(THIS).1 $(mandir)/$(actual_man)
+	$(INSTALL_PROGRAM) $(PROG) $(BINDIR)/$(actual_bin)
+	$(INSTALL_DATA) $(srcdir)/$(THIS).1 $(MANDIR)/$(actual_man)
 
-installdirs: $(bindir) $(mandir)
+installdirs: $(BINDIR) $(MANDIR)
 
-$(bindir) $(mandir) :
+$(BINDIR) $(MANDIR) :
 	mkdir -p $@
 
 uninstall:
-	rm -f $(bindir)/$(actual_bin)
-	rm -f $(mandir)/$(actual_man)
+	rm -f $(BINDIR)/$(actual_bin)
+	rm -f $(MANDIR)/$(actual_man)
 
 mostlyclean:
 	rm -f *.[oi] core *~ *.BAK *.trace *.atac
