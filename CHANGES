@@ -1,5 +1,24 @@
--- $Id: CHANGES,v 1.158 2012/06/03 16:52:19 tom Exp $
+-- $Id: CHANGES,v 1.162 2013/08/09 23:04:21 tom Exp $
 -------------------------------------------------------------------------------
+
+20130809
+	+ modify DSR cursor-position report to check if the terminal 
+	  accounts for origin-mode.
+
+	+ support --datarootdir option in makefile.in, to match configure
+	  script updates.
+
+	+ updated configure macros:
+
+	  + change from byacc for autoheader
+
+	  + improved checks for gcc attributes
+
+	  + improved checks for gcc version
+
+	  + miscellaneous fixes in CF_XOPEN_SOURCE
+
+	+ update config.guess, config.sub
 
 20120603
 	+ change cursor-position before IL/DL in 
