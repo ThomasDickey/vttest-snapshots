@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.96 2012/05/06 19:32:34 tom Exp $ */
+/* $Id: vttest.h,v 1.97 2013/08/18 19:29:30 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -120,7 +120,6 @@ please fix me
 #  endif
 #endif
 
-/*FIXME: really want 'extern' for errno*/
 #include <errno.h>
 
 #define LOG_ENABLED ((log_fp != (FILE *) 0) && !log_disabled)
