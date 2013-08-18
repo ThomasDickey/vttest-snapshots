@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.37 2012/04/20 23:22:11 tom Exp $ */
+/* $Id: charsets.c,v 1.50 2013/08/18 19:38:29 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -28,6 +28,8 @@ typedef enum {
   Hebrew = 17,
   British_Latin_1,
   Cyrillic,
+  DEC_Alt_Chars,
+  DEC_Alt_Graphics,
   DEC_Spec_Graphic,
   DEC_Supp,
   DEC_Supp_Graphic,
@@ -42,70 +44,143 @@ typedef enum {
   SCS_NRCS,
   Unknown
 } National;
+
+typedef struct {
+  National code;                /* internal name (chosen to sort 'name' member) */
+  int allow96;                  /* flag for 96-character sets (e.g., GR mapping) */
+  int order;                    /* check-column so we can mechanically-sort this table */
+  int first;                    /* first model: 0=base, 2=vt220, 3=vt320, etc. */
+  int last;                     /* lastmodel: 0=base, 2=vt220, 3=vt320, etc. */
+  const char *final;            /* end of SCS string */
+  const char *name;             /* the string we'll show the user */
+  const char *not11;            /* cells which are not 1-1 with ISO-8859-1 */
+} CHARSETS;
 /* *INDENT-OFF* */
-static const struct {
-  National code;  /* internal name (chosen to sort 'name' member) */
-  int allow96;    /* flag for 96-character sets (e.g., GR mapping) */
-  int order;      /* check-column so we can mechanically-sort this table */
-  int model;      /* 0=base, 2=vt220, 3=vt320, etc. */
-  const char *final;    /* end of SCS string */
-  const char *name;     /* the string we'll show the user */
-} KnownCharsets[] = {
-  { ASCII,             0, 0, 0, "B",    "US ASCII" },
-  { British,           0, 0, 0, "A",    "British" },
-  { British_Latin_1,   1, 0, 3, "A",    "ISO Latin-1" },
-  { Cyrillic,          0, 0, 5, "&4",   "Cyrillic (DEC)" },
-  { DEC_Spec_Graphic,  0, 0, 0, "0",    "DEC Special Graphics" },
-  { DEC_Supp,          0, 0, 2, "<",    "DEC Supplemental" },
-  { DEC_Supp_Graphic,  0, 0, 3, "%5",   "DEC Supplemental Graphic" },
-  { DEC_Tech,          0, 0, 3, ">",    "DEC Technical" },
-  { Dutch,             0, 0, 2, "4",    "Dutch" },
-  { Finnish,           0, 0, 2, "5",    "Finnish" },
-  { Finnish,           0, 1, 2, "C",    "Finnish" },
-  { French,            0, 0, 2, "R",    "French" },
-  { French,            0, 1, 2, "f",    "French" }, /* Kermit (vt340 model?) */
-  { French_Canadian,   0, 0, 2, "Q",    "French Canadian" },
-  { French_Canadian,   0, 1, 3, "9",    "French Canadian" },
-  { German,            0, 0, 2, "K",    "German" },
-  { Greek,             0, 0, 5, "\"?",  "Greek (DEC)" },
-  { Greek_Supp,        1, 0, 5, "F",    "ISO Greek Supplemental" },
-  { Hebrew,            0, 0, 5, "\"4",  "Hebrew (DEC)" },
-  { Hebrew,            0, 1, 5, "%=",   "Hebrew NRCS" },
-  { Hebrew_Supp,       1, 0, 5, "H",    "ISO Hebrew Supplemental" },
-  { Italian,           0, 0, 2, "Y",    "Italian" },
-  { Latin_5_Supp,      1, 0, 5, "M",    "ISO Latin-5 Supplemental" },
-  { Latin_Cyrillic,    1, 0, 5, "L",    "ISO Latin-Cyrillic" },
-  { Norwegian_Danish,  0, 0, 3, "`",    "Norwegian/Danish" },
-  { Norwegian_Danish,  0, 1, 2, "E",    "Norwegian/Danish" },
-  { Norwegian_Danish,  0, 2, 2, "6",    "Norwegian/Danish" },
-  { Portugese,         0, 0, 3, "%6",   "Portugese" },
-  { Russian,           0, 0, 5, "&5",   "Russian" },
-  { SCS_NRCS,          0, 0, 5, "%3",   "SCS NRCS" },
-  { Spanish,           0, 0, 2, "Z",    "Spanish" },
-  { Swedish,           0, 0, 2, "7",    "Swedish" },
-  { Swedish,           0, 1, 2, "H",    "Swedish" },
-  { Swiss,             0, 0, 2, "=",    "Swiss" },
-  { Turkish,           0, 0, 5, "%0",   "Turkish (DEC)" },
-  { Turkish,           0, 1, 5, "%2",   "Turkish NRCS" },
-  { Unknown,           0, 0, 0, "?",    "Unknown" }
+
+/* compare mappings using only 7-bits */
+#define Not11(a,b) (((a) & 0x7f) == ((b) & 0x7f))
+
+/*
+ * The VT220 and VT340 reference manuals show tables and details for the
+ * character sets.  The VT520 reference manual does not show these details, so
+ * mappings for the VT5xx character sets are not highlighted by this program.
+ */
+static const char map_pound[] = "#";
+static const char map_all94[] = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+static const char map_Spec_Graphic[] = "`abcdefghijklmnopqrstuvwxyz{|}~";
+static const char map_Supp_Graphic[] = "$&,-./48>PW^p}~\177";
+static const char map_Dutch[] = "#@[\\]{|}~";
+static const char map_Finnish[] = "`[\\]^{|}~";
+static const char map_French[] = "#@`[\\]{|}~";
+static const char map_French_Canadian[] = "@`[\\]^{|}~";
+static const char map_German[] = "@[\\]{|}~";
+static const char map_Italian[] = "#@`[\\]{|}~";
+static const char map_Norwegian[] = "@`[\\]^{|}~";
+static const char map_Spanish[] = "@[\\]{|}";
+static const char map_Swedish[] = "@`[\\]^{|}~";
+static const char map_Swiss[] = "#@`[\\]^_{|}~";
+
+static const CHARSETS KnownCharsets[] = {
+  { ASCII,             0, 0, 0, 9, "B",    "US ASCII", 0 },
+  { British,           0, 0, 0, 9, "A",    "British", map_pound },
+  { British_Latin_1,   1, 0, 3, 9, "A",    "ISO Latin-1", map_pound },
+  { Cyrillic,          0, 0, 5, 9, "&4",   "Cyrillic (DEC)", 0 },
+  { DEC_Spec_Graphic,  0, 0, 0, 9, "0",    "DEC Special graphics and line drawing", map_Spec_Graphic },
+  { DEC_Alt_Chars,     0, 0, 0, 0, "1",    "DEC Alternate character ROM standard characters", 0 },
+  { DEC_Alt_Graphics,  0, 0, 0, 0, "2",    "DEC Alternate character ROM special graphics", 0 },
+  { DEC_Supp,          0, 0, 2, 9, "<",    "DEC Supplemental", 0 },
+  { DEC_Supp_Graphic,  0, 0, 3, 9, "%5",   "DEC Supplemental Graphic", map_Supp_Graphic },
+  { DEC_Tech,          0, 0, 3, 9, ">",    "DEC Technical", map_all94 },
+  { Dutch,             0, 0, 2, 9, "4",    "Dutch", map_Dutch },
+  { Finnish,           0, 0, 2, 9, "5",    "Finnish", map_Finnish },
+  { Finnish,           0, 1, 2, 9, "C",    "Finnish", map_French },
+  { French,            0, 0, 2, 9, "R",    "French", map_French },
+  { French,            0, 1, 2, 9, "f",    "French", map_French }, /* Kermit (vt340 model?) */
+  { French_Canadian,   0, 0, 2, 9, "Q",    "French Canadian", map_French_Canadian },
+  { French_Canadian,   0, 1, 3, 9, "9",    "French Canadian", map_French_Canadian },
+  { German,            0, 0, 2, 9, "K",    "German", map_German },
+  { Greek,             0, 0, 5, 9, "\"?",  "Greek (DEC)", 0 },
+  { Greek_Supp,        1, 0, 5, 9, "F",    "ISO Greek Supplemental", 0 },
+  { Hebrew,            0, 0, 5, 9, "\"4",  "Hebrew (DEC)", 0 },
+  { Hebrew,            0, 1, 5, 9, "%=",   "Hebrew NRCS", 0 },
+  { Hebrew_Supp,       1, 0, 5, 9, "H",    "ISO Hebrew Supplemental", 0 },
+  { Italian,           0, 0, 2, 9, "Y",    "Italian", map_Italian },
+  { Latin_5_Supp,      1, 0, 5, 9, "M",    "ISO Latin-5 Supplemental", 0 },
+  { Latin_Cyrillic,    1, 0, 5, 9, "L",    "ISO Latin-Cyrillic", 0 },
+  { Norwegian_Danish,  0, 0, 3, 9, "`",    "Norwegian/Danish", map_Norwegian },
+  { Norwegian_Danish,  0, 1, 2, 9, "E",    "Norwegian/Danish", map_Norwegian },
+  { Norwegian_Danish,  0, 2, 2, 9, "6",    "Norwegian/Danish", map_Norwegian },
+  { Portugese,         0, 0, 3, 9, "%6",   "Portugese", 0 },
+  { Russian,           0, 0, 5, 9, "&5",   "Russian", 0 },
+  { SCS_NRCS,          0, 0, 5, 9, "%3",   "SCS NRCS", 0 },
+  { Spanish,           0, 0, 2, 9, "Z",    "Spanish", map_Spanish },
+  { Swedish,           0, 0, 2, 9, "7",    "Swedish", map_Swedish },
+  { Swedish,           0, 1, 2, 9, "H",    "Swedish", map_Swedish },
+  { Swiss,             0, 0, 2, 9, "=",    "Swiss", map_Swiss },
+  { Turkish,           0, 0, 5, 9, "%0",   "Turkish (DEC)", 0 },
+  { Turkish,           0, 1, 5, 9, "%2",   "Turkish NRCS", 0 },
+  { Unknown,           0, 0,-1,-1, "?",    "Unknown", 0 }
 };
 /* *INDENT-ON* */
 
+static int hilite_not11;
 static int national;
 static int cleanup;
 
+static char sgr_hilite[10];
+static char sgr_reset[10];
+
 static int current_Gx[4];
 
+static int
+append_sgr(char *buffer, int used, const char *sgr_string)
+{
+  strcpy(buffer + used, sgr_string);
+  used += (int) strlen(sgr_string);
+  return used;
+}
+
 static void
-send32(int row, int upper)
+send32(int row, int upper, const char *not11)
 {
   int col;
-  char buffer[33];
+  int used = 0;
+  int hilited = 0;
+  char buffer[33 * 8];
 
-  for (col = 0; col <= 31; col++) {
-    buffer[col] = (char) (row * 32 + upper + col);
+  if (LOG_ENABLED) {
+    fprintf(log_fp, "Note: send32 row %d, upper %d, not11:%s\n",
+            row, upper, not11 ? not11 : "");
   }
-  buffer[32] = 0;
+  for (col = 0; col <= 31; col++) {
+    char ch = (char) (row * 32 + upper + col);
+    if (not11 != 0 && hilite_not11) {
+      const char *p;
+      int found = 0;
+      for (p = not11; *p; ++p) {
+        if (Not11(*p, ch)) {
+          found = 1;
+          break;
+        }
+      }
+      if (found) {
+        if (!hilited) {
+          used = append_sgr(buffer, used, sgr_hilite);
+          hilited = 1;
+        }
+      } else {
+        if (hilited) {
+          used = append_sgr(buffer, used, sgr_reset);
+          hilited = 0;
+        }
+      }
+    }
+    buffer[used++] = ch;
+  }
+  if (hilited) {
+    used = append_sgr(buffer, used, sgr_reset);
+  }
+  buffer[used] = 0;
   tprintf("%s", buffer);
 }
 
@@ -213,7 +288,9 @@ specify_any_Gx(MENU_ARGS, int g)
     the_list[n] = 0;
     if (!strcmp(KnownCharsets[n].final, "?"))
       continue;
-    if (get_level() < KnownCharsets[n].model)
+    if (get_level() < KnownCharsets[n].first)
+      continue;
+    if (get_level() > KnownCharsets[n].last)
       continue;
     if ((g == 0) && KnownCharsets[n].allow96)
       continue;
@@ -234,6 +311,17 @@ specify_any_Gx(MENU_ARGS, int g)
   } while (menu(my_menu) && the_code < 0);
 
   current_Gx[g] = the_code;
+}
+
+static int
+toggle_hilite(MENU_ARGS)
+{
+  hilite_not11 = !hilite_not11;
+  if (hilite_not11) {
+    sprintf(sgr_hilite, "%s7m", csi_output());
+    sprintf(sgr_reset, "%sm", csi_output());
+  }
+  return MENU_NOHOLD;
 }
 
 static int
@@ -285,39 +373,33 @@ tst_vt100_charsets(MENU_ARGS)
   /* Test of:
    * SCS    (Select character Set)
    */
-  /* *INDENT-OFF* */
-  static const struct { char code; const char *msg; } table[] = {
-    { 'A', "UK / national" },
-    { 'B', "US ASCII" },
-    { '0', "Special graphics and line drawing" },
-    { '1', "Alternate character ROM standard characters" },
-    { '2', "Alternate character ROM special graphics" },
-  };
-  /* *INDENT-ON* */
-
-  int i, g, cset;
+  int i, g, count, cset;
 
   __(cup(1, 10), printf("Selected as G0 (with SI)"));
   __(cup(1, 48), printf("Selected as G1 (with SO)"));
-  for (cset = 0; cset < TABLESIZE(table); cset++) {
-    int row = 3 + (4 * cset);
+  for (count = cset = 0; count < TABLESIZE(KnownCharsets); count++) {
+    const CHARSETS *tbl = KnownCharsets + count;
+    if (tbl->first == 0) {
+      int row = 3 + (4 * cset);
 
-    scs(1, 'B');
-    cup(row, 1);
-    sgr("1");
-    tprintf("Character set %c (%s)", table[cset].code, table[cset].msg);
-    sgr("0");
-    for (g = 0; g <= 1; g++) {
-      int set_nrc = (get_level() >= 2 && table[cset].code == 'A');
-      if (set_nrc)
-        decnrcm(TRUE);
-      scs(g, (int) table[cset].code);
-      for (i = 1; i <= 3; i++) {
-        cup(row + i, 10 + 38 * g);
-        send32(i, 0);
+      scs(1, 'B');
+      cup(row, 1);
+      sgr("1");
+      tprintf("Character set %s (%s)", tbl->final, tbl->name);
+      sgr("0");
+      for (g = 0; g <= 1; g++) {
+        int set_nrc = (get_level() >= 2 && tbl->final[0] == 'A');
+        if (set_nrc)
+          decnrcm(TRUE);
+        scs(g, (int) tbl->final[0]);
+        for (i = 1; i <= 3; i++) {
+          cup(row + i, 10 + 38 * g);
+          send32(i, 0, tbl->not11);
+        }
+        if (set_nrc != national)
+          decnrcm(national);
       }
-      if (set_nrc != national)
-        decnrcm(national);
+      ++cset;
     }
   }
   scs_normal();
@@ -341,14 +423,13 @@ tst_shift_in_out(MENU_ARGS)
 
   __(cup(1, 10), printf("These are the G0 and G1 character sets."));
   for (cset = 0; cset < 2; cset++) {
+    const CHARSETS *tbl = &KnownCharsets[current_Gx[cset]];
     int row = 3 + (4 * cset);
 
     scs(cset, 'B');
     cup(row, 1);
     sgr("1");
-    tprintf("Character set %s (%s)",
-            KnownCharsets[current_Gx[cset]].final,
-            KnownCharsets[current_Gx[cset]].name);
+    tprintf("Character set %s (%s)", tbl->final, tbl->name);
     sgr("0");
 
     cup(row, 48);
@@ -357,7 +438,7 @@ tst_shift_in_out(MENU_ARGS)
     esc(scs_params(buffer, cset));
     for (i = 1; i <= 3; i++) {
       cup(row + i, 10);
-      send32(i, 0);
+      send32(i, 0, tbl->not11);
     }
     scs(cset, 'B');
   }
@@ -392,14 +473,13 @@ tst_vt220_locking(MENU_ARGS)
   for (cset = 0; cset < TABLESIZE(table); cset++) {
     int row = 3 + (4 * cset);
     int map = table[cset].mapped;
+    const CHARSETS *tbl = &KnownCharsets[current_Gx[map]];
+    int map_gl = (strstr(table[cset].msg, "into GL") != 0);
 
     scs_normal();
     cup(row, 1);
     sgr("1");
-    tprintf("Character set %s (%s) in G%d",
-            KnownCharsets[current_Gx[map]].final,
-            KnownCharsets[current_Gx[map]].name,
-            map);
+    tprintf("Character set %s (%s) in G%d", tbl->final, tbl->name, map);
     sgr("0");
 
     cup(row, 48);
@@ -414,7 +494,7 @@ tst_vt220_locking(MENU_ARGS)
         esc(table[cset].code);
       }
       cup(row + i, 5);
-      send32(i, 0);
+      send32(i, 0, map_gl ? tbl->not11 : 0);
 
       if (table[cset].upper) {
         do_scs(map);
@@ -424,7 +504,7 @@ tst_vt220_locking(MENU_ARGS)
         map_g1_to_gr();
       }
       cup(row + i, 40);
-      send32(i, 128);
+      send32(i, 128, map_gl ? 0 : tbl->not11);
     }
     reset_scs(cset);
   }
@@ -440,23 +520,39 @@ tst_vt220_single(MENU_ARGS)
 
   for (pass = 0; pass < 2; pass++) {
     int g = pass + 2;
+    const CHARSETS *tbl = &KnownCharsets[current_Gx[g]];
 
     vt_clear(2);
     cup(1, 1);
     tprintf("Testing single-shift G%d into GL (SS%d) with NRC %s\n",
             g, g, STR_ENABLED(national));
-    tprintf("G%d is %s", g, KnownCharsets[current_Gx[g]].name);
+    tprintf("G%d is %s", g, tbl->name);
 
     do_scs(g);
     for (y = 0; y < 16; y++) {
       for (x = 0; x < 6; x++) {
         int ch = y + (x * 16) + 32;
+        int hilited = 0;
+
         cup(y + 5, (x * 12) + 5);
         tprintf("%3d: (", ch);
         esc(pass ? "O" : "N");  /* SS3 or SS2 */
+        if (tbl->not11 && hilite_not11) {
+          const char *p;
+          for (p = tbl->not11; *p; ++p) {
+            if (Not11(*p, ch)) {
+              tprintf("%s", sgr_hilite);
+              hilited = 1;
+              break;
+            }
+          }
+        }
         tprintf("%c", ch);
-        if (ch == 127 && !KnownCharsets[current_Gx[g]].allow96)
+        if (ch == 127 && !tbl->allow96)
           tprintf(" ");   /* DEL should have been eaten - skip past */
+        if (hilited) {
+          tprintf("%s", sgr_reset);
+        }
         tprintf(")");
       }
     }
@@ -532,11 +628,13 @@ int
 tst_characters(MENU_ARGS)
 {
   static char whatis_Gx[4][80];
+  static char hilite_mesg[80];
   static char nrc_mesg[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Reset (ASCII for G0, G1, no NRC mode)",             reset_charset },
+      { hilite_mesg,                                         toggle_hilite },
       { nrc_mesg,                                            toggle_nrc },
       { whatis_Gx[0],                                        specify_G0 },
       { whatis_Gx[1],                                        specify_G1 },
@@ -555,12 +653,16 @@ tst_characters(MENU_ARGS)
   int n;
 
   cleanup = 0;
+  hilite_not11 = 1;
+  toggle_hilite(PASS_ARGS);
   reset_charset(PASS_ARGS);   /* make the menu consistent */
   if (get_level() > 1 || input_8bits || output_8bits) {
     do {
       vt_clear(2);
       __(title(0), printf("Character-Set Tests"));
       __(title(2), println("Choose test type:"));
+      sprintf(hilite_mesg, "%s highlighting of non-ISO-8859-1 mapping",
+              STR_ENABLE(hilite_not11));
       sprintf(nrc_mesg, "%s National Replacement Character (NRC) mode",
               STR_ENABLE(national));
       for (n = 0; n < 4; n++) {
