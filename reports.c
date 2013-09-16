@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.34 2013/08/09 22:09:15 tom Exp $ */
+/* $Id: reports.c,v 1.35 2013/09/15 14:25:38 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -268,7 +268,7 @@ tst_DA_2(MENU_ARGS)
     {  1,  "VT220" },
     { 18,  "VT330" },
     { 19,  "VT340" },
-    { 24,  "kermit" },
+    { 24,  "VT320" },
     { 28,  "DECterm" },
     { 41,  "VT420" },
     { 64,  "VT520" },

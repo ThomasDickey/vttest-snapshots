@@ -1,4 +1,4 @@
-MANIFEST for vttest, version t20130818
+MANIFEST for vttest, version t20130915
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -61,5 +61,9 @@ package/debian/source           subdirectory
 package/debian/source/format    build-script
 package/debian                  subdirectory
 package/debian/watch            build-script
+package/freebsd                 subdirectory
+package/freebsd/Makefile        build-script
+package/freebsd/distinfo        build-script
+package/freebsd/pkg-descr       build-script
 package                         subdirectory
 package/vttest.spec             build-script
