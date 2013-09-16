@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.62 2012/05/04 22:09:34 tom Exp $ */
+/* $Id: nonvt100.c,v 1.63 2013/09/15 18:29:41 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -458,7 +458,7 @@ tst_REP(MENU_ARGS)
   for (n = 1; n <= min_cols; n++)
     printf("%c", (n == last || n == last + 1) ? '+' : '*');
   vt_move(last + 1, 1);
-  ruler(last, min_cols);
+  ruler(last + 1, min_cols);
   println(the_title);
   println("There should be a diagonal of 2 +'s down to the row of *'s above this message.");
   println("The ++ in the row of *'s is the target.  If there are 11 +'s, ECMA-48 does");
@@ -486,7 +486,7 @@ tst_SD(MENU_ARGS)
     sd(1);
   }
   vt_move(last + 1, 1);
-  ruler(last, min_cols);
+  ruler(last + 1, min_cols);
   vt_clear(0);
   println(the_title);
   println("There should be a horizontal row of *'s above, just above the message.");

@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.50 2013/08/18 19:38:29 tom Exp $ */
+/* $Id: charsets.c,v 1.58 2013/09/16 00:38:40 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -67,15 +67,17 @@ typedef struct {
  */
 static const char map_pound[] = "#";
 static const char map_all94[] = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+static const char map_DEC_Supp[] = "$&,-./48>GHIJKLMNOPW^pw}~";
 static const char map_Spec_Graphic[] = "`abcdefghijklmnopqrstuvwxyz{|}~";
 static const char map_Supp_Graphic[] = "$&,-./48>PW^p}~\177";
 static const char map_Dutch[] = "#@[\\]{|}~";
 static const char map_Finnish[] = "`[\\]^{|}~";
-static const char map_French[] = "#@`[\\]{|}~";
+static const char map_French[] = "#@[\\]{|}~";
 static const char map_French_Canadian[] = "@`[\\]^{|}~";
 static const char map_German[] = "@[\\]{|}~";
 static const char map_Italian[] = "#@`[\\]{|}~";
 static const char map_Norwegian[] = "@`[\\]^{|}~";
+static const char map_Portuguese[] = "[\\]{|}";
 static const char map_Spanish[] = "@[\\]{|}";
 static const char map_Swedish[] = "@`[\\]^{|}~";
 static const char map_Swiss[] = "#@`[\\]^_{|}~";
@@ -83,12 +85,12 @@ static const char map_Swiss[] = "#@`[\\]^_{|}~";
 static const CHARSETS KnownCharsets[] = {
   { ASCII,             0, 0, 0, 9, "B",    "US ASCII", 0 },
   { British,           0, 0, 0, 9, "A",    "British", map_pound },
-  { British_Latin_1,   1, 0, 3, 9, "A",    "ISO Latin-1", map_pound },
+  { British_Latin_1,   1, 0, 3, 9, "A",    "ISO Latin-1", 0 },
   { Cyrillic,          0, 0, 5, 9, "&4",   "Cyrillic (DEC)", 0 },
   { DEC_Spec_Graphic,  0, 0, 0, 9, "0",    "DEC Special graphics and line drawing", map_Spec_Graphic },
   { DEC_Alt_Chars,     0, 0, 0, 0, "1",    "DEC Alternate character ROM standard characters", 0 },
   { DEC_Alt_Graphics,  0, 0, 0, 0, "2",    "DEC Alternate character ROM special graphics", 0 },
-  { DEC_Supp,          0, 0, 2, 9, "<",    "DEC Supplemental", 0 },
+  { DEC_Supp,          0, 0, 2, 9, "<",    "DEC Supplemental", map_DEC_Supp },
   { DEC_Supp_Graphic,  0, 0, 3, 9, "%5",   "DEC Supplemental Graphic", map_Supp_Graphic },
   { DEC_Tech,          0, 0, 3, 9, ">",    "DEC Technical", map_all94 },
   { Dutch,             0, 0, 2, 9, "4",    "Dutch", map_Dutch },
@@ -110,7 +112,7 @@ static const CHARSETS KnownCharsets[] = {
   { Norwegian_Danish,  0, 0, 3, 9, "`",    "Norwegian/Danish", map_Norwegian },
   { Norwegian_Danish,  0, 1, 2, 9, "E",    "Norwegian/Danish", map_Norwegian },
   { Norwegian_Danish,  0, 2, 2, 9, "6",    "Norwegian/Danish", map_Norwegian },
-  { Portugese,         0, 0, 3, 9, "%6",   "Portugese", 0 },
+  { Portugese,         0, 0, 3, 9, "%6",   "Portugese", map_Portuguese },
   { Russian,           0, 0, 5, 9, "&5",   "Russian", 0 },
   { SCS_NRCS,          0, 0, 5, 9, "%3",   "SCS NRCS", 0 },
   { Spanish,           0, 0, 2, 9, "Z",    "Spanish", map_Spanish },
@@ -131,6 +133,40 @@ static char sgr_hilite[10];
 static char sgr_reset[10];
 
 static int current_Gx[4];
+
+static int
+lookupCode(National code)
+{
+  int n;
+  for (n = 0; n < TABLESIZE(KnownCharsets); n++) {
+    if (KnownCharsets[n].code == code)
+      return n;
+  }
+  return lookupCode(ASCII);
+}
+
+static const CHARSETS *
+lookupCharset(int g, int n)
+{
+  const CHARSETS *result = 0;
+  if (n >= 0 && n < TABLESIZE(KnownCharsets)) {
+    if (!strcmp(KnownCharsets[n].final, "A")) {
+      if (national || (g == 0)) {
+        n = lookupCode(British);
+      } else {
+        n = lookupCode(British_Latin_1);
+      }
+    }
+    result = &KnownCharsets[n];
+  }
+  return result;
+}
+
+static const char *
+charset_name(int g, int n)
+{
+  return lookupCharset(g, n)->name;
+}
 
 static int
 append_sgr(char *buffer, int used, const char *sgr_string)
@@ -187,13 +223,13 @@ send32(int row, int upper, const char *not11)
 static char *
 scs_params(char *dst, int g)
 {
-  int n = current_Gx[g];
+  const CHARSETS *tbl = lookupCharset(g, current_Gx[g]);
 
   sprintf(dst, "%c%s",
-          ((KnownCharsets[n].allow96 && get_level() > 2)
+          ((tbl->allow96 && get_level() > 2)
            ? "?-./"[g]
            : "()*+"[g]),
-          KnownCharsets[n].final);
+          tbl->final);
   return dst;
 }
 
@@ -203,17 +239,6 @@ do_scs(int g)
   char buffer[80];
 
   esc(scs_params(buffer, g));
-}
-
-static int
-lookupCode(National code)
-{
-  int n;
-  for (n = 0; n < TABLESIZE(KnownCharsets); n++) {
-    if (KnownCharsets[n].code == code)
-      return n;
-  }
-  return lookupCode(ASCII);
 }
 
 /* reset given Gg back to sane setting */
@@ -292,7 +317,9 @@ specify_any_Gx(MENU_ARGS, int g)
       continue;
     if (get_level() > KnownCharsets[n].last)
       continue;
-    if ((g == 0) && KnownCharsets[n].allow96)
+    if (((g == 0) || national) && KnownCharsets[n].allow96)
+      continue;
+    if (((g != 0) && !national) && (KnownCharsets[n].code == British))
       continue;
     if (m && !strcmp(my_menu[m - 1].description, KnownCharsets[n].name))
       continue;
@@ -423,7 +450,7 @@ tst_shift_in_out(MENU_ARGS)
 
   __(cup(1, 10), printf("These are the G0 and G1 character sets."));
   for (cset = 0; cset < 2; cset++) {
-    const CHARSETS *tbl = &KnownCharsets[current_Gx[cset]];
+    const CHARSETS *tbl = lookupCharset(cset, current_Gx[cset]);
     int row = 3 + (4 * cset);
 
     scs(cset, 'B');
@@ -473,7 +500,7 @@ tst_vt220_locking(MENU_ARGS)
   for (cset = 0; cset < TABLESIZE(table); cset++) {
     int row = 3 + (4 * cset);
     int map = table[cset].mapped;
-    const CHARSETS *tbl = &KnownCharsets[current_Gx[map]];
+    const CHARSETS *tbl = lookupCharset(map, current_Gx[map]);
     int map_gl = (strstr(table[cset].msg, "into GL") != 0);
 
     scs_normal();
@@ -520,7 +547,7 @@ tst_vt220_single(MENU_ARGS)
 
   for (pass = 0; pass < 2; pass++) {
     int g = pass + 2;
-    const CHARSETS *tbl = &KnownCharsets[current_Gx[g]];
+    const CHARSETS *tbl = lookupCharset(g, current_Gx[g]);
 
     vt_clear(2);
     cup(1, 1);
@@ -667,7 +694,7 @@ tst_characters(MENU_ARGS)
               STR_ENABLE(national));
       for (n = 0; n < 4; n++) {
         sprintf(whatis_Gx[n], "Specify G%d (now %s)",
-                n, KnownCharsets[current_Gx[n]].name);
+                n, charset_name(n, current_Gx[n]));
       }
     } while (menu(my_menu));
     cleanup = 1;

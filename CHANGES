@@ -1,5 +1,32 @@
--- $Id: CHANGES,v 1.163 2013/08/18 18:23:16 tom Exp $
+-- $Id: CHANGES,v 1.172 2013/09/15 23:36:13 tom Exp $
 -------------------------------------------------------------------------------
+
+20130915
+	+ when NRCS is active, suppress ISO Latin-1 from menu to avoid
+	  confusion with British NRCS.
+
+	+ do not highlight ISO Latin-1 for NRCS, since it is a 96-character
+	  set, not applicable to NRCS.
+
+	+ correct position of ruler for SD and REP screens, which obscured the
+	  result.
+
+	+ expand menu 11.6.6 to demonstrate bce with top-level menus 1 and 2
+	  in addition to the existing menu 8.
+
+	+ correct description for DA response 24; it denotes VT320.
+
+	+ correct highlighting for French NRC mapping; "`" is not mapped.
+
+	+ add port-files from FreeBSD for test-builds.
+
+	+ add highlighting information for VT320 Portuguese NRC mapping.
+
+	+ add highlighting information for VT220 DEC Supplemental NRC mapping.
+
+	+ updated configure-macros to add msys changes from ncurses 20130907.
+
+	+ update config.guess, config.sub
 
 20130818
 	+ modify character-sets screens to optionally highlight the characters

@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.36 2012/06/03 16:16:03 tom Exp $ */
+/* $Id: color.c,v 1.37 2013/09/15 17:41:48 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -456,6 +456,29 @@ fancy_bce_test(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
+static int
+test_color_movements(MENU_ARGS)
+{
+  set_test_colors();
+
+  tst_movements(PASS_ARGS);
+  reset_all_colors();
+  return MENU_NOHOLD;
+}
+
+static int
+test_color_screen(MENU_ARGS)
+{
+  set_test_colors();
+
+  /* The rest of the test can be done nicely with the standard vt100 test
+   * for insert/delete, since it doesn't modify SGR.
+   */
+  tst_screen(PASS_ARGS);
+  reset_all_colors();
+  return MENU_NOHOLD;
+}
+
 /*
  * Test the insert/delete line/character operations for color (bce) terminals
  * We'll test insert/delete line operations specially, because it is very hard
@@ -491,7 +514,7 @@ test_ecma48_misc(MENU_ARGS)
 }
 
 static int
-test_color_screen(MENU_ARGS)
+test_bce_color(MENU_ARGS)
 {
   set_test_colors();
 
@@ -628,6 +651,36 @@ toggle_color_mode(MENU_ARGS)
 }
 
 /*
+ * VT100s of course never did colors, ANSI or otherwise.  This test is for
+ * xterm.
+ */
+static int
+test_vt100_colors(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  static MENU colormenu[] = {
+    { "Exit",                                                0 },
+    { "Test of cursor movements",                            test_color_movements },
+    { "Test of screen features",                             test_color_screen },
+    { "Test Insert/Delete Char/Line",                        test_color_insdel, },
+    { "", 0 }
+  };
+  /* *INDENT-ON* */
+
+  do_colors = TRUE;
+
+  do {
+    vt_clear(2);
+    __(title(0), println("Test VT102-style features with BCE"));
+    __(title(2), println("Choose test type:"));
+  } while (menu(colormenu));
+
+  do_colors = FALSE;
+
+  return MENU_NOHOLD;
+}
+
+/*
  * For terminals that support ANSI/ISO colors, work through a graduated
  * set of tests that first display colors (if the terminal does indeed
  * support them), then exercise the associated reset, clear operations.
@@ -643,10 +696,10 @@ tst_colors(MENU_ARGS)
     { "Test SGR-0 color reset",                              test_SGR_0, },
     { "Test BCE-style clear line/display (ED, EL)",          simple_bce_test, },
     { "Test BCE-style clear line/display (ECH, Indexing)",   fancy_bce_test, },
-    { "Test of VT102-style features with BCE (Insert/Delete Char/Line)", test_color_insdel, },
+    { "Test of VT102-style features with BCE",               test_vt100_colors, },
     { "Test other ISO-6429 features with BCE",               test_ecma48_misc },
-    { "Test of screen features with BCE",                    test_color_screen, },
-    { "Test of screen features with ISO 6429 SGR 22-27 codes", test_iso_6429_sgr, },
+    { "Test screen features with BCE",                       test_bce_color, },
+    { "Test screen features with ISO 6429 SGR 22-27 codes",  test_iso_6429_sgr, },
     { "", 0 }
   };
   /* *INDENT-ON* */

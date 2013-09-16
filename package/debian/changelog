@@ -1,3 +1,9 @@
+vttest-cur (2.7.20130915) unstable; urgency=low
+
+  * maintenance updates
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Sun, 15 Sep 2013 09:38:13 -0400
+
 vttest-cur (2.7.20130818) unstable; urgency=low
 
   * optionally highlight NRC mappings in character set tests.
