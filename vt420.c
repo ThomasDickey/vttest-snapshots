@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.160 2012/05/06 14:25:44 tom Exp $ */
+/* $Id: vt420.c,v 1.162 2014/01/16 22:15:54 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -1173,9 +1173,7 @@ tst_ICH_DCH(MENU_ARGS)
   int last = max_lines - 3;
   int base_row;
   int base_col;
-  int left_col;
   int last_row;
-  int last_col;
   int real_col;
   int top;
   int bot;
@@ -1203,7 +1201,6 @@ tst_ICH_DCH(MENU_ARGS)
       base_col = rgt - (bot - top) - 2;
       if (base_col < 0)
         base_col = 0;
-      last_col = rgt - 1;
       switch (tb_marg_flag) {
       default:
         last_row = bot;
@@ -1217,26 +1214,21 @@ tst_ICH_DCH(MENU_ARGS)
     } else {
       last_row = last;
       base_col = (2 * last);
-      last_col = min_cols - 1;
       real_col = rgt;
     }
   } else {
     switch (lr_marg_flag) {
     default:
       base_col = (2 * last);
-      last_col = min_cols - 1;
       break;
     case marFirst:
       base_col = 0;
-      last_col = min_cols / 2 - 1;
       break;
     case marMiddle:
       base_col = min_cols / 4;
-      last_col = (3 * min_cols) / 4 - 1;
       break;
     case marLast:
       base_col = (min_cols / 2);
-      last_col = min_cols - 1;
       break;
     }
     if (tb_marg_flag == marLast) {
@@ -1297,7 +1289,6 @@ tst_ICH_DCH(MENU_ARGS)
   if (origin_mode) {
     base_row = 0;
     if (lrmm_flag) {
-      left_col = 1;
       switch (tb_marg_flag) {
       default:
         last_row = bot;
@@ -1316,26 +1307,21 @@ tst_ICH_DCH(MENU_ARGS)
     } else {
       last_row = last;
       base_col = (2 * last);
-      left_col = 1;
       real_col = lft;
     }
   } else {
     switch (lr_marg_flag) {
     default:
       base_col = (2 * last);
-      left_col = 1;
       break;
     case marFirst:
       base_col = (min_cols / 2);
-      left_col = 1;
       break;
     case marMiddle:
       base_col = (3 * min_cols) / 4;
-      left_col = (min_cols / 4) + 1;
       break;
     case marLast:
       base_col = min_cols + 0;
-      left_col = (min_cols / 2) + 1;
       break;
     }
     if (tb_marg_flag == marLast) {

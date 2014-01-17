@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.32 2011/12/10 15:19:15 tom Exp $ */
+/* $Id: mouse.c,v 1.33 2014/01/16 22:04:01 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -663,7 +663,6 @@ test_mouse_hilite(MENU_ARGS)
   unsigned start_x, end_x;
   unsigned start_y, end_y;
   unsigned mouse_y, mouse_x;
-  int pos;
 
 first:
   vt_move(1, 1);
@@ -697,7 +696,6 @@ first:
 
     if (parse_mouse_M(report, &b, &x, &y) != 0) {
       b &= 7;
-      pos = 2;
       if (b != 3) {
         /* send the xterm the highlighting range (it MUST be done first) */
         do_csi("1;%u;%u;%d;%d;T", x, y, 10, 20);

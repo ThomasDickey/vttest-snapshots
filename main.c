@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.104 2012/05/04 20:57:12 tom Exp $ */
+/* $Id: main.c,v 1.105 2014/01/16 21:15:19 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -966,7 +966,7 @@ tst_bugs(MENU_ARGS)
       println(hmsg[i]);
     println("");
     println("          Choose bug test number:");
-  } while (menu(menutable));
+  } while (menu2(menutable, i + 1));
   return MENU_NOHOLD;
 }
 
@@ -1453,7 +1453,7 @@ prev_menu(int top, int size)
 }
 
 int
-menu(MENU *table)
+menu2(MENU *table, int top)
 {
   int i, tablesize, choice;
   char c;
@@ -1469,7 +1469,7 @@ menu(MENU *table)
   tablesize--;
 
   for (;;) {
-    vt_move(6, 1);
+    vt_move(top, 1);
     vt_clear(0);
 
     println("");
@@ -1543,6 +1543,12 @@ menu(MENU *table)
       printf("          Bad choice, try again: ");
     }
   }
+}
+
+int
+menu(MENU *table)
+{
+  return menu2(table, 6);
 }
 
 /*

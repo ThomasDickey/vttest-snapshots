@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.97 2013/08/18 19:29:30 tom Exp $ */
+/* $Id: vttest.h,v 1.98 2014/01/16 21:14:22 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -279,6 +279,7 @@ extern int get_right_margin(void);
 extern int get_top_margin(void);
 extern int main(int argc, char *argv[]);
 extern int menu(MENU *table);
+extern int menu2(MENU *table, int tp);
 extern int not_impl(MENU_ARGS);
 extern int parse_decrqss(char *report, const char *func);
 extern int rpt_DECSTBM(MENU_ARGS);

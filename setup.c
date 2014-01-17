@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.32 2012/04/22 14:48:15 tom Exp $ */
+/* $Id: setup.c,v 1.33 2014/01/16 21:03:24 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -229,10 +229,12 @@ set_level(int request)
         input_8bits = FALSE;
         output_8bits = FALSE;
       }
-      if (request > 1)
-        do_csi("6%d;%d\"p", request, !input_8bits);
-      else
-        do_csi("61\"p");
+      if (max_level > 1) {
+        if (request > 1)
+          do_csi("6%d;%d\"p", request, !input_8bits);
+        else
+          do_csi("61\"p");
+      }
     }
     padding(5); /* FIXME: may not be needed */
 

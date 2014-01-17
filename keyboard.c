@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.34 2011/12/06 09:47:39 tom Exp $ */
+/* $Id: keyboard.c,v 1.35 2014/01/16 20:53:07 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -213,8 +213,6 @@ static struct curkey {
     {{{0,  ""},  {0,  ""},  {0,  "" }}, 0,  0, "",      "" }
   },
   *curkeytab;
-/* *INDENT-ON* */
-/* *INDENT-OFF* */
 static struct fnckey {
     CTLKEY fnkeymsg[2];
     int  fnkeyrow;
@@ -256,8 +254,6 @@ static struct fnckey {
     {{{CSI,"6~"}, {0,""}}, 7, 38, "Next",   "Next"   },
     {{{0,  ""},   {0,""}}, 0,  0, "",       ""   }
   };
-/* *INDENT-ON* */
-/* *INDENT-OFF* */
 static struct fnkey {
     CTLKEY fnkeymsg[4];
     int  fnkeyrow;
