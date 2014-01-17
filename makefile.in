@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.44 2013/08/09 23:06:14 tom Exp $
+# $Id: makefile.in,v 1.45 2014/01/16 20:31:58 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -45,7 +45,7 @@ SHELL		= /bin/sh
 CPPFLAGS 	= -DHAVE_CONFIG_H -I. -I$(srcdir) @CPPFLAGS@
 
 ################################################################################
-.SUFFIXES : $o .i .html .$(manext) .cat .ps .pdf .txt
+.SUFFIXES : $o .i .cat
 
 .c$o:
 	@RULE_CC@
@@ -58,17 +58,6 @@ CPPFLAGS 	= -DHAVE_CONFIG_H -I. -I$(srcdir) @CPPFLAGS@
 .$(manext).cat :
 	- nroff -man $(srcdir)/$(THIS).$(manext) >$@
 
-.$(manext).html :
-	GROFF_NO_SGR=stupid $(SHELL) -c "tbl $*.$(manext) | groff -Thtml -man" >$@
-
-.$(manext).ps :
-	$(SHELL) -c "tbl $*.$(manext) | groff -man" >$@
-
-.$(manext).txt :
-	GROFF_NO_SGR=stupid $(SHELL) -c "tbl $*.$(manext) | nroff -Tascii -man | col -bx" >$@
-
-.ps.pdf :
-	ps2pdf $*.ps
 ################################################################################
 
 C_SRC = \
@@ -164,16 +153,16 @@ uninstall:
 	rm -f $(BINDIR)/$(actual_bin)
 	rm -f $(MANDIR)/$(actual_man)
 
-mostlyclean:
+mostlyclean ::
 	rm -f *.[oi] core *~ *.BAK *.trace *.atac
 
-clean: mostlyclean
+clean :: mostlyclean
 	rm -f $(PROG)
 
-distclean: clean
+distclean :: clean
 	rm -f makefile config.log config.cache config.status config.h
 
-realclean: distclean
+realclean :: distclean
 	rm -f tags TAGS # don't remove configure!
 
 @MAKE_LOWER_TAGS@tags:	$(C_SRC) $(HDRS)
@@ -212,15 +201,6 @@ dist-shar: MANIFEST
 
 $(THIS)$o:	config.h
 
-################################################################################
-docs :: $(THIS).html \
-	$(THIS).pdf \
-	$(THIS).ps \
-	$(THIS).txt
-$(THIS).html : $(THIS).$(manext)
-$(THIS).pdf : $(THIS).ps
-$(THIS).ps : $(THIS).$(manext)
-$(THIS).txt : $(THIS).$(manext)
 ################################################################################
 
 lint:

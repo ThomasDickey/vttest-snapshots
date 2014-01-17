@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.28 2012/04/04 09:02:07 tom Exp $ */
+/* $Id: unix_io.c,v 1.29 2014/01/16 22:11:39 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -214,7 +214,6 @@ readnl(void)
   reading = TRUE;
   do {
     if (read(0, &one_byte, (size_t) 1) < 0) {
-      ch = EOF;
       break;
     } else {
       ch = (int) one_byte;

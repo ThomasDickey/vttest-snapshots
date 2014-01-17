@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.58 2013/09/16 00:38:40 tom Exp $ */
+/* $Id: charsets.c,v 1.59 2014/01/16 20:50:17 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -698,6 +698,8 @@ tst_characters(MENU_ARGS)
       }
     } while (menu(my_menu));
     cleanup = 1;
+    /* tidy in case a "vt100" emulator does not ignore SCS */
+    vt_clear(1);
     return reset_charset(PASS_ARGS);
   } else {
     return tst_vt100_charsets(PASS_ARGS);

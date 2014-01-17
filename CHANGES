@@ -1,5 +1,22 @@
--- $Id: CHANGES,v 1.172 2013/09/15 23:36:13 tom Exp $
+-- $Id: CHANGES,v 1.177 2014/01/16 21:31:20 tom Exp $
 -------------------------------------------------------------------------------
+
+20140116
+	+ cosmetic changes (suggested by Itay Chamiel):
+
+	  + clear screen just before resetting SCS in menu #3 character sets,
+	    in case a VT100 emulator does not simply ignore VT220 G2/G3
+	    selections when it does not implement them.
+
+	  + add check for maximum operating level before deciding whether
+	    to send a DECSCL to set it to VT100-level.
+
+	  + adjust starting point of items for menu #9 "Test of known bugs"
+	    to avoid overwriting part of the description of the test.
+
+	+ add configure check for -Wlogical-op to gcc-warnings
+
+	+ update config.guess, config.sub
 
 20130915
 	+ when NRCS is active, suppress ISO Latin-1 from menu to avoid
