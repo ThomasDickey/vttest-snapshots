@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.37 2013/09/15 17:41:48 tom Exp $ */
+/* $Id: color.c,v 1.38 2014/03/05 23:13:52 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -667,6 +667,8 @@ test_vt100_colors(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
+  int save_colors = do_colors;
+
   do_colors = TRUE;
 
   do {
@@ -675,7 +677,7 @@ test_vt100_colors(MENU_ARGS)
     __(title(2), println("Choose test type:"));
   } while (menu(colormenu));
 
-  do_colors = FALSE;
+  do_colors = save_colors;
 
   return MENU_NOHOLD;
 }
@@ -704,6 +706,8 @@ tst_colors(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
+  int save_colors = do_colors;
+
   do_colors = TRUE;
 
   do {
@@ -713,7 +717,7 @@ tst_colors(MENU_ARGS)
     __(title(2), println("Choose test type:"));
   } while (menu(colormenu));
 
-  do_colors = FALSE;
+  do_colors = save_colors;
 
   return MENU_NOHOLD;
 }
