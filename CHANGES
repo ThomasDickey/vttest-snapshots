@@ -1,5 +1,12 @@
--- $Id: CHANGES,v 1.177 2014/01/16 21:31:20 tom Exp $
+-- $Id: CHANGES,v 1.180 2014/03/06 00:28:40 tom Exp $
 -------------------------------------------------------------------------------
+
+20140305
+	+ save/restore color enable-flag for menu 11.6 in a couple of places
+	  so that the ISO-6429 tests do not reset it unexpectedly.
+
+	+ amend the REP test to not reset colors if it happens to be run via
+	  the menu entry for BCE-related tests.
 
 20140116
 	+ cosmetic changes (suggested by Itay Chamiel):

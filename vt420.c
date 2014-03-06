@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.162 2014/01/16 22:15:54 tom Exp $ */
+/* $Id: vt420.c,v 1.163 2014/03/04 21:56:46 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -294,7 +294,8 @@ fill_outside(int ch)
     fprintf(log_fp, "Note: filling outside margins with '%c'\n", ch);
   }
 
-  set_colors("0");
+  if (!do_colors)
+    set_colors("0");
 
   if (origin_mode)
     decom(FALSE);
