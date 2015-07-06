@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.45 2014/01/16 20:31:58 tom Exp $
+# $Id: makefile.in,v 1.46 2015/07/06 09:24:00 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -160,7 +160,7 @@ clean :: mostlyclean
 	rm -f $(PROG)
 
 distclean :: clean
-	rm -f makefile config.log config.cache config.status config.h
+	rm -f makefile config.log config.cache config.status config.h man2html.tmp
 
 realclean :: distclean
 	rm -f tags TAGS # don't remove configure!

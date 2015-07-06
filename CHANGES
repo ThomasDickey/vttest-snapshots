@@ -1,5 +1,10 @@
--- $Id: CHANGES,v 1.180 2014/03/06 00:28:40 tom Exp $
+-- $Id: CHANGES,v 1.181 2015/07/06 09:21:56 tom Exp $
 -------------------------------------------------------------------------------
+
+20150706
+	+ add configure option --with-man2html
+
+	+ update config.guess, config.sub
 
 20140305
 	+ save/restore color enable-flag for menu 11.6 in a couple of places
