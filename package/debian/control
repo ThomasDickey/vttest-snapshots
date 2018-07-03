@@ -8,6 +8,7 @@ Homepage: http://invisible-island.net/vttest/
 
 Package: vttest-cur
 Architecture: any
+Depends: libc6 (>= 2.7)
 Description: pattern scanning and text processing language
  Vttest is a program designed to test the functionality of a VT100
  terminal (or emulator thereof).  It tests both display (escape sequence

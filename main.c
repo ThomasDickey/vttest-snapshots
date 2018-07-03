@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.105 2014/01/16 21:15:19 tom Exp $ */
+/* $Id: main.c,v 1.107 2018/07/03 00:15:04 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1685,12 +1685,24 @@ skip_digits(char *src)
   return (base == src) ? 0 : src;
 }
 
+#define xdigitOf(c) \
+        (((c) >= '0' && (c) <= '9') \
+         ? ((c) - '0') \
+         : (((c) >= 'A' && (c) <= 'F') \
+            ? ((c) + 10 - 'A') \
+            : ((c) + 10 - 'a')))
+
 char *
-skip_xdigits(char *src)
+skip_xdigits(char *src, int *value)
 {
   char *base = src;
-  while (*src != '\0' && isxdigit(CharOf(*src)))
+  *value = 0;
+  while (*src != '\0' && isxdigit(CharOf(*src))) {
+    int ch = CharOf(*src);
+    *value <<= 4;
+    *value += xdigitOf(ch);
     src++;
+  }
   return (base == src) ? 0 : src;
 }
 

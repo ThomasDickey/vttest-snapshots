@@ -1,5 +1,16 @@
--- $Id: CHANGES,v 1.181 2015/07/06 09:21:56 tom Exp $
+-- $Id: CHANGES,v 1.186 2018/07/03 00:08:16 tom Exp $
 -------------------------------------------------------------------------------
+
+20180702
+	+ updated test-packages to use recommended flags.
+
+	+ improved DECRQCRA check, updating to work with xterm #334.
+
+	+ add tests for xterm's extensions to DECSCUSR.
+
+	+ updated/improved configure macros
+
+	+ update config.guess, config.sub
 
 20150706
 	+ add configure option --with-man2html

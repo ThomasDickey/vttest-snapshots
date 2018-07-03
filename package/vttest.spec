@@ -1,8 +1,8 @@
 Summary: vttest - test VT100-type terminal
 %define AppProgram vttest
-%define AppPatched 20150706
+%define AppPatched 20180702
 %define AppVersion 2.7.%{AppPatched}
-# $XTermId: vttest.spec,v 1.22 2015/07/06 09:29:15 tom Exp $
+# $XTermId: vttest.spec,v 1.25 2018/07/03 00:23:46 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: 1
@@ -24,17 +24,20 @@ can run all menu-items (for a given level) by entering an asterisk, i.e,
 
 %prep
 
+# no need for debugging symbols...
+%define debug_package %{nil}
+
 %setup -q -n %{AppProgram}-%{AppPatched}
 
 %build
 
 INSTALL_PROGRAM='${INSTALL}' \
-	./configure \
-		--target %{_target_platform} \
-		--prefix=%{_prefix} \
-		--bindir=%{_bindir} \
-		--libdir=%{_libdir} \
-		--mandir=%{_mandir}
+%configure \
+  --target %{_target_platform} \
+  --prefix=%{_prefix} \
+  --bindir=%{_bindir} \
+  --libdir=%{_libdir} \
+  --mandir=%{_mandir}
 
 make
 
@@ -55,6 +58,9 @@ strip $RPM_BUILD_ROOT%{_bindir}/%{AppProgram}
 
 %changelog
 # each patch should add its ChangeLog entries here
+
+* Mon Jul 02 2018 Thomas Dickey
+- use recommended flags for build
 
 * Thu Aug 26 2010 Thomas Dickey
 - initial version
