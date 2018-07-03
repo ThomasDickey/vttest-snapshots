@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.163 2014/03/04 21:56:46 tom Exp $ */
+/* $Id: vt420.c,v 1.165 2018/07/02 19:10:12 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -732,14 +732,19 @@ tst_DECCARA(MENU_ARGS)
   return MENU_HOLD;
 }
 
+#define fmt_DECCKSR "Testing DECCKSR: %s\n"
+
 static int
-tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi)
+tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi, int expected)
 {
   char *report;
+  char *before;
+  char *after;
   int pos = 0;
+  int actual;
 
   vt_move(1, 1);
-  printf("Testing DECCKSR: %s\n", the_title);
+  printf(fmt_DECCKSR, the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -753,9 +758,21 @@ tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi)
       && strlen(report) > 1
       && scanto(report, &pos, '!') == Pid
       && report[pos++] == '~'
-      && (report = skip_xdigits(report + pos + 1)) != 0
-      && *report == '\0') {
-    show_result(SHOW_SUCCESS);
+      && (after = skip_xdigits((before = report + pos), &actual)) != 0
+      && *after == '\0') {
+    if ((after - before) != 4) {
+      show_result("%s: expected 4 digits", SHOW_FAILURE);
+    } else if (expected >= 0) {
+      if (actual == expected) {
+        show_result(SHOW_SUCCESS);
+      } else {
+        char msg[80];
+        sprintf(msg, "%04X", (expected & 0xffff));
+        show_result("expected %s", msg);
+      }
+    } else {
+      show_result(SHOW_SUCCESS);
+    }
   } else {
     show_result(SHOW_FAILURE);
   }
@@ -2187,8 +2204,27 @@ tst_DECSNLS(MENU_ARGS)
 static int
 tst_DSR_area_sum(MENU_ARGS)
 {
+  char buffer[1024];
+  int expected = 0;
+  int pid = 1;
+  int page = 1;
+  int r, c;
+  int rows = 2;                 /* first two rows have known content */
+  size_t len;
+
+  sprintf(buffer, fmt_DECCKSR, the_title);
+  len = strlen(buffer) - 1;
+  memset(buffer + len, ' ', sizeof(buffer) - len);
+  for (r = 0; r < rows; ++r) {
+    for (c = 0; c < min_cols; ++c) {
+      expected += (unsigned char) buffer[(min_cols * r) + c];
+      expected &= 0xffff;
+    }
+  }
+
   /* compute a checksum on the title line, which contains some text */
-  return tst_DECCKSR(PASS_ARGS, 1, "1;1;1;1;2;80*y");
+  sprintf(buffer, "%d;%d;1;1;%d;%d*y", pid, page, rows, min_cols);
+  return tst_DECCKSR(PASS_ARGS, 1, buffer, expected);
 }
 
 static int
@@ -2230,7 +2266,7 @@ tst_DSR_macrospace(MENU_ARGS)
 static int
 tst_DSR_memory_sum(MENU_ARGS)
 {
-  return tst_DECCKSR(PASS_ARGS, 1, "?63;1n");
+  return tst_DECCKSR(PASS_ARGS, 1, "?63;1n", -1);
 }
 
 static int

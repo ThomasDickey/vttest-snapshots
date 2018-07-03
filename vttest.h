@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.98 2014/01/16 21:14:22 tom Exp $ */
+/* $Id: vttest.h,v 1.99 2018/07/02 17:38:23 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -248,7 +248,7 @@ extern char *skip_dcs(char *input);
 extern char *skip_digits(char *src);
 extern char *skip_prefix(const char *prefix, char *input);
 extern char *skip_ss3(char *input);
-extern char *skip_xdigits(char *src);
+extern char *skip_xdigits(char *src, int *value);
 extern const char *parse_Sdesig(const char *source, int *offset);
 extern const char *skip_csi_2(const char *input);
 extern const char *skip_dcs_2(const char *input);

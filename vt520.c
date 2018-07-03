@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.10 2012/04/26 10:57:03 tom Exp $ */
+/* $Id: vt520.c,v 1.11 2018/07/02 16:25:42 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -30,6 +30,12 @@ static struct {
   },
   {
     4, "The cursor should be a nonblinking underline"
+  },
+  {
+    5, "xterm: The cursor should be a blinking vertical bar"
+  },
+  {
+    6, "xterm: The cursor should be a nonblinking vertical bar"
   },
   {
     2, "The cursor should be a rectangle again"
