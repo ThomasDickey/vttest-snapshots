@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.21 2011/12/06 10:29:59 tom Exp $ */
+/* $Id: ttymodes.c,v 1.22 2018/07/23 22:47:57 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -310,7 +310,7 @@ set_tty_raw(int enabled)
   } else {
 #ifdef UNIX
 # if USE_POSIX_TERMIOS || USE_TERMIO
-    new_modes              = old_modes;   /* FIXME */
+    new_modes              = old_modes;
 # else /* USE_SGTTY */
     new_modes.sg_flags     &= ~RAW;
 #   ifdef HAVE_FCNTL_H

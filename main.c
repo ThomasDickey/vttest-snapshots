@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.107 2018/07/03 00:15:04 tom Exp $ */
+/* $Id: main.c,v 1.109 2018/07/22 23:43:55 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1560,37 +1560,32 @@ chrprint2(const char *s, int row, int col)
 {
   int i;
   int result = row;
-  int tracks = (col += 2);
+  int tracks = col;
   char temp[80];
 
-  printf("  ");
   vt_hilite(TRUE);
   printf(" ");
-  tracks += 3;
+  tracks += 1;
 
   for (i = 0; s[i] != '\0'; i++) {
     int c = (unsigned char) s[i];
+    int step;
     if (c <= ' ' || c >= '\177') {
       sprintf(temp, "<%d> ", c);
     } else {
       sprintf(temp, "%c ", c);
     }
-    tracks += (int) strlen(temp);
-    if ((tracks > min_cols) && (col > 1)) {
+    step = (int) strlen(temp);
+    tracks += step;
+    if ((tracks >= min_cols) && (col > 1)) {
       vt_move(++result, col);
-      tracks = col + (int) strlen(temp);
+      tracks = col + step;
     }
     fputs(temp, stdout);
   }
 
   vt_hilite(FALSE);
   return result + 1;
-}
-
-void
-chrprint(const char *s)
-{
-  chrprint2(s, 1, 1);
 }
 
 /*

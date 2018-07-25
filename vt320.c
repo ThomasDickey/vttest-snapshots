@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.28 2012/04/25 10:51:29 tom Exp $ */
+/* $Id: vt320.c,v 1.51 2018/07/25 01:37:45 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -100,7 +100,7 @@ tst_vt320_device_status(MENU_ARGS)
  * the bogus implementations that return a decimal number.
  */
 static int
-scan_chr(char *str, int *pos, int toc)
+scan_chr(const char *str, int *pos, int toc)
 {
   int value = 0;
   while (str[*pos] != '\0' && str[*pos] != toc) {
@@ -142,85 +142,179 @@ scan_chr(char *str, int *pos, int toc)
  *                (MS Kermit uses any choice when there are multiple)
  */
 
+typedef struct {
+  /* position */
+  int row;
+  int col;
+  int page;
+  /* current rendition */
+  int Srend;                    /* raw rendition information */
+  int reverse;
+  int blinking;
+  int underline;
+  int bold;
+  /* attributes */
+  int Satt;                     /* raw attribute information */
+  int selective_erase;
+  /* flags */
+  int Sflag;                    /* raw flag-information */
+  int aw_pending;
+  int ss3_pending;
+  int ss2_pending;
+  int origin_mode;
+  /* character sets */
+  int gl;
+  int gr;
+  int Scss;
+  int cs_sizes[4];
+  const char *cs_names[4];
+} DECCIR_REPORT;
+
+static int
+parse_DECCIR(const char *input, DECCIR_REPORT * output)
+{
+  int valid = 1;
+  int pos = 3;                  /* skip "1$u" */
+  int n;
+
+  memset(output, 0, sizeof(*output));
+
+  /* *INDENT-EQLS* */
+  output->row = scanto(input, &pos, ';');
+  output->col = scanto(input, &pos, ';');
+  output->page = scanto(input, &pos, ';');
+
+  /* *INDENT-EQLS* */
+  output->Srend = scan_chr(input, &pos, ';');
+  if (output->Srend & 0x40) {
+    output->reverse = ((output->Srend & 0x08) != 0);
+    output->blinking = ((output->Srend & 0x04) != 0);
+    output->underline = ((output->Srend & 0x02) != 0);
+    output->bold  = ((output->Srend & 0x01) != 0);
+  }
+
+  output->Satt = scan_chr(input, &pos, ';');
+  if (output->Satt & 0x40) {
+    output->selective_erase = ((output->Satt & 1) != 0);
+  }
+
+  /* *INDENT-EQLS* */
+  output->Sflag = scan_chr(input, &pos, ';');
+  if (output->Sflag & 0x40) {
+    output->aw_pending = ((output->Sflag & 0x08) != 0);
+    output->ss3_pending = ((output->Sflag & 0x04) != 0);
+    output->ss2_pending = ((output->Sflag & 0x02) != 0);
+    output->origin_mode = ((output->Sflag & 0x01) != 0);
+  }
+
+  output->gl = scanto(input, &pos, ';');
+  output->gr = scanto(input, &pos, ';');
+
+  output->Scss = scan_chr(input, &pos, ';');
+  if (output->Scss & 0x40) {
+    output->cs_sizes[3] = (output->Scss & 0x08) ? 96 : 94;
+    output->cs_sizes[2] = (output->Scss & 0x04) ? 96 : 94;
+    output->cs_sizes[1] = (output->Scss & 0x02) ? 96 : 94;
+    output->cs_sizes[0] = (output->Scss & 0x01) ? 96 : 94;
+  }
+
+  n = 0;
+  while (input[pos] != '\0') {
+    output->cs_names[n++] = parse_Sdesig(input, &pos);
+    if (n >= 4)
+      break;
+  }
+
+  return valid;
+}
+
+static int
+read_DECCIR(DECCIR_REPORT * output)
+{
+  char *report;
+  int Ps = 1;
+
+  do_csi("%d$w", Ps);
+  report = get_reply();
+  if ((report = skip_dcs(report)) != 0
+      && strip_terminator(report)
+      && *report == Ps + '0'
+      && !strncmp(report + 1, "$u", (size_t) 2)) {
+    return parse_DECCIR(report, output);
+  } else {
+    return 0;
+  }
+}
+
 #define show_DECCIR_flag(value, mask, string) \
   if (value & mask) { value &= ~mask; show_result(string); }
 
 static void
 show_DECCIR(char *report)
 {
-  int Pr, Pc, Pp, Srend, Satt, Sflag, Pgl, Pgr, Scss;
-  int pos = 3;                  /* skip "1$u" */
+  int row;
   int n;
+  DECCIR_REPORT data;
 
-  Pr = scanto(report, &pos, ';');
-  Pc = scanto(report, &pos, ';');
-  Pp = scanto(report, &pos, ';');
+  parse_DECCIR(report, &data);
+
   vt_move(5, 10);
-  show_result("Cursor (%d,%d), page %d", Pr, Pc, Pp);
+  show_result("Cursor (%d,%d), page %d", data.row, data.col, data.page);
 
-  Srend = scan_chr(report, &pos, ';');
   vt_move(6, 10);
-  if (Srend & 0x40) {
-    show_DECCIR_flag(Srend, 0x40, "Rendition:");
-    if (Srend == 0)
+  if ((data.Srend & 0x4f) == data.Srend) {
+    printf("Rendition:");
+    if (data.Srend == 0) {
       show_result(" normal");
-    show_DECCIR_flag(Srend, 0x08, " reverse");
-    show_DECCIR_flag(Srend, 0x04, " blinking");
-    show_DECCIR_flag(Srend, 0x02, " underline");
-    show_DECCIR_flag(Srend, 0x01, " bold");
+    } else {
+      printf("%s", data.reverse ? " reverse" : "");
+      printf("%s", data.blinking ? " blinking" : "");
+      printf("%s", data.underline ? " underline" : "");
+      printf("%s", data.bold ? " bold" : "");
+    }
+  } else {
+    show_result(" -> unknown rendition (0x%x)", data.Srend);
   }
-  if (Srend)
-    show_result(" -> unknown rendition (0x%x)", Srend);
 
-  Satt = scan_chr(report, &pos, ';');
   vt_move(7, 10);
-  switch (Satt) {
-  case 0x40:
-    show_result("Selective erase: off");
-    break;
-  case 0x41:
-    show_result("Selective erase: ON");
-    break;
-  default:
-    show_result("Selective erase: unknown (0x%x)", Satt);
+  if ((data.Satt & 0x4f) == data.Satt) {
+    show_result("Selective erase: %s", data.selective_erase ? "ON" : "off");
+  } else {
+    show_result(" -> unknown attribute (0x%x)", data.Satt);
   }
 
-  Sflag = scan_chr(report, &pos, ';');
   vt_move(8, 10);
-  if (Sflag & 0x40) {
-    show_DECCIR_flag(Sflag, 0x40, "Flags:");
-    show_DECCIR_flag(Sflag, 0x08, " autowrap pending");
-    show_DECCIR_flag(Sflag, 0x04, " SS3 pending");
-    show_DECCIR_flag(Sflag, 0x02, " SS2 pending");
-    show_DECCIR_flag(Sflag, 0x01, " origin-mode on");
+  if ((data.Sflag & 0x4f) == data.Sflag) {
+    printf("Flags:");
+    printf("%s", data.aw_pending ? " autowrap pending" : "");
+    printf("%s", data.ss3_pending ? " SS3 pending" : "");
+    printf("%s", data.ss2_pending ? " SS2 pending" : "");
+    printf("%s", data.origin_mode ? " origin-mode on" : "");
   } else {
-    show_result(" -> unknown flag (0x%x)", Sflag);
+    show_result(" -> unknown flag (0x%x)", data.Sflag);
   }
 
-  Pgl = scanto(report, &pos, ';');
-  Pgr = scanto(report, &pos, ';');
   vt_move(9, 10);
-  show_result("Char set in GL: G%d, Char set in GR: G%d", Pgl, Pgr);
+  show_result("Char set in GL: G%d, Char set in GR: G%d", data.gl, data.gr);
 
-  Scss = scan_chr(report, &pos, ';');
   vt_move(10, 10);
-  if (Scss & 0x40) {
-    show_DECCIR_flag(Scss, 0x40, "Char set sizes:");
-    show_DECCIR_flag(Scss, 0x08, " G3 is 96 char");
-    show_DECCIR_flag(Scss, 0x04, " G2 is 96 char");
-    show_DECCIR_flag(Scss, 0x02, " G1 is 96 char");
-    show_DECCIR_flag(Scss, 0x01, " G0 is 96 char");   /* VT420 manual says this cannot happen */
+  if ((data.Scss & 0x4f) == data.Scss) {
+    printf("Char set sizes:");
+    for (n = 3; n >= 0; n--) {
+      printf(" G%d(%d)", n, data.cs_sizes[n]);
+    }
   } else {
-    show_result(" -> unknown char set size (0x%x)", Scss);
+    show_result(" -> unknown char set size (0x%x)", data.Scss);
   }
 
-  n = 11;
-  vt_move(n, 10);
+  row = 11;
+  vt_move(row, 10);
   show_result("Character set idents for G0...G3: ");
   println("");
-  while (report[pos] != '\0') {
-    const char *result = parse_Sdesig(report, &pos);
-    show_result("            %s\n", result);
+  for (n = 0; n < 4; ++n) {
+    show_result("            %s\n", (data.cs_names[n]
+                                     ? data.cs_names[n]
+                                     : "?"));
     println("");
   }
 }
@@ -256,6 +350,7 @@ int
 any_decrqpsr(MENU_ARGS, int Ps)
 {
   char *report;
+  int row;
 
   vt_move(1, 1);
   printf("Testing DECRQPSR: %s\n", the_title);
@@ -263,10 +358,10 @@ any_decrqpsr(MENU_ARGS, int Ps)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
+  vt_move(row = 3, 10);
   do_csi("%d$w", Ps);
   report = get_reply();
-  vt_move(3, 10);
-  chrprint(report);
+  chrprint2(report, row, 1);
   if ((report = skip_dcs(report)) != 0) {
     if (strip_terminator(report)
         && *report == Ps + '0'
@@ -304,6 +399,286 @@ tst_DECTABSR(MENU_ARGS)
   return any_decrqpsr(PASS_ARGS, 2);
 }
 
+/*
+ * The restore should move the cursor to 2,1; the relative move back to the
+ * test-grid demonstrates that.
+ */
+static void
+tst_restore_cursor(const char *old_mode, int row, int col)
+{
+  print_str(old_mode);
+  fflush(stdout);   /* ensure terminal is updated */
+  if (row > 2)
+    cud(row - 2);
+  if (col > 1)
+    cuf(col - 1);
+}
+
+static int
+tst_DECRSPS_cursor(MENU_ARGS)
+{
+  char *old_mode;
+  char *s;
+  DECCIR_REPORT actual;
+  int item;
+  int row, col;
+  int len;
+  int j, k;
+  int tries, fails;
+  char temp[80];
+
+  vt_move(1, 1);
+  printf("Testing %s\n", the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  decrqpsr(1);
+  old_mode = strdup(instr());
+
+  if ((s = strchr(old_mode, 'u')) != 0) {
+    println("");
+    println("Position/rendition:");
+    *s = 't';
+
+    for (item = 0; item < 16; ++item) {
+      cup(row = item + 4, col = 10);
+      sprintf(temp, "rendition[%2d]: ", item);
+      len = print_str(temp);
+      if (item == 0) {
+        len += print_str(" none");
+      } else {
+        if (item & 8) {
+          len += print_chr(' ');
+          sgr("7");
+          len += print_str("reverse");
+        }
+        if (item & 4) {
+          len += print_chr(' ');
+          sgr("5");
+          len += print_str("blinking");
+        }
+        if (item & 2) {
+          len += print_chr(' ');
+          sgr("4");
+          len += print_str("underline");
+        }
+        if (item & 1) {
+          len += print_chr(' ');
+          sgr("1");
+          len += print_str("bold");
+        }
+      }
+      if (read_DECCIR(&actual)) {
+        tst_restore_cursor(old_mode, row, col + len);
+        if (actual.Srend != (0x40 | item)) {
+          printf(" (rendition?)");
+        } else if (actual.row != row) {
+          printf(" (row?)");
+        } else if (actual.col != (col + len)) {
+          printf(" (col?)");
+        } else {
+          printf(" (OK)");
+        }
+      } else {
+        tst_restore_cursor(old_mode, row, col + len);
+        printf(" (N/A)");
+      }
+    }
+
+    cup(max_lines - 1, 1);
+    restore_ttymodes();
+    holdit();
+
+    set_tty_raw(TRUE);
+    set_tty_echo(FALSE);
+
+    vt_move(1, 1);
+    printf("Testing %s\n", the_title);
+    ed(0);
+    println("");
+    println("Flags:");
+
+    len = 42;
+    vt_move(row = 4, col = 10);
+    printf("%-*s", len, "Selective erase, should be blank:");
+    tst_restore_cursor(old_mode, row, col + len);
+    printf("XXXXXX");
+    vt_move(row, col + len);
+    decsel(0);
+
+    vt_move(++row, col);
+    printf("%-*s", len, "Selective erase, should not be blank:");
+    vt_move(row, col + len);
+    decsca(1);
+    printf("XXXXXX");
+    vt_move(row, col + len);
+    decsel(0);
+
+    fails = 0;
+    tries = 0;
+    for (j = ++row; j <= max_lines; ++j) {
+      cup(j, min_cols - 1);
+      for (k = 0; k < 4; k++) {
+        print_chr('0' + k);
+        fflush(stdout);
+        if (read_DECCIR(&actual)) {
+          tries++;
+          if (actual.aw_pending ^ (k == 1))
+            fails += 1;
+        }
+        if (j >= max_lines && k > 0)
+          break;
+      }
+    }
+    vt_move(row, col);
+    if (fails) {
+      printf("Autowrap-pending: failed %d of %d tries", fails, tries);
+    } else {
+      printf("Autowrap-pending: OK");
+    }
+    fflush(stdout);
+
+    /* FIXME demo flags (ss3, ss2, origin) */
+    /* FIXME demo charset-changes */
+
+    print_str(old_mode);  /* restore original settings */
+    free(old_mode);
+  }
+
+  restore_ttymodes();
+  vt_move(max_lines - 1, 1);
+  return MENU_HOLD;
+}
+
+static void
+tabstop_ruler(const char *tabsr, int row, int col)
+{
+  int valid = 1;
+  int n;
+  int tabstops = 0;
+  char *expect = malloc(min_cols + 1);
+  const char *suffix;
+  const char *s;
+
+  vt_move(row, col);
+  if (expect != 0) {
+    for (n = 0; n < min_cols; ++n) {
+      expect[n] = '-';
+      if (((n + 1) % 10) == 0) {
+        expect[n] = (((n + 1) / 10) % 10) + '0';
+      } else if (((n + 1) % 5) == 0) {
+        expect[n] = '+';
+      }
+    }
+    expect[min_cols] = '\0';
+
+    if (!strncmp(tabsr, "\033P", 2)) {
+      suffix = "\033\\";
+      s = tabsr + 2;
+    } else if ((unsigned char) *tabsr == 0x90) {
+      suffix = "\234";
+      s = tabsr + 1;
+    } else {
+      suffix = 0;
+      s = 0;
+    }
+
+    if (s != 0 && !strncmp(s, "2$u", 2)) {
+      int value = 0;
+      s += 2;
+      while (*++s != '\0') {
+        if (*s >= '0' && *s <= '9') {
+          value = (value * 10) + (*s - '0');
+        } else if (*s == '/') {
+          if (value-- > 0 && value < min_cols) {
+            if (expect[value] != '*') {
+              expect[value] = '*';
+              ++tabstops;
+              value = 0;
+            } else {
+              valid = 0;
+              break;
+            }
+          }
+        } else {
+          if (strcmp(s, suffix))
+            valid = 0;
+          break;
+        }
+      }
+    } else {
+      valid = 0;
+    }
+  } else {
+    valid = 0;
+  }
+
+  if (valid) {
+    println(expect);
+    print_chr('*');
+    for (n = 1; n < tabstops; ++n) {
+      print_chr('\t');
+      print_chr('*');
+    }
+  } else {
+    println("Invalid:");
+    chrprint2(tabsr, row, col);
+  }
+  free(expect);
+}
+
+static int
+tst_DECRSPS_tabs(MENU_ARGS)
+{
+  int row, col, stop;
+  char *old_tabs;
+  char *new_tabs;
+  char *s;
+
+  vt_move(1, 1);
+  printf("Testing %s\n", the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  println("");
+  println("Original:");
+  decrqpsr(2);
+  old_tabs = strdup(instr());
+  tabstop_ruler(old_tabs, 4, 1);
+
+  vt_move(row = 7, 1);
+  println("Modified:");
+  ++row;
+  for (stop = 7; stop >= 4; --stop) {
+    tbc(3);     /* clear existing tab-stops */
+    for (col = 0; col < min_cols; col += stop) {
+      cup(row, 1 + col);
+      hts();
+    }
+    decrqpsr(2);
+    new_tabs = instr();
+    tabstop_ruler(new_tabs, row, 1);
+    row += 2;
+  }
+
+  println("");
+  println("Restore:");
+  if ((s = strchr(old_tabs, 'u')) != 0)
+    *s = 't';
+  print_str(old_tabs);  /* restore original tab-stops */
+  free(old_tabs);
+
+  decrqpsr(2);
+  new_tabs = instr();
+  tabstop_ruler(new_tabs, row + 2, 1);
+
+  restore_ttymodes();
+  vt_move(max_lines - 1, 1);
+  return MENU_HOLD;
+}
+
 /* Test Window Report - VT340, VT420 */
 static int
 tst_DECRQDE(MENU_ARGS)
@@ -311,6 +686,7 @@ tst_DECRQDE(MENU_ARGS)
   char *report;
   char chr;
   int Ph, Pw, Pml, Pmt, Pmp;
+  int row, col;
 
   vt_move(1, 1);
   println("Testing DECRQDE/DECRPDE Window Report");
@@ -320,8 +696,8 @@ tst_DECRQDE(MENU_ARGS)
 
   do_csi("\"v");
   report = get_reply();
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
 
   if ((report = skip_csi(report)) != 0
       && sscanf(report, "%d;%d;%d;%d;%d\"%c",
@@ -343,6 +719,7 @@ tst_DECRQDE(MENU_ARGS)
 static int
 tst_DECRQUPSS(MENU_ARGS)
 {
+  int row, col;
   char *report;
   const char *show;
 
@@ -353,8 +730,8 @@ tst_DECRQUPSS(MENU_ARGS)
 
   do_csi("&u");
   report = get_reply();
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
   if ((report = skip_dcs(report)) != 0
       && strip_terminator(report)) {
     if (!strcmp(report, "0!u%5"))
@@ -377,6 +754,7 @@ tst_DECRQUPSS(MENU_ARGS)
 static int
 tst_DECRQTSR(MENU_ARGS)
 {
+  int row, col;
   char *report;
   const char *show;
 
@@ -389,8 +767,8 @@ tst_DECRQTSR(MENU_ARGS)
   do_csi("1$u");
   report = get_reply();
 
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
 
   if ((report = skip_dcs(report)) != 0
       && strip_terminator(report)
@@ -452,7 +830,7 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
     printf("\n     %4d: %-10s", table[j].mode, table[j].name);
     if (LOG_ENABLED)
       fprintf(log_fp, "Testing %s\n", table[j].name);
-    chrprint(report);
+    chrprint2(report, row + 1, 22);
     if ((report = skip_csi(report)) != 0
         && sscanf(report, (private
                            ? "?%d;%d$%c"
@@ -612,12 +990,13 @@ tst_DECRPM(MENU_ARGS)
 /******************************************************************************/
 
 /*
- * FIXME: The VT420 manual says that a valid response begins "DCS 0 $ r",
- * however I see "DCS 1 $ r" on a real VT420, consistently.
+ * The VT420 manual says that a valid response begins "DCS 0 $ r",
+ * however I see "DCS 1 $ r" on a real VT420, consistently --TD (1996/09/11)
  */
 int
 any_decrqss2(const char *msg, const char *func, const char *expected)
 {
+  int row, col;
   char *report;
   const char *show;
   char buffer[80];
@@ -634,8 +1013,8 @@ any_decrqss2(const char *msg, const char *func, const char *expected)
   reset_decstbm();
   reset_decslrm();
 
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
   switch (parse_decrqss(report, func)) {
   case 1:
     if (expected && strcmp(expected, report)) {
@@ -813,7 +1192,8 @@ tst_vt320_report_presentation(MENU_ARGS)
       { "Cursor Information Report (DECCIR)",                tst_DECCIR },
       { "Tab Stop Report (DECTABSR)",                        tst_DECTABSR },
       { "Request Mode (DECRQM)/Report Mode (DECRPM)",        tst_DECRPM },
-      { "Restore Presentation State (DECRSPS)",              not_impl },
+      { "Restore Presentation State (DECRSPS): cursor",      tst_DECRSPS_cursor },
+      { "Restore Presentation State (DECRSPS): tabstops",    tst_DECRSPS_tabs },
       { "Status-String Report (DECRQSS)",                    tst_vt320_DECRQSS },
       { "",                                                  0 }
   };
