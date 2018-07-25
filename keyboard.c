@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.35 2014/01/16 20:53:07 tom Exp $ */
+/* $Id: keyboard.c,v 1.36 2018/07/22 21:57:39 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -581,6 +581,7 @@ static int
 tst_AnswerBack(MENU_ARGS)
 {
   char *abmstr;
+  int row, col;
 
   set_tty_crmod(TRUE);
   vt_clear(2);
@@ -598,12 +599,12 @@ tst_AnswerBack(MENU_ARGS)
 
   set_tty_crmod(FALSE);
   do {
-    vt_move(17, 1);
+    vt_move(row = 17, col = 1);
     inflush();
     abmstr = get_reply();
-    vt_move(17, 1);
+    vt_move(row, col);
     vt_el(0);
-    chrprint(abmstr);
+    chrprint2(abmstr, row, col);
   } while (strcmp(abmstr, "\r"));
   restore_ttymodes();
   return MENU_NOHOLD;
@@ -655,6 +656,7 @@ tst_ControlKeys(MENU_ARGS)
 {
   int i, okflag;
   int kbdc;
+  int row, col;
   char temp[80];
   char *kbds = strcpy(temp, " ");
   /* *INDENT-OFF* */
@@ -714,9 +716,9 @@ tst_ControlKeys(MENU_ARGS)
            "Finish with DEL (also called DELETE or RUB OUT), or wait 1 minute.");
   set_tty_raw(TRUE);
   do {
-    vt_move(max_lines - 1, 1);
+    vt_move(row = max_lines - 1, col = 1);
     kbdc = inchar();
-    vt_move(max_lines - 1, 1);
+    vt_move(row, col);
     vt_el(0);
     if (kbdc < 32) {
       printf("  %s", ckeytab[kbdc].csymbol);
@@ -724,7 +726,7 @@ tst_ControlKeys(MENU_ARGS)
         fprintf(log_fp, "Key: %s\n", ckeytab[kbdc].csymbol);
     } else {
       sprintf(kbds, "%c", kbdc);
-      chrprint(kbds);
+      chrprint2(kbds, row, col);
       printf("%s", " -- not a CTRL key");
     }
     if (kbdc < 32)
@@ -753,6 +755,7 @@ tst_CursorKeys(MENU_ARGS)
 {
   int i;
   int ckeymode;
+  int row, col;
   char *curkeystr;
   VTLEVEL save;
 
@@ -791,10 +794,10 @@ tst_CursorKeys(MENU_ARGS)
       curkeystr = instr();
       set_level(1);   /* ANSI mode */
 
-      vt_move(max_lines - 1, 1);
+      vt_move(row = max_lines - 1, col = 1);
       vt_el(0);
-      vt_move(max_lines - 1, 1);
-      chrprint(curkeystr);
+      vt_move(row, col);
+      chrprint2(curkeystr, row, col);
 
       if (!strcmp(curkeystr, "\t"))
         break;
@@ -825,6 +828,7 @@ tst_EditingKeypad(MENU_ARGS)
 {
   int i;
   int fkeymode;
+  int row, col;
   char *fnkeystr;
   VTLEVEL save;
 
@@ -868,10 +872,10 @@ tst_EditingKeypad(MENU_ARGS)
 
       fnkeystr = instr();
 
-      vt_move(max_lines - 1, 1);
+      vt_move(row = max_lines - 1, col = 1);
       vt_el(0);
-      vt_move(max_lines - 1, 1);
-      chrprint(fnkeystr);
+      vt_move(row, col);
+      chrprint2(fnkeystr, row, col);
 
       if (!strcmp(fnkeystr, "\t"))
         break;
@@ -901,6 +905,7 @@ tst_FunctionKeys(MENU_ARGS)
 {
   int i;
   int fkeymode;
+  int row, col;
   char *fnkeystr;
   VTLEVEL save;
 
@@ -944,10 +949,10 @@ tst_FunctionKeys(MENU_ARGS)
 
       fnkeystr = instr();
 
-      vt_move(max_lines - 1, 1);
+      vt_move(row = max_lines - 1, col = 1);
       vt_el(0);
-      vt_move(max_lines - 1, 1);
-      chrprint(fnkeystr);
+      vt_move(row, col);
+      chrprint2(fnkeystr, row, col);
 
       if (!strcmp(fnkeystr, "\t"))
         break;
@@ -977,6 +982,7 @@ tst_NumericKeypad(MENU_ARGS)
 {
   int i;
   int fkeymode;
+  int row, col;
   char *fnkeystr;
   VTLEVEL save;
 
@@ -1019,10 +1025,10 @@ tst_NumericKeypad(MENU_ARGS)
       fnkeystr = instr();
       set_level(1);   /* ANSI mode */
 
-      vt_move(max_lines - 1, 1);
+      vt_move(row = max_lines - 1, col = 1);
       vt_el(0);
-      vt_move(max_lines - 1, 1);
-      chrprint(fnkeystr);
+      vt_move(row, col);
+      chrprint2(fnkeystr, row, col);
 
       if (!strcmp(fnkeystr, "\t"))
         break;
@@ -1113,6 +1119,7 @@ tst_keyboard_layout(char *scs_params)
 {
   int i;
   int kbdc;
+  int row, col;
   char temp[80];
   char *kbds = strcpy(temp, " ");
 
@@ -1130,9 +1137,9 @@ tst_keyboard_layout(char *scs_params)
   inflush();
   printf("Press each key, both shifted and unshifted. Finish with RETURN:");
   do {          /* while (kbdc != 13) */
-    vt_move(max_lines - 1, 1);
+    vt_move(row = max_lines - 1, col = 1);
     kbdc = inchar();
-    vt_move(max_lines - 1, 1);
+    vt_move(row, col);
     vt_el(0);
     if (scs_params != 0 && kbdc > ' ' && kbdc < '\177') {
       vt_hilite(TRUE);
@@ -1144,7 +1151,7 @@ tst_keyboard_layout(char *scs_params)
       vt_hilite(FALSE);
     } else {
       sprintf(kbds, "%c", kbdc);
-      chrprint(kbds);
+      chrprint2(kbds, row, col);
     }
     for (i = 0; keytab[i].c != '\0'; i++) {
       if (keytab[i].c == kbdc) {

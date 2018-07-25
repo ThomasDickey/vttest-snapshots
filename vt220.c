@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.23 2011/12/06 01:56:27 tom Exp $ */
+/* $Id: vt220.c,v 1.24 2018/07/22 22:36:21 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -11,6 +11,7 @@
 int
 any_DSR(MENU_ARGS, const char *text, void (*explain) (char *report))
 {
+  int row, col;
   char *report;
   unsigned pmode = (unsigned) ((*text == '?') ? 1 : 0);
 
@@ -22,8 +23,8 @@ any_DSR(MENU_ARGS, const char *text, void (*explain) (char *report))
 
   do_csi("%s", text);
   report = get_reply();
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
   if ((report = skip_csi(report)) != 0
       && strlen(report) > (1 + pmode)
       && (!pmode || (*report++ == '?'))) {
@@ -175,6 +176,8 @@ tst_S8C1T(MENU_ARGS)
   char *report;
   int flag = input_8bits;
   int pass;
+  int row, col;
+  char temp[80];
 
   vt_move(1, 1);
   println(the_title);
@@ -192,9 +195,10 @@ tst_S8C1T(MENU_ARGS)
     cup(1, 1);
     dsr(6);
     report = instr();
-    vt_move(10 + pass * 3, 1);
-    printf("8-bit controls %s: ", STR_ENABLED(flag));
-    chrprint(report);
+    vt_move(row = 10 + pass * 3, col = 1);
+    sprintf(temp, "8-bit controls %s:", STR_ENABLED(flag));
+    printf("%s", temp);
+    chrprint2(report, row, col + (int) strlen(temp));
     report_ok("1;1R", report);
   }
 
@@ -297,6 +301,7 @@ static int
 tst_DECUDK(MENU_ARGS)
 {
   int key;
+  int row, col;
   /* *INDENT-OFF* */
   static struct {
     int code;
@@ -347,9 +352,9 @@ tst_DECUDK(MENU_ARGS)
     char *report = instr();
     if (*report == 'q')
       break;
-    vt_move(5, 10);
+    vt_move(row = 5, col = 10);
     vt_clear(0);
-    chrprint(report);
+    chrprint2(report, row, col);
   }
 
   do_dcs("0");  /* clear all keys */

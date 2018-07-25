@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.165 2018/07/02 19:10:12 tom Exp $ */
+/* $Id: vt420.c,v 1.166 2018/07/22 23:35:06 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -560,7 +560,7 @@ show_keypress(int row, int col)
   while (strcmp(report = instr(), last)) {
     vt_move(row, col);
     vt_clear(0);
-    chrprint(report);
+    chrprint2(report, row, col);
     strcpy(last, report);
   }
 }
@@ -653,6 +653,7 @@ tst_DECBI(MENU_ARGS)
 static int
 tst_DECBKM(MENU_ARGS)
 {
+  int row, col;
   char *report;
 
   vt_move(1, 1);
@@ -664,18 +665,18 @@ tst_DECBKM(MENU_ARGS)
   reset_inchar();
   decbkm(TRUE);
   println("Press the backspace key");
-  vt_move(3, 10);
+  vt_move(row = 3, col = 10);
   report = instr();
-  chrprint(report);
+  chrprint2(report, row, col);
   show_result(!strcmp(report, "\010") ? SHOW_SUCCESS : SHOW_FAILURE);
 
   reset_inchar();
   vt_move(5, 1);
   decbkm(FALSE);
   println("Press the backspace key again");
-  vt_move(6, 10);
+  vt_move(row = 6, col = 10);
   report = instr();
-  chrprint(report);
+  chrprint2(report, row, col);
   show_result(!strcmp(report, "\177") ? SHOW_SUCCESS : SHOW_FAILURE);
 
   vt_move(max_lines - 1, 1);
@@ -742,6 +743,7 @@ tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi, int expected)
   char *after;
   int pos = 0;
   int actual;
+  int row, col;
 
   vt_move(1, 1);
   printf(fmt_DECCKSR, the_title);
@@ -751,8 +753,8 @@ tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi, int expected)
 
   do_csi("%s", the_csi);
   report = get_reply();
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
   if ((report = skip_dcs(report)) != 0
       && strip_terminator(report)
       && strlen(report) > 1
@@ -2180,18 +2182,23 @@ static int
 tst_DECSNLS(MENU_ARGS)
 {
   int rows;
+  int row, col;
+  char temp[80];
 
-  vt_move(1, 1);
+  vt_move(row = 1, col = 1);
   println("Testing Select Number of Lines per Screen (DECSNLS)");
+  println("");
 
   for (rows = 48; rows >= 24; rows -= 12) {
     set_tty_raw(TRUE);
     set_tty_echo(FALSE);
 
-    printf("%d Lines/Screen: ", rows);
+    row += 2;
+    sprintf(temp, "%d Lines/Screen:", rows);
+    fputs(temp, stdout);
     decsnls(rows);
     decrqss("*|");
-    chrprint(instr());
+    chrprint2(instr(), row, (int)strlen(temp));
     println("");
 
     restore_ttymodes();
@@ -2236,6 +2243,7 @@ tst_DSR_data_ok(MENU_ARGS)
 static int
 tst_DSR_macrospace(MENU_ARGS)
 {
+  int row, col;
   char *report;
   const char *show;
 
@@ -2247,8 +2255,8 @@ tst_DSR_macrospace(MENU_ARGS)
 
   do_csi("?62n");
   report = instr();
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
   if ((report = skip_csi(report)) != 0
       && (report = skip_digits(report)) != 0
       && !strcmp(report, "*{")) {

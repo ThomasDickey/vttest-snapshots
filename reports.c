@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.35 2013/09/15 14:25:38 tom Exp $ */
+/* $Id: reports.c,v 1.36 2018/07/22 22:30:45 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -123,6 +123,16 @@ scan_DA(const char *str, int *pos)
   return value;
 }
 
+static void
+report_is(const char *report, int row, int col)
+{
+  const char *tag = "Report is:";
+  vt_move(row, col);
+  vt_el(0);
+  printf(tag);
+  chrprint2(report, row, col + (int) strlen(tag));
+}
+
 /******************************************************************************/
 
 static int
@@ -170,10 +180,7 @@ tst_DA(MENU_ARGS)
   da();
   report = get_reply();
 
-  vt_move(3, 1);
-  vt_el(0);
-  printf("Report is: ");
-  chrprint(report);
+  report_is(report, 3, 1);
 
   found = FALSE;
   if ((cmp = skip_csi_2(report)) != 0) {
@@ -260,6 +267,7 @@ tst_DA(MENU_ARGS)
 static int
 tst_DA_2(MENU_ARGS)
 {
+  int row, col;
   /* *INDENT-OFF* */
   static const struct {
     int Pp;
@@ -289,8 +297,8 @@ tst_DA_2(MENU_ARGS)
   do_csi(">c"); /* or "CSI > 0 c" */
   report = get_reply();
 
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
   if ((report = skip_csi(report)) != 0) {
     if (sscanf(report, ">%d;%d;%d%c", &Pp, &Pv, &Pc, &ch) == 4
         && ch == 'c') {
@@ -334,6 +342,7 @@ tst_DA_2(MENU_ARGS)
 static int
 tst_DA_3(MENU_ARGS)
 {
+  int row, col;
   char *report;
   const char *show;
 
@@ -344,8 +353,8 @@ tst_DA_3(MENU_ARGS)
   do_csi("=c"); /* or "CSI = 0 c" */
   report = get_reply();
 
-  vt_move(3, 10);
-  chrprint(report);
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
   if ((report = skip_dcs(report)) != 0
       && strip_terminator(report) != 0
       && *report++ == '!'
@@ -381,10 +390,7 @@ tst_DECREQTPARM(MENU_ARGS)
   decreqtparm(0);
   report = get_reply();
 
-  vt_move(5, 1);
-  vt_el(0);
-  printf("Report is: ");
-  chrprint(report);
+  report_is(report, 5, 1);
 
   if ((cmp = skip_csi(report)) != 0)
     report = cmp;
@@ -424,10 +430,7 @@ tst_DECREQTPARM(MENU_ARGS)
   decreqtparm(1);   /* Does the same as decreqtparm(0), reports "3" */
   report2 = get_reply();
 
-  vt_move(13, 1);
-  vt_el(0);
-  printf("Report is: ");
-  chrprint(report2);
+  report_is(report, 13, 1);
 
   if ((cmp = skip_csi(report2)) != 0)
     report2 = cmp;
@@ -453,6 +456,7 @@ tst_DSR(MENU_ARGS)
 {
   int found;
   int origin;
+  int row, col;
   char *report, *cmp;
 
   set_tty_raw(TRUE);
@@ -460,14 +464,11 @@ tst_DSR(MENU_ARGS)
   vt_move(1, 1);
   printf("Test of Device Status Report 5 (report terminal status).");
 
-  vt_move(2, 1);
+  vt_move(row = 2, col = 1);
   dsr(5);
   report = get_reply();
 
-  vt_move(2, 1);
-  vt_el(0);
-  printf("Report is: ");
-  chrprint(report);
+  report_is(report, row, col);
 
   if ((cmp = skip_csi(report)) != 0)
     found = !strcmp(cmp, "0n") || !strcmp(cmp, "3n");
@@ -487,14 +488,11 @@ tst_DSR(MENU_ARGS)
       sm("?6");
       decstbm(4, max_lines - 6);
     }
-    vt_move(5, 1);
+    vt_move(row = 5, col = 1);
     dsr(6);
     report = get_reply();
 
-    vt_move(5, 1);
-    vt_el(0);
-    printf("Report is: ");
-    chrprint(report);
+    report_is(report, row, col);
 
     if ((cmp = skip_csi(report)) != 0) {
       found = (!strcmp(cmp, "5;1R")
@@ -530,6 +528,7 @@ tst_DSR(MENU_ARGS)
 static int
 tst_ENQ(MENU_ARGS)
 {
+  int row, col;
   char *report;
 
   vt_move(5, 1);
@@ -546,8 +545,8 @@ tst_ENQ(MENU_ARGS)
   printf("%c", 5);  /* ENQ */
   report = get_reply();
 
-  vt_move(10, 1);
-  chrprint(report);
+  vt_move(row = 10, col = 1);
+  chrprint2(report, row, col);
 
   vt_move(12, 1);
 
@@ -558,6 +557,7 @@ tst_ENQ(MENU_ARGS)
 static int
 tst_NLM(MENU_ARGS)
 {
+  int row, col;
   char *report;
 
   vt_move(1, 1);
@@ -569,9 +569,9 @@ tst_NLM(MENU_ARGS)
   tprintf("NewLine mode set. Push the RETURN key: ");
   report = instr();
 
-  vt_move(4, 1);
+  vt_move(row = 4, col = 1);
   vt_el(0);
-  chrprint(report);
+  chrprint2(report, row, col);
 
   if (!strcmp(report, "\015\012"))
     show_result(" -- OK");
@@ -583,9 +583,9 @@ tst_NLM(MENU_ARGS)
   tprintf("NewLine mode reset. Push the RETURN key: ");
   report = instr();
 
-  vt_move(7, 1);
+  vt_move(row = 7, col = 1);
   vt_el(0);
-  chrprint(report);
+  chrprint2(report, row, col);
 
   if (!strcmp(report, "\015"))
     show_result(" -- OK");

@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.86 2012/05/06 19:09:13 tom Exp $ */
+/* $Id: esc.c,v 1.88 2018/07/24 21:18:11 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -278,7 +278,7 @@ do_osc(const char *fmt,...)
   }
 }
 
-void
+int
 print_chr(int c)
 {
   printf("%c", c);
@@ -288,11 +288,13 @@ print_chr(int c)
     put_char(log_fp, c);
     fputs("\n", log_fp);
   }
+  return 1;
 }
 
-void
+int
 print_str(const char *s)
 {
+  int result = (int) strlen(s);
   printf("%s", s);
 
   if (LOG_ENABLED) {
@@ -302,6 +304,7 @@ print_str(const char *s)
     }
     fputs("\n", log_fp);
   }
+  return result;
 }
 
 void
@@ -667,6 +670,12 @@ void
 decrqlp(int mode)               /* DECterm Request Locator Position */
 {
   do_csi("%d'|", mode);
+}
+
+void
+decrqpsr(int mode)              /* Request presentation report */
+{
+  do_csi("%d$w", mode);
 }
 
 void

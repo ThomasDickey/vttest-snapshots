@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.52 2012/04/04 09:22:09 tom Exp $ */
+/* $Id: xterm.c,v 1.53 2018/07/22 23:39:55 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -423,44 +423,44 @@ test_report_ops(MENU_ARGS)
   vt_move(row++, 1);
   println("Report icon label:");
   vt_move(row, col);
-  brc(20, 't'); /* report icon label */
+  brc(20, 't');
   report = instr();
   row = chrprint2(report, row, col);
 
   vt_move(row++, 1);
   println("Report window label:");
   vt_move(row, col);
-  brc(21, 't'); /* report window label */
+  brc(21, 't');
   report = instr();
   row = chrprint2(report, row, col);
 
   vt_move(row++, 1);
   println("Report size of window (chars):");
-  vt_move(row++, col);
-  brc(18, 't'); /* report window's text-size */
+  vt_move(row, col);
+  brc(18, 't');
   report = instr();
-  chrprint(report);
+  chrprint2(report, row++, col);
 
   vt_move(row++, 1);
   println("Report size of window (pixels):");
-  vt_move(row++, col);
-  brc(14, 't'); /* report window's pixel-size */
+  vt_move(row, col);
+  brc(14, 't');
   report = instr();
-  chrprint(report);
+  chrprint2(report, row++, col);
 
   vt_move(row++, 1);
   println("Report position of window (pixels):");
-  vt_move(row++, col);
-  brc(13, 't'); /* report window's pixel-size */
+  vt_move(row, col);
+  brc(13, 't');
   report = instr();
-  chrprint(report);
+  chrprint2(report, row++, col);
 
   vt_move(row++, 1);
   println("Report state of window (normal/iconified):");
   vt_move(row, col);
-  brc(11, 't'); /* report window's pixel-size */
+  brc(11, 't');
   report = instr();
-  chrprint(report);
+  chrprint2(report, row, col);
 
   vt_move(20, 1);
   restore_ttymodes();
