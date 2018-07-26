@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.38 2014/03/05 23:13:52 tom Exp $ */
+/* $Id: color.c,v 1.39 2018/07/26 00:21:02 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -37,13 +37,13 @@ static void
 c_sgr(const char *s)
 {
   char temp[80];
-  char *t;
   int reset = FALSE;
 
   (void) strcpy(temp, s);
   if (*temp == ';' || *temp == 0) {
     reset = TRUE;
   } else {
+    char *t;
     for (t = temp; *t != 0; t++) {
       if (((t[0] == '0')
            && (t == temp || t[-1] == ';')
@@ -354,8 +354,6 @@ static void
 fancy_bce_erases(BOX *box)
 {
   int i;
-  int first;
-  int limit;
 
   cup(box->top - 1, min_cols / 2);
   ed(1);        /* clear from home to cursor */
@@ -368,6 +366,9 @@ fancy_bce_erases(BOX *box)
   el(1);        /* clear to beginning of line */
 
   for (i = box->top; i <= box->bottom; i++) {
+    int first;
+    int limit;
+
     cup(i, box->left - 1);
     el(1);
     cup(i, box->right + 1);

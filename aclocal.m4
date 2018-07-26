@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.26 2018/07/02 10:56:02 tom Exp $
+dnl $Id: aclocal.m4,v 1.27 2018/07/26 00:15:19 tom Exp $
 dnl autoconf macros for vttest - T.E.Dickey
 dnl ---------------------------------------------------------------------------
 dnl Copyright:  1997-2015,2018 by Thomas E. Dickey
@@ -1070,6 +1070,14 @@ else
 fi
 AC_SUBST(GROFF_NOTE)
 AC_SUBST(NROFF_NOTE)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_PROG_LINT version: 3 updated: 2016/05/22 15:25:54
+dnl ------------
+AC_DEFUN([CF_PROG_LINT],
+[
+AC_CHECK_PROGS(LINT, lint cppcheck splint)
+AC_SUBST(LINT_OPTS)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_REMOVE_DEFINE version: 3 updated: 2010/01/09 11:05:50

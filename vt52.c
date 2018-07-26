@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.18 2018/07/22 23:44:24 tom Exp $ */
+/* $Id: vt52.c,v 1.19 2018/07/26 00:42:11 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -43,9 +43,7 @@ tst_vt52(MENU_ARGS)
   /* *INDENT-ON* */
 
   int i, j;
-  int row, col;
   char *response;
-  const char *temp;
   VTLEVEL save;
 
   save_level(&save);
@@ -181,6 +179,8 @@ tst_vt52(MENU_ARGS)
    * VT100 mode.
    */
   if (terminal_id() >= 200) {
+    int row, col;
+
     row = 8;
     set_level(0);   /* Reset ANSI (VT100) mode, Set VT52 mode  */
     println("Verify operating level after restoring ANSI mode");
@@ -208,6 +208,8 @@ tst_vt52(MENU_ARGS)
     }
 
     if (save.cur_level >= 2) {
+      const char *temp;
+
       vt_move(++row, 1);
       row = testing("S8C1T", row);
       s8c1t(1);

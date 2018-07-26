@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.24 2018/07/22 22:36:21 tom Exp $ */
+/* $Id: vt220.c,v 1.25 2018/07/26 00:39:55 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -173,10 +173,8 @@ show_UDK_Status(char *report)
 static int
 tst_S8C1T(MENU_ARGS)
 {
-  char *report;
   int flag = input_8bits;
   int pass;
-  int row, col;
   char temp[80];
 
   vt_move(1, 1);
@@ -190,6 +188,9 @@ tst_S8C1T(MENU_ARGS)
   set_tty_echo(FALSE);
 
   for (pass = 0; pass < 2; pass++) {
+    char *report;
+    int row, col;
+
     flag = !flag;
     s8c1t(flag);
     cup(1, 1);
@@ -301,7 +302,6 @@ static int
 tst_DECUDK(MENU_ARGS)
 {
   int key;
-  int row, col;
   /* *INDENT-OFF* */
   static struct {
     int code;
@@ -349,7 +349,9 @@ tst_DECUDK(MENU_ARGS)
   set_tty_echo(FALSE);
 
   for (;;) {
+    int row, col;
     char *report = instr();
+
     if (*report == 'q')
       break;
     vt_move(row = 5, col = 10);

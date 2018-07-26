@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.59 2014/01/16 20:50:17 tom Exp $ */
+/* $Id: charsets.c,v 1.60 2018/07/26 00:20:16 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -265,11 +265,11 @@ reset_scs(int g)
 static int
 reset_charset(MENU_ARGS)
 {
-  int n, m;
+  int n;
 
   decnrcm(national = FALSE);
   for (n = 0; n < 4; n++) {
-    m = sane_cs(cleanup ? 0 : n);
+    int m = sane_cs(cleanup ? 0 : n);
     if (m != current_Gx[n] || (m == 0)) {
       current_Gx[n] = m;
       do_scs(n);
@@ -677,13 +677,14 @@ tst_characters(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
-  int n;
-
   cleanup = 0;
   hilite_not11 = 1;
   toggle_hilite(PASS_ARGS);
   reset_charset(PASS_ARGS);   /* make the menu consistent */
+
   if (get_level() > 1 || input_8bits || output_8bits) {
+    int n;
+
     do {
       vt_clear(2);
       __(title(0), printf("Character-Set Tests"));

@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.166 2018/07/22 23:35:06 tom Exp $ */
+/* $Id: vt420.c,v 1.170 2018/07/26 00:41:17 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -8,11 +8,6 @@
 #include <draw.h>
 #include <esc.h>
 #include <ttymodes.h>
-
-typedef struct {
-  int mode;
-  char *name;
-} MODES;
 
 typedef enum {
   marNone = -1,
@@ -463,9 +458,9 @@ toggle_DECOM(MENU_ARGS)
 static void
 fill_screen(void)
 {
-  int y, x;
-
   if (do_colors) {
+    int y, x;
+
     set_colors(WHITE_ON_BLUE);
     for (y = 0; y < max_lines - 4; ++y) {
       cup(y + 1, 1);
@@ -990,10 +985,10 @@ tst_DECDC(MENU_ARGS)
       }
 
       slowly();
-      __(cup(row, col), putchar(mark));
+      __(cup(row, col), print_chr(mark));
       if (top > 1 || (lrmm_flag && lft > 1)) {
         __(cup(1, 1), decdc(1));  /* outside margins, should be ignored */
-        __(cup(row, col), putchar(mark));
+        __(cup(row, col), print_chr(mark));
       }
       if (final_dc-- > left_col)
         __(cup(top, lft), decdc(1));
@@ -1012,11 +1007,8 @@ tst_DECDC(MENU_ARGS)
   vt_move(last + 1, 1);
   vt_clear(0);
 
-  if (lrmm_flag)
-    tprintf("If your terminal supports DECDC, letters %c-%c are on column %d\n",
-            mark_1st, mark_2nd, real_col);
-  else
-    println("There should be a diagonal of letters from left near bottom to middle at top");
+  tprintf("If your terminal supports DECDC, letters %c-%c are on column %d\n",
+          mark_1st, mark_2nd, real_col);
   return MENU_HOLD;
 }
 
@@ -1275,12 +1267,12 @@ tst_ICH_DCH(MENU_ARGS)
       }
 
       slowly();
-      __(cup(row, col), putchar(mark));
+      __(cup(row, col), print_chr(mark));
       if (col < rgt) {
         cup(row, lft);
-        putchar('?');
+        print_chr('?');
         cup(row, lft);
-        ich(rgt - col - 1);
+        ich(rgt - col);
       }
     }
   }
@@ -1367,7 +1359,7 @@ tst_ICH_DCH(MENU_ARGS)
         }
       }
 
-      __(cup(row, col), putchar(mark));
+      __(cup(row, col), print_chr(mark));
       slowly();
       if (col < rgt)
         ech(rgt - col);
@@ -1862,10 +1854,10 @@ tst_DECIC(MENU_ARGS)
       }
 
       slowly();
-      __(cup(row, col), putchar(mark));
+      __(cup(row, col), print_chr(mark));
       if (!origin_mode && (top > 1 || (lrmm_flag && lft > 1))) {
         __(cup(1, 1), decic(1));  /* outside margins, should be ignored */
-        __(cup(row, col), putchar(mark));
+        __(cup(row, col), print_chr(mark));
       }
       if (final_ic++ <= last_col)
         __(cup(top, lft), decic(1));
@@ -1884,11 +1876,8 @@ tst_DECIC(MENU_ARGS)
   vt_move(last + 1, 1);
   vt_clear(0);
 
-  if (lrmm_flag)
-    tprintf("If your terminal supports DECIC, letters %c-%c are on column %d\n",
-            mark_1st, mark_2nd, real_col);
-  else
-    println("There should be a diagonal of letters from left near top to middle at bottom");
+  tprintf("If your terminal supports DECIC, letters %c-%c are on column %d\n",
+          mark_1st, mark_2nd, real_col);
   return MENU_HOLD;
 }
 
@@ -2177,7 +2166,6 @@ tst_DECSERA(MENU_ARGS)
   return MENU_HOLD;
 }
 
-/* FIXME: use DECRQSS to get reports */
 static int
 tst_DECSNLS(MENU_ARGS)
 {
@@ -2198,7 +2186,7 @@ tst_DECSNLS(MENU_ARGS)
     fputs(temp, stdout);
     decsnls(rows);
     decrqss("*|");
-    chrprint2(instr(), row, (int)strlen(temp));
+    chrprint2(instr(), row, (int) strlen(temp));
     println("");
 
     restore_ttymodes();

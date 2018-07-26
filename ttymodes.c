@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.22 2018/07/23 22:47:57 tom Exp $ */
+/* $Id: ttymodes.c,v 1.23 2018/07/26 00:38:24 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -166,11 +166,12 @@ close_tty(void)
 void
 init_ttymodes(int pn)
 {
-  int speed_code, n;
-
   dump_ttymodes("init_ttymodes", pn);
+
 #ifdef UNIX
   if (pn == 0) {
+    int speed_code, n;
+
     fflush(stdout);
 # if USE_POSIX_TERMIOS || USE_TERMIO
     tcgetattr(0, &old_modes);

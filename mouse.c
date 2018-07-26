@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.34 2018/07/22 22:01:58 tom Exp $ */
+/* $Id: mouse.c,v 1.35 2018/07/26 00:32:06 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -142,9 +142,10 @@ static char *
 parse_mouse_M(char *report, unsigned *b, unsigned *x, unsigned *y)
 {
   char *result = 0;
-  char *finalp;
 
   if ((report = skip_csi(report)) != 0) {
+    char *finalp;
+
     switch (do_ExtCoords) {
     default:
     case cUTF:
@@ -157,6 +158,7 @@ parse_mouse_M(char *report, unsigned *b, unsigned *x, unsigned *y)
         result = report + pos;
       }
       break;
+
     case cSGR:
       if (*report++ == '<') {
         finalp = skip_params(report);
@@ -175,6 +177,7 @@ parse_mouse_M(char *report, unsigned *b, unsigned *x, unsigned *y)
         }
       }
       break;
+
     case cURX:
       finalp = skip_params(report);
       if (*finalp == 'M') {
@@ -186,6 +189,7 @@ parse_mouse_M(char *report, unsigned *b, unsigned *x, unsigned *y)
       break;
     }
   }
+
   return result;
 }
 
@@ -203,9 +207,10 @@ parse_mouse_T(char *report,
               unsigned *mouse_y)
 {
   char *result = 0;
-  char *finalp;
 
   if ((report = skip_csi(report)) != 0) {
+    char *finalp;
+
     switch (do_ExtCoords) {
     default:
     case cUTF:
@@ -221,10 +226,12 @@ parse_mouse_T(char *report,
         result = report + pos;
       }
       break;
+
     case cSGR:
       if (*report++ != '<')
         break;
       /* FALLTHRU */
+
     case cURX:
       finalp = skip_params(report);
       if (*finalp == 'T') {
@@ -239,6 +246,7 @@ parse_mouse_T(char *report,
       break;
     }
   }
+
   return result;
 }
 
@@ -250,9 +258,10 @@ static char *
 parse_mouse_t(char *report, unsigned *x, unsigned *y)
 {
   char *result = 0;
-  char *finalp;
 
   if ((report = skip_csi(report)) != 0) {
+    char *finalp;
+
     switch (do_ExtCoords) {
     default:
     case cUTF:
@@ -263,10 +272,12 @@ parse_mouse_t(char *report, unsigned *x, unsigned *y)
         *y = xterm_coord(report, &pos);
       }
       break;
+
     case cSGR:
       if (*report++ != '<')
         break;
       /* FALLTHRU */
+
     case cURX:
       finalp = skip_params(report);
       if (*finalp == 't') {
@@ -277,6 +288,7 @@ parse_mouse_t(char *report, unsigned *x, unsigned *y)
       break;
     }
   }
+
   return result;
 }
 
@@ -470,7 +482,7 @@ show_dec_locator_events(MENU_ARGS, int mode, int pixels)
 {
   int row, now;
 
-first:
+loop:
   vt_move(1, 1);
   ed(0);
   println(the_title);
@@ -499,9 +511,9 @@ first:
       break;
     } else if (isReport(*report)) {
       show_mousemodes();
-      goto first;
+      goto loop;
     } else if (isClear(*report)) {
-      goto first;
+      goto loop;
     }
     row = 4;
     while (now > row) {
@@ -530,7 +542,7 @@ show_mouse_tracking(MENU_ARGS, const char *the_mode)
   unsigned b, xx, yy;
   int report_row, report_col;
 
-first:
+loop:
   vt_move(1, 1);
   ed(0);
   println(the_title);
@@ -548,9 +560,9 @@ first:
       break;
     } else if (isReport(*report)) {
       show_mousemodes();
-      goto first;
+      goto loop;
     } else if (isClear(*report)) {
-      goto first;
+      goto loop;
     }
 
     ToData(0);
@@ -667,7 +679,7 @@ test_mouse_hilite(MENU_ARGS)
   unsigned mouse_y, mouse_x;
   int report_row, report_col;
 
-first:
+loop:
   vt_move(1, 1);
   ed(0);
   println(the_title);
@@ -687,9 +699,9 @@ first:
       break;
     } else if (isReport(*report)) {
       show_mousemodes();
-      goto first;
+      goto loop;
     } else if (isClear(*report)) {
-      goto first;
+      goto loop;
     }
 
     show_hilite(first, last);
@@ -768,7 +780,7 @@ test_X10_mouse(MENU_ARGS)
   unsigned b, x, y;
   int report_row, report_col;
 
-first:
+loop:
   vt_move(1, 1);
   ed(0);
   println(the_title);
@@ -785,9 +797,9 @@ first:
       break;
     } else if (isReport(*report)) {
       show_mousemodes();
-      goto first;
+      goto loop;
     } else if (isClear(*report)) {
-      goto first;
+      goto loop;
     }
     ToData(0);
     vt_el(2);

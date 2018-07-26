@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.64 2014/01/16 22:04:56 tom Exp $ */
+/* $Id: nonvt100.c,v 1.65 2018/07/26 00:29:08 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -582,10 +582,11 @@ toggle_ERM(MENU_ARGS)
 static int
 tst_SPA(MENU_ARGS)
 {
-  int pass;
   BOX box;
 
   if (make_box_params(&box, 5, 20) == 0) {
+    int pass;
+
     for (pass = 0; pass < 2; pass++) {
       if (pass == 0) {
         esc("V");   /* SPA */
@@ -617,6 +618,7 @@ tst_SPA(MENU_ARGS)
       }
     }
   }
+
   return MENU_NOHOLD;
 }
 

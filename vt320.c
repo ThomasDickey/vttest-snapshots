@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.51 2018/07/25 01:37:45 tom Exp $ */
+/* $Id: vt320.c,v 1.60 2018/07/26 00:44:56 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -166,6 +166,7 @@ typedef struct {
   int gl;
   int gr;
   int Scss;
+  char cs_suffix[4][2];
   int cs_sizes[4];
   const char *cs_names[4];
 } DECCIR_REPORT;
@@ -180,17 +181,17 @@ parse_DECCIR(const char *input, DECCIR_REPORT * output)
   memset(output, 0, sizeof(*output));
 
   /* *INDENT-EQLS* */
-  output->row = scanto(input, &pos, ';');
-  output->col = scanto(input, &pos, ';');
+  output->row  = scanto(input, &pos, ';');
+  output->col  = scanto(input, &pos, ';');
   output->page = scanto(input, &pos, ';');
 
-  /* *INDENT-EQLS* */
   output->Srend = scan_chr(input, &pos, ';');
   if (output->Srend & 0x40) {
-    output->reverse = ((output->Srend & 0x08) != 0);
-    output->blinking = ((output->Srend & 0x04) != 0);
+    /* *INDENT-EQLS* */
+    output->reverse   = ((output->Srend & 0x08) != 0);
+    output->blinking  = ((output->Srend & 0x04) != 0);
     output->underline = ((output->Srend & 0x02) != 0);
-    output->bold  = ((output->Srend & 0x01) != 0);
+    output->bold      = ((output->Srend & 0x01) != 0);
   }
 
   output->Satt = scan_chr(input, &pos, ';');
@@ -198,10 +199,10 @@ parse_DECCIR(const char *input, DECCIR_REPORT * output)
     output->selective_erase = ((output->Satt & 1) != 0);
   }
 
-  /* *INDENT-EQLS* */
   output->Sflag = scan_chr(input, &pos, ';');
   if (output->Sflag & 0x40) {
-    output->aw_pending = ((output->Sflag & 0x08) != 0);
+    /* *INDENT-EQLS* */
+    output->aw_pending  = ((output->Sflag & 0x08) != 0);
     output->ss3_pending = ((output->Sflag & 0x04) != 0);
     output->ss2_pending = ((output->Sflag & 0x02) != 0);
     output->origin_mode = ((output->Sflag & 0x01) != 0);
@@ -220,6 +221,10 @@ parse_DECCIR(const char *input, DECCIR_REPORT * output)
 
   n = 0;
   while (input[pos] != '\0') {
+    strncpy(output->cs_suffix[n], input + pos, 2);
+    if (output->cs_suffix[n][0] != '%') {
+      output->cs_suffix[n][1] = '\0';
+    }
     output->cs_names[n++] = parse_Sdesig(input, &pos);
     if (n >= 4)
       break;
@@ -420,12 +425,6 @@ tst_DECRSPS_cursor(MENU_ARGS)
   char *old_mode;
   char *s;
   DECCIR_REPORT actual;
-  int item;
-  int row, col;
-  int len;
-  int j, k;
-  int tries, fails;
-  char temp[80];
 
   vt_move(1, 1);
   printf("Testing %s\n", the_title);
@@ -437,6 +436,13 @@ tst_DECRSPS_cursor(MENU_ARGS)
   old_mode = strdup(instr());
 
   if ((s = strchr(old_mode, 'u')) != 0) {
+    int item;
+    int row, col;
+    int len;
+    int j, k;
+    int tries, fails;
+    char temp[80];
+
     println("");
     println("Position/rendition:");
     *s = 't';
@@ -519,7 +525,7 @@ tst_DECRSPS_cursor(MENU_ARGS)
     tries = 0;
     for (j = ++row; j <= max_lines; ++j) {
       cup(j, min_cols - 1);
-      for (k = 0; k < 4; k++) {
+      for (k = 0; k < 3; k++) {
         print_chr('0' + k);
         fflush(stdout);
         if (read_DECCIR(&actual)) {
@@ -531,23 +537,102 @@ tst_DECRSPS_cursor(MENU_ARGS)
           break;
       }
     }
-    vt_move(row, col);
+
+    vt_move(row, 1);
+    ed(0);
+    println("");
+    println("Modes:");
+
+    vt_move(row += 2, col);
+    el(2);
     if (fails) {
       printf("Autowrap-pending: failed %d of %d tries", fails, tries);
     } else {
       printf("Autowrap-pending: OK");
     }
-    fflush(stdout);
+    println("");
 
-    /* FIXME demo flags (ss3, ss2, origin) */
-    /* FIXME demo charset-changes */
+    fails = 1;
+    vt_move(++row, col);
+    print_str(ss2_output());
+    if (read_DECCIR(&actual) && actual.ss2_pending) {
+      print_chr(' ');
+      if (read_DECCIR(&actual) && !actual.ss2_pending) {
+        fails = 0;
+      }
+    }
+    el(2);
+    vt_move(row, col);
+    if (fails) {
+      println("SS2 pending: ERR");
+    } else {
+      println("SS2 pending: OK");
+    }
+
+    fails = 1;
+    vt_move(++row, col);
+    print_str(ss3_output());
+    if (read_DECCIR(&actual) && actual.ss3_pending) {
+      print_chr(' ');
+      if (read_DECCIR(&actual) && !actual.ss3_pending) {
+        fails = 0;
+      }
+    }
+    el(2);
+    vt_move(row, col);
+    if (fails) {
+      println("SS3 pending: ERR");
+    } else {
+      println("SS3 pending: OK");
+    }
+
+    fails = 1;
+    vt_move(++row, col);
+    decom(1);
+    if (read_DECCIR(&actual) && actual.origin_mode) {
+      fails = 0;
+    }
+    print_str(old_mode);  /* restore original settings */
+    vt_move(row, col);
+    printf("Origin mode: %s", fails ? "ERR" : "OK");
+
+    vt_move(++row, 1);
+    ed(0);
+    println("");
+    println("Character sets:");
+
+    esc("+A");  /* set G3 to British */
+    esc("o");   /* select that into GL */
+    esc("*0");  /* set G2 to DEC special graphics */
+    esc("}");   /* select that into GR */
+    esc("(<");  /* set G1 to DEC supplementary */
+    esc(")>");  /* set G0 to DEC technical */
+    read_DECCIR(&actual);
+    print_str(old_mode);
+
+    vt_move(row += 2, col);
+    printf("Current GL: %s", (actual.gl == 3) ? "OK" : "ERR");
+
+    vt_move(++row, col);
+    printf("Current GR: %s", (actual.gr == 2) ? "OK" : "ERR");
+
+    for (j = 0; j < 4; ++j) {
+      static const char *my_suffix = "<>0A";
+
+      vt_move(++row, col);
+      printf("G%d suffix: '%.2s' %s (%s)", j,
+             actual.cs_suffix[j],
+             (actual.cs_suffix[j][0] == my_suffix[j]) ? "OK" : "ERR",
+             actual.cs_names[j]);
+    }
 
     print_str(old_mode);  /* restore original settings */
-    free(old_mode);
   }
 
+  free(old_mode);
   restore_ttymodes();
   vt_move(max_lines - 1, 1);
+  ed(0);
   return MENU_HOLD;
 }
 
@@ -557,16 +642,18 @@ tabstop_ruler(const char *tabsr, int row, int col)
   int valid = 1;
   int n;
   int tabstops = 0;
-  char *expect = malloc(min_cols + 1);
-  const char *suffix;
-  const char *s;
+  char *expect = malloc((size_t) min_cols + 1);
 
   vt_move(row, col);
+
   if (expect != 0) {
+    const char *suffix;
+    const char *s;
+
     for (n = 0; n < min_cols; ++n) {
       expect[n] = '-';
       if (((n + 1) % 10) == 0) {
-        expect[n] = (((n + 1) / 10) % 10) + '0';
+        expect[n] = (char) ((((n + 1) / 10) % 10) + '0');
       } else if (((n + 1) % 5) == 0) {
         expect[n] = '+';
       }
