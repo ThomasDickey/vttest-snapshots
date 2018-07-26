@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.26 2012/04/04 09:02:35 tom Exp $ */
+/* $Id: vms_io.c,v 1.27 2018/07/25 15:31:16 tom Exp $ */
 
 #define DEBUG
 
@@ -348,7 +348,7 @@ init_ttymodes(int pn)
   newmode[1] = oldmode[1] | TT$M_EIGHTBIT;
   newmode[1] &= ~(TT$M_TTSYNC | TT$M_HOSTSYNC);
 
-  /* FIXME: this assumes we're doing IO$_SETCHAR */
+  /* Note: this assumes we're doing IO$_SETCHAR */
   newmode[2] = oldmode[2] | TT2$M_PASTHRU;
 
   status = sys$qiow(EFN, iochan, IO$_SETMODE, &iosb, 0, 0,

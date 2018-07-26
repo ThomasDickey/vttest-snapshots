@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.36 2018/07/22 22:30:45 tom Exp $ */
+/* $Id: reports.c,v 1.38 2018/07/26 00:33:49 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -129,7 +129,7 @@ report_is(const char *report, int row, int col)
   const char *tag = "Report is:";
   vt_move(row, col);
   vt_el(0);
-  printf(tag);
+  printf("%s", tag);
   chrprint2(report, row, col + (int) strlen(tag));
 }
 
@@ -138,7 +138,7 @@ report_is(const char *report, int row, int col)
 static int
 tst_DA(MENU_ARGS)
 {
-  int i, found;
+  int found;
   const char *report, *cmp;
   /* *INDENT-OFF* */
   static const char *attributes[][2] = { /* after CSI */
@@ -183,7 +183,10 @@ tst_DA(MENU_ARGS)
   report_is(report, 3, 1);
 
   found = FALSE;
+
   if ((cmp = skip_csi_2(report)) != 0) {
+    int i;
+
     for (i = 0; *attributes[i][0] != '\0'; i++) {
       if (!strcmp(cmp, attributes[i][0])) {
         int n = 0;
@@ -198,6 +201,7 @@ tst_DA(MENU_ARGS)
       }
     }
   }
+
   if (!found) { /* this could be a vt200+ with some options disabled */
     if (cmp != 0 && *cmp == '?') {
       int reportpos = 1;
@@ -288,7 +292,6 @@ tst_DA_2(MENU_ARGS)
   int Pp, Pv, Pc;
   char ch;
   const char *show = SHOW_FAILURE;
-  size_t n;
 
   vt_move(1, 1);
   println("Testing Secondary Device Attributes (Firmware version)");
@@ -299,10 +302,13 @@ tst_DA_2(MENU_ARGS)
 
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
+
   if ((report = skip_csi(report)) != 0) {
     if (sscanf(report, ">%d;%d;%d%c", &Pp, &Pv, &Pc, &ch) == 4
         && ch == 'c') {
       const char *name = "unknown";
+      size_t n;
+
       show = SHOW_SUCCESS;
       for (n = 0; n < TABLESIZE(tbl); n++) {
         if (Pp == tbl[n].Pp) {
@@ -376,8 +382,6 @@ tst_DA_3(MENU_ARGS)
 static int
 tst_DECREQTPARM(MENU_ARGS)
 {
-  int parity, nbits, xspeed, rspeed, clkmul, flags;
-  int reportpos;
   char *report, *report2, *cmp;
 
   set_tty_raw(TRUE);
@@ -400,14 +404,14 @@ tst_DECREQTPARM(MENU_ARGS)
       || report[1] != ';')
     println(" -- Bad format");
   else {
-    reportpos = 2;
+    int reportpos = 2;
     /* *INDENT-EQLS* */
-    parity = scanto(report, &reportpos, ';');
-    nbits  = scanto(report, &reportpos, ';');
-    xspeed = scanto(report, &reportpos, ';');
-    rspeed = scanto(report, &reportpos, ';');
-    clkmul = scanto(report, &reportpos, ';');
-    flags  = scanto(report, &reportpos, 'x');
+    int parity = scanto(report, &reportpos, ';');
+    int nbits  = scanto(report, &reportpos, ';');
+    int xspeed = scanto(report, &reportpos, ';');
+    int rspeed = scanto(report, &reportpos, ';');
+    int clkmul = scanto(report, &reportpos, ';');
+    int flags  = scanto(report, &reportpos, 'x');
 
     if (parity == 0 || nbits == 0 || clkmul == 0)
       println(" -- Bad format");

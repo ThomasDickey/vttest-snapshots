@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.33 2014/01/16 21:03:24 tom Exp $ */
+/* $Id: setup.c,v 1.34 2018/07/25 15:50:37 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -16,7 +16,7 @@ check_8bit_toggle(void)
 
   cup(1, 1);
   dsr(6);
-  padding(5);   /* FIXME: may not be needed */
+  padding(5);   /* may not be needed */
   report = get_reply();
 
   restore_ttymodes();
@@ -236,7 +236,7 @@ set_level(int request)
           do_csi("61\"p");
       }
     }
-    padding(5); /* FIXME: may not be needed */
+    padding(5); /* may not be needed */
 
     cur_level = request;
   }

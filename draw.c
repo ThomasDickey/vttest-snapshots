@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.11 2012/05/06 14:13:23 tom Exp $ */
+/* $Id: draw.c,v 1.12 2018/07/26 00:21:17 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -109,10 +109,10 @@ draw_box_caption(BOX *box, int margin, const char **c)
   int y1 = (box->bottom - margin);
   int x = x0;
   int y = y0;
-  int t;
   const char *s;
 
   while ((s = *c++) != 0) {
+    int t;
     while ((t = *s++) != 0) {
       if (x == x0) {
         if (t == ' ')

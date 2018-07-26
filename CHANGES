@@ -1,8 +1,16 @@
--- $Id: CHANGES,v 1.188 2018/07/22 23:46:57 tom Exp $
+-- $Id: CHANGES,v 1.191 2018/07/25 23:31:59 tom Exp $
 -------------------------------------------------------------------------------
 
-20180722
-	+ improve formatting of highlighted response-strings.
+20180725
+	+ remove obsolete message about diagonal in DECIC/DECDC test; since
+	  xterm #315 the test result is on the margin.
+
+	+ fix an off-by-one in right-margin for ICH/DCH test.
+
+	+ add tests for DECRSPS for xterm #334.
+
+	+ improve formatting of highlighted response-strings, fixing a problem
+	  with wrapping.
 
 20180702
 	+ updated test-packages to use recommended flags.

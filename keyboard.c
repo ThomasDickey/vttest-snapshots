@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.36 2018/07/22 21:57:39 tom Exp $ */
+/* $Id: keyboard.c,v 1.37 2018/07/26 00:22:47 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -581,7 +581,6 @@ static int
 tst_AnswerBack(MENU_ARGS)
 {
   char *abmstr;
-  int row, col;
 
   set_tty_crmod(TRUE);
   vt_clear(2);
@@ -598,7 +597,10 @@ tst_AnswerBack(MENU_ARGS)
   println("Finish with a single RETURN.");
 
   set_tty_crmod(FALSE);
+
   do {
+    int row, col;
+
     vt_move(row = 17, col = 1);
     inflush();
     abmstr = get_reply();
@@ -606,6 +608,7 @@ tst_AnswerBack(MENU_ARGS)
     vt_el(0);
     chrprint2(abmstr, row, col);
   } while (strcmp(abmstr, "\r"));
+
   restore_ttymodes();
   return MENU_NOHOLD;
 }
@@ -656,7 +659,6 @@ tst_ControlKeys(MENU_ARGS)
 {
   int i, okflag;
   int kbdc;
-  int row, col;
   char temp[80];
   char *kbds = strcpy(temp, " ");
   /* *INDENT-OFF* */
@@ -716,6 +718,8 @@ tst_ControlKeys(MENU_ARGS)
            "Finish with DEL (also called DELETE or RUB OUT), or wait 1 minute.");
   set_tty_raw(TRUE);
   do {
+    int row, col;
+
     vt_move(row = max_lines - 1, col = 1);
     kbdc = inchar();
     vt_move(row, col);
@@ -1119,7 +1123,6 @@ tst_keyboard_layout(char *scs_params)
 {
   int i;
   int kbdc;
-  int row, col;
   char temp[80];
   char *kbds = strcpy(temp, " ");
 
@@ -1136,7 +1139,9 @@ tst_keyboard_layout(char *scs_params)
 
   inflush();
   printf("Press each key, both shifted and unshifted. Finish with RETURN:");
+
   do {          /* while (kbdc != 13) */
+    int row, col;
     vt_move(row = max_lines - 1, col = 1);
     kbdc = inchar();
     vt_move(row, col);

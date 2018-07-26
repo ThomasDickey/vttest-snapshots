@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.14 2011/12/06 10:41:39 tom Exp $ */
+/* $Id: sixel.c,v 1.15 2018/07/26 00:36:36 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -181,14 +181,15 @@ static int
 display_char(FILE *fp, int chr)
 {
   char *s;
-  int bit, n, high;
-  char bits[6][MAX_WIDTH];
 
   s = find_char(chr);
   if (s != 0) {
+    int bit = 0;
+    int high = 0;
+    int n;
+    char bits[6][MAX_WIDTH];
+
     fprintf(fp, "Glyph '%c'\n", chr);
-    bit = 0;
-    high = 0;
     do {
       if (*s >= '?' && *s <= '~') {
         for (n = 0; n < 6; n++)
@@ -296,7 +297,12 @@ setup_softchars(const char *filename)
   }
   while ((c = fgetc(fp)) != EOF) {
     if (use + 1 >= len) {
-      buffer = (char *) realloc(buffer, len *= 2);
+      char *check = (char *) realloc(buffer, len *= 2);
+      if (check == 0) {
+        perror("malloc");
+        exit(EXIT_FAILURE);
+      }
+      buffer = check;
     }
     buffer[use++] = (char) c;
   }

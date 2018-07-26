@@ -1,9 +1,9 @@
-/* $Id: esc.c,v 1.88 2018/07/24 21:18:11 tom Exp $ */
+/* $Id: esc.c,v 1.90 2018/07/25 14:03:26 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 
-/* FIXME: for Solaris 2.5, which is broken */
+/* This was needed for Solaris 2.5, whose standard I/O was broken */
 #define FLUSH fflush(stdout)
 
 static int soft_scroll;
@@ -68,6 +68,25 @@ const char *
 osc_output(void)
 {
   return output_8bits ? (const char *) osc_8 : osc_7;
+}
+
+/******************************************************************************/
+
+static char ss2_7[] =
+{ESC, 'N', 0};
+static unsigned char ss2_8[] =
+{0x8e, 0};
+
+char *
+ss2_input(void)
+{
+  return input_8bits ? (char *) ss2_8 : ss2_7;
+}
+
+char *
+ss2_output(void)
+{
+  return output_8bits ? (char *) ss2_8 : ss2_7;
 }
 
 /******************************************************************************/

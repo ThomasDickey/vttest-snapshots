@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.13 2011/12/06 10:34:05 tom Exp $ */
+/* $Id: tek4014.c,v 1.14 2018/07/26 00:37:55 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -180,8 +180,6 @@ tek_mouse_coords(MENU_ARGS)
 {
   char *report;
   char status[6];
-  int new_x = -1;
-  int new_y = -1;
 
   tek_clear(PASS_ARGS);
 
@@ -191,7 +189,11 @@ tek_mouse_coords(MENU_ARGS)
 
   report = empty;
   println("Any key or mouse click twice to exit...");
+
   do {
+    int new_x;
+    int new_y;
+
     strncpy(status, report, (size_t) 5)[5] = 0;
     /*
      * The graphics-in mode is reset each time users send a mouse click.  So we

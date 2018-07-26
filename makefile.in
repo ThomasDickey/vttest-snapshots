@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.46 2015/07/06 09:24:00 tom Exp $
+# $Id: makefile.in,v 1.47 2018/07/26 00:15:55 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -15,6 +15,7 @@ CC		= @CC@
 CPP		= @CPP@
 LINK		= $(CC)
 LINT		= @LINT@
+LINT_OPTS	= @LINT_OPTS@
 INSTALL 	= @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA	= @INSTALL_DATA@
@@ -204,7 +205,7 @@ $(THIS)$o:	config.h
 ################################################################################
 
 lint:
-	$(LINT) $(CPPFLAGS) $(C_SRC)
+	$(LINT) $(LINT_OPTS) $(CPPFLAGS) $(C_SRC)
 
 check: $(PROG)
 	@echo 'Sorry -- You must run this interactively.'

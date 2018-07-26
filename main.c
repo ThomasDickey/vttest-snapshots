@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.109 2018/07/22 23:43:55 tom Exp $ */
+/* $Id: main.c,v 1.110 2018/07/26 00:26:52 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -126,8 +126,11 @@ main(int argc, char *argv[])
        */
       char *p = argv[0];
       char *q;
-      int values[3], n, m;
+      int values[3], n;
+
       for (n = 0; n < 3; n++) {
+        int m;
+
         if (!*p)
           break;
         if ((m = (int) strtol(p, &q, 10)) > 0) {
@@ -205,12 +208,13 @@ tst_movements(MENU_ARGS)
      Cursor control characters inside CSI sequences
    */
 
-  int i, row, col, pass, width, hlfxtra;
+  int i, row, col, pass, width;
   const char *ctext = "This is a correct sentence";
 
   set_tty_crmod(TRUE);  /* want to disable tab/space conversion */
 
   for (pass = 0; pass <= 1; pass++) {
+    int hlfxtra;
     int inner_l, inner_r;
 
     if (pass == 0) {
@@ -688,12 +692,12 @@ tst_doublesize(MENU_ARGS)
      DECDHL  (Double Height Line) (also implicit double width)
    */
 
-  int col, i, w, w1;
+  int col, i, w;
 
   /* Print the test pattern in both 80 and 132 character width  */
 
   for (w = 0; w <= 1; w++) {
-    w1 = 13 * w;
+    int w1 = 13 * w;
 
     ed(2);
     cup(1, 1);

@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.102 2018/07/24 20:48:12 tom Exp $ */
+/* $Id: vttest.h,v 1.103 2018/07/25 14:02:16 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -45,21 +45,13 @@
 
 #if defined(HAVE_TERMIOS_H) && defined(HAVE_TCGETATTR)
 #  define USE_POSIX_TERMIOS 1
-#else
-#  ifdef HAVE_TERMIO_H
-#    define USE_TERMIO 1
-#  else
-#    ifdef HAVE_SGTTY_H
-#      define USE_SGTTY 1
-#      define USE_FIONREAD 1
-#    else
-#      ifdef VMS
-         /* FIXME */
-#      else
-please fix me
-#      endif
-#    endif
-#  endif
+#elif defined(HAVE_TERMIO_H)
+#  define USE_TERMIO 1
+#elif defined(HAVE_SGTTY_H)
+#  define USE_SGTTY 1
+#  define USE_FIONREAD 1
+#elif !defined(VMS)
+#  error please fix me
 #endif
 
 #ifndef USE_FIONREAD
