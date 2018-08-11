@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.60 2018/07/26 00:44:56 tom Exp $ */
+/* $Id: vt320.c,v 1.62 2018/08/11 12:45:06 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -221,7 +221,7 @@ parse_DECCIR(const char *input, DECCIR_REPORT * output)
 
   n = 0;
   while (input[pos] != '\0') {
-    strncpy(output->cs_suffix[n], input + pos, 2);
+    strncpy(output->cs_suffix[n], input + pos, (size_t) 2);
     if (output->cs_suffix[n][0] != '%') {
       output->cs_suffix[n][1] = '\0';
     }
@@ -660,7 +660,7 @@ tabstop_ruler(const char *tabsr, int row, int col)
     }
     expect[min_cols] = '\0';
 
-    if (!strncmp(tabsr, "\033P", 2)) {
+    if (!strncmp(tabsr, "\033P", (size_t) 2)) {
       suffix = "\033\\";
       s = tabsr + 2;
     } else if ((unsigned char) *tabsr == 0x90) {
@@ -671,7 +671,7 @@ tabstop_ruler(const char *tabsr, int row, int col)
       s = 0;
     }
 
-    if (s != 0 && !strncmp(s, "2$u", 2)) {
+    if (s != 0 && !strncmp(s, "2$u", (size_t) 2)) {
       int value = 0;
       s += 2;
       while (*++s != '\0') {
@@ -914,10 +914,10 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
 
     do_csi((private ? "?%d$p" : "%d$p"), table[j].mode);
     report = instr();
-    printf("\n     %4d: %-10s", table[j].mode, table[j].name);
+    printf("\n     %4d: %-10s ", table[j].mode, table[j].name);
     if (LOG_ENABLED)
       fprintf(log_fp, "Testing %s\n", table[j].name);
-    chrprint2(report, row + 1, 22);
+    chrprint2(report, row + 1, 23);
     if ((report = skip_csi(report)) != 0
         && sscanf(report, (private
                            ? "?%d;%d$%c"

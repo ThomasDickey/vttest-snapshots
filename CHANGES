@@ -1,5 +1,11 @@
--- $Id: CHANGES,v 1.191 2018/07/25 23:31:59 tom Exp $
+-- $Id: CHANGES,v 1.194 2018/08/11 12:04:55 tom Exp $
 -------------------------------------------------------------------------------
+
+20180811
+	+ recent BSD-make mishandled .1.cat rule; fix
+
+20180728
+	+ update xterm DECRPM table
 
 20180725
 	+ remove obsolete message about diagonal in DECIC/DECDC test; since
