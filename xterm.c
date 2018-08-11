@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.53 2018/07/22 23:39:55 tom Exp $ */
+/* $Id: xterm.c,v 1.55 2018/07/26 23:46:01 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -492,8 +492,12 @@ test_window_name(MENU_ARGS)
 #define XT_MSE_X10 9
 #define XT_TOOLBAR 10
 #define XT_CBLINK  12
+#define XT_OPTBLNK 13
+#define XT_XORBLNK 14
 #define XT_SCRLBAR 30
 #define XT_FONTSWT 35
+#define XT_TEK4014 38
+#define XT_80_132  40
 #define XT_CURSES  41
 #define XT_MARBELL 44
 #define XT_REVWRAP 45
@@ -505,6 +509,8 @@ test_window_name(MENU_ARGS)
 #define XT_MSE_ANY 1003
 #define XT_MSE_WIN 1004
 #define XT_MSE_UTF 1005
+#define XT_MSE_SGR 1006
+#define XT_ALTSCRL 1007
 #define XT_TTY_OUT 1010
 #define XT_SCRLKEY 1011
 #define XT_IN_8BIT 1034
@@ -516,8 +522,10 @@ test_window_name(MENU_ARGS)
 #define XT_SELTCLP 1041
 #define XT_BELLURG 1042
 #define XT_POPBELL 1043
+#define XT_OLDCLIP 1044
+#define XT_ALTS_OK 1046
 #define XT_ALTS_47 1047
-#define XT_ALTS_48 1048
+#define XT_ALTS_SC 1048
 #define XT_EXTSCRN 1049
 #define XT_KT_TCAP 1050
 #define XT_KT_SUN  1051
@@ -549,8 +557,8 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( XT_TOOLBAR, 3 /* rxvt toolbar vs DECEDM */),
     DATA( DECLTM,     3 /* line transmit */),
     DATA( XT_CBLINK,  3 /* att610: Start/stop blinking cursor */),
-    DATA( DECSCFDM,   3 /* space compression field delimiter */),
-    DATA( DECTEM,     3 /* transmission execution */),
+    DATA( XT_OPTBLNK, 3 /* blink-option via menu/resource */),
+    DATA( XT_XORBLNK, 3 /* enable XOR or blinking cursoor control */),
     DATA( DECEKEM,    3 /* edit key execution */),
     DATA( DECPFF,     3 /* print form feed */),
     DATA( DECPEX,     3 /* printer extent */),
@@ -558,7 +566,9 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( XT_SCRLBAR, 3 /* rxvt scrollbar */),
     DATA( DECRLM,     5 /* left-to-right */),
     DATA( XT_FONTSWT, 3 /* rxvt font-switching vs DECTEK */),
+    DATA( XT_TEK4014, 3 /* Tektronix 4014 */),
     DATA( DECHEM,     5 /* Hebrew encoding */),
+    DATA( XT_80_132,  3 /* 80/132 mode */),
     DATA( XT_CURSES,  3 /* curses hack */),
     DATA( DECNRCM,    3 /* national replacement character set */),
     DATA( DECGEPM,    3 /* graphics expanded print */),
@@ -600,7 +610,9 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( XT_MSE_BTN, 3 /* button-event mouse */),
     DATA( XT_MSE_ANY, 3 /* any-event mouse */),
     DATA( XT_MSE_WIN, 3 /* focus-event mouse */),
-    DATA( XT_MSE_UTF, 3 /* extended mouse-coordinates */),
+    DATA( XT_MSE_UTF, 3 /* UTF-8 extended mouse-coordinates */),
+    DATA( XT_MSE_SGR, 3 /* SGR-style extended mouse-coordinates */),
+    DATA( XT_ALTSCRL, 3 /* alternate-scroll */),
     DATA( XT_TTY_OUT, 3 /* rxvt scroll tty output */),
     DATA( XT_SCRLKEY, 3 /* rxvt scroll key */),
     DATA( XT_IN_8BIT, 3 /* input eight bits */),
@@ -612,7 +624,9 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( XT_SELTCLP, 3 /* select to clipboard */),
     DATA( XT_BELLURG, 3 /* bell is urgent */),
     DATA( XT_POPBELL, 3 /* pop on bell */),
+    DATA( XT_ALTS_OK, 3 /* enable alt-screen switching */),
     DATA( XT_ALTS_47, 3 /* first extended alt-screen */),
+    DATA( XT_ALTS_SC, 3 /* save cursor for first extended alt-screen */),
     DATA( XT_EXTSCRN, 3 /* second extended alt-screen */),
     DATA( RL_BTN1,    3 /* click1 emit Esc seq to move point*/),
     DATA( RL_BTN2,    3 /* press2 emit Esc seq to move point*/),
@@ -645,7 +659,8 @@ show_mousemodes(void)
     DATA( XT_MSE_BTN, 3 /* button-event mouse */),
     DATA( XT_MSE_ANY, 3 /* any-event mouse */),
     DATA( XT_MSE_WIN, 3 /* focus-event mouse */),
-    DATA( XT_MSE_UTF, 3 /* extended mouse-coordinates */),
+    DATA( XT_MSE_UTF, 3 /* UTF-8 extended mouse-coordinates */),
+    DATA( XT_MSE_SGR, 3 /* SGR-style extended mouse-coordinates */),
   };
   /* *INDENT-ON* */
 

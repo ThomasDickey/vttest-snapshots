@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.47 2018/07/26 00:15:55 tom Exp $
+# $Id: makefile.in,v 1.48 2018/08/11 12:02:36 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -46,7 +46,7 @@ SHELL		= /bin/sh
 CPPFLAGS 	= -DHAVE_CONFIG_H -I. -I$(srcdir) @CPPFLAGS@
 
 ################################################################################
-.SUFFIXES : $o .i .cat
+.SUFFIXES : $o .i .cat .$(manext)
 
 .c$o:
 	@RULE_CC@
@@ -57,7 +57,7 @@ CPPFLAGS 	= -DHAVE_CONFIG_H -I. -I$(srcdir) @CPPFLAGS@
 	@ECHO_CC@$(CPP) -C $(CPPFLAGS) $*.c >$@
 
 .$(manext).cat :
-	- nroff -man $(srcdir)/$(THIS).$(manext) >$@
+	- nroff -man $(srcdir)/$< >$@
 
 ################################################################################
 
@@ -155,7 +155,7 @@ uninstall:
 	rm -f $(MANDIR)/$(actual_man)
 
 mostlyclean ::
-	rm -f *.[oi] core *~ *.BAK *.trace *.atac
+	rm -f *.[oi] core *~ *.cat *.BAK *.trace *.atac
 
 clean :: mostlyclean
 	rm -f $(PROG)
