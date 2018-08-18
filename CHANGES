@@ -1,5 +1,8 @@
--- $Id: CHANGES,v 1.194 2018/08/11 12:04:55 tom Exp $
+-- $Id: CHANGES,v 1.195 2018/08/18 00:25:38 tom Exp $
 -------------------------------------------------------------------------------
+
+20180817
+	+ revise DECRQCRA test to match VT525 screenshots from Markus Schmidt
 
 20180811
 	+ recent BSD-make mishandled .1.cat rule; fix
