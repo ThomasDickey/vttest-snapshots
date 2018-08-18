@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.170 2018/07/26 00:41:17 tom Exp $ */
+/* $Id: vt420.c,v 1.171 2018/08/18 00:25:38 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -2196,30 +2196,75 @@ tst_DECSNLS(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
+#define CHK(n) ((-(n)) & 0xffff)
+
 static int
 tst_DSR_area_sum(MENU_ARGS)
 {
-  char buffer[1024];
+  char buffer[1024];            /* FIXME - allocate buffer for lines */
   int expected = 0;
+  int trimmed = 0;
+  int first = TRUE;
   int pid = 1;
   int page = 1;
   int r, c;
   int rows = 2;                 /* first two rows have known content */
+  int ch;
   size_t len;
 
+  /* FIXME - revise this to report on entire screen, to test blanks */
   sprintf(buffer, fmt_DECCKSR, the_title);
   len = strlen(buffer) - 1;
   memset(buffer + len, ' ', sizeof(buffer) - len);
   for (r = 0; r < rows; ++r) {
     for (c = 0; c < min_cols; ++c) {
-      expected += (unsigned char) buffer[(min_cols * r) + c];
-      expected &= 0xffff;
+      ch = (unsigned char) buffer[(min_cols * r) + c];
+      expected += ch;
+      if (first || (ch != ' '))
+        trimmed = expected;
+      first = FALSE;
     }
   }
 
   /* compute a checksum on the title line, which contains some text */
   sprintf(buffer, "%d;%d;1;1;%d;%d*y", pid, page, rows, min_cols);
-  return tst_DECCKSR(PASS_ARGS, 1, buffer, expected);
+  tst_DECCKSR(PASS_ARGS, 1, buffer, CHK(trimmed));
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  ch = ' ';
+  for (c = 4; c < min_cols - 10; c += 12) {
+    for (r = 5; r < max_lines - 3; ++r) {
+      char *report;
+      char *s;
+
+      vt_move(r, c);
+      printf("%c %02X ", ch, ch);
+      do_csi("%d;%d;%d;%d;%d;%d*y", pid, page, r, c, r, c);
+      report = get_reply();
+      if ((s = strchr(report, '!')) != 0 && (*++s == '~') && strlen(++s) > 4) {
+        char test[5];
+        sprintf(test, "%04X", CHK(ch));
+        if (memcmp(test, s, 4)) {
+          vt_hilite(TRUE);
+          printf("%4s", s);
+          vt_hilite(FALSE);
+        } else {
+          printf("%4s", test);
+        }
+      }
+      ++ch;
+      if (ch > '~')
+        break;
+    }
+    if (ch > '~')
+      break;
+  }
+  restore_ttymodes();
+
+  vt_move(max_lines - 1, 1);
+  return MENU_HOLD;
 }
 
 static int
