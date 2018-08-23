@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.65 2018/07/26 00:29:08 tom Exp $ */
+/* $Id: nonvt100.c,v 1.66 2018/08/23 23:21:28 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -218,12 +218,13 @@ tst_CNL(MENU_ARGS)
   set_colors(WHITE_ON_BLUE);
 
   vt_move(1, 1);
-  printf("1.");
-  for (n = 1; n <= last; n++) {
-    cup(1, min_cols);
-    cnl(n - 1);
+  printf("1."); /* this line should not be overwritten */
+  for (n = 1; n <= last - 3; n++) {
+    hpa(min_cols);
+    cnl(n - 1); /* CNL 0 should skip to the second line */
     slowly();
-    printf("%d.", n);
+    printf("%d.", n + 1);
+    vpa(2);     /* subsequently, start from the second line */
   }
 
   set_colors(0);
