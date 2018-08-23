@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.171 2018/08/18 00:25:38 tom Exp $ */
+/* $Id: vt420.c,v 1.172 2018/08/20 08:59:55 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -2262,6 +2262,8 @@ tst_DSR_area_sum(MENU_ARGS)
       break;
   }
   restore_ttymodes();
+  vt_move(max_lines - 2, 1);
+  printf("Checksum for individual character is highlighted if mismatched.");
 
   vt_move(max_lines - 1, 1);
   return MENU_HOLD;

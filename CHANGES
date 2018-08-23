@@ -1,7 +1,8 @@
--- $Id: CHANGES,v 1.195 2018/08/18 00:25:38 tom Exp $
+-- $Id: CHANGES,v 1.196 2018/08/23 23:22:34 tom Exp $
 -------------------------------------------------------------------------------
 
 20180817
+	+ modify CNL test to demonstrate its treatment of zero as default.
 	+ revise DECRQCRA test to match VT525 screenshots from Markus Schmidt
 
 20180811
