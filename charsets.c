@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.60 2018/07/26 00:20:16 tom Exp $ */
+/* $Id: charsets.c,v 1.63 2018/09/01 00:20:14 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -35,12 +35,15 @@ typedef enum {
   DEC_Supp_Graphic,
   DEC_Tech,
   Greek,
+  Greek_DEC,
   Greek_Supp,
+  Hebrew_DEC,
   Hebrew_Supp,
   Latin_5_Supp,
   Latin_Cyrillic,
   Russian,
   Turkish,
+  Turkish_DEC,
   SCS_NRCS,
   Unknown
 } National;
@@ -50,7 +53,7 @@ typedef struct {
   int allow96;                  /* flag for 96-character sets (e.g., GR mapping) */
   int order;                    /* check-column so we can mechanically-sort this table */
   int first;                    /* first model: 0=base, 2=vt220, 3=vt320, etc. */
-  int last;                     /* lastmodel: 0=base, 2=vt220, 3=vt320, etc. */
+  int last;                     /* last model: 0=base, 2=vt220, 3=vt320, etc. */
   const char *final;            /* end of SCS string */
   const char *name;             /* the string we'll show the user */
   const char *not11;            /* cells which are not 1-1 with ISO-8859-1 */
@@ -61,12 +64,12 @@ typedef struct {
 #define Not11(a,b) (((a) & 0x7f) == ((b) & 0x7f))
 
 /*
- * The VT220 and VT340 reference manuals show tables and details for the
- * character sets.  The VT520 reference manual does not show these details, so
- * mappings for the VT5xx character sets are not highlighted by this program.
+ * The "map_XXX" strings list the characters that should be replaced for the
+ * given NRCS.  Use that to highlight them for clarity.
  */
 static const char map_pound[] = "#";
 static const char map_all94[] = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
+static const char map_all96[] = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\177";
 static const char map_DEC_Supp[] = "$&,-./48>GHIJKLMNOPW^pw}~";
 static const char map_Spec_Graphic[] = "`abcdefghijklmnopqrstuvwxyz{|}~";
 static const char map_Supp_Graphic[] = "$&,-./48>PW^p}~\177";
@@ -75,12 +78,15 @@ static const char map_Finnish[] = "`[\\]^{|}~";
 static const char map_French[] = "#@[\\]{|}~";
 static const char map_French_Canadian[] = "@`[\\]^{|}~";
 static const char map_German[] = "@[\\]{|}~";
+static const char map_Greek[] = "abcdefghijklmnopqrstuvwxyz";
+static const char map_Hebrew[] = "`abcdefghijklmnopqrstuvwxyz";
 static const char map_Italian[] = "#@`[\\]{|}~";
 static const char map_Norwegian[] = "@`[\\]^{|}~";
 static const char map_Portuguese[] = "[\\]{|}";
 static const char map_Spanish[] = "@[\\]{|}";
 static const char map_Swedish[] = "@`[\\]^{|}~";
 static const char map_Swiss[] = "#@`[\\]^_{|}~";
+static const char map_Turkish[] = "&@[\\]^{|}~";
 
 static const CHARSETS KnownCharsets[] = {
   { ASCII,             0, 0, 0, 9, "B",    "US ASCII", 0 },
@@ -101,26 +107,27 @@ static const CHARSETS KnownCharsets[] = {
   { French_Canadian,   0, 0, 2, 9, "Q",    "French Canadian", map_French_Canadian },
   { French_Canadian,   0, 1, 3, 9, "9",    "French Canadian", map_French_Canadian },
   { German,            0, 0, 2, 9, "K",    "German", map_German },
-  { Greek,             0, 0, 5, 9, "\"?",  "Greek (DEC)", 0 },
-  { Greek_Supp,        1, 0, 5, 9, "F",    "ISO Greek Supplemental", 0 },
-  { Hebrew,            0, 0, 5, 9, "\"4",  "Hebrew (DEC)", 0 },
-  { Hebrew,            0, 1, 5, 9, "%=",   "Hebrew NRCS", 0 },
-  { Hebrew_Supp,       1, 0, 5, 9, "H",    "ISO Hebrew Supplemental", 0 },
+  { Greek,             0, 0, 5, 9, "\">",  "Greek", map_Greek },
+  { Greek_DEC,         0, 0, 5, 9, "\"?",  "Greek (DEC)", map_all94 },
+  { Greek_Supp,        1, 0, 5, 9, "F",    "ISO Greek Supplemental", map_all94 },
+  { Hebrew,            0, 0, 5, 9, "%=",   "Hebrew", map_Hebrew },
+  { Hebrew_DEC,        0, 0, 5, 9, "\"4",  "Hebrew (DEC)", map_all94 },
+  { Hebrew_Supp,       1, 0, 5, 9, "H",    "ISO Hebrew Supplemental", map_all94 },
   { Italian,           0, 0, 2, 9, "Y",    "Italian", map_Italian },
-  { Latin_5_Supp,      1, 0, 5, 9, "M",    "ISO Latin-5 Supplemental", 0 },
-  { Latin_Cyrillic,    1, 0, 5, 9, "L",    "ISO Latin-Cyrillic", 0 },
+  { Latin_5_Supp,      1, 0, 5, 9, "M",    "ISO Latin-5 Supplemental", map_all96 },
+  { Latin_Cyrillic,    1, 0, 5, 9, "L",    "ISO Latin-Cyrillic", map_all96 },
   { Norwegian_Danish,  0, 0, 3, 9, "`",    "Norwegian/Danish", map_Norwegian },
   { Norwegian_Danish,  0, 1, 2, 9, "E",    "Norwegian/Danish", map_Norwegian },
   { Norwegian_Danish,  0, 2, 2, 9, "6",    "Norwegian/Danish", map_Norwegian },
   { Portugese,         0, 0, 3, 9, "%6",   "Portugese", map_Portuguese },
   { Russian,           0, 0, 5, 9, "&5",   "Russian", 0 },
-  { SCS_NRCS,          0, 0, 5, 9, "%3",   "SCS NRCS", 0 },
+  { SCS_NRCS,          0, 0, 5, 9, "%3",   "SCS", 0 },
   { Spanish,           0, 0, 2, 9, "Z",    "Spanish", map_Spanish },
   { Swedish,           0, 0, 2, 9, "7",    "Swedish", map_Swedish },
   { Swedish,           0, 1, 2, 9, "H",    "Swedish", map_Swedish },
   { Swiss,             0, 0, 2, 9, "=",    "Swiss", map_Swiss },
-  { Turkish,           0, 0, 5, 9, "%0",   "Turkish (DEC)", 0 },
-  { Turkish,           0, 1, 5, 9, "%2",   "Turkish NRCS", 0 },
+  { Turkish,           0, 0, 5, 9, "%2",   "Turkish", map_Turkish },
+  { Turkish_DEC,       0, 0, 5, 9, "%0",   "Turkish (DEC)", map_all94 },
   { Unknown,           0, 0,-1,-1, "?",    "Unknown", 0 }
 };
 /* *INDENT-ON* */
@@ -528,6 +535,22 @@ tst_vt220_locking(MENU_ARGS)
         esc(table[cset].code);
       } else {
         scs_normal();
+        /*
+         * That set G1 to ASCII, just like G0.  While that works for VT100 (a
+         * 7-bit device), the later 8-bit models use Latin-1 for the default
+         * value of G1.
+         */
+        switch (get_level()) {
+        case 0:
+        case 1:
+          break;
+        case 2:
+          esc(")A");  /* select the 94-character NRCS, closest to MCS */
+          break;
+        default:
+          esc("-A");  /* select the 96-character set */
+          break;
+        }
         map_g1_to_gr();
       }
       cup(row + i, 40);
