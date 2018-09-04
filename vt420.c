@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.172 2018/08/20 08:59:55 tom Exp $ */
+/* $Id: vt420.c,v 1.193 2018/09/04 00:04:37 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -17,6 +17,13 @@ typedef enum {
   marMiddle = 3,
   marEnd
 } MARS;
+
+typedef enum {
+  chkUNDERLINE = 0x10,
+  chkINVERSE = 0x20,
+  chkBLINK = 0x40,
+  chkBOLD = 0x80
+} CHKS;
 
 int origin_mode = FALSE;
 char txt_override_color[80];
@@ -728,17 +735,57 @@ tst_DECCARA(MENU_ARGS)
   return MENU_HOLD;
 }
 
-#define fmt_DECCKSR "Testing DECCKSR: %s\n"
+#define fmt_DECCKSR "Testing DECCKSR: %s"
+
+static int
+parse_DECCKSR(char *report, int Pid, int *digits, int *checksum)
+{
+  int result = 0;
+  int pos = 0;
+  int actual;
+  char *after;
+  char *before;
+
+  if ((report = skip_dcs(report)) != 0
+      && strip_terminator(report)
+      && strlen(report) > 1
+      && scanto(report, &pos, '!') == Pid
+      && report[pos++] == '~'
+      && (after = skip_xdigits((before = report + pos), &actual)) != 0
+      && *after == '\0') {
+    result = 1;
+    *digits = (after - before);
+    *checksum = actual;
+  }
+  return result;
+}
+
+static char *
+check_DECCKSR(char *target, char *source, int Pid, int expected)
+{
+  int digits;
+  int actual;
+
+  if (parse_DECCKSR(source, Pid, &digits, &actual)) {
+    if (digits != 4) {
+      sprintf(target, "%s: expected 4 digits", SHOW_FAILURE);
+    } else if (expected < 0 || (actual == expected)) {
+      strcpy(target, SHOW_SUCCESS);
+    } else {
+      sprintf(target, "expected %04X", (expected & 0xffff));
+    }
+  } else {
+    strcpy(target, SHOW_FAILURE);
+  }
+  return target;
+}
 
 static int
 tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi, int expected)
 {
   char *report;
-  char *before;
-  char *after;
-  int pos = 0;
-  int actual;
   int row, col;
+  char temp[80];
 
   vt_move(1, 1);
   printf(fmt_DECCKSR, the_title);
@@ -750,29 +797,7 @@ tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi, int expected)
   report = get_reply();
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
-  if ((report = skip_dcs(report)) != 0
-      && strip_terminator(report)
-      && strlen(report) > 1
-      && scanto(report, &pos, '!') == Pid
-      && report[pos++] == '~'
-      && (after = skip_xdigits((before = report + pos), &actual)) != 0
-      && *after == '\0') {
-    if ((after - before) != 4) {
-      show_result("%s: expected 4 digits", SHOW_FAILURE);
-    } else if (expected >= 0) {
-      if (actual == expected) {
-        show_result(SHOW_SUCCESS);
-      } else {
-        char msg[80];
-        sprintf(msg, "%04X", (expected & 0xffff));
-        show_result("expected %s", msg);
-      }
-    } else {
-      show_result(SHOW_SUCCESS);
-    }
-  } else {
-    show_result(SHOW_FAILURE);
-  }
+  show_result(check_DECCKSR(temp, report, Pid, expected));
 
   restore_ttymodes();
   vt_move(max_lines - 1, 1);
@@ -2201,61 +2226,167 @@ tst_DECSNLS(MENU_ARGS)
 static int
 tst_DSR_area_sum(MENU_ARGS)
 {
+  static int chk_notrim = 0;    /* do not trim trailing blanks */
+  static int chk_attrib = 0;    /* do not add video attributes to checksum */
+
   char buffer[1024];            /* FIXME - allocate buffer for lines */
   int expected = 0;
-  int trimmed = 0;
+  int title_sum = 0;
   int first = TRUE;
   int pid = 1;
   int page = 1;
+  int i, j;
   int r, c;
   int rows = 2;                 /* first two rows have known content */
   int ch;
-  size_t len;
+  int full = 0;
+  int report_len;
+  char *report;
+  char **lines;
+  char temp[80];
+  char *temp2;
 
-  /* FIXME - revise this to report on entire screen, to test blanks */
+  /* make an array of blank lines, to track text on the screen */
+  lines = calloc(max_lines, sizeof(char *));
+  for (r = 0; r < max_lines; ++r) {
+    lines[r] = malloc(min_cols + 1);
+    memset(lines[r], ' ', min_cols);
+    lines[r][min_cols] = '\0';
+  }
   sprintf(buffer, fmt_DECCKSR, the_title);
-  len = strlen(buffer) - 1;
-  memset(buffer + len, ' ', sizeof(buffer) - len);
+  memcpy(lines[0], buffer, strlen(buffer));
+
   for (r = 0; r < rows; ++r) {
     for (c = 0; c < min_cols; ++c) {
-      ch = (unsigned char) buffer[(min_cols * r) + c];
+      ch = (unsigned char) lines[r][c];
       expected += ch;
-      if (first || (ch != ' '))
-        trimmed = expected;
+      if (chk_notrim || (first || (ch != ' ')))
+        title_sum = expected;
       first = FALSE;
     }
   }
 
-  /* compute a checksum on the title line, which contains some text */
-  sprintf(buffer, "%d;%d;1;1;%d;%d*y", pid, page, rows, min_cols);
-  tst_DECCKSR(PASS_ARGS, 1, buffer, CHK(trimmed));
-
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
+
+  vt_move(1, 1);
+  fputs(buffer, stdout);
+
+  /* compute a checksum on the title line, which contains some text */
+  sprintf(buffer, "%d;%d;1;1;%d;%d*y", pid, page, rows, min_cols);
+  do_csi("%s", buffer);
+  report = get_reply();
+  vt_move(r = 3, c = 10);
+
+  /* like chrprint2, but shadowed into the lines[][] array */
+  vt_hilite(TRUE);
+  printf(" ");
+  report_len = 1;
+  temp2 = chrformat(report, c, 1);
+  for (i = 0, j = 1; temp2[i] != '\0'; ++i) {
+    if (temp2[i] == '\n') {
+      vt_move(++r, c);
+      j = 0;
+    } else {
+      putchar(temp2[i]);
+      lines[r - 1][c - 1 + j++] = temp2[i];
+      ++report_len;
+    }
+  }
+  free(temp2);
+  vt_hilite(FALSE);
+
+  show_result(check_DECCKSR(temp, report, pid, CHK(title_sum)));
+  for (i = 0; temp[i] != '\0'; ++i)
+    lines[r - 1][c + j++] = temp[i];
 
   ch = ' ';
   for (c = 4; c < min_cols - 10; c += 12) {
     for (r = 5; r < max_lines - 3; ++r) {
-      char *report;
       char *s;
 
       vt_move(r, c);
-      printf("%c %02X ", ch, ch);
-      do_csi("%d;%d;%d;%d;%d;%d*y", pid, page, r, c, r, c);
+
+      if (ch > '~') {
+        sgr("1;4");
+        sprintf(buffer, "All");
+        fputs(buffer, stdout);
+        memcpy(&lines[r - 1][c - 1], buffer, strlen(buffer));
+        sgr("0;1");
+        sprintf(buffer, ": ");
+        fputs(buffer, stdout);
+        memcpy(&lines[r - 1][c + 2], buffer, strlen(buffer));
+        sgr("0");
+        do_csi("%d;%d*y", pid, page);
+      } else {
+        sprintf(buffer, "%c %02X ", ch, ch);
+        fputs(buffer, stdout);
+        memcpy(&lines[r - 1][c - 1], buffer, strlen(buffer));
+        do_csi("%d;%d;%d;%d;%d;%d*y", pid, page, r, c, r, c);
+      }
+
+      /* FIXME - use check_DECCKSR? */
       report = get_reply();
       if ((s = strchr(report, '!')) != 0 && (*++s == '~') && strlen(++s) > 4) {
         char test[5];
-        sprintf(test, "%04X", CHK(ch));
+
+        if (ch > '~') {
+          int y, x;
+
+          first = TRUE;
+          for (y = 0; y < (!chk_notrim ? r : max_lines); ++y) {
+            /*
+             * If trimming, count through space after ":" in "All:".
+             * Otherwise, count the whole screen.
+             */
+            int col_limit = (chk_notrim || (y < (r - 1))) ? min_cols : (c + 4);
+            int part = full;
+
+            for (x = 0; x < col_limit; ++x) {
+              int yx = (unsigned char) lines[y][x];
+              full += yx;
+              if (chk_notrim
+                  || first
+                  || (yx != ' ')
+                  || (!chk_notrim && (x == (c + 3)) && y == (r - 1))) {
+                part = full;
+              }
+              first = FALSE;
+            }
+            if (!chk_notrim)
+              full = part;
+            if (!chk_attrib && (y == 2)) {
+              /* add attributes for highlighted report-string */
+              full += report_len * (chkINVERSE);
+            }
+            if (!chk_attrib && (y == (r - 1))) {
+              /* add attributes for "All:" */
+              full += 3 * (chkBOLD | chkUNDERLINE);
+              full += 2 * (chkBOLD);
+            }
+            if (LOG_ENABLED) {
+              fprintf(log_fp,
+                      "Check: %04X %2d:%s\n",
+                      CHK(full), y + 1, lines[y]);
+            }
+          }
+          sprintf(test, "%04X", CHK(full));
+        } else {
+          sprintf(test, "%04X", CHK(ch));
+        }
         if (memcmp(test, s, 4)) {
           vt_hilite(TRUE);
-          printf("%4s", s);
+          sprintf(buffer, "%.4s", s);
+          fputs(buffer, stdout);
           vt_hilite(FALSE);
         } else {
-          printf("%4s", test);
+          sprintf(buffer, "%.4s", test);
+          fputs(buffer, stdout);
         }
+        memcpy(&lines[r - 1][c + 4], buffer, 4);
       }
       ++ch;
-      if (ch > '~')
+      if (ch > '~' + 1)
         break;
     }
     if (ch > '~')
@@ -2264,6 +2395,11 @@ tst_DSR_area_sum(MENU_ARGS)
   restore_ttymodes();
   vt_move(max_lines - 2, 1);
   printf("Checksum for individual character is highlighted if mismatched.");
+
+  for (r = 0; r < max_lines; r++) {
+    free(lines[r]);
+  }
+  free(lines);
 
   vt_move(max_lines - 1, 1);
   return MENU_HOLD;

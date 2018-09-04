@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.110 2018/07/26 00:26:52 tom Exp $ */
+/* $Id: main.c,v 1.113 2018/09/02 17:58:44 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1351,6 +1351,11 @@ bye(void)
   printf("\n\n\n");
   inflush();
   close_tty();
+
+  if (LOG_ENABLED) {
+    fclose(log_fp);
+  }
+
   exit(EXIT_SUCCESS);
 }
 
@@ -1556,6 +1561,50 @@ menu(MENU *table)
 }
 
 /*
+ * Format a response-string, to highlight in chrprint2() and print.  It may be
+ * multi-line, depending on the length and the column limits.
+ */
+char *
+chrformat(const char *s, int col, int first)
+{
+  int pass;
+  int wrap = (min_cols - col);
+  char *result = 0;
+
+  for (pass = 0; pass < 2; ++pass) {
+    int j, k;
+    int base;
+
+    for (j = k = base = 0; s[j] != '\0'; ++j) {
+      int c = (unsigned char) s[j];
+      char temp[80];
+
+      if (c <= ' ' || c >= '\177') {
+        sprintf(temp, "<%d> ", c);
+      } else {
+        sprintf(temp, "%c ", c);
+      }
+      if ((k + first - base) >= wrap) {
+        if (pass) {
+          result[k] = '\n';
+        }
+        base = ++k;
+        first = 0;
+      }
+      if (pass) {
+        strcpy(result + k, temp);
+      }
+      k += (int) strlen(temp);
+    }
+    if (!pass) {
+      result = malloc(k + 2);
+      *result = '\0';
+    }
+  }
+  return result;
+}
+
+/*
  * Return updated row-number based on the number of characters printed to the
  * screen, e.g., for test_report_ops() to handle very long results.
  */
@@ -1564,31 +1613,23 @@ chrprint2(const char *s, int row, int col)
 {
   int i;
   int result = row;
-  int tracks = col;
-  char temp[80];
+  char *temp;
 
   vt_hilite(TRUE);
   printf(" ");
-  tracks += 1;
+  temp = chrformat(s, col, 1);
 
-  for (i = 0; s[i] != '\0'; i++) {
-    int c = (unsigned char) s[i];
-    int step;
-    if (c <= ' ' || c >= '\177') {
-      sprintf(temp, "<%d> ", c);
-    } else {
-      sprintf(temp, "%c ", c);
-    }
-    step = (int) strlen(temp);
-    tracks += step;
-    if ((tracks >= min_cols) && (col > 1)) {
+  for (i = 0; temp[i] != '\0'; ++i) {
+    if (temp[i] == '\n') {
       vt_move(++result, col);
-      tracks = col + step;
+    } else {
+      putchar(temp[i]);
     }
-    fputs(temp, stdout);
   }
 
   vt_hilite(FALSE);
+  free(temp);
+
   return result + 1;
 }
 

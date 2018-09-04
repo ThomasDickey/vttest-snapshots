@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.103 2018/07/25 14:02:16 tom Exp $ */
+/* $Id: vttest.h,v 1.105 2018/09/02 16:59:48 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -235,6 +235,7 @@ extern char txt_override_color[80];
 
 extern RETSIGTYPE onbrk(SIG_ARGS);
 extern RETSIGTYPE onterm(SIG_ARGS);
+extern char *chrformat(const char *s, int col, int first);
 extern char *skip_csi(char *input);
 extern char *skip_dcs(char *input);
 extern char *skip_digits(char *src);
