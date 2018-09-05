@@ -1,7 +1,10 @@
--- $Id: CHANGES,v 1.198 2018/09/01 00:23:52 tom Exp $
+-- $Id: CHANGES,v 1.200 2018/09/04 23:13:06 tom Exp $
 -------------------------------------------------------------------------------
 
-20180831
+20180904
+	+ demonstrate DECRQCRA with GR.
+	+ improve DECRQCRA test, demonstrating treatment of whitespace and
+	  video attributes by DEC terminals.
 	+ modify locking-shift test, changing the default GR character set to
 	  match hardware terminals more closely, e.g., setting it to Latin-1.
 	+ add/improve character-set table entries for xterm #336.

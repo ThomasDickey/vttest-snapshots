@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.193 2018/09/04 00:04:37 tom Exp $ */
+/* $Id: vt420.c,v 1.197 2018/09/05 00:21:03 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -754,7 +754,7 @@ parse_DECCKSR(char *report, int Pid, int *digits, int *checksum)
       && (after = skip_xdigits((before = report + pos), &actual)) != 0
       && *after == '\0') {
     result = 1;
-    *digits = (after - before);
+    *digits = (int) (after - before);
     *checksum = actual;
   }
   return result;
@@ -797,7 +797,7 @@ tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi, int expected)
   report = get_reply();
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
-  show_result(check_DECCKSR(temp, report, Pid, expected));
+  show_result("%s", check_DECCKSR(temp, report, Pid, expected));
 
   restore_ttymodes();
   vt_move(max_lines - 1, 1);
@@ -2224,12 +2224,12 @@ tst_DECSNLS(MENU_ARGS)
 #define CHK(n) ((-(n)) & 0xffff)
 
 static int
-tst_DSR_area_sum(MENU_ARGS)
+tst_DSR_area_sum(MENU_ARGS, int g)
 {
   static int chk_notrim = 0;    /* do not trim trailing blanks */
   static int chk_attrib = 0;    /* do not add video attributes to checksum */
 
-  char buffer[1024];            /* FIXME - allocate buffer for lines */
+  char buffer[1024];            /* allocate buffer for lines */
   int expected = 0;
   int title_sum = 0;
   int first = TRUE;
@@ -2241,16 +2241,18 @@ tst_DSR_area_sum(MENU_ARGS)
   int ch;
   int full = 0;
   int report_len;
+  int ch_1st = g ? 160 : 32;
+  int ch_end = g ? 254 : 126;
   char *report;
   char **lines;
   char temp[80];
   char *temp2;
 
   /* make an array of blank lines, to track text on the screen */
-  lines = calloc(max_lines, sizeof(char *));
+  lines = calloc((size_t) max_lines, sizeof(char *));
   for (r = 0; r < max_lines; ++r) {
-    lines[r] = malloc(min_cols + 1);
-    memset(lines[r], ' ', min_cols);
+    lines[r] = malloc((size_t) min_cols + 1);
+    memset(lines[r], ' ', (size_t) min_cols);
     lines[r][min_cols] = '\0';
   }
   sprintf(buffer, fmt_DECCKSR, the_title);
@@ -2296,18 +2298,18 @@ tst_DSR_area_sum(MENU_ARGS)
   free(temp2);
   vt_hilite(FALSE);
 
-  show_result(check_DECCKSR(temp, report, pid, CHK(title_sum)));
+  show_result("%s", check_DECCKSR(temp, report, pid, CHK(title_sum)));
   for (i = 0; temp[i] != '\0'; ++i)
     lines[r - 1][c + j++] = temp[i];
 
-  ch = ' ';
+  ch = ch_1st;
   for (c = 4; c < min_cols - 10; c += 12) {
     for (r = 5; r < max_lines - 3; ++r) {
       char *s;
 
       vt_move(r, c);
 
-      if (ch > '~') {
+      if (ch > ch_end) {
         sgr("1;4");
         sprintf(buffer, "All");
         fputs(buffer, stdout);
@@ -2327,10 +2329,12 @@ tst_DSR_area_sum(MENU_ARGS)
 
       /* FIXME - use check_DECCKSR? */
       report = get_reply();
-      if ((s = strchr(report, '!')) != 0 && (*++s == '~') && strlen(++s) > 4) {
+      if ((s = strchr(report, '!')) != 0
+          && (*++s == '~')
+          && strlen(++s) > 4) {
         char test[5];
 
-        if (ch > '~') {
+        if (ch > ch_end) {
           int y, x;
 
           first = TRUE;
@@ -2386,10 +2390,10 @@ tst_DSR_area_sum(MENU_ARGS)
         memcpy(&lines[r - 1][c + 4], buffer, 4);
       }
       ++ch;
-      if (ch > '~' + 1)
+      if (ch > ch_end + 1)
         break;
     }
-    if (ch > '~')
+    if (ch > ch_end)
       break;
   }
   restore_ttymodes();
@@ -2403,6 +2407,30 @@ tst_DSR_area_sum(MENU_ARGS)
 
   vt_move(max_lines - 1, 1);
   return MENU_HOLD;
+}
+
+static int
+tst_DSR_area_sum_gl(MENU_ARGS)
+{
+  return tst_DSR_area_sum(PASS_ARGS, 0);
+}
+
+static int
+tst_DSR_area_sum_gr(MENU_ARGS)
+{
+  switch (get_level()) {
+  case 0:
+  case 1:
+    break;
+  case 2:
+    esc(")A");  /* select the 94-character NRCS, closest to MCS */
+    break;
+  default:
+    esc("-A");  /* select the 96-character set */
+    break;
+  }
+  esc("~");
+  return tst_DSR_area_sum(PASS_ARGS, 1);
 }
 
 static int
@@ -2726,7 +2754,8 @@ tst_vt420_device_status(MENU_ARGS)
       { "Test Memory Checksum",                              tst_DSR_memory_sum },
       { "Test Data Integrity",                               tst_DSR_data_ok },
       { "Test Multiple Session Status",                      tst_DSR_multisession },
-      { "Test Checksum of Rectangular Area (DECRQCRA)",      tst_DSR_area_sum },
+      { "Test Checksum of Rectangular Area (DECRQCRA): GL",  tst_DSR_area_sum_gl },
+      { "Test Checksum of Rectangular Area (DECRQCRA): GR",  tst_DSR_area_sum_gr },
       { "Test Extended Cursor-Position (DECXCPR)",           tst_DSR_cursor },
       { "",                                                  0 }
     };
