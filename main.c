@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.113 2018/09/02 17:58:44 tom Exp $ */
+/* $Id: main.c,v 1.114 2018/09/05 00:18:31 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1597,7 +1597,7 @@ chrformat(const char *s, int col, int first)
       k += (int) strlen(temp);
     }
     if (!pass) {
-      result = malloc(k + 2);
+      result = malloc((size_t) k + 2);
       *result = '\0';
     }
   }
