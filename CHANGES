@@ -1,15 +1,17 @@
--- $Id: CHANGES,v 1.200 2018/09/04 23:13:06 tom Exp $
+-- $Id: CHANGES,v 1.204 2018/09/12 01:17:54 tom Exp $
 -------------------------------------------------------------------------------
 
-20180904
-	+ demonstrate DECRQCRA with GR.
+20180911
+	+ add "-V" option, for version information.
+	+ ensure logfile is flushed after each command.
+	+ demonstrate DECRQCRA with GR, checked with VT520 screenshot.
 	+ improve DECRQCRA test, demonstrating treatment of whitespace and
-	  video attributes by DEC terminals.
+	  video attributes by DEC terminals, seen in VT520 screenshots.
 	+ modify locking-shift test, changing the default GR character set to
 	  match hardware terminals more closely, e.g., setting it to Latin-1.
 	+ add/improve character-set table entries for xterm #336.
 	+ modify CNL test to demonstrate its treatment of zero as default.
-	+ revise DECRQCRA test to match VT525 screenshots from Markus Schmidt
+	+ revise DECRQCRA test to match VT520 screenshots from Markus Schmidt
 
 20180811
 	+ recent BSD-make mishandled .1.cat rule; fix

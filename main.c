@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.114 2018/09/05 00:18:31 tom Exp $ */
+/* $Id: main.c,v 1.117 2018/09/12 00:52:03 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -63,8 +63,19 @@ static void
 usage(void)
 {
   fprintf(stderr,
-          "Usage: vttest [-l] [-p] [-s] [-8] [-f font] [24x80.132]\n");
+          "Usage: vttest [-V] [-l] [-p] [-s] [-8] [-f font] [24x80.132]\n");
   exit(EXIT_FAILURE);
+}
+
+static int
+version(void)
+{
+  printf("VT100 test program, version %d.%d", RELEASE, PATCHLEVEL);
+#ifdef PATCH_DATE
+  if (PATCH_DATE)
+    printf(" (%d)", PATCH_DATE);
+#endif
+  return 1;     /* used for indenting */
 }
 
 int
@@ -94,6 +105,10 @@ main(int argc, char *argv[])
     if (*opt == '-') {
       while (*++opt != '\0') {
         switch (*opt) {
+        case 'V':
+          version();
+          putchar('\n');
+          exit(EXIT_SUCCESS);
         case 'f':
           if (!*++opt) {
             if (argc-- < 1)
@@ -169,11 +184,7 @@ main(int argc, char *argv[])
 #endif
   do {
     vt_clear(2);
-    __(title(0), printf("VT100 test program, version %d.%d", RELEASE, PATCHLEVEL));
-#ifdef PATCH_DATE
-    if (PATCH_DATE)
-      printf(" (%d)", PATCH_DATE);
-#endif
+    __(title(0), version());
 
     title(1);
     if (max_lines != 24
@@ -1535,6 +1546,8 @@ menu2(MENU *table, int top)
             pop_menu(save);
           }
         }
+        if (LOG_ENABLED)
+          fflush(log_fp);
         return 1;
       } else if (choice <= tablesize) {
         vt_clear(2);
@@ -1547,6 +1560,8 @@ menu2(MENU *table, int top)
             holdit();
           pop_menu(save);
         }
+        if (LOG_ENABLED)
+          fflush(log_fp);
         return (table[choice].dispatch != 0);
       }
       printf("          Bad choice, try again: ");

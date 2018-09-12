@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.197 2018/09/05 00:21:03 tom Exp $ */
+/* $Id: vt420.c,v 1.203 2018/09/12 00:36:05 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -2221,12 +2221,16 @@ tst_DECSNLS(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
-#define CHK(n) ((-(n)) & 0xffff)
+#define SOH             1
+#define CHK(n)          ((-(n)) & 0xffff)
+
+#define to_fill(ch)     (!chk_notrim && ((ch) == ' ') ? SOH : (ch))
+#define from_fill(ch)   (!chk_notrim && ((ch) == SOH) ? ' ' : (ch))
 
 static int
 tst_DSR_area_sum(MENU_ARGS, int g)
 {
-  static int chk_notrim = 0;    /* do not trim trailing blanks */
+  static int chk_notrim = 0;    /* do not trim blanks */
   static int chk_attrib = 0;    /* do not add video attributes to checksum */
 
   char buffer[1024];            /* allocate buffer for lines */
@@ -2244,7 +2248,7 @@ tst_DSR_area_sum(MENU_ARGS, int g)
   int ch_1st = g ? 160 : 32;
   int ch_end = g ? 254 : 126;
   char *report;
-  char **lines;
+  char **lines;                 /* keep track of "drawn" characters */
   char temp[80];
   char *temp2;
 
@@ -2252,7 +2256,7 @@ tst_DSR_area_sum(MENU_ARGS, int g)
   lines = calloc((size_t) max_lines, sizeof(char *));
   for (r = 0; r < max_lines; ++r) {
     lines[r] = malloc((size_t) min_cols + 1);
-    memset(lines[r], ' ', (size_t) min_cols);
+    memset(lines[r], to_fill(' '), (size_t) min_cols);
     lines[r][min_cols] = '\0';
   }
   sprintf(buffer, fmt_DECCKSR, the_title);
@@ -2260,7 +2264,7 @@ tst_DSR_area_sum(MENU_ARGS, int g)
 
   for (r = 0; r < rows; ++r) {
     for (c = 0; c < min_cols; ++c) {
-      ch = (unsigned char) lines[r][c];
+      ch = from_fill((unsigned char) lines[r][c]);
       expected += ch;
       if (chk_notrim || (first || (ch != ' ')))
         title_sum = expected;
@@ -2282,7 +2286,8 @@ tst_DSR_area_sum(MENU_ARGS, int g)
 
   /* like chrprint2, but shadowed into the lines[][] array */
   vt_hilite(TRUE);
-  printf(" ");
+  putchar(' ');
+  lines[r - 1][c - 1] = ' ';
   report_len = 1;
   temp2 = chrformat(report, c, 1);
   for (i = 0, j = 1; temp2[i] != '\0'; ++i) {
@@ -2299,8 +2304,10 @@ tst_DSR_area_sum(MENU_ARGS, int g)
   vt_hilite(FALSE);
 
   show_result("%s", check_DECCKSR(temp, report, pid, CHK(title_sum)));
-  for (i = 0; temp[i] != '\0'; ++i)
-    lines[r - 1][c + j++] = temp[i];
+  lines[r - 1][c - 1 + j++] = ' ';
+  for (i = 0; temp[i] != '\0'; ++i) {
+    lines[r - 1][c - 1 + j++] = temp[i];
+  }
 
   ch = ch_1st;
   for (c = 4; c < min_cols - 10; c += 12) {
@@ -2344,29 +2351,29 @@ tst_DSR_area_sum(MENU_ARGS, int g)
              * Otherwise, count the whole screen.
              */
             int col_limit = (chk_notrim || (y < (r - 1))) ? min_cols : (c + 4);
-            int part = full;
 
             for (x = 0; x < col_limit; ++x) {
               int yx = (unsigned char) lines[y][x];
-              full += yx;
               if (chk_notrim
-                  || first
-                  || (yx != ' ')
-                  || (!chk_notrim && (x == (c + 3)) && y == (r - 1))) {
-                part = full;
+                  || (yx >= ' ')) {
+                full += (yx < ' ') ? ' ' : yx;
               }
-              first = FALSE;
+              /*
+               * Tidy up the logfile (for debugging, turn this off).
+               */
+              if (yx == SOH + 0)
+                lines[y][x] = ' ';
             }
-            if (!chk_notrim)
-              full = part;
-            if (!chk_attrib && (y == 2)) {
-              /* add attributes for highlighted report-string */
-              full += report_len * (chkINVERSE);
-            }
-            if (!chk_attrib && (y == (r - 1))) {
-              /* add attributes for "All:" */
-              full += 3 * (chkBOLD | chkUNDERLINE);
-              full += 2 * (chkBOLD);
+            if (!chk_attrib) {
+              if (y == 2) {
+                /* add attributes for highlighted report-string */
+                full += report_len * (chkINVERSE);
+              }
+              if (y == (r - 1)) {
+                /* add attributes for "All:" */
+                full += 3 * (chkBOLD | chkUNDERLINE);
+                full += 2 * (chkBOLD);
+              }
             }
             if (LOG_ENABLED) {
               fprintf(log_fp,
@@ -2378,16 +2385,23 @@ tst_DSR_area_sum(MENU_ARGS, int g)
         } else {
           sprintf(test, "%04X", CHK(ch));
         }
-        if (memcmp(test, s, 4)) {
+        if (memcmp(test, s, (size_t) 4)) {
           vt_hilite(TRUE);
           sprintf(buffer, "%.4s", s);
+          if (LOG_ENABLED) {
+            unsigned actual;
+            sscanf(s, "%x", &actual);
+            fprintf(log_fp, "Actual: %.4s\n", s);
+            fprintf(log_fp, "actual: %04x\n", actual);
+            fprintf(log_fp, "Expect: %04X\n", CHK(full));
+          }
           fputs(buffer, stdout);
           vt_hilite(FALSE);
         } else {
           sprintf(buffer, "%.4s", test);
           fputs(buffer, stdout);
         }
-        memcpy(&lines[r - 1][c + 4], buffer, 4);
+        memcpy(&lines[r - 1][c + 4], buffer, (size_t) 4);
       }
       ++ch;
       if (ch > ch_end + 1)
