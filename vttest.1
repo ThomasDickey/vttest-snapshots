@@ -1,5 +1,15 @@
-.\" $Id: vttest.1,v 1.14 2012/04/22 23:39:16 tom Exp $
+.\" $Id: vttest.1,v 1.17 2018/09/12 00:56:52 tom Exp $
 .TH VTTEST 1 "LOCAL"
+.\" Bulleted paragraph
+.de bP
+.ie n  .IP \(bu 4
+.el    .IP \(bu 2
+..
+.\" Escape single quotes in literal strings from groff's Unicode transform.
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
 .
 .SH NAME
 vttest \- test VT100-type terminal
@@ -14,44 +24,49 @@ is a program designed to test the functionality of a VT100 terminal
 It tests both display (escape sequence handling) and keyboard.
 .PP
 The program is menu-driven and contains full on-line operating instructions.
-.TP 3
--
+.bP
 To run a given menu-item, you must enter its number.
-.TP 3
--
-Menu items start at zero; this is the "Exit" item in almost all cases.
-.TP 3
--
+.bP
+Menu items start at zero; this is the \*(``Exit\*('' item in almost all cases.
+.bP
 You can run all menu-items (for a given level) by entering an asterisk,
-i.e, `*'.
-.TP 3
--
-You can force a repaint of the menu items by entering "?".
-.TP 3
--
-A few menus can be more than one page.  Use "n" and "p" to
-switch to the next or previous page.
+i.e, \*(``*'.
+.bP
+You can force a repaint of the menu items by entering \*(``?\*(''.
+.bP
+A few menus can be more than one page.
+Use \*(``n\*('' and \*(``p\*('' to switch to the next or previous page.
 .SH OPTIONS
 You can specify the screen geometry in the form \fI[24x80.132]\fP,
-i.e., 24 lines, 80 minimum columns, 132 maximum columns.
+i.e.,
+.bP
+24 lines,
+.bP
+80 minimum columns, and
+.bP
+132 maximum columns.
+.PP
 If your terminal does not switch between 80 and 132 columns you
 may specify 24x80.80, for example, to avoid a misleading display.
 .PP
 Other options are:
 .TP 5
-.BI -f " file"
+.B \-V
+print the program version, and exit.
+.TP 5
+.BI \-f " fontfile"
 specify a file containing a DRCS (soft character definition) string.
 .TP 5
-.B -l
+.B \-l
 log test results to \fIvttest.log\fP.
 .TP 5
-.B -p
+.B \-p
 use padding, e.g., for a VT100 connected to a high-speed line.
 .TP 5
-.B -s
+.B \-s
 add time-delay in selected panning/scrolling options to show details.
 .TP 5
-.B -8
+.B \-8
 use 8-bit controls (this can be changed with a menu option).
 .
 .SH AUTHOR
