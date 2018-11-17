@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.35 2018/07/26 00:32:06 tom Exp $ */
+/* $Id: mouse.c,v 1.36 2018/11/17 01:36:47 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -566,35 +566,41 @@ loop:
     }
 
     ToData(0);
-    vt_el(2);
     chrprint2(report, report_row, report_col);
 
     while ((report = parse_mouse_M(report, &b, &xx, &yy)) != 0) {
       unsigned adj = 1;
+      char result[80];
+      char modifiers[80];
 
-      ToData(1);
-      vt_el(2);
-      show_result("code 0x%x (%d,%d)", b, yy, xx);
+      sprintf(result, "code 0x%x (%d,%d)", b, yy, xx);
+      *modifiers = '\0';
       if (b & (unsigned) (~3)) {
         if (b & 4)
-          printf(" shift");
+          strcat(modifiers, " shift");
         if (b & 8)
-          printf(" meta");
+          strcat(modifiers, " meta");
         if (b & 16)
-          printf(" control");
+          strcat(modifiers, " control");
         if (b & 32)
-          printf(" motion");
+          strcat(modifiers, " motion");
         if (b & 64)
           adj += 3;
+        b &= 3;
       }
-      b &= 3;
-      if (b != 3) {
+      if ((b == 3) && (adj == 1)) {
+        if (xx != x || yy != y) {
+          ToData(1);
+          vt_el(2);
+          show_result("%s release%s", result, modifiers);
+          show_click(yy, xx, '*');
+        }
+      } else {
         b += adj;
-        printf(" button %u", b);
+        ToData(1);
+        vt_el(2);
+        show_result("%s button %u%s", result, b, modifiers);
         show_click(yy, xx, (int) (b + '0'));
-      } else if (xx != x || yy != y) {
-        printf(" release");
-        show_click(yy, xx, '*');
       }
       x = xx;
       y = yy;

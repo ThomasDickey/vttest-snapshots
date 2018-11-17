@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.117 2018/09/12 00:52:03 tom Exp $ */
+/* $Id: main.c,v 1.118 2018/11/17 01:05:02 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1855,6 +1855,9 @@ my_vfprintf(FILE *fp, va_list ap, const char *fmt)
         break;
       case 'd':
         fprintf(fp, "%d", va_arg(ap, int));
+        break;
+      case 'u':
+        fprintf(fp, "%u", va_arg(ap, unsigned));
         break;
       case 's':
         fputs(va_arg(ap, char *), fp);
