@@ -1,5 +1,15 @@
--- $Id: CHANGES,v 1.205 2018/11/17 01:47:34 tom Exp $
+-- $Id: CHANGES,v 1.208 2019/01/05 18:43:43 tom Exp $
 -------------------------------------------------------------------------------
+
+20190105
+	+ added/updated port-files from pkgsrc for test-builds.
+
+	+ updated port-files from FreeBSD for test-builds.
+
+	+ updated/improved configure macros
+	  CF_CC_ENV_FLAGS, CF_GNU_SOURCE, CF_POSIX_C_SOURCE, CF_XOPEN_SOURCE
+
+	+ update config.guess, config.sub
 
 20181116
 	+ improve mouse-tracking test, logging the decoded button- and
