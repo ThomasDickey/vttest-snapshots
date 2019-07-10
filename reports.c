@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.38 2018/07/26 00:33:49 tom Exp $ */
+/* $Id: reports.c,v 1.40 2019/07/10 22:18:23 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -49,8 +49,9 @@ struct table {
 },extensions[] = {
     {   1, "132 columns" },                             /* vt400 */
     {   2, "printer port" },                            /* vt400 */
-    {   3, "ReGIS Graphics" },                          /* kermit */
-    {   4, "Sixel Graphics" },                          /* kermit */
+    {   3, "ReGIS graphics" },                          /* kermit */
+    {   4, "Sixel graphics" },                          /* kermit */
+    {   5, "Katakana extension" },                      /* vt400? */
     {   6, "selective erase" },                         /* vt400 */
     {   7, "soft character set (DRCS)" },               /* vt400 */
     {   8, "user-defined keys (UDK)" },                 /* vt400 */
@@ -65,15 +66,28 @@ struct table {
     {  17, "terminal state reports" },                  /* ? */
     {  18, "user windows" },                            /* vt400 */
     {  19, "two sessions" },                            /* vt400 */
+    {  20, "APL" },                                     /* vt400? */
     {  21, "horizontal scrolling" },                    /* vt400 */
     {  22, "color" },                                   /* vt500 */
     {  23, "Greek" },                                   /* vt500 */
     {  24, "Turkish" },                                 /* vt500 */
+    {  25, "Arabic bilingual M1" },                     /* vt400? */
+    {  26, "Arabic bilingual M2" },                     /* vt400? */
+    {  27, "Arabic bilingual M3" },                     /* vt400? */
+    {  28, "rectangular editing" },                     /* vt400 */
     {  29, "ANSI text locator" },                       /* DXterm */
-    {  39, "page memory extension" },                   /* ? */
+    {  30, "Hanzi" },                                   /* vt400? */
+    {  32, "text macros" },                             /* vt400? */
+    {  33, "Hangul Hanja" },                            /* vt400? */
+    {  34, "Icelandic" },                               /* vt400? */
+    {  35, "Arabic bilingual TC" },                     /* vt400? */
+    {  36, "Arabic bilingual no TC" },                  /* vt400? */
+    {  36, "Arabic bilingual no TC" },                  /* vt400? */
+    {  37, "Thai" },                                    /* vt400? */
+    {  38, "character outlining" },                     /* vt400? */
     {  42, "ISO Latin-2" },                             /* vt500 */
     {  44, "PC Term" },                                 /* vt500 */
-    {  45, "Soft key mapping" },                        /* vt500 */
+    {  45, "soft key mapping" },                        /* vt500 */
     {  46, "ASCII Terminal emulation (WYSE,TVI,...)" }, /* vt500 */
     {  -1, "" }
 };

@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.55 2018/07/26 23:46:01 tom Exp $ */
+/* $Id: xterm.c,v 1.56 2019/07/10 22:00:07 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -47,6 +47,8 @@ test_altscrn_47(MENU_ARGS)
   holdit();
 
   sm("?47");
+  vt_move(12, 1);
+  println("This message should not be here.");
   decaln();     /* fill the screen */
   vt_move(15, 7);
   decsc();
@@ -83,6 +85,8 @@ test_altscrn_1047(MENU_ARGS)
   holdit();
 
   sm("?1047");
+  vt_move(12, 1);
+  println("This message should not be here.");
   decaln();     /* fill the screen */
   vt_move(15, 7);
   decsc();
@@ -118,6 +122,8 @@ test_altscrn_1049(MENU_ARGS)
   holdit();     /* cursor location will be one line down */
 
   sm("?1049");  /* this saves the cursor location */
+  vt_move(12, 1);
+  println("This message should not be here.");
   decaln();     /* fill the screen */
   cup(max_lines - 2, 1);
   ed(0);
