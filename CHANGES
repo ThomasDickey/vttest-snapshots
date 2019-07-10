@@ -1,5 +1,14 @@
--- $Id: CHANGES,v 1.208 2019/01/05 18:43:43 tom Exp $
+-- $Id: CHANGES,v 1.210 2019/07/10 22:01:59 tom Exp $
 -------------------------------------------------------------------------------
+
+20190710
+	+ improve alternate-screen test, with additional cursor-position check.
+
+	+ add extensions found in DEC standard 070 to the primary reponse table.
+
+	+ updated/improved configure macros
+
+	+ update config.guess, config.sub
 
 20190105
 	+ added/updated port-files from pkgsrc for test-builds.
