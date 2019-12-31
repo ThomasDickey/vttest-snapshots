@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.30 2019/07/10 20:57:46 tom Exp $
+dnl $Id: aclocal.m4,v 1.31 2019/12/31 22:34:22 tom Exp $
 dnl autoconf macros for vttest - T.E.Dickey
 dnl ---------------------------------------------------------------------------
 dnl Copyright:  1997-2018,2019 by Thomas E. Dickey
@@ -404,7 +404,7 @@ AC_SUBST(SHOW_CC)
 AC_SUBST(ECHO_CC)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_FCNTL_VS_IOCTL version: 3 updated: 2004/08/03 20:29:33
+dnl CF_FCNTL_VS_IOCTL version: 4 updated: 2019/12/31 17:31:55
 dnl -----------------
 dnl Test if we have a usable ioctl with FIONREAD, or if fcntl.h is preferred.
 AC_DEFUN([CF_FCNTL_VS_IOCTL],
@@ -423,7 +423,7 @@ ioctl (0, FIONREAD, &l1);
 	[cf_cv_use_fionread=no])
 ])
 AC_MSG_RESULT($cf_cv_use_fionread)
-test $cf_cv_use_fionread = yes && AC_DEFINE(USE_FIONREAD)
+test $cf_cv_use_fionread = yes && AC_DEFINE(USE_FIONREAD,1,[Define to 1 if we may use FIONREAD])
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_GCC_ATTRIBUTES version: 17 updated: 2015/04/12 15:39:00
@@ -536,9 +536,10 @@ rm -rf conftest*
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_VERSION version: 7 updated: 2012/10/18 06:46:33
+dnl CF_GCC_VERSION version: 8 updated: 2019/09/07 13:38:36
 dnl --------------
-dnl Find version of gcc
+dnl Find version of gcc, and (because icc/clang pretend to be gcc without being
+dnl compatible), attempt to determine if icc/clang is actually used.
 AC_DEFUN([CF_GCC_VERSION],[
 AC_REQUIRE([AC_PROG_CC])
 GCC_VERSION=none
@@ -548,9 +549,11 @@ if test "$GCC" = yes ; then
 	test -z "$GCC_VERSION" && GCC_VERSION=unknown
 	AC_MSG_RESULT($GCC_VERSION)
 fi
+CF_INTEL_COMPILER(GCC,INTEL_COMPILER,CFLAGS)
+CF_CLANG_COMPILER(GCC,CLANG_COMPILER,CFLAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 35 updated: 2019/06/16 09:45:01
+dnl CF_GCC_WARNINGS version: 36 updated: 2019/09/07 13:38:36
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
@@ -572,8 +575,6 @@ dnl
 AC_DEFUN([CF_GCC_WARNINGS],
 [
 AC_REQUIRE([CF_GCC_VERSION])
-CF_INTEL_COMPILER(GCC,INTEL_COMPILER,CFLAGS)
-CF_CLANG_COMPILER(GCC,CLANG_COMPILER,CFLAGS)
 if test "x$have_x" = xyes; then CF_CONST_X_STRING fi
 cat > conftest.$ac_ext <<EOF
 #line __oline__ "${as_me:-configure}"
@@ -1071,7 +1072,7 @@ fi # cf_cv_posix_visible
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_POSIX_VDISABLE version: 6 updated: 2010/10/23 15:52:32
+dnl CF_POSIX_VDISABLE version: 7 updated: 2019/12/31 17:31:55
 dnl -----------------
 dnl Special test to workaround gcc 2.6.2, which cannot parse C-preprocessor
 dnl conditionals.
@@ -1112,7 +1113,7 @@ this did not work
 	)])
 ])
 AC_MSG_RESULT($cf_cv_posix_vdisable)
-test $cf_cv_posix_vdisable = yes && AC_DEFINE(HAVE_POSIX_VDISABLE)
+test $cf_cv_posix_vdisable = yes && AC_DEFINE(HAVE_POSIX_VDISABLE,1,[Define to 1 if POSIX VDISABLE symbol should be used])
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_POSIX_VISIBLE version: 1 updated: 2018/12/31 20:46:17
@@ -1142,11 +1143,15 @@ AC_TRY_COMPILE([#include <stdio.h>],[
 ])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_CC version: 4 updated: 2014/07/12 18:57:58
+dnl CF_PROG_CC version: 5 updated: 2019/12/31 08:53:54
 dnl ----------
 dnl standard check for CC, plus followup sanity checks
 dnl $1 = optional parameter to pass to AC_PROG_CC to specify compiler name
 AC_DEFUN([CF_PROG_CC],[
+CF_ACVERSION_CHECK(2.53,
+	[AC_MSG_WARN(this will incorrectly handle gnatgcc choice)
+	 AC_REQUIRE([AC_PROG_CC])],
+	[])
 ifelse($1,,[AC_PROG_CC],[AC_PROG_CC($1)])
 CF_GCC_VERSION
 CF_ACVERSION_CHECK(2.52,
@@ -1175,11 +1180,16 @@ AC_SUBST(GROFF_NOTE)
 AC_SUBST(NROFF_NOTE)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_PROG_LINT version: 3 updated: 2016/05/22 15:25:54
+dnl CF_PROG_LINT version: 4 updated: 2019/11/20 18:55:37
 dnl ------------
 AC_DEFUN([CF_PROG_LINT],
 [
 AC_CHECK_PROGS(LINT, lint cppcheck splint)
+case "x$LINT" in
+(xcppcheck|x*/cppcheck)
+	test -z "$LINT_OPTS" && LINT_OPTS="--enable=all"
+	;;
+esac
 AC_SUBST(LINT_OPTS)
 ])dnl
 dnl ---------------------------------------------------------------------------
