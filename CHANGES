@@ -1,5 +1,10 @@
--- $Id: CHANGES,v 1.210 2019/07/10 22:01:59 tom Exp $
+-- $Id: CHANGES,v 1.211 2019/12/31 22:35:27 tom Exp $
 -------------------------------------------------------------------------------
+
+20191231
+	+ updated/improved configure macros
+
+	+ update config.guess, config.sub
 
 20190710
 	+ improve alternate-screen test, with additional cursor-position check.
