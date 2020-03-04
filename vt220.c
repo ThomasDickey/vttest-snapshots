@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.25 2018/07/26 00:39:55 tom Exp $ */
+/* $Id: vt220.c,v 1.26 2020/03/04 02:09:27 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -80,7 +80,7 @@ show_KeyboardStatus(char *report)
     case 13:  show = "Norwegian/Danish";     break;
     case 14:  show = "French/Belgian";       break;
     case 15:  show = "Spanish Int.";         break;
-    case 16:  show = "Portugese";            break; /* vt3XX */
+    case 16:  show = "Portuguese";           break; /* vt3XX */
     case 19:  show = "Hebrew";               break; /* vt5XX: kermit says 14 */
     case 22:  show = "Greek";                break; /* vt5XX */
     case 28:  show = "Canadian (English)";   break; /* vt4XX */

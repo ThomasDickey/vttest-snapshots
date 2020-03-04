@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.63 2018/09/01 00:20:14 tom Exp $ */
+/* $Id: charsets.c,v 1.70 2020/03/04 02:09:09 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -24,7 +24,7 @@ typedef enum {
   Norwegian_Danish = 13,
   French = 14,
   Spanish = 15,
-  Portugese = 16,
+  Portuguese = 16,
   Hebrew = 17,
   British_Latin_1,
   Cyrillic,
@@ -67,26 +67,30 @@ typedef struct {
  * The "map_XXX" strings list the characters that should be replaced for the
  * given NRCS.  Use that to highlight them for clarity.
  */
-static const char map_pound[] = "#";
-static const char map_all94[] = "!\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
-static const char map_all96[] = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~\177";
-static const char map_DEC_Supp[] = "$&,-./48>GHIJKLMNOPW^pw}~";
+static const char map_pound[]        = "#";
+static const char map_all94[]        = "!\"#$%&'()*+,-./0123456789:;<=>?"
+                                       "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
+                                       "`abcdefghijklmnopqrstuvwxyz{|}~";
+static const char map_all96[]        = " !\"#$%&'()*+,-./0123456789:;<=>?"
+                                       "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
+                                       "`abcdefghijklmnopqrstuvwxyz{|}~\177";
+static const char map_DEC_Supp[]     = "$&,-./48>GHIJKLMNOPW^pw}~";
 static const char map_Spec_Graphic[] = "`abcdefghijklmnopqrstuvwxyz{|}~";
-static const char map_Supp_Graphic[] = "$&,-./48>PW^p}~\177";
-static const char map_Dutch[] = "#@[\\]{|}~";
-static const char map_Finnish[] = "`[\\]^{|}~";
-static const char map_French[] = "#@[\\]{|}~";
-static const char map_French_Canadian[] = "@`[\\]^{|}~";
-static const char map_German[] = "@[\\]{|}~";
-static const char map_Greek[] = "abcdefghijklmnopqrstuvwxyz";
-static const char map_Hebrew[] = "`abcdefghijklmnopqrstuvwxyz";
-static const char map_Italian[] = "#@`[\\]{|}~";
-static const char map_Norwegian[] = "@`[\\]^{|}~";
-static const char map_Portuguese[] = "[\\]{|}";
-static const char map_Spanish[] = "@[\\]{|}";
-static const char map_Swedish[] = "@`[\\]^{|}~";
-static const char map_Swiss[] = "#@`[\\]^_{|}~";
-static const char map_Turkish[] = "&@[\\]^{|}~";
+static const char map_Supp_Graphic[] = "$&(,-./48>PW]^pw}~\177";
+static const char map_Dutch[]        = "#@[\\]{|}~";
+static const char map_Finnish[]      = "[\\]^`{|}~";
+static const char map_French[]       = "#@[\\]{|}~";
+static const char map_French_Canadian[] = "@[\\]^`{|}~";
+static const char map_German[]       = "@[\\]{|}~";
+static const char map_Greek[]        = "abcdefghijklmnopqrstuvwxyz";
+static const char map_Hebrew[]       = "`abcdefghijklmnopqrstuvwxyz";
+static const char map_Italian[]      = "#@[\\]`{|}~";
+static const char map_Norwegian[]    = "@[\\]^`{|}~";
+static const char map_Portuguese[]   = "[\\]{|}";
+static const char map_Spanish[]      = "#@[\\]{|}";
+static const char map_Swedish[]      = "@[\\]^`{|}~";
+static const char map_Swiss[]        = "#@[\\]^_`{|}~";
+static const char map_Turkish[]      = "&@[\\]^`{|}~";
 
 static const CHARSETS KnownCharsets[] = {
   { ASCII,             0, 0, 0, 9, "B",    "US ASCII", 0 },
@@ -119,7 +123,7 @@ static const CHARSETS KnownCharsets[] = {
   { Norwegian_Danish,  0, 0, 3, 9, "`",    "Norwegian/Danish", map_Norwegian },
   { Norwegian_Danish,  0, 1, 2, 9, "E",    "Norwegian/Danish", map_Norwegian },
   { Norwegian_Danish,  0, 2, 2, 9, "6",    "Norwegian/Danish", map_Norwegian },
-  { Portugese,         0, 0, 3, 9, "%6",   "Portugese", map_Portuguese },
+  { Portuguese,        0, 0, 3, 9, "%6",   "Portuguese", map_Portuguese },
   { Russian,           0, 0, 5, 9, "&5",   "Russian", 0 },
   { SCS_NRCS,          0, 0, 5, 9, "%3",   "SCS", 0 },
   { Spanish,           0, 0, 2, 9, "Z",    "Spanish", map_Spanish },

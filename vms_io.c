@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.27 2018/07/25 15:31:16 tom Exp $ */
+/* $Id: vms_io.c,v 1.28 2020/03/04 02:09:37 tom Exp $ */
 
 #define DEBUG
 
@@ -20,7 +20,7 @@
 typedef struct {
   unsigned short int status;    /* I/O completion status */
   unsigned short int count;     /* byte transfer count   */
-  int dev_dep_data;             /* device dependant data */
+  int dev_dep_data;             /* device dependent data */
 } QIO_SB;                       /* This is a QIO I/O Status Block */
 
 #define NIBUF   1024  /* Input buffer size            */
