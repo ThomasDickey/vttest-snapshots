@@ -1,6 +1,6 @@
 dnl Process this file with 'autoconf' to produce a 'configure' script
-dnl $Id: configure.in,v 1.26 2018/07/26 00:14:58 tom Exp $
-AC_REVISION($Revision: 1.26 $)
+dnl $Id: configure.in,v 1.27 2020/03/03 22:42:35 tom Exp $
+AC_REVISION($Revision: 1.27 $)
 
 AC_INIT(esc.c)
 AC_CONFIG_HEADER(config.h:config.hin)
@@ -9,6 +9,8 @@ CF_CHECK_CACHE
 
 AC_ARG_PROGRAM
 CF_PROG_CC
+
+CF_WITHOUT_X
 
 AC_PROG_INSTALL
 CF_MAKE_TAGS

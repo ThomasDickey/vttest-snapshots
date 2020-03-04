@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.40 2019/07/10 22:18:23 tom Exp $ */
+/* $Id: reports.c,v 1.41 2020/03/04 02:10:20 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -357,7 +357,7 @@ tst_DA_2(MENU_ARGS)
 }
 
 /*
- * VT400 (reply is a hexidecimal string)
+ * VT400 (reply is a hexadecimal string)
  */
 static int
 tst_DA_3(MENU_ARGS)

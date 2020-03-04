@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.15 2018/07/26 00:36:36 tom Exp $ */
+/* $Id: sixel.c,v 1.16 2020/03/04 02:10:08 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -80,7 +80,7 @@ decode_header(void)
   default:
     MatrixWide = Pcms;
     MatrixHigh = 10;
-    break;      /* 5 thru 10 */
+    break;      /* 5 through 10 */
   }
 
   switch (Pe) {
