@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.41 2020/03/04 02:10:20 tom Exp $ */
+/* $Id: reports.c,v 1.43 2020/04/20 21:09:23 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -226,7 +226,14 @@ tst_DA(MENU_ARGS)
         if ((value = scan_DA(cmp, &reportpos)) != 0) {
           printf("   ");
           switch (value) {
+          case 2:
+            show_result("no STP, AVO, no GPO (ReGIS)");
+            break;
+          case 3:
+            show_result("no STP, AVO, GPO (ReGIS)");
+            break;
           case 5:
+            show_result("no AVO");
             break;
           case 7:
             show_result("with AVO");
@@ -241,6 +248,9 @@ tst_DA(MENU_ARGS)
         if ((value = scan_DA(cmp, &reportpos)) != 0) {
           printf("   ");
           switch (value) {
+          case 0:
+            show_result("no printer");
+            break;
           case 1:
             show_result("with printer");
             break;
@@ -292,11 +302,14 @@ tst_DA_2(MENU_ARGS)
     const char *name;
   } tbl[] = {
     {  1,  "VT220" },
+    {  2,  "VT240" },
     { 18,  "VT330" },
     { 19,  "VT340" },
     { 24,  "VT320" },
+    { 32,  "VT382" },
     { 28,  "DECterm" },
     { 41,  "VT420" },
+    { 61,  "VT510" },
     { 64,  "VT520" },
     { 65,  "VT525" },
   };
