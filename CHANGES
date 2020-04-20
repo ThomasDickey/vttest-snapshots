@@ -1,5 +1,10 @@
--- $Id: CHANGES,v 1.214 2020/03/04 02:10:52 tom Exp $
+-- $Id: CHANGES,v 1.219 2020/04/20 22:34:37 tom Exp $
 -------------------------------------------------------------------------------
+
+20200420
+	+ improve test-coverage for REP/SD/SL/SR/SU, exercising default params.
+
+	+ improve DA/DA2 reports for VT125, VT240, VT382, VT510 used in xterm.
 
 20200303
 	+ spelling fixes found with codespell.

@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.90 2018/07/25 14:03:26 tom Exp $ */
+/* $Id: esc.c,v 1.92 2020/04/20 22:33:40 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -212,7 +212,7 @@ va_out(FILE *fp, va_list ap, const char *fmt)
 }
 
 int
-tprintf(const char *fmt,...)
+tprintf(const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -232,7 +232,7 @@ tprintf(const char *fmt,...)
 
 /* CSI xxx */
 void
-do_csi(const char *fmt,...)
+do_csi(const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -253,7 +253,7 @@ do_csi(const char *fmt,...)
 
 /* DCS xxx ST */
 void
-do_dcs(const char *fmt,...)
+do_dcs(const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -276,7 +276,7 @@ do_dcs(const char *fmt,...)
 
 /* DCS xxx ST */
 void
-do_osc(const char *fmt,...)
+do_osc(const char *fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
@@ -339,10 +339,35 @@ esc(const char *s)
   }
 }
 
+/*
+ * Maps positive sequence to [-1,0,1], where -1 denotes the absence of a
+ * parameter, 0 and 1 are different ways to express the default parameter
+ * when it is 1.
+ */
+int
+default_1(int pn)
+{
+  return ((pn % 3) - 1);
+}
+
+/*
+ * Special case for xterm's use of CSI T for mouse-tracking.
+ */
+int
+default_1a(int pn)
+{
+  if ((pn = default_1(pn)) == 0)
+    pn = 1;
+  return pn;
+}
+
 void
 brc(int pn, int c)
 {
-  do_csi("%d%c", pn, c);
+  if (pn < 0)   /* e.g., default_1() */
+    do_csi("%c", c);
+  else
+    do_csi("%d%c", pn, c);
 }
 
 void
@@ -1017,7 +1042,10 @@ nel(void)                       /* Next Line */
 void
 rep(int pn)                     /* Repeat */
 {
-  do_csi("%db", pn);
+  if (pn < 0)
+    do_csi("b");
+  else
+    do_csi("%db", pn);
 }
 
 void
@@ -1095,7 +1123,10 @@ sgr(const char *ps)             /* Select Graphic Rendition */
 void
 sl(int pn)                      /* Scroll Left */
 {
-  do_csi("%d @", pn);
+  if (pn < 0)
+    do_csi(" @");
+  else
+    do_csi("%d @", pn);
 }
 
 void
@@ -1107,7 +1138,10 @@ sm(const char *ps)              /* Set Mode */
 void
 sr(int pn)                      /* Scroll Right */
 {
-  do_csi("%d A", pn);
+  if (pn < 0)
+    do_csi(" A");
+  else
+    do_csi("%d A", pn);
 }
 
 void

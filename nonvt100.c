@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.66 2018/08/23 23:21:28 tom Exp $ */
+/* $Id: nonvt100.c,v 1.68 2020/04/20 22:35:16 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -441,7 +441,7 @@ tst_REP(MENU_ARGS)
         rep(n - 2);
     }
     printf("+");
-    rep(1);     /* make that 2 +'s */
+    rep(default_1(n));  /* make that 2 +'s */
     rep(10);    /* this should be ignored, since a control sequence precedes */
     println("");
   }
@@ -476,7 +476,7 @@ tst_SD(MENU_ARGS)
     cup(n, n);
     printf("*");
     slowly();
-    sd(1);
+    sd(default_1a(n));
   }
   vt_move(last + 1, 1);
   ruler(last + 1, min_cols);
@@ -502,7 +502,7 @@ tst_SL(MENU_ARGS)
     cup(n, min_cols / 2 + last - n);
     printf("*");
     slowly();
-    sl(1);
+    sl(default_1(n));
   }
   vt_move(last, 1);
   ruler(last, min_cols);
@@ -528,7 +528,7 @@ tst_SR(MENU_ARGS)
     cup(n, min_cols / 2 - last + n);
     printf("*");
     slowly();
-    sr(1);
+    sr(default_1(n));
   }
   vt_move(last, 1);
   ruler(last, min_cols);
@@ -552,7 +552,7 @@ tst_SU(MENU_ARGS)
     cup(last + 1 - n, n);
     printf("*");
     slowly();
-    su(1);
+    su(default_1(n));
   }
   vt_move(last + 1, 1);
   ruler(last, min_cols);
