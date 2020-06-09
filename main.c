@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.118 2018/11/17 01:05:02 tom Exp $ */
+/* $Id: main.c,v 1.119 2020/06/09 00:33:14 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1874,7 +1874,7 @@ my_vfprintf(FILE *fp, va_list ap, const char *fmt)
  * Show a test-result, optionally logging it as well.
  */
 void
-show_result(const char *fmt,...)
+show_result(const char *fmt, ...)
 {
   va_list ap;
 

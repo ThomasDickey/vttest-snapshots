@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.203 2018/09/12 00:36:05 tom Exp $ */
+/* $Id: vt420.c,v 1.204 2020/06/08 19:49:28 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -1037,12 +1037,8 @@ tst_DECDC(MENU_ARGS)
   return MENU_HOLD;
 }
 
-/*
- * VT400 & up
- * Erase Rectangular area
- */
-static int
-tst_DECERA(MENU_ARGS)
+static void
+show_DECERA(MENU_ARGS, const char *color_name, const char *color_value)
 {
   int last = max_lines - 3;
   BOX box;
@@ -1053,7 +1049,7 @@ tst_DECERA(MENU_ARGS)
 
   test_with_margins(1);
 
-  set_colors(WHITE_ON_GREEN);
+  set_colors(color_value);
 
   decera(box.top, box.left, box.bottom, box.right);
 
@@ -1065,10 +1061,25 @@ tst_DECERA(MENU_ARGS)
   vt_clear(0);
 
   println(the_title);
-  if (origin_mode)
-    println("There should be a rectangle cleared in the middle of the margins.");
-  else
-    println("There should be a rectangle cleared in the middle of the screen.");
+  tprintf("There should be a%s rectangle cleared in the middle of the %s.\r\n",
+          color_name,
+          origin_mode ? "margins" : "screen");
+}
+
+/*
+ * VT400 & up
+ * Erase Rectangular area
+ */
+static int
+tst_DECERA(MENU_ARGS)
+{
+  if (do_colors) {
+    show_DECERA(PASS_ARGS, " blue", WHITE_ON_BLUE);
+    holdit();
+    show_DECERA(PASS_ARGS, " green", WHITE_ON_GREEN);
+  } else {
+    show_DECERA(PASS_ARGS, "", WHITE_ON_BLUE);
+  }
   return MENU_HOLD;
 }
 
