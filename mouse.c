@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.36 2018/11/17 01:36:47 tom Exp $ */
+/* $Id: mouse.c,v 1.37 2020/06/10 01:00:59 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -573,7 +573,7 @@ loop:
       char result[80];
       char modifiers[80];
 
-      sprintf(result, "code 0x%x (%d,%d)", b, yy, xx);
+      sprintf(result, "code 0x%x (%u,%u)", b, yy, xx);
       *modifiers = '\0';
       if (b & (unsigned) (~3)) {
         if (b & 4)

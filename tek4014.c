@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.14 2018/07/26 00:37:55 tom Exp $ */
+/* $Id: tek4014.c,v 1.15 2020/06/10 01:04:48 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -189,6 +189,7 @@ tek_mouse_coords(MENU_ARGS)
 
   report = empty;
   println("Any key or mouse click twice to exit...");
+  status[0] = '\0';
 
   do {
     int new_x;
@@ -251,6 +252,8 @@ tek_mouse_lines(MENU_ARGS)
 
   report = empty;
   println("Any mouse click twice to exit...");
+  status[0] = '\0';
+
   do {
     strncpy(status, report, (size_t) 5)[5] = 0;
     if (old_x >= 0 && old_y >= 0) {
