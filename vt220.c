@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.26 2020/03/04 02:09:27 tom Exp $ */
+/* $Id: vt220.c,v 1.33 2020/06/10 08:20:01 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -6,6 +6,7 @@
  */
 #include <vttest.h>
 #include <ttymodes.h>
+#include <draw.h>
 #include <esc.h>
 
 int
@@ -212,72 +213,195 @@ tst_S8C1T(MENU_ARGS)
  * Test DEC's selective-erase (set-protected area) by drawing a box of
  * *'s that will remain, and a big X of *'s that gets cleared..
  */
+static void
+tst_DECSCA_selective(MENU_ARGS)
+{
+  BOX inner;
+
+  if (make_box_params(&inner, 6, 20) == 0) {
+    int pass;
+
+    for (pass = 0; pass < 2; pass++) {
+      int i;
+
+      if (pass == 0)
+        decsca(1);
+
+      for (i = inner.top; i <= inner.bottom; i++) {
+	int j;
+
+        cup(i - 1, 1 + inner.left);
+        for (j = inner.left; j <= inner.right; j++) {
+          putchar('*');
+        }
+      }
+
+      if (pass == 0) {
+        int j;
+
+        decsca(0);
+
+        for (j = 0; j <= 2; j++) {
+          for (i = 1; i < inner.top - 1; i++) {
+            cup(i, inner.left - inner.top + (i + j) + 3);
+            putchar('*');
+            cup(i, inner.right + inner.top - (i + j) - 1);
+            putchar('*');
+          }
+          for (i = inner.bottom; i < max_lines; i++) {
+            cup(i, (inner.left + inner.bottom) - (i - j) + 1);
+            putchar('*');
+            cup(i, (inner.right - inner.bottom) + (i - j) + 1);
+            putchar('*');
+          }
+          cup((max_lines / 2) - 1, (min_cols / 2) - 1);
+          decsed(j);
+        }
+
+        for (i = inner.right + 1; i <= min_cols; i++) {
+          cup(inner.top + 1, 1 + i);
+          putchar('*');
+          cup(max_lines / 2 + 1, 1 + i);
+          putchar('*');
+        }
+        cup(max_lines / 2 + 1, 1 + min_cols / 2);
+        decsel(0);  /* after the cursor */
+
+        for (i = 1; i < inner.left; i++) {
+          cup(inner.top + 1, 1 + i);
+          putchar('*');
+          cup(max_lines / 2 + 1, 1 + i);
+          putchar('*');
+        }
+        cup(max_lines / 2 + 1, 1 + min_cols / 2);
+        decsel(1);  /* before the cursor */
+
+        cup(inner.top + 1, 1 + min_cols / 2);
+        decsel(2);  /* the whole line */
+
+        vt_move(max_lines - 3, 1);
+        vt_clear(0);
+        println("If your terminal supports DEC protected areas (DECSCA, DECSED, DECSEL),");
+        println("there will be an solid box made of *'s in the middle of the screen.");
+        holdit();
+      }
+    }
+  } else {
+    vt_move(max_lines - 3, 1);
+    vt_clear(0);
+    println("The screen is too small for this test");
+    holdit();
+  }
+}
+
+static void
+tst_DECSCA_edit_line(MENU_ARGS)
+{
+  BOX outer;
+  BOX inner;
+
+  if (make_box_params(&outer, 0, 0) == 0 &&
+      make_box_params(&inner, 6, 20) == 0) {
+    int i;
+
+    decsca(1);
+
+    for (i = outer.top; i <= outer.bottom; i++) {
+      int j;
+
+      cup(i + 1, 1 + outer.left);
+      for (j = outer.left; j <= outer.right; j++) {
+        putchar((i >= inner.top &&
+                 i <= inner.bottom &&
+                 j >= inner.left &&
+                 j <= inner.right) ? '*' : '#');
+      }
+    }
+    cup(inner.top - 2, max_cols);
+    ed(1);
+    cup(inner.bottom, 1);
+    ed(0);
+    for (i = outer.top; i <= outer.bottom; i++) {
+      cup(i + 1, inner.left);
+      el(1);
+      cup(i + 1, inner.right + 2);
+      el(0);
+    }
+
+    decsca(0);
+    vt_move(max_lines - 3, 1);
+    vt_clear(0);
+    println("If your terminal supports DEC protected areas (DECSCA, ignoring EL/ED),");
+    println("there will be an solid box made of *'s in the middle of the screen.");
+  } else {
+    vt_move(max_lines - 3, 1);
+    vt_clear(0);
+    println("The screen is too small for this test");
+  }
+  holdit();
+}
+
+static void
+tst_DECSCA_edit_char(MENU_ARGS)
+{
+  BOX outer;
+  BOX inner;
+
+  if (make_box_params(&outer, 0, 0) == 0 &&
+      make_box_params(&inner, 6, 20) == 0) {
+    int i;
+
+    decsca(1);
+
+    for (i = outer.top; i <= outer.bottom; i++) {
+      int j;
+
+      cup(i + 1, 1 + outer.left);
+      for (j = outer.left; j <= outer.right; j++) {
+        putchar((i >= inner.top &&
+                 i <= inner.bottom &&
+                 j >= inner.left &&
+                 j <= inner.right) ? '*' : '#');
+      }
+    }
+    for (i = 1; i < inner.top - 1; ++i) {
+      cup(i, 1);
+      ech(min_cols);
+    }
+    for (i = inner.top; i <= inner.bottom; i++) {
+      cup(i - 1, 1);
+      ech(inner.left);
+      cup(i - 1, inner.right + 2);
+      if (i % 2) {
+        ich(19);
+      } else {
+        dch(19);
+      }
+    }
+    for (i = inner.bottom; i < outer.bottom; ++i) {
+      cup(i, 1);
+      dch(min_cols);
+    }
+    decsca(0);
+
+    vt_move(max_lines - 3, 1);
+    vt_clear(0);
+    println("If your terminal supports DEC protected areas (DECSCA, ignoring ECH/ICH/DCH),");
+    println("there will be an solid box made of *'s in the middle of the screen.");
+  } else {
+    vt_move(max_lines - 3, 1);
+    vt_clear(0);
+    println("The screen is too small for this test");
+  }
+  holdit();
+}
+
 static int
 tst_DECSCA(MENU_ARGS)
 {
-  int i, j, pass;
-  int tmar = 5;
-  int bmar = max_lines - 8;
-  int lmar = 20;
-  int rmar = min_cols - lmar;
-
-  for (pass = 0; pass < 2; pass++) {
-    if (pass == 0)
-      decsca(1);
-    for (i = tmar; i <= bmar; i++) {
-      cup(i, lmar);
-      for (j = lmar; j <= rmar; j++) {
-        printf("*");
-      }
-    }
-    if (pass == 0) {
-      decsca(0);
-
-      for (j = 0; j <= 2; j++) {
-        for (i = 1; i < tmar; i++) {
-          cup(i, lmar - tmar + (i + j));
-          printf("*");
-          cup(i, rmar + tmar - (i + j));
-          printf("*");
-        }
-        for (i = bmar + 1; i < max_lines; i++) {
-          cup(i, lmar + bmar - i + j);
-          printf("*");
-          cup(i, rmar - bmar + i - j);
-          printf("*");
-        }
-        cup(max_lines / 2, min_cols / 2);
-        decsed(j);
-      }
-
-      for (i = rmar + 1; i <= min_cols; i++) {
-        cup(tmar, i);
-        printf("*");
-        cup(max_lines / 2, i);
-        printf("*");
-      }
-      cup(max_lines / 2, min_cols / 2);
-      decsel(0);  /* after the cursor */
-
-      for (i = 1; i < lmar; i++) {
-        cup(tmar, i);
-        printf("*");
-        cup(max_lines / 2, i);
-        printf("*");
-      }
-      cup(max_lines / 2, min_cols / 2);
-      decsel(1);  /* before the cursor */
-
-      cup(tmar, min_cols / 2);
-      decsel(2);  /* the whole line */
-
-      vt_move(max_lines - 3, 1);
-      vt_clear(0);
-      println("If your terminal supports DEC protected areas (DECSCA, DECSED, DECSEL),");
-      println("there will be an solid box made of *'s in the middle of the screen.");
-      holdit();
-    }
-  }
+  tst_DECSCA_selective(PASS_ARGS);
+  tst_DECSCA_edit_line(PASS_ARGS);
+  tst_DECSCA_edit_char(PASS_ARGS);
   return MENU_NOHOLD;
 }
 
@@ -430,9 +554,9 @@ tst_ECH(MENU_ARGS)
     cup(i, min_cols - i - 2);
     do_csi("X");  /* make sure default-parameter works */
     cup(i, min_cols - i - 1);
-    printf("*");
+    putchar('*');
     ech(min_cols);
-    printf("*");  /* this should be adjacent, in the upper-right corner */
+    putchar('*');   /* this should be adjacent, in the upper-right corner */
   }
 
   vt_move(last, 1);

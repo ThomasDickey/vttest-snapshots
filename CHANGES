@@ -1,7 +1,10 @@
--- $Id: CHANGES,v 1.221 2020/06/09 00:35:20 tom Exp $
+-- $Id: CHANGES,v 1.222 2020/06/10 00:55:58 tom Exp $
 -------------------------------------------------------------------------------
 
 20200610
+	+ modify DECSCA test to show whether EL/ED and ECH/ICH/DCH ignore
+	  DECSCA.
+
 	+ modify DECERA test to assume that the terminal uses bce, and prompt
 	  for an additional color-change/erase to demonstrate this.
 

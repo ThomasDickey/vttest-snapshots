@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.105 2018/09/02 16:59:48 tom Exp $ */
+/* $Id: vttest.h,v 1.106 2020/06/09 19:25:58 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -95,7 +95,7 @@
 #endif
 
 #ifdef HAVE_SYS_FILIO_H
-#  include <sys/filio.h>        /* FIONREAD */
+#  include <sys/filio.h>  /* FIONREAD */
 #endif
 
 #ifdef HAVE_FCNTL_H
@@ -184,14 +184,14 @@ extern void perror(const char *s);
 extern int _flsbuf(int c, FILE *s);
 extern int fclose(FILE *s);
 extern int fflush(FILE *s);
-extern int fprintf(FILE *s, const char *fmt,...);
+extern int fprintf(FILE *s, const char *fmt, ...);
 extern int fgetc(FILE *s);
 extern int fputc(int c, FILE *s);
 extern int fputs(char *p, FILE *s);
 extern int ioctl(int fd, unsigned long mask, void *p);
-extern int printf(const char *fmt,...);
-extern int scanf(const char *fmt,...);
-extern int sscanf(const char *src, const char *fmt,...);
+extern int printf(const char *fmt, ...);
+extern int scanf(const char *fmt, ...);
+extern int sscanf(const char *src, const char *fmt, ...);
 extern long strtol(const char *src, char **dst, int base);
 #endif
 
@@ -369,7 +369,7 @@ extern void set_colors(const char *value);
 extern void setup_softchars(const char *filename);
 extern void setup_vt420_cursor(MENU_ARGS);
 extern void show_mousemodes(void);
-extern void show_result(const char *fmt,...) GCC_PRINTFLIKE(1,2);
+extern void show_result(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 extern void slowly(void);
 extern void test_with_margins(int enable);
 extern void vt_clear(int code);
