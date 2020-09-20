@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.33 2020/04/20 18:43:19 tom Exp $
+dnl $Id: aclocal.m4,v 1.35 2020/09/20 17:09:52 tom Exp $
 dnl autoconf macros for vttest - T.E.Dickey
 dnl ---------------------------------------------------------------------------
 dnl Copyright:  1997-2019,2020 by Thomas E. Dickey
@@ -159,6 +159,12 @@ dnl Allow user to disable a normally-on option.
 AC_DEFUN([CF_ARG_DISABLE],
 [CF_ARG_OPTION($1,[$2],[$3],[$4],yes)])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_ARG_ENABLE version: 3 updated: 1999/03/30 17:24:31
+dnl -------------
+dnl Allow user to enable a normally-off option.
+AC_DEFUN([CF_ARG_ENABLE],
+[CF_ARG_OPTION($1,[$2],[$3],[$4],no)])dnl
+dnl ---------------------------------------------------------------------------
 dnl CF_ARG_OPTION version: 5 updated: 2015/05/10 19:52:14
 dnl -------------
 dnl Restricted form of AC_ARG_ENABLE that ensures user doesn't give bogus
@@ -281,7 +287,7 @@ if test ".$system_name" != ".$cf_cv_system_name" ; then
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_CLANG_COMPILER version: 2 updated: 2013/11/19 19:23:35
+dnl CF_CLANG_COMPILER version: 3 updated: 2020/08/28 04:10:22
 dnl -----------------
 dnl Check if the given compiler is really clang.  clang's C driver defines
 dnl __GNUC__ (fooling the configure script into setting $GCC to yes) but does
@@ -311,6 +317,10 @@ cf_save_CFLAGS="$cf_save_CFLAGS -Qunused-arguments"
 ],[])
 	ifelse([$3],,CFLAGS,[$3])="$cf_save_CFLAGS"
 	AC_MSG_RESULT($ifelse([$2],,CLANG_COMPILER,[$2]))
+fi
+
+if test "x$CLANG_COMPILER" = "xyes" ; then
+	CF_APPEND_TEXT(CFLAGS,-Wno-error=implicit-function-declaration)
 fi
 ])
 dnl ---------------------------------------------------------------------------
@@ -351,6 +361,36 @@ AC_SUBST(SHOW_CC)
 AC_SUBST(ECHO_CC)
 ])dnl
 dnl ---------------------------------------------------------------------------
+dnl CF_ENABLE_WARNINGS version: 7 updated: 2020/08/29 09:05:21
+dnl ------------------
+dnl Configure-option to enable gcc warnings
+dnl
+dnl $1 = extra options to add, if supported
+dnl $2 = option for checking attributes.  By default, this is done when
+dnl      warnings are enabled.  For other values:
+dnl      yes: always do this, e.g., to use in generated library-headers
+dnl      no: never do this
+AC_DEFUN([CF_ENABLE_WARNINGS],[
+if ( test "$GCC" = yes || test "$GXX" = yes )
+then
+CF_FIX_WARNINGS(CFLAGS)
+CF_FIX_WARNINGS(CPPFLAGS)
+CF_FIX_WARNINGS(LDFLAGS)
+AC_MSG_CHECKING(if you want to turn on gcc warnings)
+CF_ARG_ENABLE(warnings,
+	[  --enable-warnings       test: turn on gcc compiler warnings],
+	[with_warnings=yes],
+	[with_warnings=no])
+AC_MSG_RESULT($with_warnings)
+if test "$with_warnings" = "yes"
+then
+	ifelse($2,,[CF_GCC_ATTRIBUTES])
+	CF_GCC_WARNINGS($1)
+fi
+ifelse($2,yes,[CF_GCC_ATTRIBUTES])
+fi
+])dnl
+dnl ---------------------------------------------------------------------------
 dnl CF_FCNTL_VS_IOCTL version: 4 updated: 2019/12/31 17:31:55
 dnl -----------------
 dnl Test if we have a usable ioctl with FIONREAD, or if fcntl.h is preferred.
@@ -373,14 +413,48 @@ AC_MSG_RESULT($cf_cv_use_fionread)
 test $cf_cv_use_fionread = yes && AC_DEFINE(USE_FIONREAD,1,[Define to 1 if we may use FIONREAD])
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_ATTRIBUTES version: 18 updated: 2020/03/10 18:53:47
+dnl CF_FIX_WARNINGS version: 2 updated: 2020/08/28 15:08:28
+dnl ---------------
+dnl Warning flags do not belong in CFLAGS, CPPFLAGS, etc.  Any of gcc's
+dnl "-Werror" flags can interfere with configure-checks.  Those go into
+dnl EXTRA_CFLAGS.
+dnl
+dnl $1 = variable name to repair
+define([CF_FIX_WARNINGS],[
+if ( test "$GCC" = yes || test "$GXX" = yes )
+then
+	case [$]$1 in
+	(*-Werror=*)
+		CF_VERBOSE(repairing $1: [$]$1)
+		cf_temp_flags=
+		for cf_temp_scan in [$]$1
+		do
+			case "x$cf_temp_scan" in
+			(x-Werror=*)
+				CF_APPEND_TEXT(EXTRA_CFLAGS,"$cf_temp_scan")
+				;;
+			(*)
+				CF_APPEND_TEXT(cf_temp_flags,"$cf_temp_scan")
+				;;
+			esac
+		done
+		$1="$cf_temp_flags"
+		CF_VERBOSE(... fixed [$]$1)
+		CF_VERBOSE(... extra $EXTRA_CFLAGS)
+		;;
+	esac
+fi
+AC_SUBST(EXTRA_CFLAGS)
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_GCC_ATTRIBUTES version: 19 updated: 2020/08/29 09:05:21
 dnl -----------------
 dnl Test for availability of useful gcc __attribute__ directives to quiet
 dnl compiler warnings.  Though useful, not all are supported -- and contrary
 dnl to documentation, unrecognized directives cause older compilers to barf.
 AC_DEFUN([CF_GCC_ATTRIBUTES],
 [
-if test "$GCC" = yes
+if ( test "$GCC" = yes || test "$GXX" = yes )
 then
 cat > conftest.i <<EOF
 #ifndef GCC_PRINTF
@@ -500,7 +574,7 @@ CF_INTEL_COMPILER(GCC,INTEL_COMPILER,CFLAGS)
 CF_CLANG_COMPILER(GCC,CLANG_COMPILER,CFLAGS)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_GCC_WARNINGS version: 37 updated: 2020/01/05 20:04:12
+dnl CF_GCC_WARNINGS version: 38 updated: 2020/08/28 15:08:28
 dnl ---------------
 dnl Check if the compiler supports useful warning options.  There's a few that
 dnl we don't use, simply because they're too noisy:
@@ -543,7 +617,7 @@ then
 
 	AC_CHECKING([for $CC warning options])
 	cf_save_CFLAGS="$CFLAGS"
-	EXTRA_CFLAGS="-Wall"
+	EXTRA_CFLAGS="$EXTRA_CFLAGS -Wall"
 	for cf_opt in \
 		wd1419 \
 		wd1683 \
@@ -566,7 +640,6 @@ elif test "$GCC" = yes && test "$GCC_VERSION" != "unknown"
 then
 	AC_CHECKING([for $CC warning options])
 	cf_save_CFLAGS="$CFLAGS"
-	EXTRA_CFLAGS=
 	cf_warn_CONST=""
 	test "$with_ext_const" = yes && cf_warn_CONST="Wwrite-strings"
 	cf_gcc_warnings="Wignored-qualifiers Wlogical-op Wvarargs"
@@ -827,6 +900,89 @@ ${GROFF_NOTE}$cf_name.ps   : $cf_name.$2
 ${GROFF_NOTE}$cf_name.txt  : $cf_name.$2
 CF_EOF
 done
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_MAKE_PHONY version: 1 updated: 2020/09/08 21:08:52
+dnl -------------
+dnl Check if the make-program handles a ".PHONY" target, e.g,. a target which
+dnl acts as a placeholder.
+dnl
+dnl The ".PHONY" feature was proposed in 2011 here
+dnl     https://www.austingroupbugs.net/view.php?id=523
+dnl and is scheduled for release in P1003.1 Issue 8 (late 2022).
+dnl
+dnl This is not supported by SVr4 make (or SunOS 4, 4.3SD, etc), but works with
+dnl a few others (i.e., GNU make and the non-POSIX "BSD" make):
+dnl
+dnl + This is a GNU make feature (since April 1988, but in turn from binutils,
+dnl   date unspecified).
+dnl
+dnl + It was adopted in NetBSD make in June 1995.
+dnl
+dnl + The other BSD make programs are derived from the NetBSD make (and for
+dnl   that reason are not actually different "implementations").
+dnl
+dnl + Some features of NetBSD make were actually adapted from pmake, which
+dnl   began as a modified GNU make starting in 1993.
+dnl
+dnl + Version 3.8 of the dmake program in January 1992 also implemented this
+dnl   GNU make extension, but is less well known than the BSD make.
+AC_DEFUN([CF_MAKE_PHONY],[
+AC_CACHE_CHECK(for \".PHONY\" make-support, cf_cv_make_PHONY,[
+	rm -rf conftest*
+	(
+		mkdir conftest || exit 1
+		cd conftest
+		cat >makefile <<'CF_EOF'
+.PHONY: always
+DATA=0
+always:	always.out
+	@echo "** making [$]@ [$](DATA)"
+once: once.out
+	@echo "** making [$]@ [$](DATA)"
+always.out:
+	@echo "** making [$]@ [$](DATA)"
+	echo [$](DATA) > [$]@
+once.out:
+	@echo "** making [$]@ [$](DATA)"
+	echo [$](DATA) > [$]@
+CF_EOF
+		for cf_data in 1 2 3
+		do
+			${MAKE:-make} always DATA=$cf_data
+			${MAKE:-make} once   DATA=$cf_data
+			${MAKE:-make} -t always once
+			if test -f always ; then
+				echo "no (case 1)" > ../conftest.tmp
+			elif test ! -f always.out ; then
+				echo "no (case 2)" > ../conftest.tmp
+			elif test ! -f once.out ; then
+				echo "no (case 3)" > ../conftest.tmp
+			elif ! cmp -s always.out once.out ; then
+				echo "no (case 4)" > ../conftest.tmp
+				diff always.out once.out
+			else
+				cf_check=`cat always.out`
+				if test "x$cf_check" != "x$cf_data" ; then
+					echo "no (case 5)" > ../conftest.tmp
+				else
+					echo yes > ../conftest.tmp
+					rm -f *.out
+					continue
+				fi
+			fi
+			break
+		done
+	) >&AC_FD_CC 2>&1
+	cf_cv_make_PHONY=`cat conftest.tmp`
+	rm -rf conftest*
+])
+MAKE_NO_PHONY="#"
+MAKE_PHONY="#"
+test "x$cf_cv_make_PHONY" = xyes && MAKE_PHONY=
+test "x$cf_cv_make_PHONY" != xyes && MAKE_NO_PHONY=
+AC_SUBST(MAKE_NO_PHONY)
+AC_SUBST(MAKE_PHONY)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_MAKE_TAGS version: 6 updated: 2010/10/23 15:52:32
@@ -1383,29 +1539,6 @@ chmod 700 $MAN2HTML_TEMP
 AC_SUBST(MAN2HTML_NOTE)
 AC_SUBST(MAN2HTML_PATH)
 AC_SUBST(MAN2HTML_TEMP)
-])dnl
-dnl ---------------------------------------------------------------------------
-dnl CF_WITH_WARNINGS version: 5 updated: 2004/07/23 14:40:34
-dnl ----------------
-dnl Combine the checks for gcc features into a configure-script option
-dnl
-dnl Parameters:
-dnl	$1 - see CF_GCC_WARNINGS
-AC_DEFUN([CF_WITH_WARNINGS],
-[
-if ( test "$GCC" = yes || test "$GXX" = yes )
-then
-AC_MSG_CHECKING(if you want to check for gcc warnings)
-AC_ARG_WITH(warnings,
-	[  --with-warnings         test: turn on gcc warnings],
-	[cf_opt_with_warnings=$withval],
-	[cf_opt_with_warnings=no])
-AC_MSG_RESULT($cf_opt_with_warnings)
-if test "$cf_opt_with_warnings" != no ; then
-	CF_GCC_ATTRIBUTES
-	CF_GCC_WARNINGS([$1])
-fi
-fi
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_XOPEN_SOURCE version: 55 updated: 2018/12/31 20:46:17

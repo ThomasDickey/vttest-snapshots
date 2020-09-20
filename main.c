@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.119 2020/06/09 00:33:14 tom Exp $ */
+/* $Id: main.c,v 1.120 2020/09/20 18:03:56 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -53,6 +53,7 @@ int input_8bits = FALSE;
 int output_8bits = FALSE;
 int slow_motion = FALSE;
 int tty_speed   = DEFAULT_SPEED;  /* nominal speed, for padding */
+int quick_reply = FALSE;
 int use_padding = FALSE;
 jmp_buf intrenv;
 
@@ -63,7 +64,7 @@ static void
 usage(void)
 {
   fprintf(stderr,
-          "Usage: vttest [-V] [-l] [-p] [-s] [-8] [-f font] [24x80.132]\n");
+          "Usage: vttest [-V] [-l] [-p] [-q] [-s] [-8] [-f font] [24x80.132]\n");
   exit(EXIT_FAILURE);
 }
 
@@ -123,6 +124,9 @@ main(int argc, char *argv[])
           break;
         case 'p':
           use_padding = TRUE;
+          break;
+        case 'q':
+          quick_reply = TRUE;
           break;
         case 's':
           slow_motion = TRUE;
@@ -1586,12 +1590,27 @@ chrformat(const char *s, int col, int first)
   int wrap = (min_cols - col);
   char *result = 0;
 
+  if (quick_reply) {
+    const char *quicker = s;
+    int j;
+    for (j = 0; s[j] != '\0'; ++j) {
+      int c = CharOf(s[j]);
+      if (c == '\033') {
+        if (j != 0)
+          quicker = s + j;
+      } else if (c == '\n') {
+        if (s[j + 1] != '\0')
+          quicker = s + j + 1;
+      }
+    }
+    s = quicker;
+  }
   for (pass = 0; pass < 2; ++pass) {
     int j, k;
     int base;
 
     for (j = k = base = 0; s[j] != '\0'; ++j) {
-      int c = (unsigned char) s[j];
+      int c = CharOf(s[j]);
       char temp[80];
 
       if (c <= ' ' || c >= '\177') {
@@ -1641,6 +1660,8 @@ chrprint2(const char *s, int row, int col)
       putchar(temp[i]);
     }
   }
+  if (quick_reply)
+    vt_el(0);
 
   vt_hilite(FALSE);
   free(temp);
@@ -1664,7 +1685,7 @@ skip_prefix(const char *prefix, char *input)
 char *
 skip_csi(char *input)
 {
-  if ((unsigned char) *input == CSI) {
+  if (CharOf(*input) == CSI) {
     return input + 1;
   }
   return skip_prefix(csi_input(), input);
@@ -1673,7 +1694,7 @@ skip_csi(char *input)
 char *
 skip_dcs(char *input)
 {
-  if ((unsigned char) *input == DCS) {
+  if (CharOf(*input) == DCS) {
     return input + 1;
   }
   return skip_prefix(dcs_input(), input);
@@ -1682,7 +1703,7 @@ skip_dcs(char *input)
 char *
 skip_ss3(char *input)
 {
-  if ((unsigned char) *input == SS3) {
+  if (CharOf(*input) == SS3) {
     return input + 1;
   }
   return skip_prefix(ss3_input(), input);
@@ -1704,7 +1725,7 @@ skip_prefix_2(const char *prefix, const char *input)
 const char *
 skip_csi_2(const char *input)
 {
-  if ((unsigned char) *input == CSI) {
+  if (CharOf(*input) == CSI) {
     return input + 1;
   }
   return skip_prefix_2(csi_input(), input);
@@ -1713,7 +1734,7 @@ skip_csi_2(const char *input)
 const char *
 skip_dcs_2(const char *input)
 {
-  if ((unsigned char) *input == DCS) {
+  if (CharOf(*input) == DCS) {
     return input + 1;
   }
   return skip_prefix_2(dcs_input(), input);
@@ -1722,7 +1743,7 @@ skip_dcs_2(const char *input)
 const char *
 skip_ss3_2(const char *input)
 {
-  if ((unsigned char) *input == SS3) {
+  if (CharOf(*input) == SS3) {
     return input + 1;
   }
   return skip_prefix_2(ss3_input(), input);
@@ -1799,7 +1820,7 @@ strip_terminator(char *src)
   int ok = strip_suffix(src, st_input());
   if (!ok) {
     int have = (int) strlen(src);
-    if (have > 0 && (unsigned char) src[have - 1] == ST) {
+    if (have > 0 && CharOf(src[have - 1]) == ST) {
       ok = TRUE;
       src[--have] = '\0';
     }

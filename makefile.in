@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.48 2018/08/11 12:02:36 tom Exp $
+# $Id: makefile.in,v 1.49 2020/09/20 17:16:34 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -134,11 +134,14 @@ PROG	= $(THIS)$x
 
 DISTFILES = MANIFEST configure $(SRC)
 
+@MAKE_PHONY@.PHONY: all install installdirs uninstall mostlyclean clean distclean realclean lint check
+
 all:	$(PROG)
 
 $(PROG): $(OBJS)
 	@ECHO_LD@$(LINK) $(CFLAGS) $(LDFLAGS) -o $(PROG) $(OBJS) $(LIBS)
 
+$(THIS)$o \
 $(OBJS): config.h $(THIS).h patchlev.h
 
 install: all installdirs
@@ -171,36 +174,6 @@ realclean :: distclean
 
 @MAKE_UPPER_TAGS@TAGS:	$(C_SRC) $(HDRS)
 @MAKE_UPPER_TAGS@	$(ETAGS) $(C_SRC) $(HDRS)
-
-# I keep my sources in RCS, and assign a symbolic release to the current patch
-# level.  The 'manifest' script knows how to build a list of files for a given
-# revision.
-MANIFEST: patchlev.h
-	manifest -rd`fgrep PATCH_DATE patchlev.h | sed -e s'/^[^0-9]*//'`
-
-dist: MANIFEST
-	- rm -f .fname .files
-	fgrep PATCH_DATE patchlev.h | sed -e 's/[^0-9.]//g' -e 's/^/$(THIS)-/' >.fname
-	cat MANIFEST | grep ' ' | egrep -v ' subdirectory$$' | sed -e 's/\ .*//' | uniq >.files
-	rm -rf `cat .fname`
-	TOP=`cat .fname`; mkdir $$TOP `cat .files | grep / | sed -e 's@/.*@@' | sed -e s@\^@$$TOP/@ | uniq`
-	for file in `cat .files`; do \
-	  ln $(srcdir)/$$file `cat .fname`/$$file \
-	    || { echo copying $$file instead; cp $$file `cat .fname`/$$file; }; \
-	done
-	tar -cf - `cat .fname` | gzip >`cat .fname`.tgz
-	rm -rf `cat .fname` .fname .files
-
-# Some of the output will be uuencoded because the test scripts include
-# <CR><LF> terminated ".bat" files for MS-DOS.
-dist-shar: MANIFEST
-	- rm -f .fname .files
-	fgrep PATCH_DATE patchlev.h | sed -e 's/[^0-9.]//g' -e 's/^/$(THIS)-/' >.fname
-	cat MANIFEST | grep ' ' | egrep -v ' subdirectory$$' | sed -e 's/\ .*//' | uniq >.files
-	shar -M -n`cat .fname` -opart -l50 `cat .files`
-	- rm -f .fname .files
-
-$(THIS)$o:	config.h
 
 ################################################################################
 

@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.37 2020/06/10 01:00:59 tom Exp $ */
+/* $Id: mouse.c,v 1.39 2020/09/20 20:32:30 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -16,15 +16,107 @@ typedef enum {
   cDFT = 0,
   cUTF = 1005,
   cSGR = 1006,
-  cURX = 1015
+  cURX = 1015,
+  cSGRp = 1016
 } COORDS;
 
 static int do_ExtCoords;
+static int do_ExtPixels;
 static int do_FocusEvent;
+
 static int chars_high;
 static int chars_wide;
+
 static int pixels_high;
 static int pixels_wide;
+static int pixels_xpos;
+static int pixels_ypos;
+static int pixels_xchr;
+static int pixels_ychr;
+
+/*
+ * If the terminal responds to the window-size reports, use that to determine
+ * the scaling for pixel-coordinates.
+ */
+static int
+can_do_pixels(void)
+{
+  static int first = TRUE;
+  int result = FALSE;
+  if (first) {
+    char *report;
+    int reply;
+    char final;
+    char extra;
+
+    first = FALSE;
+    result = TRUE;
+
+    set_tty_raw(TRUE);
+    set_tty_echo(FALSE);
+
+    brc(13, 't');
+    report = instr();
+    if ((report = skip_csi(report)) == 0
+        || sscanf(report,
+                  "%d;%d;%d%c%c",
+                  &reply,
+                  &pixels_ypos,
+                  &pixels_xpos,
+                  &final,
+                  &extra) != 4
+        || reply != 3
+        || pixels_ypos <= 0
+        || pixels_xpos <= 0
+        || final != 't') {
+      result = FALSE;
+    } else {
+      brc(14, 't');
+      report = instr();
+      if ((report = skip_csi(report)) == 0
+          || sscanf(report,
+                    "%d;%d;%d%c%c",
+                    &reply,
+                    &pixels_high,
+                    &pixels_wide,
+                    &final,
+                    &extra) != 4
+          || reply != 4
+          || pixels_high <= 0
+          || pixels_wide <= 0
+          || final != 't') {
+        result = FALSE;
+      } else {
+        brc(16, 't');
+        report = instr();
+        if ((report = skip_csi(report)) == 0
+            || sscanf(report,
+                      "%d;%d;%d%c%c",
+                      &reply,
+                      &pixels_ychr,
+                      &pixels_xchr,
+                      &final,
+                      &extra) != 4
+            || reply != 6
+            || pixels_ychr <= 0
+            || pixels_xchr <= 0
+            || final != 't') {
+          result = FALSE;
+        }
+      }
+    }
+
+    restore_ttymodes();
+
+    if (result && LOG_ENABLED) {
+      fprintf(log_fp, "Screen %dx%d at %d,%d (cell %dx%d)\n",
+              pixels_high, pixels_wide,
+              pixels_ypos, pixels_xpos,
+              pixels_ychr, pixels_xchr);
+    }
+  }
+  return result;
+}
 
 static const char *
 nameOfExtCoords(int code)
@@ -40,6 +132,9 @@ nameOfExtCoords(int code)
     break;
   case cURX:
     result = "urxvt-style";
+    break;
+  case cSGRp:
+    result = "SGR/pixels";
     break;
   default:
     result = "normal";
@@ -83,6 +178,7 @@ xterm_coord(char *source, int *pos)
     }
     break;
   case cSGR:
+  case cSGRp:
     result = 0;
     break;
   case cURX:
@@ -160,6 +256,7 @@ parse_mouse_M(char *report, unsigned *b, unsigned *x, unsigned *y)
       break;
 
     case cSGR:
+    case cSGRp:
       if (*report++ == '<') {
         finalp = skip_params(report);
         if (*finalp == 'M') {
@@ -228,6 +325,7 @@ parse_mouse_T(char *report,
       break;
 
     case cSGR:
+    case cSGRp:
       if (*report++ != '<')
         break;
       /* FALLTHRU */
@@ -274,6 +372,7 @@ parse_mouse_t(char *report, unsigned *x, unsigned *y)
       break;
 
     case cSGR:
+    case cSGRp:
       if (*report++ != '<')
         break;
       /* FALLTHRU */
@@ -369,6 +468,10 @@ locator_event(int e)
 static void
 show_click(unsigned y, unsigned x, int c)
 {
+  if (do_ExtPixels) {
+    y = (y + (unsigned) pixels_ychr - 1) / (unsigned) pixels_ychr;
+    x = (x + (unsigned) pixels_xchr - 1) / (unsigned) pixels_xchr;
+  }
   cup((int) y, (int) x);
   putchar(c);
   vt_move((int) y, (int) x);
@@ -875,6 +978,7 @@ toggle_ExtCoords(MENU_ARGS)
   int old_ExtCoords = do_ExtCoords;
   char buffer[80];
 
+  do_ExtPixels = FALSE;
   switch (do_ExtCoords) {
   case cUTF:
     do_ExtCoords = cSGR;
@@ -883,6 +987,14 @@ toggle_ExtCoords(MENU_ARGS)
     do_ExtCoords = cURX;
     break;
   case cURX:
+    if (can_do_pixels()) {
+      do_ExtCoords = cSGRp;
+      do_ExtPixels = TRUE;
+    } else {
+      do_ExtCoords = cDFT;
+    }
+    break;
+  case cSGRp:
     do_ExtCoords = cDFT;
     break;
   default:

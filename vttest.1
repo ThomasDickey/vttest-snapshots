@@ -1,4 +1,4 @@
-.\" $Id: vttest.1,v 1.17 2018/09/12 00:56:52 tom Exp $
+.\" $Id: vttest.1,v 1.18 2020/09/20 18:00:03 tom Exp $
 .TH VTTEST 1 "LOCAL"
 .\" Bulleted paragraph
 .de bP
@@ -62,6 +62,10 @@ log test results to \fIvttest.log\fP.
 .TP 5
 .B \-p
 use padding, e.g., for a VT100 connected to a high-speed line.
+.TP 5
+.B \-q
+show only the most recent part of a continuous response,
+e.g., any-event mouse tests, to improve readability of the test.
 .TP 5
 .B \-s
 add time-delay in selected panning/scrolling options to show details.
