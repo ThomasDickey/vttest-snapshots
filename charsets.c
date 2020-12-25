@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.70 2020/03/04 02:09:09 tom Exp $ */
+/* $Id: charsets.c,v 1.78 2020/12/25 14:24:42 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -39,6 +39,7 @@ typedef enum {
   Greek_Supp,
   Hebrew_DEC,
   Hebrew_Supp,
+  Latin_2_Supp,
   Latin_5_Supp,
   Latin_Cyrillic,
   Russian,
@@ -74,6 +75,7 @@ static const char map_all94[]        = "!\"#$%&'()*+,-./0123456789:;<=>?"
 static const char map_all96[]        = " !\"#$%&'()*+,-./0123456789:;<=>?"
                                        "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
                                        "`abcdefghijklmnopqrstuvwxyz{|}~\177";
+/* National Replacement Character Sets */
 static const char map_DEC_Supp[]     = "$&,-./48>GHIJKLMNOPW^pw}~";
 static const char map_Spec_Graphic[] = "`abcdefghijklmnopqrstuvwxyz{|}~";
 static const char map_Supp_Graphic[] = "$&(,-./48>PW]^pw}~\177";
@@ -92,11 +94,34 @@ static const char map_Swedish[]      = "@[\\]^`{|}~";
 static const char map_Swiss[]        = "#@[\\]^_`{|}~";
 static const char map_Turkish[]      = "&@[\\]^`{|}~";
 
+/* DEC pre-ISO 94-Character Sets */
+static const char map_DEC_Greek[]    = "$&,-./48>"
+                                       "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
+                                       "`abcdefghijklmnopqrstuvwxyz{|}~";
+static const char map_DEC_Hebrew[]   = "$&,-./48>"
+                                       "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
+                                       "`abcdefghijklmnopqrstuvwxyz{|}~";
+static const char map_DEC_Turkish[]  = "$&,-./48>?"
+                                       "PW]^"
+                                       "pw~";
+
+/* ISO 96-Character Sets */
+static const char map_ISO_Greek[]    = "!\"$%*./45689:<>?"
+                                       "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
+                                       "`abcdefghijklmnopqrstuvwxyz{|}~\177";
+static const char map_ISO_Hebrew[]   = "!*:?"
+                                       "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
+                                       "`abcdefghijklmnopqrstuvwxyz{|}~\177";
+static const char map_ISO_Latin_2[]  = "!\"#%&)*+,./1235679:;<=>?"
+                                       "@CEFHJLOPQRUXY[^"
+                                       "`cefhjlopqruxy{~\177";
+static const char map_ISO_Latin_5[]  = "P]^p}~";
+
 static const CHARSETS KnownCharsets[] = {
   { ASCII,             0, 0, 0, 9, "B",    "US ASCII", 0 },
   { British,           0, 0, 0, 9, "A",    "British", map_pound },
   { British_Latin_1,   1, 0, 3, 9, "A",    "ISO Latin-1", 0 },
-  { Cyrillic,          0, 0, 5, 9, "&4",   "Cyrillic (DEC)", 0 },
+  { Cyrillic,          0, 0, 5, 9, "&4",   "Cyrillic (DEC)", map_all94 },
   { DEC_Spec_Graphic,  0, 0, 0, 9, "0",    "DEC Special graphics and line drawing", map_Spec_Graphic },
   { DEC_Alt_Chars,     0, 0, 0, 0, "1",    "DEC Alternate character ROM standard characters", 0 },
   { DEC_Alt_Graphics,  0, 0, 0, 0, "2",    "DEC Alternate character ROM special graphics", 0 },
@@ -112,13 +137,14 @@ static const CHARSETS KnownCharsets[] = {
   { French_Canadian,   0, 1, 3, 9, "9",    "French Canadian", map_French_Canadian },
   { German,            0, 0, 2, 9, "K",    "German", map_German },
   { Greek,             0, 0, 5, 9, "\">",  "Greek", map_Greek },
-  { Greek_DEC,         0, 0, 5, 9, "\"?",  "Greek (DEC)", map_all94 },
-  { Greek_Supp,        1, 0, 5, 9, "F",    "ISO Greek Supplemental", map_all94 },
+  { Greek_DEC,         0, 0, 5, 9, "\"?",  "Greek (DEC)", map_DEC_Greek },
+  { Greek_Supp,        1, 0, 5, 9, "F",    "ISO Greek Supplemental", map_ISO_Greek },
   { Hebrew,            0, 0, 5, 9, "%=",   "Hebrew", map_Hebrew },
-  { Hebrew_DEC,        0, 0, 5, 9, "\"4",  "Hebrew (DEC)", map_all94 },
-  { Hebrew_Supp,       1, 0, 5, 9, "H",    "ISO Hebrew Supplemental", map_all94 },
+  { Hebrew_DEC,        0, 0, 5, 9, "\"4",  "Hebrew (DEC)", map_DEC_Hebrew },
+  { Hebrew_Supp,       1, 0, 5, 9, "H",    "ISO Hebrew Supplemental", map_ISO_Hebrew },
   { Italian,           0, 0, 2, 9, "Y",    "Italian", map_Italian },
-  { Latin_5_Supp,      1, 0, 5, 9, "M",    "ISO Latin-5 Supplemental", map_all96 },
+  { Latin_2_Supp,      1, 0, 5, 9, "B",    "ISO Latin-2 Supplemental", map_ISO_Latin_2 },
+  { Latin_5_Supp,      1, 0, 5, 9, "M",    "ISO Latin-5 Supplemental", map_ISO_Latin_5 },
   { Latin_Cyrillic,    1, 0, 5, 9, "L",    "ISO Latin-Cyrillic", map_all96 },
   { Norwegian_Danish,  0, 0, 3, 9, "`",    "Norwegian/Danish", map_Norwegian },
   { Norwegian_Danish,  0, 1, 2, 9, "E",    "Norwegian/Danish", map_Norwegian },
@@ -131,7 +157,7 @@ static const CHARSETS KnownCharsets[] = {
   { Swedish,           0, 1, 2, 9, "H",    "Swedish", map_Swedish },
   { Swiss,             0, 0, 2, 9, "=",    "Swiss", map_Swiss },
   { Turkish,           0, 0, 5, 9, "%2",   "Turkish", map_Turkish },
-  { Turkish_DEC,       0, 0, 5, 9, "%0",   "Turkish (DEC)", map_all94 },
+  { Turkish_DEC,       0, 0, 5, 9, "%0",   "Turkish (DEC)", map_DEC_Turkish },
   { Unknown,           0, 0,-1,-1, "?",    "Unknown", 0 }
 };
 /* *INDENT-ON* */
