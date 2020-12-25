@@ -1,5 +1,16 @@
--- $Id: CHANGES,v 1.226 2020/09/20 19:53:54 tom Exp $
+-- $Id: CHANGES,v 1.234 2020/12/25 15:46:44 tom Exp $
 -------------------------------------------------------------------------------
+
+20201225
+	+ correct highlighting for ISO Greek, Hebrew and Latin-5.
+
+	+ correct highlighting for DEC Cyrillic, Greek and Hebrew.
+
+	+ add Latin-2 character set for VT510.
+
+	+ updated/improved configure macros, i.e., for compiler-warnings
+
+	+ update config.guess, config.sub
 
 20200920
 	+ add test for xterm's 1016 pixel-coordinates mouse-mode.
