@@ -1,5 +1,11 @@
--- $Id: CHANGES,v 1.234 2020/12/25 15:46:44 tom Exp $
+-- $Id: CHANGES,v 1.237 2021/02/10 23:18:35 tom Exp $
 -------------------------------------------------------------------------------
+
+20210210
+        + improve test-screen for VT420 cursor movement, when left/right
+          margins are enabled (prompted by discussion with Tom Szilagyi).
+
+	+ updated/improved configure macros, i.e., for shellcheck-warnings
 
 20201225
 	+ correct highlighting for ISO Greek, Hebrew and Latin-5.

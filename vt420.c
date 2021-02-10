@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.204 2020/06/08 19:49:28 tom Exp $ */
+/* $Id: vt420.c,v 1.205 2021/02/10 23:08:19 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -1604,7 +1604,7 @@ tst_cursor_margins(MENU_ARGS)
 
   for (row = box.top; row <= box.bottom; ++row) {
     cup(row, box.right);
-    for (col = 1; col <= min_cols; col++) {
+    for (col = get_left_margin(); col <= min_cols; col++) {
       cuf(1);
     }
     putchar('r');
@@ -1703,7 +1703,7 @@ tst_other_margins(MENU_ARGS)
       cup(box.top, col);
       for (row = box.top; row < box.bottom; row++) {
         nel();
-        cuf(col - 1);
+        cuf(col - get_left_margin());
       }
       putchar('d');
       break;
