@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.37 2018/07/26 00:22:47 tom Exp $ */
+/* $Id: keyboard.c,v 1.39 2022/02/15 22:38:50 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -487,7 +487,7 @@ show_character(int i, char *scs_params, int hilite)
     vt_hilite(TRUE);
   if (special)
     esc(scs_params);
-  printf("%s", keytab[i].symbol);
+  tprintf("%s", keytab[i].symbol);
   if (special)
     scs(0, 'B');
   if (hilite)
@@ -505,7 +505,7 @@ show_cursor_keys(int flag)
     vt_move(1 + 2 * curkeytab[i].curkeyrow, 1 + curkeytab[i].curkeycol);
     if (flag)
       vt_hilite(TRUE);
-    printf("%s", curkeytab[i].curkeysymbol);
+    tprintf("%s", curkeytab[i].curkeysymbol);
     if (flag)
       vt_hilite(FALSE);
   }
@@ -521,7 +521,7 @@ show_editing_keypad(int flag)
       vt_move(1 + 2 * edt_keypadtab[i].fnkeyrow, 1 + edt_keypadtab[i].fnkeycol);
       if (flag)
         vt_hilite(TRUE);
-      printf("%s", edt_keypadtab[i].fnkeysymbol);
+      tprintf("%s", edt_keypadtab[i].fnkeysymbol);
       if (flag)
         vt_hilite(FALSE);
     }
@@ -538,7 +538,7 @@ show_function_keys(int flag)
       vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
       if (flag)
         vt_hilite(TRUE);
-      printf("%s", fnkeytab[i].fnkeysymbol);
+      tprintf("%s", fnkeytab[i].fnkeysymbol);
       if (flag)
         vt_hilite(FALSE);
     }
@@ -569,7 +569,7 @@ show_numeric_keypad(int flag)
     vt_move(1 + 2 * num_keypadtab[i].fnkeyrow, 1 + num_keypadtab[i].fnkeycol);
     if (flag)
       vt_hilite(TRUE);
-    printf("%s", num_keypadtab[i].fnkeysymbol);
+    tprintf("%s", num_keypadtab[i].fnkeysymbol);
     if (flag)
       vt_hilite(FALSE);
   }
@@ -624,7 +624,7 @@ tst_AutoRepeat(MENU_ARGS)
 
   println("");
   println("Hold down an alphanumeric key for a while, then push RETURN.");
-  printf("%s", "Auto Repeat OFF: ");
+  tprintf("%s", "Auto Repeat OFF: ");
   decarm(FALSE);  /* DECARM */
   inputline(arptstring);
   if (LOG_ENABLED)
@@ -638,7 +638,7 @@ tst_AutoRepeat(MENU_ARGS)
   println("");
 
   println("Hold down an alphanumeric key for a while, then push RETURN.");
-  printf("%s", "Auto Repeat ON: ");
+  tprintf("%s", "Auto Repeat ON: ");
   decarm(TRUE);
   inputline(arptstring);
   if (LOG_ENABLED)
@@ -705,7 +705,7 @@ tst_ControlKeys(MENU_ARGS)
   for (i = 0; i < 32; i++) {
     vt_move(1 + (i % 16), 1 + 40 * (i / 16));
     vt_hilite(TRUE);
-    printf("%s", ckeytab[i].csymbol);
+    tprintf("%s", ckeytab[i].csymbol);
     vt_hilite(FALSE);
   }
   vt_move(19, 1);
@@ -713,7 +713,7 @@ tst_ControlKeys(MENU_ARGS)
   println(
            "Push each CTRL-key TWICE. Note that you should be able to send *all*");
   println(
-           "CTRL-codes twice, including CTRL-S (X-Off) and CTRL-Q (X-Off)!");
+           "CTRL-codes twice, including CTRL-S (X-Off) and CTRL-Q (X-On)!");
   println(
            "Finish with DEL (also called DELETE or RUB OUT), or wait 1 minute.");
   set_tty_raw(TRUE);
@@ -725,19 +725,19 @@ tst_ControlKeys(MENU_ARGS)
     vt_move(row, col);
     vt_el(0);
     if (kbdc < 32) {
-      printf("  %s", ckeytab[kbdc].csymbol);
+      tprintf("  %s", ckeytab[kbdc].csymbol);
       if (LOG_ENABLED)
         fprintf(log_fp, "Key: %s\n", ckeytab[kbdc].csymbol);
     } else {
       sprintf(kbds, "%c", kbdc);
       chrprint2(kbds, row, col);
-      printf("%s", " -- not a CTRL key");
+      tprintf("%s", " -- not a CTRL key");
     }
     if (kbdc < 32)
       ckeytab[kbdc].ccount++;
     if (ckeytab[kbdc].ccount == 2) {
       vt_move(1 + (kbdc % 16), 1 + 40 * (kbdc / 16));
-      printf("%s", ckeytab[kbdc].csymbol);
+      tprintf("%s", ckeytab[kbdc].csymbol);
     }
   } while (kbdc != '\177');
 
@@ -748,9 +748,9 @@ tst_ControlKeys(MENU_ARGS)
     if (ckeytab[i].ccount < 2)
       okflag = 0;
   if (okflag)
-    printf("%s", "OK. ");
+    printxx("%s", "OK. ");
   else
-    printf("%s", "You have not been able to send all CTRL keys! ");
+    printxx("%s", "You have not been able to send all CTRL keys! ");
   return MENU_HOLD;
 }
 
@@ -786,11 +786,11 @@ tst_CursorKeys(MENU_ARGS)
 
     show_cursor_keys(1);
     vt_move(21, 1);
-    printf("<%s>%20s", curkeymodes[ckeymode], "");
+    tprintf("<%s>%20s", curkeymodes[ckeymode], "");
     vt_move(max_lines - 2, 1);
     vt_el(0);
     vt_move(max_lines - 2, 1);
-    printf("%s", "Press each cursor key. Finish with TAB.");
+    printxx("%s", "Press each cursor key. Finish with TAB.");
     for (;;) {
       vt_move(max_lines - 1, 1);
       if (ckeymode == 2)
@@ -810,7 +810,7 @@ tst_CursorKeys(MENU_ARGS)
         show_result(" (%s key) ", curkeytab[i].curkeyname);
         vt_hilite(FALSE);
         vt_move(1 + 2 * curkeytab[i].curkeyrow, 1 + curkeytab[i].curkeycol);
-        printf("%s", curkeytab[i].curkeysymbol);
+        tprintf("%s", curkeytab[i].curkeysymbol);
       } else {
         vt_hilite(TRUE);
         show_result("%s", " (Unknown cursor key) ");
@@ -850,8 +850,8 @@ tst_EditingKeypad(MENU_ARGS)
   vt_move(max_lines - 2, 1);
 
   if (terminal_id() < 200) {
-    printf("Sorry, a real VT%d terminal doesn't have an editing keypad\n",
-           terminal_id());
+    printxx("Sorry, a real VT%d terminal doesn't have an editing keypad\n",
+            terminal_id());
     return MENU_HOLD;
   }
 
@@ -861,11 +861,11 @@ tst_EditingKeypad(MENU_ARGS)
   for (fkeymode = 0; fkeymode <= 1; fkeymode++) {
     show_editing_keypad(1);
     vt_move(21, 1);
-    printf("<%s>%20s", fnkeymodes[fkeymode], "");
+    tprintf("<%s>%20s", fnkeymodes[fkeymode], "");
     vt_move(max_lines - 2, 1);
     vt_el(0);
     vt_move(max_lines - 2, 1);
-    printf("%s", "Press each function key. Finish with TAB.");
+    printxx("%s", "Press each function key. Finish with TAB.");
 
     for (;;) {
       vt_move(max_lines - 1, 1);
@@ -888,7 +888,7 @@ tst_EditingKeypad(MENU_ARGS)
         show_result(" (%s key) ", edt_keypadtab[i].fnkeyname);
         vt_hilite(FALSE);
         vt_move(1 + 2 * edt_keypadtab[i].fnkeyrow, 1 + edt_keypadtab[i].fnkeycol);
-        printf("%s", edt_keypadtab[i].fnkeysymbol);
+        tprintf("%s", edt_keypadtab[i].fnkeysymbol);
       } else {
         vt_hilite(TRUE);
         show_result("%s", " (Unknown function key) ");
@@ -927,8 +927,8 @@ tst_FunctionKeys(MENU_ARGS)
   vt_move(max_lines - 2, 1);
 
   if (terminal_id() < 200) {
-    printf("Sorry, a real VT%d terminal doesn't have function keys\n",
-           terminal_id());
+    printxx("Sorry, a real VT%d terminal doesn't have function keys\n",
+            terminal_id());
     return MENU_HOLD;
   }
 
@@ -938,11 +938,11 @@ tst_FunctionKeys(MENU_ARGS)
   for (fkeymode = 0; fkeymode <= 1; fkeymode++) {
     show_function_keys(1);
     vt_move(21, 1);
-    printf("<%s>%20s", fnkeymodes[fkeymode], "");
+    tprintf("<%s>%20s", fnkeymodes[fkeymode], "");
     vt_move(max_lines - 2, 1);
     vt_el(0);
     vt_move(max_lines - 2, 1);
-    printf("%s", "Press each function key. Finish with TAB.");
+    printxx("%s", "Press each function key. Finish with TAB.");
 
     for (;;) {
       vt_move(max_lines - 1, 1);
@@ -965,7 +965,7 @@ tst_FunctionKeys(MENU_ARGS)
         show_result(" (%s key) ", fnkeytab[i].fnkeyname);
         vt_hilite(FALSE);
         vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
-        printf("%s", fnkeytab[i].fnkeysymbol);
+        tprintf("%s", fnkeytab[i].fnkeysymbol);
       } else {
         vt_hilite(TRUE);
         show_result("%s", " (Unknown function key) ");
@@ -1012,11 +1012,11 @@ tst_NumericKeypad(MENU_ARGS)
   for (fkeymode = 0; fkeymode <= 3; fkeymode++) {
     show_numeric_keypad(1);
     vt_move(21, 1);
-    printf("<%s>%20s", fnkeymodes[fkeymode], "");
+    tprintf("<%s>%20s", fnkeymodes[fkeymode], "");
     vt_move(max_lines - 2, 1);
     vt_el(0);
     vt_move(max_lines - 2, 1);
-    printf("%s", "Press each function key. Finish with TAB.");
+    printxx("%s", "Press each function key. Finish with TAB.");
 
     for (;;) {
       vt_move(max_lines - 1, 1);
@@ -1041,7 +1041,7 @@ tst_NumericKeypad(MENU_ARGS)
         show_result(" (%s key) ", num_keypadtab[i].fnkeyname);
         vt_hilite(FALSE);
         vt_move(1 + 2 * num_keypadtab[i].fnkeyrow, 1 + num_keypadtab[i].fnkeycol);
-        printf("%s", num_keypadtab[i].fnkeysymbol);
+        tprintf("%s", num_keypadtab[i].fnkeysymbol);
       } else {
         vt_hilite(TRUE);
         show_result("%s", " (Unknown function key) ");
@@ -1107,7 +1107,7 @@ tst_LED_Lights(MENU_ARGS)
   for (i = 0; i <= 5; i++) {
     vt_move(10, 52);
     vt_el(0);
-    printf("%s", ledmsg[i]);
+    printxx("%s", ledmsg[i]);
     decll("0");
     decll(ledseq[i]);
     vt_move(12, 1);
@@ -1138,7 +1138,7 @@ tst_keyboard_layout(char *scs_params)
   set_tty_echo(FALSE);
 
   inflush();
-  printf("Press each key, both shifted and unshifted. Finish with RETURN:");
+  printxx("Press each key, both shifted and unshifted. Finish with RETURN:");
 
   do {          /* while (kbdc != 13) */
     int row, col;
@@ -1149,9 +1149,9 @@ tst_keyboard_layout(char *scs_params)
     if (scs_params != 0 && kbdc > ' ' && kbdc < '\177') {
       vt_hilite(TRUE);
       esc(scs_params);
-      printf(" %c ", kbdc);
+      tprintf(" %c ", kbdc);
       scs(0, 'B');
-      printf("= %d ", kbdc);
+      tprintf("= %d ", kbdc);
       scs(0, 'B');
       vt_hilite(FALSE);
     } else {
@@ -1194,7 +1194,7 @@ tst_keyboard(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("Keyboard Tests"));
+    __(title(0), printxx("Keyboard Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;

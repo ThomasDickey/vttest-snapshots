@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.56 2019/07/10 22:00:07 tom Exp $ */
+/* $Id: xterm.c,v 1.57 2022/02/15 23:18:17 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -25,10 +25,10 @@ check_rc(int row, int col)
   el(2);
   if ((params = skip_csi(report)) == 0
       || strcmp(params, expected) != 0) {
-    printf("cursor save/restore %s, got \"%s\", expected \"%s\"",
-           SHOW_FAILURE, params, expected);
+    printxx("cursor save/restore %s, got \"%s\", expected \"%s\"",
+            SHOW_FAILURE, params, expected);
   } else {
-    printf("cursor save/restore %s", SHOW_SUCCESS);
+    printxx("cursor save/restore %s", SHOW_SUCCESS);
   }
 }
 
@@ -200,7 +200,7 @@ tst_modify_font(MENU_ARGS)
   println("    \"#-2 fixed\" to set the next-previous font to \"fixed\"");
   println("    \"#+fixed\" to set the following font to \"fixed\"");
   vt_move(11, 1);
-  printf(">");
+  printxx(">");
   inputline(temp);
   do_osc("50;%s%c", temp, BEL);
   return MENU_HOLD;
@@ -236,7 +236,7 @@ tst_report_font(MENU_ARGS)
     do_osc("50;?%d%c", n, BEL);
     report = instr();
     if (strchr(report, ';') != 0) {
-      printf("  %2d: ", n);
+      printxx("  %2d: ", n);
       row = chrprint2(report, row, col);
     }
   }
@@ -252,7 +252,7 @@ tst_report_font(MENU_ARGS)
     do_osc("50;?%c%d%c", n >= 0 ? '+' : '-', n >= 0 ? n : -n, BEL);
     report = instr();
     if (strchr(report, ';') != 0) {
-      printf("  %2d: ", n);
+      printxx("  %2d: ", n);
       row = chrprint2(report, row, col);
     } else if (n >= 0) {
       break;

@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.68 2020/04/20 22:35:16 tom Exp $ */
+/* $Id: nonvt100.c,v 1.69 2022/02/15 22:32:05 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -14,7 +14,7 @@ int
 not_impl(MENU_ARGS)
 {
   vt_move(1, 1);
-  printf("Sorry, test not implemented:\r\n\r\n  %s", the_title);
+  printxx("Sorry, test not implemented:\r\n\r\n  %s", the_title);
   vt_move(max_lines - 1, 1);
   return MENU_HOLD;
 }
@@ -177,7 +177,7 @@ tst_CHT(MENU_ARGS)
   println("CHT with param == 1:");
   for (n = 0; n < last_tab; n++) {
     cht(1);
-    printf("*");
+    tprintf("*");
   }
 
   vt_move(4, 1);
@@ -185,13 +185,13 @@ tst_CHT(MENU_ARGS)
   for (n = 0; n < last_tab; n++) {
     cup(5, 1);
     cht(n);
-    printf("+");
+    tprintf("+");
   }
 
   vt_move(7, 1);
   println("Normal tabs:");
   for (n = 0; n < last_tab; n++) {
-    printf("\t*");
+    tprintf("\t*");
   }
 
   set_colors(0);
@@ -218,12 +218,12 @@ tst_CNL(MENU_ARGS)
   set_colors(WHITE_ON_BLUE);
 
   vt_move(1, 1);
-  printf("1."); /* this line should not be overwritten */
+  tprintf("1.");  /* this line should not be overwritten */
   for (n = 1; n <= last - 3; n++) {
     hpa(min_cols);
     cnl(n - 1); /* CNL 0 should skip to the second line */
     slowly();
-    printf("%d.", n + 1);
+    tprintf("%d.", n + 1);
     vpa(2);     /* subsequently, start from the second line */
   }
 
@@ -259,7 +259,7 @@ tst_CPL(MENU_ARGS)
   for (i = max_lines - 1; i > 0; i--) {
     cpl(1);
     slowly();
-    printf("%d.", i);
+    tprintf("%d.", i);
   }
 
   set_colors(0);
@@ -436,11 +436,11 @@ tst_REP(MENU_ARGS)
   vt_move(1, 1);
   for (n = 1; n < last; n++) {
     if (n > 1) {
-      printf(" ");
+      tprintf(" ");
       if (n > 2)
         rep(n - 2);
     }
-    printf("+");
+    tprintf("+");
     rep(default_1(n));  /* make that 2 +'s */
     rep(10);    /* this should be ignored, since a control sequence precedes */
     println("");
@@ -449,7 +449,7 @@ tst_REP(MENU_ARGS)
 
   vt_move(last, 1);
   for (n = 1; n <= min_cols; n++)
-    printf("%c", (n == last || n == last + 1) ? '+' : '*');
+    tprintf("%c", (n == last || n == last + 1) ? '+' : '*');
   vt_move(last + 1, 1);
   ruler(last + 1, min_cols);
   println(the_title);
@@ -474,7 +474,7 @@ tst_SD(MENU_ARGS)
 
   for (n = 1; n < last; n++) {
     cup(n, n);
-    printf("*");
+    tprintf("*");
     slowly();
     sd(default_1a(n));
   }
@@ -500,7 +500,7 @@ tst_SL(MENU_ARGS)
 
   for (n = 1; n < last; n++) {
     cup(n, min_cols / 2 + last - n);
-    printf("*");
+    tprintf("*");
     slowly();
     sl(default_1(n));
   }
@@ -526,7 +526,7 @@ tst_SR(MENU_ARGS)
 
   for (n = 1; n < last; n++) {
     cup(n, min_cols / 2 - last + n);
-    printf("*");
+    tprintf("*");
     slowly();
     sr(default_1(n));
   }
@@ -550,7 +550,7 @@ tst_SU(MENU_ARGS)
 
   for (n = 1; n < last; n++) {
     cup(last + 1 - n, n);
-    printf("*");
+    tprintf("*");
     slowly();
     su(default_1(n));
   }
@@ -610,10 +610,10 @@ tst_SPA(MENU_ARGS)
 
         __(cup(1, 1), println(the_title));
         cup(max_lines - 4, 1);
-        printf("There %s be an solid box made of *'s in the middle of the screen.\n",
-               erm_flag
-               ? "may"
-               : "should");
+        printxx("There %s be an solid box made of *'s in the middle of the screen.\n",
+                erm_flag
+                ? "may"
+                : "should");
         println("note: DEC terminals do not implement ERM (erase mode).");
         holdit();
       }
@@ -638,7 +638,7 @@ tst_protected_area(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("Protected-Areas Tests"));
+    __(title(0), printxx("Protected-Areas Tests"));
     __(title(2), println("Choose test type:"));
     sprintf(erm_mesg, "%s ERM (erase mode)", STR_ENABLE(erm_flag));
   } while (menu(my_menu));
@@ -890,7 +890,7 @@ tst_ecma48_curs(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("ISO-6429 (ECMA-48) Cursor-Movement"));
+    __(title(0), printxx("ISO-6429 (ECMA-48) Cursor-Movement"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -914,7 +914,7 @@ tst_ecma48_misc(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("Miscellaneous ISO-6429 (ECMA-48) Tests"));
+    __(title(0), printxx("Miscellaneous ISO-6429 (ECMA-48) Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -942,7 +942,7 @@ tst_nonvt100(MENU_ARGS)
   do {
     vt_clear(2);
     title(0);
-    printf("Non-VT100 Tests");
+    printxx("Non-VT100 Tests");
     title(2);
     println("Choose test type:");
   } while (menu(my_menu));

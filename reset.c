@@ -1,4 +1,4 @@
-/* $Id: reset.c,v 1.7 2011/12/06 10:43:28 tom Exp $ */
+/* $Id: reset.c,v 1.8 2022/02/15 23:12:01 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -28,8 +28,8 @@ tst_DECTST(MENU_ARGS)
   if (did_reset)
     println("The terminal is now RESET.  Next, the built-in confidence test");
   else
-    printf("The built-in confidence test ");
-  printf("will be invoked. ");
+    printxx("The built-in confidence test ");
+  printxx("will be invoked. ");
   holdit();
 
   vt_clear(2);
@@ -37,7 +37,7 @@ tst_DECTST(MENU_ARGS)
   zleep(5000);  /* Wait 5.0 seconds */
   vt_move(10, 1);
   println("If the built-in confidence test found any errors, a code");
-  printf("%s", "is visible above. ");
+  printxx("%s", "is visible above. ");
 
   did_reset = FALSE;
   return MENU_HOLD;
@@ -50,7 +50,7 @@ tst_RIS(MENU_ARGS)
   println(the_title);
   println("(VT100 & up, not recommended)");
   println("");
-  printf("The terminal will now be RESET. ");
+  printxx("The terminal will now be RESET. ");
   holdit();
   ris();
   zleep(5000);  /* Wait 5.0 seconds */
@@ -79,7 +79,7 @@ tst_rst(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("%s", the_title));
+    __(title(0), printxx("%s", the_title));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;

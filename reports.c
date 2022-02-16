@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.43 2020/04/20 21:09:23 tom Exp $ */
+/* $Id: reports.c,v 1.45 2022/02/15 23:29:31 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -143,7 +143,7 @@ report_is(const char *report, int row, int col)
   const char *tag = "Report is:";
   vt_move(row, col);
   vt_el(0);
-  printf("%s", tag);
+  tprintf("%s", tag);
   chrprint2(report, row, col + (int) strlen(tag));
 }
 
@@ -224,7 +224,7 @@ tst_DA(MENU_ARGS)
       println("");
       if (value == 12) {
         if ((value = scan_DA(cmp, &reportpos)) != 0) {
-          printf("   ");
+          printxx("   ");
           switch (value) {
           case 2:
             show_result("no STP, AVO, no GPO (ReGIS)");
@@ -240,13 +240,13 @@ tst_DA(MENU_ARGS)
             println("");
             break;
           default:
-            printf("unknown code %d", value);
+            printxx("unknown code %d", value);
             println("");
             break;
           }
         }
         if ((value = scan_DA(cmp, &reportpos)) != 0) {
-          printf("   ");
+          printxx("   ");
           switch (value) {
           case 0:
             show_result("no printer");
@@ -255,18 +255,18 @@ tst_DA(MENU_ARGS)
             show_result("with printer");
             break;
           default:
-            printf("unknown code %d", value);
+            printxx("unknown code %d", value);
             break;
           }
           println("");
         }
         if ((value = scan_DA(cmp, &reportpos)) != 0) {
-          printf("    ROM version %d", value);
+          tprintf("    ROM version %d", value);
           println("");
         }
       } else {
         while ((value = scan_DA(cmp, &reportpos)) != 0) {
-          printf("   ");
+          printxx("   ");
           show_result("%d = %s\n", value, lookup(extensions, value));
           println("");
         }
@@ -344,19 +344,19 @@ tst_DA_2(MENU_ARGS)
         }
       }
       vt_move(4, 10);
-      printf("Pp=%d (%s)", Pp, name);
+      printxx("Pp=%d (%s)", Pp, name);
 
       vt_move(5, 10);
-      printf("Pv=%d, firmware version %d.%d", Pv, Pv / 10, Pv % 10);
+      printxx("Pv=%d, firmware version %d.%d", Pv, Pv / 10, Pv % 10);
 
       vt_move(6, 10);
       switch (Pp) {
       case 64:
       case 65:
-        printf("Pc=%d, %s keyboard", Pc, Pc ? "PC" : "VT");
+        printxx("Pc=%d, %s keyboard", Pc, Pc ? "PC" : "VT");
         break;
       default:
-        printf("Pc=%d, ROM cartridge registration number", Pc);
+        printxx("Pc=%d, ROM cartridge registration number", Pc);
         break;
       }
     }
@@ -461,7 +461,7 @@ tst_DECREQTPARM(MENU_ARGS)
   decreqtparm(1);   /* Does the same as decreqtparm(0), reports "3" */
   report2 = get_reply();
 
-  report_is(report, 13, 1);
+  report_is(report2, 13, 1);
 
   if ((cmp = skip_csi(report2)) != 0)
     report2 = cmp;
@@ -493,7 +493,7 @@ tst_DSR(MENU_ARGS)
   set_tty_raw(TRUE);
 
   vt_move(1, 1);
-  printf("Test of Device Status Report 5 (report terminal status).");
+  printxx("Test of Device Status Report 5 (report terminal status).");
 
   vt_move(row = 2, col = 1);
   dsr(5);
@@ -573,7 +573,7 @@ tst_ENQ(MENU_ARGS)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
   inflush();
-  printf("%c", 5);  /* ENQ */
+  tprintf("%c", 5);   /* ENQ */
   report = get_reply();
 
   vt_move(row = 10, col = 1);
@@ -649,7 +649,7 @@ tst_reports(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("Terminal Reports/Responses"));
+    __(title(0), printxx("Terminal Reports/Responses"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;

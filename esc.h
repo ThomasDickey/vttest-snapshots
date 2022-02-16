@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.68 2020/04/20 22:18:01 tom Exp $ */
+/* $Id: esc.h,v 1.69 2022/02/15 22:23:31 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -123,7 +123,8 @@ int decic(int pn);
 int default_1(int pn);
 int default_1a(int pn);
 int println(const char *s);
-int tprintf(const char *fmt,...) GCC_PRINTFLIKE(1,2);
+int printxx(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+int tprintf(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
 void brc3(int pn1, int pn2, int pn3, int c);
@@ -192,9 +193,9 @@ void decstr(void);
 void decswl(void);
 void dectst(int pn);
 void dl(int pn);
-void do_csi(const char *fmt,...) GCC_PRINTFLIKE(1,2);
-void do_dcs(const char *fmt,...) GCC_PRINTFLIKE(1,2);
-void do_osc(const char *fmt,...) GCC_PRINTFLIKE(1,2);
+void do_csi(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+void do_dcs(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+void do_osc(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void dsr(int pn);
 void ech(int pn);
 void ed(int pn);

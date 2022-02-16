@@ -1,9 +1,23 @@
--- $Id: CHANGES,v 1.237 2021/02/10 23:18:35 tom Exp $
+-- $Id: CHANGES,v 1.241 2022/02/16 01:29:50 tom Exp $
 -------------------------------------------------------------------------------
 
+20220215
+        + add test-screen using cursor-addressing in the status line.
+
+        + add underline and bold attributes to the test-screen for status-line.
+
+        + improve logging, showing the test-strings to give better context for
+          escape-sequences.
+
+	+ fix typos in keyboard.c and reports.c (patch by Kelvin Sherlock).
+
+	+ updated/improved configure macros, i.e., for compiler-warnings
+
+	+ update config.guess, config.sub
+
 20210210
-        + improve test-screen for VT420 cursor movement, when left/right
-          margins are enabled (prompted by discussion with Tom Szilagyi).
+	+ improve test-screen for VT420 cursor movement, when left/right
+	  margins are enabled (prompted by discussion with Tom Szilagyi).
 
 	+ updated/improved configure macros, i.e., for shellcheck-warnings
 

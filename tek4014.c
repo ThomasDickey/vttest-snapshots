@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.15 2020/06/10 01:04:48 tom Exp $ */
+/* $Id: tek4014.c,v 1.16 2022/02/15 23:17:06 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -51,7 +51,7 @@ tek_GIN(void)
 static void
 tek_ALP(void)
 {
-  printf("%c", US);
+  tprintf("%c", US);
 }
 
 /*
@@ -208,14 +208,14 @@ tek_mouse_coords(MENU_ARGS)
      * If we do not start a new line after reading the mouse, we will see no
      * text.  So we do it before the rest of the report rather than after.
      */
-    printf("\r\n");
+    printxx("\r\n");
     if ((report[0] & 0x80) != 0
         && strchr("lmrLMR", report[0] & 0x7f) != 0) {
-      printf("mouse %c:", report[0] & 0x7f);
+      printxx("mouse %c:", report[0] & 0x7f);
     } else {
-      printf("key: %d", CharOf(report[0]));
+      printxx("key: %d", CharOf(report[0]));
     }
-    printf(" (%d,%d)", new_y, new_x);
+    printxx(" (%d,%d)", new_y, new_x);
     fflush(stdout);
   } while (strcmp(report, status));
 

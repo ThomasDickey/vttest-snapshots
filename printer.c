@@ -1,4 +1,4 @@
-/* $Id: printer.c,v 1.8 2011/12/06 01:52:06 tom Exp $ */
+/* $Id: printer.c,v 1.9 2022/02/15 23:08:59 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -20,11 +20,11 @@ setup_printout(MENU_ARGS, int visible, const char *whole)
   cup(1, 1);
   println(the_title);
   println("Test screen for printing.  We will set scrolling margins at");
-  printf("lines %d and %d, and write a test pattern there.\n", margin_lo, margin_hi);
-  printf("The test pattern should be %s.\n", visible
-         ? "visible"
-         : "invisible");
-  printf("The %s should be in the printer's output.\n", whole);
+  printxx("lines %d and %d, and write a test pattern there.\n", margin_lo, margin_hi);
+  printxx("The test pattern should be %s.\n", visible
+          ? "visible"
+          : "invisible");
+  printxx("The %s should be in the printer's output.\n", whole);
   decstbm(margin_lo, margin_hi);
   cup(margin_lo, 1);
 }
@@ -35,11 +35,11 @@ test_printout(void)
   int row, col;
   vt_move(margin_hi, 1);
   for (row = 0; row < max_lines; row++) {
-    printf("%3d:", row);
+    tprintf("%3d:", row);
     for (col = 0; col < min_cols - 5; col++) {
-      printf("%c", ((row + col) % 26) + 'a');
+      tprintf("%c", ((row + col) % 26) + 'a');
     }
-    printf("\n");
+    tprintf("\n");
   }
 }
 
@@ -179,7 +179,7 @@ tst_printing(MENU_ARGS)
            : "Assign printer to active session (MC)");
     sprintf(start_mesg, "%s printer-to-host session (MC)", STR_START(started));
     vt_clear(2);
-    __(title(0), printf("Printing-Control Tests"));
+    __(title(0), printxx("Printing-Control Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
 

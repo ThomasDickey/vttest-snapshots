@@ -1,4 +1,4 @@
-/* $Id: status.c,v 1.7 2012/04/12 14:57:28 tom Exp $ */
+/* $Id: status.c,v 1.11 2022/02/16 01:28:19 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -23,9 +23,9 @@ simple_statusline(MENU_ARGS)
 
   decssdt(2);
   decsasd(1);
-  printf("%s", text);
+  tprintf("%s", text);
   decsasd(0);
-  printf("There should be %s\r\n", text);
+  printxx("There should be %s\r\n", text);
   holdit();
 
   decssdt(0);
@@ -53,9 +53,74 @@ SGR_statusline(MENU_ARGS)
   el(2);
   cup(1, 1);
   sgr("1");
-  printf("BOLD text ");
+  tprintf("BOLD ");
+  sgr("0;4");
+  tprintf("Underlined ");
+  sgr("0;7");
+  tprintf("Reverse ");
+  sgr("0;5");
+  tprintf("Blink ");
   sgr("0");
-  printf("NORMAL text ");
+  tprintf("NORMAL text ");
+
+  decsasd(0);
+  holdit();
+
+  restore_status();
+  holdit();
+
+  restore_status();
+  return MENU_NOHOLD;
+}
+
+static int
+CUP_statusline(MENU_ARGS)
+{
+  static struct {
+    const char *codes;
+    const char *value;
+  } table[] = {
+    {
+      "0;1", "First "
+    },
+    {
+      "0;4", "Second "
+    },
+    {
+      "0;7", "Third "
+    },
+    {
+      "0;5", "Fourth "
+    },
+    {
+      "0", "Last word"
+    },
+  };
+  size_t last;
+
+  vt_move(1, 1);
+  println("This test demonstrates cursor-movement in the status-line");
+  holdit();
+
+  decssdt(2);
+  decsasd(1);
+
+  /*
+   * Write the words in reverse-order, using cursor-addressing.
+   * We could also do something with backspacing, insert/delete, but this
+   * suffices to illustrate.
+   */
+  el(2);
+  for (last = TABLESIZE(table); last != 0; --last) {
+    size_t j;
+    int cols = 0;
+    for (j = 0; j + 1 < last; ++j) {
+      cols += (int) strlen(table[j].value);
+    }
+    hpa(1 + cols);
+    sgr(table[last - 1].codes);
+    tprintf("%s", table[last - 1].value);
+  }
 
   decsasd(0);
   holdit();
@@ -91,6 +156,7 @@ tst_statusline(MENU_ARGS)
       { "Exit",                                              0 },
       { "Simple Status line Test",                           simple_statusline },
       { "Test Graphic-Rendition in Status line",             SGR_statusline },
+      { "Test Cursor-movement in Status line",               CUP_statusline },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */

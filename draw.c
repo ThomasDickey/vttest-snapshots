@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.12 2018/07/26 00:21:17 tom Exp $ */
+/* $Id: draw.c,v 1.13 2022/02/15 22:35:32 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -12,7 +12,7 @@ static int
 check_box_params(BOX *box)
 {
   if (box->top >= box->bottom || box->left >= box->right) {
-    printf("The screen is too small for box with margins %d,%d.", box->top, box->left);
+    printxx("The screen is too small for box with margins %d,%d.", box->top, box->left);
     holdit();
     return -1;
   }

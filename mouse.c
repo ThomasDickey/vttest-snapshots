@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.39 2020/09/20 20:32:30 tom Exp $ */
+/* $Id: mouse.c,v 1.40 2022/02/15 22:41:48 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -485,10 +485,10 @@ static void
 show_hilite(int first, int last)
 {
   /* *INDENT-OFF* */
-  vt_move(first, 1);          printf("+");
-  vt_move(last-1,  1);        printf("+");
-  vt_move(first, min_cols);   printf("+");
-  vt_move(last-1,  min_cols); printf("+");
+  vt_move(first, 1);          tprintf("+");
+  vt_move(last-1,  1);        tprintf("+");
+  vt_move(first, min_cols);   tprintf("+");
+  vt_move(last-1,  min_cols); tprintf("+");
   /* *INDENT-ON* */
 
   fflush(stdout);
@@ -794,7 +794,7 @@ loop:
   println(the_title);
   show_mousehelp();
   println("Mouse events will be marked with the button number.");
-  printf("Highlighting range is [%d..%d)\n", first, last);
+  printxx("Highlighting range is [%d..%d)\n", first, last);
   show_hilite(first, last);
 
   sm("?1001");
@@ -915,7 +915,7 @@ loop:
     chrprint2(report, report_row, report_col);
     if ((report = parse_mouse_M(report, &b, &x, &y)) != 0) {
       cup((int) y, (int) x);
-      printf("%u", b + 1);
+      tprintf("%u", b + 1);
       vt_move((int) y, (int) x);
       fflush(stdout);
     }

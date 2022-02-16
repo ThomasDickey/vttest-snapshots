@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.16 2020/03/04 02:10:08 tom Exp $ */
+/* $Id: sixel.c,v 1.17 2022/02/15 23:18:17 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -214,7 +214,7 @@ tst_DECDLD(MENU_ARGS)
   char *s;
 
   vt_move(1, 1);
-  printf("Working...\n");
+  printxx("Working...\n");
   for (s = font_string; *s; s++) {
     putchar(*s);
     if (*s == '\n') {
@@ -224,9 +224,9 @@ tst_DECDLD(MENU_ARGS)
   }
   fflush(stdout);
   padding(20);
-  printf("...done ");
+  printxx("...done ");
 
-  printf("%c*%s", ESC, FontName);   /* designate G2 as the DRCS font */
+  tprintf("%c*%s", ESC, FontName);  /* designate G2 as the DRCS font */
   padding(4);
   fflush(stdout);
 
@@ -253,7 +253,7 @@ tst_display(MENU_ARGS)
     vt_clear(0);
     if (display_char(stdout, c)) {
       println("");
-      printf("Render: %cN%c", ESC, c);  /* use SS2 to invoke G2 into GL */
+      tprintf("Render: %cN%c", ESC, c);   /* use SS2 to invoke G2 into GL */
     }
   } while (c != d);
 
@@ -353,12 +353,12 @@ tst_softchars(MENU_ARGS)
 
   vt_move(1, 1);
   if (font_string == 0 || *font_string == 0) {
-    printf("You did not specify a font-file with the -f option\n");
+    printxx("You did not specify a font-file with the -f option\n");
     return MENU_HOLD;
   }
   do {
     vt_clear(2);
-    __(title(0), printf("Soft Character Sets"));
+    __(title(0), printxx("Soft Character Sets"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
