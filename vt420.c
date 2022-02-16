@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.205 2021/02/10 23:08:19 tom Exp $ */
+/* $Id: vt420.c,v 1.206 2022/02/15 23:29:31 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -274,7 +274,7 @@ special_prompt(int row, int col, const char *msg)
 
   vt_move(row, col);
   if (msg != 0) {
-    printf("%s", msg);
+    printxx("%s", msg);
     vt_move(row + 1, col);
   }
   holdit();
@@ -636,7 +636,7 @@ tst_DECBI(MENU_ARGS)
       for (m = 0; m < 4; m++)
         decbi();
     }
-    printf("%3d", n);
+    printxx("%3d", n);
   }
 
   reset_colors();
@@ -648,7 +648,7 @@ tst_DECBI(MENU_ARGS)
 
   println(the_title);
   println("If your terminal supports DECBI (backward index), then the top row");
-  printf("should be numbered 1 through %d.\n", final);
+  printxx("should be numbered 1 through %d.\n", final);
   return MENU_HOLD;
 }
 
@@ -788,7 +788,7 @@ tst_DECCKSR(MENU_ARGS, int Pid, const char *the_csi, int expected)
   char temp[80];
 
   vt_move(1, 1);
-  printf(fmt_DECCKSR, the_title);
+  printxx(fmt_DECCKSR, the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -1456,7 +1456,7 @@ tst_ASCII_format(MENU_ARGS)
   set_colors(WHITE_ON_BLUE);
   cup(top, rgt);
   for (n = 0; n < rgt; ++n) {
-    printf("*%c%c", BS, BS);
+    tprintf("*%c%c", BS, BS);
   }
 
   /*
@@ -1540,7 +1540,7 @@ tst_DECFI(MENU_ARGS)
   for (n = 1; n <= final; n++) {
     slowly();
     cup(top, rgt - 3);
-    printf("%3d", n);   /* leaves cursor in rightmost column */
+    tprintf("%3d", n);  /* leaves cursor in rightmost column */
     if (n != final) {
       for (m = 0; m < 4; m++)
         decfi();
@@ -1556,7 +1556,7 @@ tst_DECFI(MENU_ARGS)
 
   println(the_title);
   println("If your terminal supports DECFI (forward index), then the top row");
-  printf("should be numbered 1 through %d.\n", final);
+  printxx("should be numbered 1 through %d.\n", final);
   return MENU_HOLD;
 }
 
@@ -2068,7 +2068,7 @@ tst_vt420_DECRQSS(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Status-Strings Reports"));
+    __(title(0), printxx("VT420 Status-Strings Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -2423,7 +2423,7 @@ tst_DSR_area_sum(MENU_ARGS, int g)
   }
   restore_ttymodes();
   vt_move(max_lines - 2, 1);
-  printf("Checksum for individual character is highlighted if mismatched.");
+  printxx("Checksum for individual character is highlighted if mismatched.");
 
   for (r = 0; r < max_lines; r++) {
     free(lines[r]);
@@ -2472,7 +2472,7 @@ tst_DSR_macrospace(MENU_ARGS)
   const char *show;
 
   vt_move(1, 1);
-  printf("Testing DECMSR: %s\n", the_title);
+  printxx("Testing DECMSR: %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -2615,7 +2615,7 @@ tst_vt420_cursor(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Cursor-Movement Tests"));
+    __(title(0), printxx("VT420 Cursor-Movement Tests"));
     __(title(2), println("Choose test type:"));
     menus_vt420_cursor();
   } while (menu(my_menu));
@@ -2676,7 +2676,7 @@ tst_VT420_editing(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Editing Sequence Tests"));
+    __(title(0), printxx("VT420 Editing Sequence Tests"));
     __(title(2), println("Choose test type:"));
     menus_vt420_cursor();
   } while (menu(my_menu));
@@ -2710,7 +2710,7 @@ tst_VT420_keyboard_ctl(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Keyboard-Control Tests"));
+    __(title(0), printxx("VT420 Keyboard-Control Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -2745,10 +2745,10 @@ tst_VT420_rectangle(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Rectangular Area Tests%s",
-                        ((terminal_id() < 400)
-                         ? " (should not work)"
-                         : "")));
+    __(title(0), printxx("VT420 Rectangular Area Tests%s",
+                         ((terminal_id() < 400)
+                          ? " (should not work)"
+                          : "")));
     __(title(2), println("Choose test type:"));
     menus_vt420_cursor();
     sprintf(txt_override_lines, "%s line-drawing characters",
@@ -2788,7 +2788,7 @@ tst_vt420_device_status(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Device Status Reports (DSR)"));
+    __(title(0), printxx("VT420 Device Status Reports (DSR)"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -2813,7 +2813,7 @@ tst_vt420_report_presentation(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Presentation State Reports"));
+    __(title(0), printxx("VT420 Presentation State Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   set_DECRPM(old_DECRPM);
@@ -2835,7 +2835,7 @@ tst_vt420_reports(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Reports"));
+    __(title(0), printxx("VT420 Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -2857,7 +2857,7 @@ tst_VT420_screen(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Screen-Display Tests"));
+    __(title(0), printxx("VT420 Screen-Display Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -2888,7 +2888,7 @@ tst_vt420(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT420 Tests"));
+    __(title(0), printxx("VT420 Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;

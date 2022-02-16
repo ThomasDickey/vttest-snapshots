@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.120 2020/09/20 18:03:56 tom Exp $ */
+/* $Id: main.c,v 1.121 2022/02/15 22:28:25 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -71,10 +71,10 @@ usage(void)
 static int
 version(void)
 {
-  printf("VT100 test program, version %d.%d", RELEASE, PATCHLEVEL);
+  printxx("VT100 test program, version %d.%d", RELEASE, PATCHLEVEL);
 #ifdef PATCH_DATE
   if (PATCH_DATE)
-    printf(" (%d)", PATCH_DATE);
+    printxx(" (%d)", PATCH_DATE);
 #endif
   return 1;     /* used for indenting */
 }
@@ -194,11 +194,11 @@ main(int argc, char *argv[])
     if (max_lines != 24
         || min_cols != 80
         || max_cols != 132)
-      printf("Screen size %dx%d (%d max) ", max_lines, min_cols, max_cols);
+      printxx("Screen size %dx%d (%d max) ", max_lines, min_cols, max_cols);
     if (tty_speed != DEFAULT_SPEED)
-      printf("Line speed %dbd ", tty_speed);
+      printxx("Line speed %dbd ", tty_speed);
     if (use_padding)
-      printf(" (padded)");
+      printxx(" (padded)");
 
     __(title(2), println("Choose test type:"));
   } while (menu(mainmenu));
@@ -268,38 +268,38 @@ tst_movements(MENU_ARGS)
     el(2);
     for (col = 1; col <= width; col++) {
       hvp(max_lines, col);
-      printf("*");
+      tprintf("*");
       hvp(1, col);
-      printf("*");
+      tprintf("*");
     }
     cup(2, 2);
     for (row = 2; row <= max_lines - 1; row++) {
-      printf("+");
+      tprintf("+");
       cub(1);
       ind();
     }
     cup(max_lines - 1, width - 1);
     for (row = max_lines - 1; row >= 2; row--) {
-      printf("+");
+      tprintf("+");
       cub(1);
       ri();
     }
     cup(2, 1);
     for (row = 2; row <= max_lines - 1; row++) {
-      printf("*");
+      tprintf("*");
       cup(row, width);
-      printf("*");
+      tprintf("*");
       cub(10);
       if (row < 10)
         nel();
       else
-        printf("\n");
+        tprintf("\n");
     }
     cup(2, 10);
     cub(42 + hlfxtra);
     cuf(2);
     for (col = 3; col <= width - 2; col++) {
-      printf("+");
+      tprintf("+");
       cuf(0);
       cub(2);
       cuf(1);
@@ -308,11 +308,11 @@ tst_movements(MENU_ARGS)
     cuf(42 + hlfxtra);
     cub(2);
     for (col = width - 2; col >= 3; col--) {
-      printf("+");
+      tprintf("+");
       cub(1);
       cuf(1);
       cub(0);
-      printf("%c", 8);
+      tprintf("%c", 8);
     }
     cup(1, 1);
     cuu(10);
@@ -326,19 +326,19 @@ tst_movements(MENU_ARGS)
     cup(10, 2 + inner_l);
     for (row = 10; row <= 15; row++) {
       for (col = 2 + inner_l; col <= inner_r - 2; col++)
-        printf(" ");
+        tprintf(" ");
       cud(1);
       cub(58);
     }
     cuu(5);
     cuf(1);
-    printf("The screen should be cleared,  and have an unbroken bor-");
+    printxx("The screen should be cleared,  and have an unbroken bor-");
     cup(12, inner_l + 3);
-    printf("der of *'s and +'s around the edge,   and exactly in the");
+    printxx("der of *'s and +'s around the edge,   and exactly in the");
     cup(13, inner_l + 3);
-    printf("middle  there should be a frame of E's around this  text");
+    printxx("middle  there should be a frame of E's around this  text");
     cup(14, inner_l + 3);
-    printf("with  one (1) free position around it.    ");
+    printxx("with  one (1) free position around it.    ");
     holdit();
   }
   deccolm(FALSE);
@@ -371,30 +371,30 @@ tst_movements(MENU_ARGS)
       switch (i % 4) {
       case 0:
         /* draw characters as-is, for reference */
-        __(cup(region + 1, 1), printf("%c", on_left[i]));
-        __(cup(region + 1, width), printf("%c", on_right[i]));
-        printf("\n");
+        __(cup(region + 1, 1), tprintf("%c", on_left[i]));
+        __(cup(region + 1, width), tprintf("%c", on_right[i]));
+        tprintf("\n");
         break;
       case 1:
         /* simple wrapping */
-        __(cup(region, width), printf("%c%c", on_right[i - 1], on_left[i]));
+        __(cup(region, width), tprintf("%c%c", on_right[i - 1], on_left[i]));
         /* backspace at right margin */
-        __(cup(region + 1, width), printf("%c%c %c",
-                                          on_left[i], BS, on_right[i]));
-        printf("\n");
+        __(cup(region + 1, width), tprintf("%c%c %c",
+                                           on_left[i], BS, on_right[i]));
+        tprintf("\n");
         break;
       case 2:
         /* tab to right margin */
-        __(cup(region + 1, width), printf("%c%c%c%c%c%c",
-                                          on_left[i], BS, BS,
-                                          TAB, TAB, on_right[i]));
-        __(cup(region + 1, 2), printf("%c%c\n", BS, on_left[i]));
+        __(cup(region + 1, width), tprintf("%c%c%c%c%c%c",
+                                           on_left[i], BS, BS,
+                                           TAB, TAB, on_right[i]));
+        __(cup(region + 1, 2), tprintf("%c%c\n", BS, on_left[i]));
         break;
       default:
         /* newline at right margin */
-        __(cup(region + 1, width), printf("\n"));
-        __(cup(region, 1), printf("%c", on_left[i]));
-        __(cup(region, width), printf("%c", on_right[i]));
+        __(cup(region + 1, width), tprintf("\n"));
+        __(cup(region, 1), tprintf("%c", on_left[i]));
+        __(cup(region, width), tprintf("%c", on_right[i]));
         break;
       }
     }
@@ -415,19 +415,19 @@ tst_movements(MENU_ARGS)
   println("");
   println("A B C D E F G H I");
   for (i = 1; i < 10; i++) {
-    printf("%c", '@' + i);
+    tprintf("%c", '@' + i);
     do_csi("2%cC", BS);   /* Two forward, one backspace */
   }
   println("");
   /* Now put CR in CUF sequence. */
-  printf("A ");
+  tprintf("A ");
   for (i = 2; i < 10; i++)
-    printf("%s%c%dC%c", csi_output(), CR, 2 * i - 2, '@' + i);
+    tprintf("%s%c%dC%c", csi_output(), CR, 2 * i - 2, '@' + i);
   println("");
   /* Now put VT in CUU sequence. */
   rm("20");
   for (i = 1; i < 10; i++) {
-    printf("%c ", '@' + i);
+    tprintf("%c ", '@' + i);
     do_csi("1\013A");
   }
   println("");
@@ -440,9 +440,9 @@ tst_movements(MENU_ARGS)
   vt_clear(2);
   vt_move(1, 1);
   println("Test of leading zeros in ESC sequences.");
-  printf("Two lines below you should see the sentence \"%s\".", ctext);
+  printxx("Two lines below you should see the sentence \"%s\".", ctext);
   for (col = 1; *ctext; col++)
-    printf("%s00000000004;00000000%dH%c", csi_output(), col, *ctext++);
+    tprintf("%s00000000004;00000000%dH%c", csi_output(), col, *ctext++);
   cup(20, 1);
 
   restore_ttymodes();
@@ -478,10 +478,10 @@ do_scrolling(void)
         else
           cud(max_lines);
         for (i = 1; i <= max_lines + 5; i++) {
-          printf("%s scroll %s region [%d..%d] size %d Line %d\n",
-                 soft ? "Soft" : "Jump",
-                 down ? "down" : "up",
-                 first, last, last - first + 1, i);
+          printxx("%s scroll %s region [%d..%d] size %d Line %d\n",
+                  soft ? "Soft" : "Jump",
+                  down ? "down" : "up",
+                  first, last, last - first + 1, i);
           if (down) {
             ri();
             ri();
@@ -524,11 +524,11 @@ tst_screen(MENU_ARGS)
   cup(1, 1);
   decawm(TRUE); /* DECAWM: Wrap Around ON */
   for (col = 1; col <= min_cols * 2; col++)
-    printf("*");
+    tprintf("*");
   decawm(FALSE);  /* DECAWM: Wrap Around OFF */
   cup(3, 1);
   for (col = 1; col <= min_cols * 2; col++)
-    printf("*");
+    tprintf("*");
   decawm(TRUE); /* DECAWM: Wrap Around ON */
   cup(5, 1);
   println("This should be three identical lines of *'s completely filling");
@@ -553,13 +553,13 @@ tst_screen(MENU_ARGS)
   tbc(2);       /* no-op */
   cup(1, 1);
   for (col = 1; col <= min_cols - 2; col += 6)
-    printf("%c*", TAB);
+    tprintf("%c*", TAB);
   cup(2, 2);
   for (col = 2; col <= min_cols - 2; col += 6)
-    printf("     *");
+    tprintf("     *");
   cup(4, 1);
   println("Test of TAB setting/resetting. These two lines");
-  printf("should look the same. ");
+  printxx("should look the same. ");
   holdit();
   for (background = 0; background <= 1; background++) {
     if (background)
@@ -576,63 +576,63 @@ tst_screen(MENU_ARGS)
     }
     cup(1, 1);
     for (col = 1; col <= max_cols; col += 10)
-      printf("%.*s", (max_cols > col) ? (max_cols - col) : 10, "1234567890");
+      tprintf("%.*s", (max_cols > col) ? (max_cols - col) : 10, "1234567890");
     for (row = 3; row <= 20; row++) {
       cup(row, row);
-      printf("This is %d column mode, %s background.", max_cols,
-             background ? "dark" : "light");
+      tprintf("This is %d column mode, %s background.", max_cols,
+              background ? "dark" : "light");
     }
     holdit();
     deccolm(FALSE);   /* 80 cols */
     ed(2);      /* VT100 clears screen on SM3/RM3, but not obviously, so... */
     cup(1, 1);
     for (col = 1; col <= min_cols; col += 10)
-      printf("%.*s", (min_cols > col) ? (min_cols - col) : 10, "1234567890");
+      tprintf("%.*s", (min_cols > col) ? (min_cols - col) : 10, "1234567890");
     for (row = 3; row <= 20; row++) {
       cup(row, row);
-      printf("This is %d column mode, %s background.", min_cols,
-             background ? "dark" : "light");
+      tprintf("This is %d column mode, %s background.", min_cols,
+              background ? "dark" : "light");
     }
     holdit();
   }
   do_scrolling();
   ed(2);
   decstbm(max_lines - 1, max_lines);
-  printf(
-          "\nOrigin mode test. This line should be at the bottom of the screen.");
+  printxx(
+           "\nOrigin mode test. This line should be at the bottom of the screen.");
   cup(1, 1);
-  printf("%s",
-         "This line should be the one above the bottom of the screen. ");
+  tprintf("%s",
+          "This line should be the one above the bottom of the screen. ");
   holdit();
   ed(2);
   decom(FALSE); /* Origin mode (absolute) */
   cup(max_lines, 1);
-  printf(
-          "Origin mode test. This line should be at the bottom of the screen.");
+  tprintf(
+           "Origin mode test. This line should be at the bottom of the screen.");
   cup(1, 1);
-  printf("%s", "This line should be at the top of the screen. ");
+  tprintf("%s", "This line should be at the top of the screen. ");
   holdit();
   decstbm(1, max_lines);
 
   ed(2);
   /* *INDENT-OFF* */
-  cup( 1,20); printf("Graphic rendition test pattern:");
-  cup( 4, 1); sgr("0");         printf("vanilla");
-  cup( 4,40); sgr("0;1");       printf("bold");
-  cup( 6, 6); sgr(";4");        printf("underline");
-  cup( 6,45);sgr(";1");sgr("4");printf("bold underline");
-  cup( 8, 1); sgr("0;5");       printf("blink");
-  cup( 8,40); sgr("0;5;1");     printf("bold blink");
-  cup(10, 6); sgr("0;4;5");     printf("underline blink");
-  cup(10,45); sgr("0;1;4;5");   printf("bold underline blink");
-  cup(12, 1); sgr("1;4;5;0;7"); printf("negative");
-  cup(12,40); sgr("0;1;7");     printf("bold negative");
-  cup(14, 6); sgr("0;4;7");     printf("underline negative");
-  cup(14,45); sgr("0;1;4;7");   printf("bold underline negative");
-  cup(16, 1); sgr("1;4;;5;7");  printf("blink negative");
-  cup(16,40); sgr("0;1;5;7");   printf("bold blink negative");
-  cup(18, 6); sgr("0;4;5;7");   printf("underline blink negative");
-  cup(18,45); sgr("0;1;4;5;7"); printf("bold underline blink negative");
+  cup( 1,20); tprintf("Graphic rendition test pattern:");
+  cup( 4, 1); sgr("0");         tprintf("vanilla");
+  cup( 4,40); sgr("0;1");       tprintf("bold");
+  cup( 6, 6); sgr(";4");        tprintf("underline");
+  cup( 6,45);sgr(";1");sgr("4");tprintf("bold underline");
+  cup( 8, 1); sgr("0;5");       tprintf("blink");
+  cup( 8,40); sgr("0;5;1");     tprintf("bold blink");
+  cup(10, 6); sgr("0;4;5");     tprintf("underline blink");
+  cup(10,45); sgr("0;1;4;5");   tprintf("bold underline blink");
+  cup(12, 1); sgr("1;4;5;0;7"); tprintf("negative");
+  cup(12,40); sgr("0;1;7");     tprintf("bold negative");
+  cup(14, 6); sgr("0;4;7");     tprintf("underline negative");
+  cup(14,45); sgr("0;1;4;7");   tprintf("bold underline negative");
+  cup(16, 1); sgr("1;4;;5;7");  tprintf("blink negative");
+  cup(16,40); sgr("0;1;5;7");   tprintf("bold blink negative");
+  cup(18, 6); sgr("0;4;5;7");   tprintf("underline blink negative");
+  cup(18,45); sgr("0;1;4;5;7"); tprintf("bold underline blink negative");
   /* *INDENT-ON* */
 
   sgr("");
@@ -640,28 +640,28 @@ tst_screen(MENU_ARGS)
   decscnm(FALSE);   /* Inverse video off */
   cup(max_lines - 1, 1);
   el(0);
-  printf("Dark background. ");
+  tprintf("Dark background. ");
   holdit();
 
   decscnm(TRUE);  /* Inverse video */
   cup(max_lines - 1, 1);
   el(0);
-  printf("Light background. ");
+  tprintf("Light background. ");
   holdit();
 
   decscnm(FALSE);
 
   ed(2);
   /* *INDENT-OFF* */
-  cup(8,12); printf("normal");
-  cup(8,24); printf("bold");
-  cup(8,36); printf("underscored");
-  cup(8,48); printf("blinking");
-  cup(8,60); printf("reversed");
-  cup(10,1); printf("stars:");
-  cup(12,1); printf("line:");
-  cup(14,1); printf("x'es:");
-  cup(16,1); printf("diamonds:");
+  cup(8,12); tprintf("normal");
+  cup(8,24); tprintf("bold");
+  cup(8,36); tprintf("underscored");
+  cup(8,48); tprintf("blinking");
+  cup(8,60); tprintf("reversed");
+  cup(10,1); tprintf("stars:");
+  cup(12,1); tprintf("line:");
+  cup(14,1); tprintf("x'es:");
+  cup(16,1); tprintf("diamonds:");
   /* *INDENT-ON* */
 
   for (cset = 0; cset <= 3; cset++) {
@@ -673,16 +673,16 @@ tst_screen(MENU_ARGS)
       else
         scs_graphics();
       for (j = 0; j <= 4; j++) {
-        printf("%c", tststr[cset]);
+        tprintf("%c", tststr[cset]);
       }
       decsc();
       cup(cset + 1, i + 1);
       sgr("");
       scs_normal();
-      printf("A");
+      tprintf("A");
       decrc();
       for (j = 0; j <= 4; j++) {
-        printf("%c", tststr[cset]);
+        tprintf("%c", tststr[cset]);
       }
     }
   }
@@ -718,24 +718,24 @@ tst_doublesize(MENU_ARGS)
     cup(1, 1);
     if (w) {
       deccolm(TRUE);
-      printf("%3d column mode", max_cols);
+      tprintf("%3d column mode", max_cols);
     } else {
       deccolm(FALSE);
-      printf("%3d column mode", min_cols);
+      tprintf("%3d column mode", min_cols);
     }
 
     cup(5, 3 + 2 * w1);
-    printf("v------- left margin");
+    tprintf("v------- left margin");
 
     cup(7, 3 + 2 * w1);
-    printf("This is a normal-sized line");
+    tprintf("This is a normal-sized line");
 
     decdhl(0);
     decdhl(1);
     decdwl();
     decswl();
     cup(9, 2 + w1);
-    printf("This is a Double-width line");
+    tprintf("This is a Double-width line");
 
     decswl();
     decdhl(0);
@@ -747,14 +747,14 @@ tst_doublesize(MENU_ARGS)
     decswl();
     decdhl(1);
     decdhl(0);
-    printf("This is a Double-width-and-height line");
+    tprintf("This is a Double-width-and-height line");
 
     cup(12, 2 + w1);
     decdwl();
     decswl();
     decdhl(0);
     decdhl(1);
-    printf("This is a Double-width-and-height line");
+    tprintf("This is a Double-width-and-height line");
 
     cup(14, 2 + w1);
     decdwl();
@@ -762,27 +762,27 @@ tst_doublesize(MENU_ARGS)
     decdhl(1);
     decdhl(0);
     el(2);
-    printf("This is another such line");
+    tprintf("This is another such line");
 
     cup(15, 2 + w1);
     decdwl();
     decswl();
     decdhl(0);
     decdhl(1);
-    printf("This is another such line");
+    tprintf("This is another such line");
 
     cup(17, 3 + 2 * w1);
-    printf("^------- left margin");
+    tprintf("^------- left margin");
 
     cup(21, 1);
-    printf("This is not a double-width line");
+    tprintf("This is not a double-width line");
     for (i = 0; i <= 1; i++) {
       cup(21, 6);
       if (i) {
-        printf("**is**");
+        tprintf("**is**");
         decdwl();
       } else {
-        printf("is not");
+        tprintf("is not");
         decswl();
       }
       cup(max_lines - 1, 1);
@@ -800,34 +800,34 @@ tst_doublesize(MENU_ARGS)
   ed(2);
   /* *INDENT-OFF* */
   scs_graphics();
-  cup( 8,1); decdhl(0); printf("lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk");
-  cup( 9,1); decdhl(1); printf("lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk");
-  cup(10,1); decdhl(0); printf("x%c%c%c%c%cx",9,9,9,9,9);
-  cup(11,1); decdhl(1); printf("x%c%c%c%c%cx",9,9,9,9,9);
-  cup(12,1); decdhl(0); printf("x%c%c%c%c%cx",9,9,9,9,9);
-  cup(13,1); decdhl(1); printf("x%c%c%c%c%cx",9,9,9,9,9);
+  cup( 8,1); decdhl(0); tprintf("lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk");
+  cup( 9,1); decdhl(1); tprintf("lqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqk");
+  cup(10,1); decdhl(0); tprintf("x%c%c%c%c%cx",9,9,9,9,9);
+  cup(11,1); decdhl(1); tprintf("x%c%c%c%c%cx",9,9,9,9,9);
+  cup(12,1); decdhl(0); tprintf("x%c%c%c%c%cx",9,9,9,9,9);
+  cup(13,1); decdhl(1); tprintf("x%c%c%c%c%cx",9,9,9,9,9);
   scs(1, '0');  /* should look the same as scs_graphics() */
-  cup(14,1); decdhl(0); printf("x                                      x");
-  cup(15,1); decdhl(1); printf("x                                      x");
-  cup(16,1); decdhl(0); printf("mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj");
-  cup(17,1); decdhl(1); printf("mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj");
+  cup(14,1); decdhl(0); tprintf("x                                      x");
+  cup(15,1); decdhl(1); tprintf("x                                      x");
+  cup(16,1); decdhl(0); tprintf("mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj");
+  cup(17,1); decdhl(1); tprintf("mqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqj");
   scs_normal();
   /* *INDENT-ON* */
 
   sgr("1;5");
   cup(12, 3);
-  printf("* The mad programmer strikes again * ");
+  tprintf("* The mad programmer strikes again * ");
 
   cup(13, 3);
-  printf("%c", 9);
+  tprintf("%c", 9);
 
   cub(6);
-  printf("* The mad programmer strikes again *");
+  tprintf("* The mad programmer strikes again *");
   sgr("0");
 
   cup(max_lines - 2, 1);
   println("Another test pattern...  a frame with blinking bold text,");
-  printf("all in double-height double-width size. ");
+  printxx("all in double-height double-width size. ");
   holdit();
 
   decstbm(8, max_lines);  /* Absolute origin mode, so cursor is set at (1,1) */
@@ -836,7 +836,7 @@ tst_doublesize(MENU_ARGS)
     ri();
   decstbm(0, 0);  /* No scroll region     */
   cup(1, 1);
-  printf("%s", "Exactly half of the box should remain. ");
+  printxx("%s", "Exactly half of the box should remain. ");
   return MENU_HOLD;
 }
 
@@ -866,10 +866,10 @@ tst_insdel(MENU_ARGS)
     for (row = 1; row <= max_lines; row++) {
       cup(row, 1);
       for (col = 1; col <= sw; col++)
-        printf("%c", 'A' - 1 + row);
+        tprintf("%c", 'A' - 1 + row);
     }
     cup(4, 1);
-    printf("Screen accordion test (Insert & Delete Line). ");
+    printxx("Screen accordion test (Insert & Delete Line). ");
     holdit();
 
     ri();
@@ -884,27 +884,27 @@ tst_insdel(MENU_ARGS)
     decom(FALSE);
     decstbm(0, 0);
     cup(2, 1);
-    printf("Top line: A's, bottom line: %c's, this line, nothing more. ",
-           'A' - 1 + max_lines);
+    printxx("Top line: A's, bottom line: %c's, this line, nothing more. ",
+            'A' - 1 + max_lines);
     holdit();
     cup(2, 1);
     ed(0);
     cup(1, 2);
-    printf("B");
+    tprintf("B");
     cub(1);
     sm("4");
     for (col = 2; col <= sw - 1; col++)
-      printf("*");
+      tprintf("*");
     rm("4");
     cup(4, 1);
-    printf("Test of 'Insert Mode'. The top line should be 'A*** ... ***B'. ");
+    printxx("Test of 'Insert Mode'. The top line should be 'A*** ... ***B'. ");
     holdit();
     ri();
     el(2);
     cup(1, 2);
     dch(sw - 2);
     cup(4, 1);
-    printf("Test of 'Delete Character'. The top line should be 'AB'. ");
+    printxx("Test of 'Delete Character'. The top line should be 'AB'. ");
     holdit();
 
     for (dblchr = 1; dblchr <= 2; dblchr++) {
@@ -914,13 +914,13 @@ tst_insdel(MENU_ARGS)
         if (dblchr == 2)
           decdwl();
         for (col = 1; col <= sw / dblchr; col++)
-          printf("%c", 'A' - 1 + row);
+          tprintf("%c", 'A' - 1 + row);
         cup(row, sw / dblchr - row);
         dch(row);
       }
       cup(4, 1);
       println("The right column should be staggered ");
-      printf("by one.  ");
+      printxx("by one.  ");
       holdit();
     }
     ed(2);
@@ -931,7 +931,7 @@ tst_insdel(MENU_ARGS)
     println("below:");
     println("");
     for (i = 'Z'; i >= 'A'; i--) {
-      printf("%c%c", i, BS);
+      tprintf("%c%c", i, BS);
       ich(2);
     }
     cup(10, 1);
@@ -1007,15 +1007,15 @@ bug_a(MENU_ARGS)
   esc("[24H");  /* Simplified cursor movement   */
   decsclm(FALSE);
   for (i = 1; i <= 20; i++)
-    printf("\n");
+    tprintf("\n");
 
   decsclm(TRUE);
   for (i = 1; i <= 10; i++)
-    printf("\n");
+    tprintf("\n");
 
   decsclm(FALSE);
   for (i = 1; i <= 5; i++)
-    printf("\n");
+    tprintf("\n");
 
   /* That should be enough to show the bug. But we'll try another way:  */
   decsclm(TRUE);  /* Set soft scroll              */
@@ -1023,7 +1023,7 @@ bug_a(MENU_ARGS)
   decsclm(FALSE);   /* Reset soft scroll            */
   nel();        /* "NextLine", move down        */
   for (i = 1; i <= 10; i++) {   /* Show the bug                 */
-    printf("Softscroll bug test, line %d.  ", i);
+    printxx("Softscroll bug test, line %d.  ", i);
     holdit();
   }
   println("That should have been enough to show the bug, if present.");
@@ -1041,19 +1041,19 @@ bug_b(MENU_ARGS)
 
   cup(1, 1);
   el(0);
-  printf("Line 11 should be double-wide, line 12 should be cleared.");
+  printxx("Line 11 should be double-wide, line 12 should be cleared.");
 
   cup(2, 1);
   el(0);
-  printf("Then, the letters A-P should be written at the beginning");
+  printxx("Then, the letters A-P should be written at the beginning");
 
   cup(3, 1);
   el(0);
-  printf("of lines 12-%d, and the empty line and A-E are scrolled away.", max_lines);
+  printxx("of lines 12-%d, and the empty line and A-E are scrolled away.", max_lines);
 
   cup(4, 1);
   el(0);
-  printf("If the bug is present, some lines are confused, look at K-P.");
+  printxx("If the bug is present, some lines are confused, look at K-P.");
 
   cup(11, 1);
   decdwl();
@@ -1061,13 +1061,13 @@ bug_b(MENU_ARGS)
 
   cup(12, 1);
   el(0);
-  printf("Here we go... ");
+  printxx("Here we go... ");
   holdit();
 
   cup(12, 1);
   ri();         /* Bug comes here */
   for (c = 'A'; c <= 'P'; c++)
-    printf("%c\n", c);  /* Bug shows here */
+    tprintf("%c\n", c);   /* Bug shows here */
   holdit();
   decstbm(0, 0);  /* No scr. region */
   return MENU_NOHOLD;
@@ -1082,7 +1082,7 @@ bug_c(MENU_ARGS)
   cup(1, 81);
   deccolm(FALSE);   /*  80 column mode */
   cup(12, 5);
-  printf("Except for this line, the screen should be blank. ");
+  printxx("Except for this line, the screen should be blank. ");
   return MENU_HOLD;
 }
 
@@ -1116,7 +1116,7 @@ bug_d(MENU_ARGS)
     cup(max_lines, 9);
     decdwl();
     sgr("1;5;7");
-    printf("If you can see this then the bug did not appear.");
+    printxx("If you can see this then the bug did not appear.");
     sgr("");
 
     cup(4, 9);
@@ -1147,15 +1147,15 @@ bug_e(MENU_ARGS)
   decdwl();
   println("This test should put an 'X' at line 3 column 100.");
   for (i = 1; i <= 12; i++)
-    printf("1234567890%s%s", csi_output(), rend[i & 1]);
+    tprintf("1234567890%s%s", csi_output(), rend[i & 1]);
   cup(1, 1);    /* The bug appears when we jump from a double-wide line */
   cup(3, 100);  /* to a single-wide line, column > 66.                  */
-  printf("X");
+  printxx("X");
   cup(4, max_cols / 2);
-  printf("!                                 !");
+  printxx("!                                 !");
   cup(5, 1);
-  printf("--------------------------- The 'X' should NOT be above here -");
-  printf("---+------------ but above here -----+");
+  printxx("--------------------------- The 'X' should NOT be above here -");
+  printxx("---+------------ but above here -----+");
   cup(10, 1);
   decdwl();
   holdit();
@@ -1177,12 +1177,12 @@ bug_f(MENU_ARGS)
   decscnm(TRUE);  /* Set reverse mode             */
   deccolm(TRUE);  /* Set 132 column mode          */
   println("Test VT100 'Toggle origin mode, forget rest' bug, part 1.");
-  printf("The screen should be in reverse, %d column mode.\n", max_cols);
+  printxx("The screen should be in reverse, %d column mode.\n", max_cols);
   holdit();
   ed(2);
   rm("?6;5;3"); /* Reset (origin, reverse, 132 col)     */
   println("Test VT100 'Toggle origin mode, forget rest' bug, part 2.\n");
-  printf("The screen should be in non-reverse, %d column mode.\n", min_cols);
+  printxx("The screen should be in non-reverse, %d column mode.\n", min_cols);
   return MENU_HOLD;
 }
 
@@ -1211,10 +1211,10 @@ bug_w(MENU_ARGS)
 
   cup(1, 1);
   for (col = 1; col <= min_cols - 1; col++)
-    printf("+");
+    tprintf("+");
   for (row = 1; row <= max_lines; row++) {
     hvp(row, min_cols);
-    printf("*");
+    tprintf("*");
   }
   cup(max_lines, 1);
   return MENU_HOLD;
@@ -1232,14 +1232,14 @@ int
 bug_l(MENU_ARGS)
 {
   cup(15, 1);
-  printf("This-is-a-long-line-This-is-a-long-line-");
-  printf("This-is-a-long-line-This-is-a-long-line-");
+  printxx("This-is-a-long-line-This-is-a-long-line-");
+  printxx("This-is-a-long-line-This-is-a-long-line-");
   cup(1, 1);
-  printf("This is a test of what happens to the right half of double-width");
+  printxx("This is a test of what happens to the right half of double-width");
   println(" lines.");
-  printf("A common misfeature is that the right half does not come back");
+  printxx("A common misfeature is that the right half does not come back");
   println(" when a long");
-  printf("single-width line is set to double-width and then reset to");
+  printxx("single-width line is set to double-width and then reset to");
   println(" single-width.");
 
   cup(5, 1);
@@ -1261,31 +1261,31 @@ bug_l(MENU_ARGS)
   deccolm(TRUE);
   ed(2);
   cup(15, 1);
-  printf("This-is-a-long-line-This-is-a-long-line-");
-  printf("This-is-a-long-line-This-is-a-long-line-");
-  printf("This-is-a-long-line-This-is-a-long-line-");
-  printf("ending-here-");
+  printxx("This-is-a-long-line-This-is-a-long-line-");
+  printxx("This-is-a-long-line-This-is-a-long-line-");
+  printxx("This-is-a-long-line-This-is-a-long-line-");
+  printxx("ending-here-");
 
   cup(1, 1);
-  printf("This is the same test in %d column mode.", max_cols);
+  printxx("This is the same test in %d column mode.", max_cols);
 
   cup(5, 1);
-  printf("Now the line below should contain %d characters in single width.\n", max_cols);
+  printxx("Now the line below should contain %d characters in single width.\n", max_cols);
   holdit();
 
   cup(15, 1);
   decdwl();
 
   cup(8, 1);
-  printf("Now the line below should contain %d characters in double width.\n",
-         max_cols / 2);
+  printxx("Now the line below should contain %d characters in double width.\n",
+          max_cols / 2);
   holdit();
 
   cup(15, 1);
   decswl();
 
   cup(11, 1);
-  printf("Now the line below should contain %d characters in single width.\n", max_cols);
+  printxx("Now the line below should contain %d characters in single width.\n", max_cols);
 
   holdit();
   deccolm(FALSE);
@@ -1299,13 +1299,13 @@ bug_s(MENU_ARGS)
   decstbm(20, 10);  /* 20-10=-10, < 2, so no scroll region. */
   cup(1, 1);
   for (i = 1; i <= 20; i++)
-    printf("This is 20 lines of text (line %d), no scroll region.\n", i);
+    tprintf("This is 20 lines of text (line %d), no scroll region.\n", i);
   holdit();
   ed(2);
   decstbm(0, 1);  /* Should be interpreted as decstbm(1,1) = none */
   cup(1, 1);
   for (i = 1; i <= 20; i++)
-    printf("This is 20 lines of text (line %d), no scroll region.\n", i);
+    tprintf("This is 20 lines of text (line %d), no scroll region.\n", i);
   holdit();
   decstbm(0, 0);  /* No scroll region (just in case...)   */
   return MENU_NOHOLD;
@@ -1362,8 +1362,8 @@ bye(void)
 
   vt_clear(2);
   vt_move(12, 30);
-  printf("That's all, folks!\n");
-  printf("\n\n\n");
+  printxx("That's all, folks!\n");
+  printxx("\n\n\n");
   inflush();
   close_tty();
 
@@ -1454,9 +1454,9 @@ pop_menu(const char *saved)
 static void
 show_entry(MENU *table, int number)
 {
-  printf("          %d%c %s\n", number,
-         (table[number].dispatch == not_impl) ? '*' : '.',
-         table[number].description);
+  printxx("          %d%c %s\n", number,
+          (table[number].dispatch == not_impl) ? '*' : '.',
+          table[number].description);
 }
 
 static int
@@ -1505,7 +1505,7 @@ menu2(MENU *table, int top)
       show_entry(table, pagetop + i);
     }
 
-    printf("\n          Enter choice number (0 - %d): ", tablesize);
+    printxx("\n          Enter choice number (0 - %d): ", tablesize);
     for (;;) {
       char *s = storage;
       inputline(s);
@@ -1568,7 +1568,7 @@ menu2(MENU *table, int top)
           fflush(log_fp);
         return (table[choice].dispatch != 0);
       }
-      printf("          Bad choice, try again: ");
+      printxx("          Bad choice, try again: ");
     }
   }
 }
@@ -1650,7 +1650,7 @@ chrprint2(const char *s, int row, int col)
   char *temp;
 
   vt_hilite(TRUE);
-  printf(" ");
+  printxx(" ");
   temp = chrformat(s, col, 1);
 
   for (i = 0; temp[i] != '\0'; ++i) {
@@ -1858,7 +1858,7 @@ title(int offset)
 {
   vt_move(TITLE_LINE + offset, 10);
   if (offset == 0 && *current_menu)
-    printf("Menu %s: ", current_menu);
+    printxx("Menu %s: ", current_menu);
   return 1;     /* used for indenting */
 }
 

@@ -1,10 +1,14 @@
-/* $Id: esc.c,v 1.92 2020/04/20 22:33:40 tom Exp $ */
+/* $Id: esc.c,v 1.94 2022/02/15 23:26:14 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 
 /* This was needed for Solaris 2.5, whose standard I/O was broken */
 #define FLUSH fflush(stdout)
+
+#define SEND_STR "Send: "   /* use this for control-sequences, sent */
+#define DATA_STR "Data: "   /* use this for test-data */
+#define TELL_STR "Text: "   /* use this for test-instructions */
 
 static int soft_scroll;
 
@@ -151,11 +155,32 @@ extra_padding(int msecs)
 }
 
 int
+printxx(const char *fmt, ...)
+{
+  int endl = (strchr(fmt, '\n') != NULL ? 0 : 1);
+  va_list ap;
+
+  va_start(ap, fmt);
+  vfprintf(stdout, fmt, ap);
+  va_end(ap);
+
+  if (LOG_ENABLED) {
+    va_start(ap, fmt);
+    fprintf(log_fp, TELL_STR);
+    vfprintf(log_fp, fmt, ap);
+    if (endl)
+      fputs("\n", log_fp);
+    va_end(ap);
+  }
+  return 1;
+}
+
+int
 println(const char *s)
 {
   printf("%s\r\n", s);
   if (LOG_ENABLED) {
-    fprintf(log_fp, "Text: %s\n", s);
+    fprintf(log_fp, "%s%s\n", TELL_STR, s);
   }
   return 1;
 }
@@ -221,7 +246,7 @@ tprintf(const char *fmt, ...)
   FLUSH;
 
   if (LOG_ENABLED) {
-    fputs("Text: ", log_fp);
+    fputs(DATA_STR, log_fp);
     va_start(ap, fmt);
     va_out(log_fp, ap, fmt);
     va_end(ap);
@@ -242,7 +267,7 @@ do_csi(const char *fmt, ...)
   FLUSH;
 
   if (LOG_ENABLED) {
-    fputs("Send: ", log_fp);
+    fputs(SEND_STR, log_fp);
     put_string(log_fp, csi_output());
     va_start(ap, fmt);
     va_out(log_fp, ap, fmt);
@@ -265,7 +290,7 @@ do_dcs(const char *fmt, ...)
 
   if (LOG_ENABLED) {
     va_start(ap, fmt);
-    fputs("Send: ", log_fp);
+    fputs(SEND_STR, log_fp);
     put_string(log_fp, dcs_output());
     va_out(log_fp, ap, fmt);
     va_end(ap);
@@ -288,7 +313,7 @@ do_osc(const char *fmt, ...)
 
   if (LOG_ENABLED) {
     va_start(ap, fmt);
-    fputs("Send: ", log_fp);
+    fputs(SEND_STR, log_fp);
     put_string(log_fp, osc_output());
     va_out(log_fp, ap, fmt);
     va_end(ap);
@@ -303,7 +328,7 @@ print_chr(int c)
   printf("%c", c);
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "Send: ");
+    fprintf(log_fp, SEND_STR);
     put_char(log_fp, c);
     fputs("\n", log_fp);
   }
@@ -317,7 +342,7 @@ print_str(const char *s)
   printf("%s", s);
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "Send: ");
+    fprintf(log_fp, SEND_STR);
     while (*s) {
       put_char(log_fp, *s++);
     }
@@ -332,7 +357,7 @@ esc(const char *s)
   printf("%c%s", ESC, s);
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "Send: ");
+    fprintf(log_fp, SEND_STR);
     put_char(log_fp, ESC);
     put_string(log_fp, s);
     fputs("\n", log_fp);

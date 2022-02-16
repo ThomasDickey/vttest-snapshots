@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.33 2020/06/10 08:20:01 tom Exp $ */
+/* $Id: vt220.c,v 1.34 2022/02/15 23:08:59 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -17,7 +17,7 @@ any_DSR(MENU_ARGS, const char *text, void (*explain) (char *report))
   unsigned pmode = (unsigned) ((*text == '?') ? 1 : 0);
 
   vt_move(1, 1);
-  printf("Testing DSR: %s\n", the_title);
+  printxx("Testing DSR: %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -199,7 +199,7 @@ tst_S8C1T(MENU_ARGS)
     report = instr();
     vt_move(row = 10 + pass * 3, col = 1);
     sprintf(temp, "8-bit controls %s:", STR_ENABLED(flag));
-    printf("%s", temp);
+    printxx("%s", temp);
     chrprint2(report, row, col + (int) strlen(temp));
     report_ok("1;1R", report);
   }
@@ -228,7 +228,7 @@ tst_DECSCA_selective(MENU_ARGS)
         decsca(1);
 
       for (i = inner.top; i <= inner.bottom; i++) {
-	int j;
+        int j;
 
         cup(i - 1, 1 + inner.left);
         for (j = inner.left; j <= inner.right; j++) {
@@ -588,7 +588,7 @@ tst_vt220_device_status(MENU_ARGS)
   do {
     vt_clear(2);
     title(0);
-    printf("VT220 Device Status Reports");
+    printxx("VT220 Device Status Reports");
     title(2);
     println("Choose test type:");
   } while (menu(my_menu));
@@ -614,7 +614,7 @@ tst_vt220_screen(MENU_ARGS)
   do {
     vt_clear(2);
     title(0);
-    printf("VT220 Screen-Display Tests");
+    printxx("VT220 Screen-Display Tests");
     title(2);
     println("Choose test type:");
   } while (menu(my_menu));
@@ -636,7 +636,7 @@ tst_vt220_reports(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT220 Reports"));
+    __(title(0), printxx("VT220 Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -664,7 +664,7 @@ tst_vt220(MENU_ARGS)
   do {
     vt_clear(2);
     title(0);
-    printf("VT220 Tests");
+    printxx("VT220 Tests");
     title(2);
     println("Choose test type:");
   } while (menu(my_menu));

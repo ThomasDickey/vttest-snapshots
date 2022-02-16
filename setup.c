@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.34 2018/07/25 15:50:37 tom Exp $ */
+/* $Id: setup.c,v 1.35 2022/02/15 23:12:39 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -80,7 +80,7 @@ toggle_DECSCL(MENU_ARGS)
 
   if (max_level <= 1) {
     vt_move(1, 1);
-    printf("Sorry, terminal supports only VT%d", terminal_id());
+    printxx("Sorry, terminal supports only VT%d", terminal_id());
     vt_move(max_lines - 1, 1);
     return MENU_HOLD;
   }
@@ -212,7 +212,7 @@ set_level(int request)
     fprintf(log_fp, "set_level(%d)\n", request);
 
   if (request > max_level) {
-    printf("Sorry, this terminal supports only VT%d\n", terminal_id());
+    printxx("Sorry, this terminal supports only VT%d\n", terminal_id());
     return FALSE;
   }
 

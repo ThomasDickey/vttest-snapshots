@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.11 2018/07/02 16:25:42 tom Exp $ */
+/* $Id: vt520.c,v 1.12 2022/02/15 23:15:36 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -72,7 +72,7 @@ tst_vt520_cursor(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT520 Cursor-Movement"));
+    __(title(0), printxx("VT520 Cursor-Movement"));
     __(title(2), println("Choose test type:"));
     menus_vt420_cursor();
   } while (menu(my_menu));
@@ -296,7 +296,7 @@ tst_VT520_hardware_DECRQSS(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT520 Status-Strings Reports (Hardware-oriented)"));
+    __(title(0), printxx("VT520 Status-Strings Reports (Hardware-oriented)"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -407,7 +407,7 @@ tst_VT520_DECRQSS(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT520 Status-Strings Reports"));
+    __(title(0), printxx("VT520 Status-Strings Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -432,7 +432,7 @@ tst_VT520_report_presentation(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT520 Presentation State Reports"));
+    __(title(0), printxx("VT520 Presentation State Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   set_DECRPM(old_DECRPM);
@@ -454,7 +454,7 @@ tst_vt520_reports(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT520 Reports"));
+    __(title(0), printxx("VT520 Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -476,7 +476,7 @@ tst_vt520_screen(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT520 Screen-Display Tests"));
+    __(title(0), printxx("VT520 Screen-Display Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -505,7 +505,7 @@ tst_vt520(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT520 Tests"));
+    __(title(0), printxx("VT520 Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;

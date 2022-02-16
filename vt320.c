@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.62 2018/08/11 12:45:06 tom Exp $ */
+/* $Id: vt320.c,v 1.63 2022/02/15 23:18:17 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -85,7 +85,7 @@ tst_vt320_device_status(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT320 Device Status Reports (DSR)"));
+    __(title(0), printxx("VT320 Device Status Reports (DSR)"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -268,14 +268,14 @@ show_DECCIR(char *report)
 
   vt_move(6, 10);
   if ((data.Srend & 0x4f) == data.Srend) {
-    printf("Rendition:");
+    printxx("Rendition:");
     if (data.Srend == 0) {
       show_result(" normal");
     } else {
-      printf("%s", data.reverse ? " reverse" : "");
-      printf("%s", data.blinking ? " blinking" : "");
-      printf("%s", data.underline ? " underline" : "");
-      printf("%s", data.bold ? " bold" : "");
+      printxx("%s", data.reverse ? " reverse" : "");
+      printxx("%s", data.blinking ? " blinking" : "");
+      printxx("%s", data.underline ? " underline" : "");
+      printxx("%s", data.bold ? " bold" : "");
     }
   } else {
     show_result(" -> unknown rendition (0x%x)", data.Srend);
@@ -290,11 +290,11 @@ show_DECCIR(char *report)
 
   vt_move(8, 10);
   if ((data.Sflag & 0x4f) == data.Sflag) {
-    printf("Flags:");
-    printf("%s", data.aw_pending ? " autowrap pending" : "");
-    printf("%s", data.ss3_pending ? " SS3 pending" : "");
-    printf("%s", data.ss2_pending ? " SS2 pending" : "");
-    printf("%s", data.origin_mode ? " origin-mode on" : "");
+    printxx("Flags:");
+    printxx("%s", data.aw_pending ? " autowrap pending" : "");
+    printxx("%s", data.ss3_pending ? " SS3 pending" : "");
+    printxx("%s", data.ss2_pending ? " SS2 pending" : "");
+    printxx("%s", data.origin_mode ? " origin-mode on" : "");
   } else {
     show_result(" -> unknown flag (0x%x)", data.Sflag);
   }
@@ -304,9 +304,9 @@ show_DECCIR(char *report)
 
   vt_move(10, 10);
   if ((data.Scss & 0x4f) == data.Scss) {
-    printf("Char set sizes:");
+    printxx("Char set sizes:");
     for (n = 3; n >= 0; n--) {
-      printf(" G%d(%d)", n, data.cs_sizes[n]);
+      printxx(" G%d(%d)", n, data.cs_sizes[n]);
     }
   } else {
     show_result(" -> unknown char set size (0x%x)", data.Scss);
@@ -358,7 +358,7 @@ any_decrqpsr(MENU_ARGS, int Ps)
   int row;
 
   vt_move(1, 1);
-  printf("Testing DECRQPSR: %s\n", the_title);
+  printxx("Testing DECRQPSR: %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -427,7 +427,7 @@ tst_DECRSPS_cursor(MENU_ARGS)
   DECCIR_REPORT actual;
 
   vt_move(1, 1);
-  printf("Testing %s\n", the_title);
+  printxx("Testing %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -478,17 +478,17 @@ tst_DECRSPS_cursor(MENU_ARGS)
       if (read_DECCIR(&actual)) {
         tst_restore_cursor(old_mode, row, col + len);
         if (actual.Srend != (0x40 | item)) {
-          printf(" (rendition?)");
+          printxx(" (rendition?)");
         } else if (actual.row != row) {
-          printf(" (row?)");
+          printxx(" (row?)");
         } else if (actual.col != (col + len)) {
-          printf(" (col?)");
+          printxx(" (col?)");
         } else {
-          printf(" (OK)");
+          printxx(" (OK)");
         }
       } else {
         tst_restore_cursor(old_mode, row, col + len);
-        printf(" (N/A)");
+        printxx(" (N/A)");
       }
     }
 
@@ -500,24 +500,24 @@ tst_DECRSPS_cursor(MENU_ARGS)
     set_tty_echo(FALSE);
 
     vt_move(1, 1);
-    printf("Testing %s\n", the_title);
+    printxx("Testing %s\n", the_title);
     ed(0);
     println("");
     println("Flags:");
 
     len = 42;
     vt_move(row = 4, col = 10);
-    printf("%-*s", len, "Selective erase, should be blank:");
+    tprintf("%-*s", len, "Selective erase, should be blank:");
     tst_restore_cursor(old_mode, row, col + len);
-    printf("XXXXXX");
+    tprintf("XXXXXX");
     vt_move(row, col + len);
     decsel(0);
 
     vt_move(++row, col);
-    printf("%-*s", len, "Selective erase, should not be blank:");
+    tprintf("%-*s", len, "Selective erase, should not be blank:");
     vt_move(row, col + len);
     decsca(1);
-    printf("XXXXXX");
+    tprintf("XXXXXX");
     vt_move(row, col + len);
     decsel(0);
 
@@ -546,9 +546,9 @@ tst_DECRSPS_cursor(MENU_ARGS)
     vt_move(row += 2, col);
     el(2);
     if (fails) {
-      printf("Autowrap-pending: failed %d of %d tries", fails, tries);
+      printxx("Autowrap-pending: failed %d of %d tries", fails, tries);
     } else {
-      printf("Autowrap-pending: OK");
+      printxx("Autowrap-pending: OK");
     }
     println("");
 
@@ -594,7 +594,7 @@ tst_DECRSPS_cursor(MENU_ARGS)
     }
     print_str(old_mode);  /* restore original settings */
     vt_move(row, col);
-    printf("Origin mode: %s", fails ? "ERR" : "OK");
+    printxx("Origin mode: %s", fails ? "ERR" : "OK");
 
     vt_move(++row, 1);
     ed(0);
@@ -611,19 +611,19 @@ tst_DECRSPS_cursor(MENU_ARGS)
     print_str(old_mode);
 
     vt_move(row += 2, col);
-    printf("Current GL: %s", (actual.gl == 3) ? "OK" : "ERR");
+    printxx("Current GL: %s", (actual.gl == 3) ? "OK" : "ERR");
 
     vt_move(++row, col);
-    printf("Current GR: %s", (actual.gr == 2) ? "OK" : "ERR");
+    printxx("Current GR: %s", (actual.gr == 2) ? "OK" : "ERR");
 
     for (j = 0; j < 4; ++j) {
       static const char *my_suffix = "<>0A";
 
       vt_move(++row, col);
-      printf("G%d suffix: '%.2s' %s (%s)", j,
-             actual.cs_suffix[j],
-             (actual.cs_suffix[j][0] == my_suffix[j]) ? "OK" : "ERR",
-             actual.cs_names[j]);
+      printxx("G%d suffix: '%.2s' %s (%s)", j,
+              actual.cs_suffix[j],
+              (actual.cs_suffix[j][0] == my_suffix[j]) ? "OK" : "ERR",
+              actual.cs_names[j]);
     }
 
     print_str(old_mode);  /* restore original settings */
@@ -724,7 +724,7 @@ tst_DECRSPS_tabs(MENU_ARGS)
   char *s;
 
   vt_move(1, 1);
-  printf("Testing %s\n", the_title);
+  printxx("Testing %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -893,7 +893,7 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
   char *report;
 
   vt_move(1, 1);
-  printf("Testing %s\n", the_title);
+  printxx("Testing %s\n", the_title);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -914,7 +914,7 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
 
     do_csi((private ? "?%d$p" : "%d$p"), table[j].mode);
     report = instr();
-    printf("\n     %4d: %-10s ", table[j].mode, table[j].name);
+    printxx("\n     %4d: %-10s ", table[j].mode, table[j].name);
     if (LOG_ENABLED)
       fprintf(log_fp, "Testing %s\n", table[j].name);
     chrprint2(report, row + 1, 23);
@@ -1068,7 +1068,7 @@ tst_DECRPM(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("Request Mode (DECRQM)/Report Mode (DECRPM)"));
+    __(title(0), printxx("Request Mode (DECRQM)/Report Mode (DECRPM)"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -1089,7 +1089,7 @@ any_decrqss2(const char *msg, const char *func, const char *expected)
   char buffer[80];
 
   vt_move(1, 1);
-  printf("Testing DECRQSS: %s\n", msg);
+  printxx("Testing DECRQSS: %s\n", msg);
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -1213,7 +1213,7 @@ tst_vt320_DECRQSS(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT320 Status-String Reports"));
+    __(title(0), printxx("VT320 Status-String Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -1240,7 +1240,7 @@ tst_vt320_cursor(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT320 Cursor-Movement Tests"));
+    __(title(0), printxx("VT320 Cursor-Movement Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -1262,7 +1262,7 @@ tst_vt320_report_terminal(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT320 Terminal State Reports"));
+    __(title(0), printxx("VT320 Terminal State Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -1290,7 +1290,7 @@ tst_vt320_report_presentation(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT320 Presentation State Reports"));
+    __(title(0), printxx("VT320 Presentation State Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   set_DECRPM(old_DECRPM);
@@ -1317,7 +1317,7 @@ tst_vt320_reports(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT320 Reports"));
+    __(title(0), printxx("VT320 Reports"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -1402,7 +1402,7 @@ tst_PageFormat(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("Page Format Tests"));
+    __(title(0), printxx("Page Format Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -1428,7 +1428,7 @@ tst_PageMovement(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("Page Format Tests"));
+    __(title(0), printxx("Page Format Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -1451,7 +1451,7 @@ tst_vt320_screen(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT320 Screen-Display Tests"));
+    __(title(0), printxx("VT320 Screen-Display Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;
@@ -1477,7 +1477,7 @@ tst_vt320(MENU_ARGS)
 
   do {
     vt_clear(2);
-    __(title(0), printf("VT320 Tests"));
+    __(title(0), printxx("VT320 Tests"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
   return MENU_NOHOLD;

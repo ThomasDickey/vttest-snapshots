@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.39 2018/07/26 00:21:02 tom Exp $ */
+/* $Id: color.c,v 1.40 2022/02/15 22:20:40 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -126,25 +126,25 @@ show_graphic_rendition(void)
 {
   ed(2);
   /* *INDENT-OFF* */
-  cup( 1,20); printf("Color/Graphic rendition test pattern:");
-  cup( 4, 1); c_sgr("0");            printf("vanilla");
-  cup( 4,40); c_sgr("0;1");          printf("bold");
-  cup( 6, 6); c_sgr(";4");           printf("underline");
-  cup( 6,45); c_sgr(";1");c_sgr("4");printf("bold underline");
-  cup( 8, 1); c_sgr("0;5");          printf("blink");
-  cup( 8,40); c_sgr("0;5;1");        printf("bold blink");
-  cup(10, 6); c_sgr("0;4;5");        printf("underline blink");
-  cup(10,45); c_sgr("0;1;4;5");      printf("bold underline blink");
-  cup(12, 1); c_sgr("1;4;5;0;7");    printf("negative");
-  cup(12,40); c_sgr("0;1;7");        printf("bold negative");
-  cup(14, 6); c_sgr("0;4;7");        printf("underline negative");
-  cup(14,45); c_sgr("0;1;4;7");      printf("bold underline negative");
-  cup(16, 1); c_sgr("1;4;;5;7");     printf("blink negative");
-  cup(16,40); c_sgr("0;1;5;7");      printf("bold blink negative");
-  cup(18, 6); c_sgr("0;4;5;7");      printf("underline blink negative");
-  cup(18,45); c_sgr("0;1;4;5;7");    printf("bold underline blink negative");
-  cup(20, 6); c_sgr(""); set_foreground(9); printf("original foreground");
-  cup(20,45); c_sgr(""); set_background(9); printf("original background");
+  cup( 1,20); printxx("Color/Graphic rendition test pattern:");
+  cup( 4, 1); c_sgr("0");            tprintf("vanilla");
+  cup( 4,40); c_sgr("0;1");          tprintf("bold");
+  cup( 6, 6); c_sgr(";4");           tprintf("underline");
+  cup( 6,45); c_sgr(";1");c_sgr("4");tprintf("bold underline");
+  cup( 8, 1); c_sgr("0;5");          tprintf("blink");
+  cup( 8,40); c_sgr("0;5;1");        tprintf("bold blink");
+  cup(10, 6); c_sgr("0;4;5");        tprintf("underline blink");
+  cup(10,45); c_sgr("0;1;4;5");      tprintf("bold underline blink");
+  cup(12, 1); c_sgr("1;4;5;0;7");    tprintf("negative");
+  cup(12,40); c_sgr("0;1;7");        tprintf("bold negative");
+  cup(14, 6); c_sgr("0;4;7");        tprintf("underline negative");
+  cup(14,45); c_sgr("0;1;4;7");      tprintf("bold underline negative");
+  cup(16, 1); c_sgr("1;4;;5;7");     tprintf("blink negative");
+  cup(16,40); c_sgr("0;1;5;7");      tprintf("bold blink negative");
+  cup(18, 6); c_sgr("0;4;5;7");      tprintf("underline blink negative");
+  cup(18,45); c_sgr("0;1;4;5;7");    tprintf("bold underline blink negative");
+  cup(20, 6); c_sgr(""); set_foreground(9); tprintf("original foreground");
+  cup(20,45); c_sgr(""); set_background(9); tprintf("original background");
   /* *INDENT-ON* */
 
   c_sgr("");    /* same as c_sgr("0") */
@@ -152,13 +152,13 @@ show_graphic_rendition(void)
   decscnm(FALSE);   /* Inverse video off */
   cup(max_lines - 1, 1);
   el(0);
-  printf("Dark background. ");
+  tprintf("Dark background. ");
   holdit();
 
   decscnm(TRUE);  /* Inverse video */
   cup(max_lines - 1, 1);
   el(0);
-  printf("Light background. ");
+  tprintf("Light background. ");
   holdit();
 
   decscnm(FALSE);
@@ -171,12 +171,12 @@ show_line_deletions(void)
 
   ed(2);
   cup(1, 1);
-  printf("This test deletes every third line from a list, marking cursor with '*'.\n");
-  printf("The foreground and background should be yellow(orange) and blue, respectively.\n");
+  printxx("This test deletes every third line from a list, marking cursor with '*'.\n");
+  printxx("The foreground and background should be yellow(orange) and blue, respectively.\n");
 
   for (row = 5; row <= max_lines; row++) {
     cup(row, 1);
-    printf("   row %3d: this is some text", row);
+    tprintf("   row %3d: this is some text", row);
   }
   for (row = 7; row <= max_lines; row += 2 /* 3 - deletion */ ) {
     cup(row, 8);
@@ -194,12 +194,12 @@ show_line_insertions(void)
 
   ed(2);
   cup(1, 1);
-  printf("This test inserts after every second line in a list, marking cursor with '*'.\n");
-  printf("The foreground and background should be yellow(orange) and blue, respectively.\n");
+  printxx("This test inserts after every second line in a list, marking cursor with '*'.\n");
+  printxx("The foreground and background should be yellow(orange) and blue, respectively.\n");
 
   for (row = 5; row <= max_lines; row++) {
     cup(row, 1);
-    printf("   row %3d: this is some text", row);
+    tprintf("   row %3d: this is some text", row);
   }
   for (row = 7; row <= max_lines; row += 3 /* 2 + insertion */ ) {
     cup(row, 8);
@@ -219,30 +219,30 @@ show_test_pattern(MENU_ARGS)
   reset_all_colors();
   ed(2);
   cup(1, 1);
-  printf("There are %d color combinations", MAX_COLORS * MAX_COLORS);
+  printxx("There are %d color combinations", MAX_COLORS * MAX_COLORS);
 
   for (k = 0; k <= 11; k += 11) {
     cup(k + 2, 1);
-    printf("%dx%d matrix of foreground/background colors, bright *",
-           MAX_COLORS, MAX_COLORS);
+    tprintf("%dx%d matrix of foreground/background colors, bright *",
+            MAX_COLORS, MAX_COLORS);
 
     if (k) {
       sgr("1");
-      printf("on");
+      tprintf("on");
       sgr("0");
     } else {
-      printf("off");
+      tprintf("off");
     }
-    printf("*");
+    tprintf("*");
 
     for (i = 0; i < MAX_COLORS; i++) {
       cup(k + 3, (i + 1) * 8 + 1);
-      printf("%s", colors[i]);
+      tprintf("%s", colors[i]);
     }
 
     for (i = 0; i < MAX_COLORS; i++) {
       cup(k + i + 4, 1);
-      printf("%s", colors[i]);
+      tprintf("%s", colors[i]);
     }
 
     for (i = 0; i < MAX_COLORS; i++) {
@@ -251,7 +251,7 @@ show_test_pattern(MENU_ARGS)
           sgr("1");
         set_color_pair(j, i);
         cup(k + 4 + i, (j + 1) * 8 + 1);
-        printf("Hello");
+        tprintf("Hello");
         reset_all_colors();
       }
     }
@@ -546,48 +546,48 @@ test_iso_6429_sgr(MENU_ARGS)
 
   ed(2);
   /* *INDENT-OFF* */
-  cup( 1,20); printf("Extended/Graphic rendition test pattern:");
-  cup( 4, 1); c_sgr("0");            printf("vanilla");
-  cup( 4,40); c_sgr("0;1");          printf("bold");
-  cup( 6, 6); c_sgr("22;4");         printf("underline");
-  cup( 6,45); c_sgr("24;1;4");       printf("bold underline");
-  cup( 8, 1); c_sgr("22;24;5");      printf("blink");
-  cup( 8,40); c_sgr("25;5;1");       printf("bold blink");
-  cup(10, 6); c_sgr("22;4;5");       printf("underline blink");
-  cup(10,45); c_sgr("24;25;1;4;5");  printf("bold underline blink");
-  cup(12, 1); c_sgr("22;24;25;7");   printf("negative");
-  cup(12,40); c_sgr("1");            printf("bold negative");
-  cup(14, 6); c_sgr("22;4;7");       printf("underline negative");
-  cup(14,45); c_sgr("1;4;7");        printf("bold underline negative");
-  cup(16, 1); c_sgr("22;24;5;7");    printf("blink negative");
-  cup(16,40); c_sgr("1");            printf("bold blink negative");
-  cup(18, 6); c_sgr("22;4");         printf("underline blink negative");
-  cup(18,45); c_sgr("1");            printf("bold underline blink negative");
-  cup(20, 6); c_sgr(""); set_foreground(9); printf("original foreground");
-  cup(20,45); c_sgr(""); set_background(9); printf("original background");
-  cup(22, 1); c_sgr(";8");           printf("concealed");
-  cup(22,40); c_sgr("8;7");          printf("concealed negative");
+  cup( 1,20); printxx("Extended/Graphic rendition test pattern:");
+  cup( 4, 1); c_sgr("0");            tprintf("vanilla");
+  cup( 4,40); c_sgr("0;1");          tprintf("bold");
+  cup( 6, 6); c_sgr("22;4");         tprintf("underline");
+  cup( 6,45); c_sgr("24;1;4");       tprintf("bold underline");
+  cup( 8, 1); c_sgr("22;24;5");      tprintf("blink");
+  cup( 8,40); c_sgr("25;5;1");       tprintf("bold blink");
+  cup(10, 6); c_sgr("22;4;5");       tprintf("underline blink");
+  cup(10,45); c_sgr("24;25;1;4;5");  tprintf("bold underline blink");
+  cup(12, 1); c_sgr("22;24;25;7");   tprintf("negative");
+  cup(12,40); c_sgr("1");            tprintf("bold negative");
+  cup(14, 6); c_sgr("22;4;7");       tprintf("underline negative");
+  cup(14,45); c_sgr("1;4;7");        tprintf("bold underline negative");
+  cup(16, 1); c_sgr("22;24;5;7");    tprintf("blink negative");
+  cup(16,40); c_sgr("1");            tprintf("bold blink negative");
+  cup(18, 6); c_sgr("22;4");         tprintf("underline blink negative");
+  cup(18,45); c_sgr("1");            tprintf("bold underline blink negative");
+  cup(20, 6); c_sgr(""); set_foreground(9); tprintf("original foreground");
+  cup(20,45); c_sgr(""); set_background(9); tprintf("original background");
+  cup(22, 1); c_sgr(";8");           tprintf("concealed");
+  cup(22,40); c_sgr("8;7");          tprintf("concealed negative");
   /* *INDENT-ON* */
 
   c_sgr("");    /* same as c_sgr("0") */
-  printf(" <- concealed text");
+  tprintf(" <- concealed text");
 
   decscnm(FALSE);   /* Inverse video off */
   cup(max_lines - 1, 1);
   el(0);
-  printf("Dark background. ");
+  tprintf("Dark background. ");
   holdit();
 
   decscnm(TRUE);  /* Inverse video */
   cup(max_lines - 1, 1);
   el(0);
-  printf("Light background. ");
+  tprintf("Light background. ");
   holdit();
 
   decscnm(FALSE);
   cup(max_lines - 1, 1);
   el(0);
-  printf("Dark background. ");
+  tprintf("Dark background. ");
   holdit();
 
   reset_all_colors();
@@ -609,31 +609,31 @@ test_SGR_0(MENU_ARGS)
   println("");
 
   reset_all_colors();
-  printf("You should see only black:");
+  printxx("You should see only black:");
   sgr("30;40");
-  printf("SGR 30 and SGR 40 don't work");
+  tprintf("SGR 30 and SGR 40 don't work");
   reset_all_colors();
   println(":up to here");
 
   reset_all_colors();
-  printf("You should see only white:");
+  printxx("You should see only white:");
   sgr("37;47");
-  printf("SGR 37 and SGR 47 don't work");
+  tprintf("SGR 37 and SGR 47 don't work");
   reset_all_colors();
   println(":up to here");
 
   reset_all_colors();
-  printf("You should see text here: ");
+  printxx("You should see text here: ");
   sgr("30;40");
   sgr("0");
-  printf("SGR 0 reset works (explicit 0)");
+  tprintf("SGR 0 reset works (explicit 0)");
   println("");
 
   reset_all_colors();
-  printf("................and here: ");
+  printxx("................and here: ");
   sgr("37;47");
   sgr("");
-  printf("SGR 0 reset works (default param)");
+  tprintf("SGR 0 reset works (default param)");
   println("");
 
   reset_all_colors();

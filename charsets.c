@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.78 2020/12/25 14:24:42 tom Exp $ */
+/* $Id: charsets.c,v 1.79 2022/02/15 22:35:23 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -439,8 +439,8 @@ tst_vt100_charsets(MENU_ARGS)
    */
   int i, g, count, cset;
 
-  __(cup(1, 10), printf("Selected as G0 (with SI)"));
-  __(cup(1, 48), printf("Selected as G1 (with SO)"));
+  __(cup(1, 10), printxx("Selected as G0 (with SI)"));
+  __(cup(1, 48), printxx("Selected as G1 (with SO)"));
   for (count = cset = 0; count < TABLESIZE(KnownCharsets); count++) {
     const CHARSETS *tbl = KnownCharsets + count;
     if (tbl->first == 0) {
@@ -467,7 +467,7 @@ tst_vt100_charsets(MENU_ARGS)
     }
   }
   scs_normal();
-  __(cup(max_lines, 1), printf("These are the installed character sets. "));
+  __(cup(max_lines, 1), printxx("These are the installed character sets. "));
   return MENU_HOLD;
 }
 
@@ -485,7 +485,7 @@ tst_shift_in_out(MENU_ARGS)
   int i, cset;
   char buffer[80];
 
-  __(cup(1, 10), printf("These are the G0 and G1 character sets."));
+  __(cup(1, 10), printxx("These are the G0 and G1 character sets."));
   for (cset = 0; cset < 2; cset++) {
     const CHARSETS *tbl = lookupCharset(cset, current_Gx[cset]);
     int row = 3 + (4 * cset);
@@ -740,7 +740,7 @@ tst_characters(MENU_ARGS)
 
     do {
       vt_clear(2);
-      __(title(0), printf("Character-Set Tests"));
+      __(title(0), printxx("Character-Set Tests"));
       __(title(2), println("Choose test type:"));
       sprintf(hilite_mesg, "%s highlighting of non-ISO-8859-1 mapping",
               STR_ENABLE(hilite_not11));

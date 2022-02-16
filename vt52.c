@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.19 2018/07/26 00:42:11 tom Exp $ */
+/* $Id: vt52.c,v 1.20 2022/02/15 23:08:59 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -53,19 +53,19 @@ tst_vt52(MENU_ARGS)
   vt52home();   /* Cursor home     */
   for (i = 0; i <= max_lines - 1; i++) {
     for (j = 0; j <= 9; j++)
-      printf("%s", "FooBar ");
+      tprintf("%s", "FooBar ");
     println("Bletch");
   }
   vt52home();   /* Cursor home     */
   vt52ed();     /* Erase to end of screen  */
 
   vt52cup(7, 47);
-  printf("nothing more.");
+  tprintf("nothing more.");
   for (i = 1; i <= 10; i++)
-    printf("THIS SHOULD GO AWAY! ");
+    tprintf("THIS SHOULD GO AWAY! ");
   for (i = 1; i <= 5; i++) {
     vt52cup(1, 1);
-    printf("%s", "Back scroll (this should go away)");
+    tprintf("%s", "Back scroll (this should go away)");
     vt52ri();   /* Reverse LineFeed (with backscroll!)  */
   }
   vt52cup(12, 60);
@@ -77,36 +77,36 @@ tst_vt52(MENU_ARGS)
 
   for (i = 2; i <= max_lines - 1; i++) {
     vt52cup(i, 70);
-    printf("%s", "**Foobar");
+    tprintf("%s", "**Foobar");
   }
   vt52cup(max_lines - 1, 10);
   for (i = max_lines - 1; i >= 2; i--) {
-    printf("%s", "*");
-    printf("%c", 8);  /* BS */
+    tprintf("%s", "*");
+    tprintf("%c", 8);   /* BS */
     vt52ri();   /* Reverse LineFeed (LineStarve)        */
   }
   vt52cup(1, 70);
   for (i = 70; i >= 10; i--) {
-    printf("%s", "*");
+    tprintf("%s", "*");
     vt52cub1();
     vt52cub1(); /* Cursor Left */
   }
   vt52cup(max_lines, 10);
   for (i = 10; i <= 70; i++) {
-    printf("%s", "*");
-    printf("%c", 8);  /* BS */
+    tprintf("%s", "*");
+    tprintf("%c", 8);   /* BS */
     vt52cuf1(); /* Cursor Right */
   }
   vt52cup(2, 11);
   for (i = 2; i <= max_lines - 1; i++) {
-    printf("%s", "!");
-    printf("%c", 8);  /* BS */
+    tprintf("%s", "!");
+    tprintf("%c", 8);   /* BS */
     vt52cud1(); /* Cursor Down  */
   }
   vt52cup(max_lines - 1, 69);
   for (i = max_lines - 1; i >= 2; i--) {
-    printf("%s", "!");
-    printf("%c", 8);  /* BS */
+    tprintf("%s", "!");
+    tprintf("%c", 8);   /* BS */
     vt52cuu1(); /* Cursor Up    */
   }
   for (i = 2; i <= max_lines - 1; i++) {
@@ -115,29 +115,29 @@ tst_vt52(MENU_ARGS)
   }
 
   vt52cup(10, 16);
-  printf("%s", "The screen should be cleared, and have a centered");
+  printxx("%s", "The screen should be cleared, and have a centered");
   vt52cup(11, 16);
-  printf("%s", "rectangle of \"*\"s with \"!\"s on the inside to the");
+  printxx("%s", "rectangle of \"*\"s with \"!\"s on the inside to the");
   vt52cup(12, 16);
-  printf("%s", "left and right. Only this, and");
+  printxx("%s", "left and right. Only this, and");
   vt52cup(13, 16);
   holdit();
 
   vt52home();   /* Cursor home     */
   vt52ed();     /* Erase to end of screen  */
-  printf("%s", "This is the normal character set:");
+  printxx("%s", "This is the normal character set:");
   for (j = 0; j <= 1; j++) {
     vt52cup(3 + j, 16);
     for (i = 0; i <= 47; i++)
-      printf("%c", 32 + i + 48 * j);
+      tprintf("%c", 32 + i + 48 * j);
   }
   vt52cup(6, 1);
-  printf("%s", "This is the special graphics character set:");
+  printxx("%s", "This is the special graphics character set:");
   esc("F");     /* Select Special Graphics character set        */
   for (j = 0; j <= 1; j++) {
     vt52cup(8 + j, 16);
     for (i = 0; i <= 47; i++)
-      printf("%c", 32 + i + 48 * j);
+      tprintf("%c", 32 + i + 48 * j);
   }
   esc("G");     /* Select ASCII character set   */
   vt52cup(12, 1);
@@ -161,7 +161,7 @@ tst_vt52(MENU_ARGS)
   restore_ttymodes();
   padding(10);  /* some terminals miss part of the response otherwise */
 
-  printf("Response was ");
+  printxx("Response was ");
   chrprint2(response, 2, 13);
   for (i = 0; resptable[i].rcode[0] != '\0'; i++) {
     if (!strcmp(response, resptable[i].rcode)) {
@@ -194,13 +194,13 @@ tst_vt52(MENU_ARGS)
       decrqss("\"p");
       response = get_reply();
       vt_move(++row, col = 10);
-      printf("Response was");
+      printxx("Response was");
       chrprint2(response, row, col);
       if (isreturn(response)) {
         show_result(SHOW_SUCCESS);
       } else {
         if (parse_decrqss(response, "\"p") > 0)
-          printf("DECSCL recognized --");
+          printxx("DECSCL recognized --");
         show_result(SHOW_FAILURE);
       }
       println("");
@@ -217,14 +217,14 @@ tst_vt52(MENU_ARGS)
       dsr(6);
       response = instr();
       vt_move(row, col = 10);
-      printf("Response to CUP(1,1)/DSR(6)");
+      printxx("Response to CUP(1,1)/DSR(6)");
       chrprint2(response, row, col);
       if ((temp = skip_prefix(csi_input(), response)) != 0) {
         if (!strcmp("1;1R", temp)) {
-          printf("S8C1T recognized --");
+          printxx("S8C1T recognized --");
           show_result(SHOW_FAILURE);
         } else {
-          printf("unknown response --");
+          printxx("unknown response --");
           show_result(SHOW_FAILURE);
         }
       } else {
@@ -233,7 +233,7 @@ tst_vt52(MENU_ARGS)
             && !strcmp("1;1R", temp)) {
           show_result(SHOW_SUCCESS);
         } else {
-          printf("unknown response --");
+          printxx("unknown response --");
           show_result(SHOW_FAILURE);
         }
       }
