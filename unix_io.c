@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.29 2014/01/16 22:11:39 tom Exp $ */
+/* $Id: unix_io.c,v 1.30 2022/02/27 11:04:04 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -33,7 +33,7 @@ char
 inchar(void)
 {
   int lval;
-  int ch = '\0';
+  int ch;
   char one_byte = '\0';
 
   fflush(stdout);

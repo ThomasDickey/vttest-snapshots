@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.45 2022/02/15 23:29:31 tom Exp $ */
+/* $Id: reports.c,v 1.48 2022/02/26 13:30:54 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -126,13 +126,15 @@ lookup(struct table t[], int k)
 static int
 scan_DA(const char *str, int *pos)
 {
-  int save = *pos;
-  int value = scanto(str, pos, ';');
-  if (value == 0) {
-    *pos = save;
-    value = scanto(str, pos, 'c');
-    if (str[*pos] != '\0')
-      value = 0;
+  int value = -1;
+  if (str[*pos] != '\0') {
+    int save = *pos;
+    value = scanto(str, pos, ';');
+    if (value == 0 && *pos == save) {
+      value = scanto(str, pos, 'c');
+      if (str[*pos] != '\0')
+        value = -1;
+    }
   }
   return value;
 }
@@ -223,7 +225,7 @@ tst_DA(MENU_ARGS)
       show_result("%s\n", lookup(operating_level, value));
       println("");
       if (value == 12) {
-        if ((value = scan_DA(cmp, &reportpos)) != 0) {
+        if ((value = scan_DA(cmp, &reportpos)) >= 0) {
           printxx("   ");
           switch (value) {
           case 2:
@@ -237,15 +239,14 @@ tst_DA(MENU_ARGS)
             break;
           case 7:
             show_result("with AVO");
-            println("");
             break;
           default:
             printxx("unknown code %d", value);
-            println("");
             break;
           }
+          println("");
         }
-        if ((value = scan_DA(cmp, &reportpos)) != 0) {
+        if ((value = scan_DA(cmp, &reportpos)) >= 0) {
           printxx("   ");
           switch (value) {
           case 0:
@@ -260,12 +261,12 @@ tst_DA(MENU_ARGS)
           }
           println("");
         }
-        if ((value = scan_DA(cmp, &reportpos)) != 0) {
+        if ((value = scan_DA(cmp, &reportpos)) >= 0) {
           tprintf("    ROM version %d", value);
           println("");
         }
       } else {
-        while ((value = scan_DA(cmp, &reportpos)) != 0) {
+        while ((value = scan_DA(cmp, &reportpos)) >= 0) {
           printxx("   ");
           show_result("%d = %s\n", value, lookup(extensions, value));
           println("");
@@ -440,7 +441,7 @@ tst_DECREQTPARM(MENU_ARGS)
     int clkmul = scanto(report, &reportpos, ';');
     int flags  = scanto(report, &reportpos, 'x');
 
-    if (parity == 0 || nbits == 0 || clkmul == 0)
+    if (parity <= 0 || nbits <= 0 || clkmul <= 0)
       println(" -- Bad format");
     else
       println(" -- OK");

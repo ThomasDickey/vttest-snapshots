@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.40 2022/02/15 22:41:48 tom Exp $ */
+/* $Id: mouse.c,v 1.41 2022/02/25 22:54:34 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -913,7 +913,7 @@ loop:
     ToData(0);
     vt_el(2);
     chrprint2(report, report_row, report_col);
-    if ((report = parse_mouse_M(report, &b, &x, &y)) != 0) {
+    if (parse_mouse_M(report, &b, &x, &y) != 0) {
       cup((int) y, (int) x);
       tprintf("%u", b + 1);
       vt_move((int) y, (int) x);

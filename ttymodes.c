@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.23 2018/07/26 00:38:24 tom Exp $ */
+/* $Id: ttymodes.c,v 1.26 2022/02/27 10:05:56 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -83,8 +83,7 @@ disable_control_chars(TTY * modes)
   if (temp == -1) {
     if (errno != 0) {
       restore_ttymodes();
-      fprintf(stderr, "Cannot disable special characters!\n");
-      exit(EXIT_FAILURE);
+      failed("Cannot disable special characters!\n");
     }
     temp = 0377;
   }
@@ -210,7 +209,10 @@ init_ttymodes(int pn)
 #  define O_NDELAY O_NONBLOCK   /* O_NONBLOCK is POSIX */
 #  endif
   close(2);
-  open("/dev/tty", O_RDWR | O_NDELAY);
+  if (open("/dev/tty", O_RDWR | O_NDELAY) != 2) {
+    restore_ttymodes();
+    failed("Cannot initialize tty modes!\n");
+  }
 # endif
 #endif /* UNIX */
   dump_ttymodes("...init_ttymodes", pn);

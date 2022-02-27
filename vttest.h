@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.106 2020/06/09 19:25:58 tom Exp $ */
+/* $Id: vttest.h,v 1.108 2022/02/26 15:44:31 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -168,6 +168,10 @@ extern jmp_buf intrenv;
 
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(p)  /* nothing */
+#endif
+
+#ifndef GCC_NORETURN
+#define GCC_NORETURN  /* nothing */
 #endif
 
 #ifndef GCC_PRINTFLIKE
@@ -375,5 +379,8 @@ extern void test_with_margins(int enable);
 extern void vt_clear(int code);
 extern void vt_el(int code);
 extern void vt_hilite(int flag);
+
+extern GCC_NORETURN void failed(const char *);
+extern GCC_NORETURN void no_memory(void);
 
 #endif /* VTTEST_H */

@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.63 2022/02/15 23:18:17 tom Exp $ */
+/* $Id: vt320.c,v 1.67 2022/02/26 16:34:53 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -166,7 +166,7 @@ typedef struct {
   int gl;
   int gr;
   int Scss;
-  char cs_suffix[4][2];
+  char cs_suffix[4][3];
   int cs_sizes[4];
   const char *cs_names[4];
 } DECCIR_REPORT;
@@ -221,7 +221,7 @@ parse_DECCIR(const char *input, DECCIR_REPORT * output)
 
   n = 0;
   while (input[pos] != '\0') {
-    strncpy(output->cs_suffix[n], input + pos, (size_t) 2);
+    strncpy(output->cs_suffix[n], input + pos, (size_t) 2)[2] = '\0';
     if (output->cs_suffix[n][0] != '%') {
       output->cs_suffix[n][1] = '\0';
     }
@@ -337,8 +337,10 @@ show_DECTABSR(char *report)
 {
   int pos = 3;                  /* skip "2$u" */
   int stop;
-  char *buffer = (char *) malloc(strlen(report));
+  char *buffer;
 
+  if ((buffer = malloc(strlen(report) + 1)) == NULL)
+    no_memory();
   *buffer = '\0';
   strcat(report, "/");  /* simplify scanning */
   while ((stop = scanto(report, &pos, '/')) != 0) {
@@ -642,60 +644,58 @@ tabstop_ruler(const char *tabsr, int row, int col)
   int valid = 1;
   int n;
   int tabstops = 0;
-  char *expect = malloc((size_t) min_cols + 1);
+  char *expect;
+  const char *suffix;
+  const char *s;
+
+  if ((expect = malloc((size_t) min_cols + 1)) == NULL)
+    no_memory();
 
   vt_move(row, col);
 
-  if (expect != 0) {
-    const char *suffix;
-    const char *s;
-
-    for (n = 0; n < min_cols; ++n) {
-      expect[n] = '-';
-      if (((n + 1) % 10) == 0) {
-        expect[n] = (char) ((((n + 1) / 10) % 10) + '0');
-      } else if (((n + 1) % 5) == 0) {
-        expect[n] = '+';
-      }
+  for (n = 0; n < min_cols; ++n) {
+    expect[n] = '-';
+    if (((n + 1) % 10) == 0) {
+      expect[n] = (char) ((((n + 1) / 10) % 10) + '0');
+    } else if (((n + 1) % 5) == 0) {
+      expect[n] = '+';
     }
-    expect[min_cols] = '\0';
+  }
+  expect[min_cols] = '\0';
 
-    if (!strncmp(tabsr, "\033P", (size_t) 2)) {
-      suffix = "\033\\";
-      s = tabsr + 2;
-    } else if ((unsigned char) *tabsr == 0x90) {
-      suffix = "\234";
-      s = tabsr + 1;
-    } else {
-      suffix = 0;
-      s = 0;
-    }
+  if (!strncmp(tabsr, "\033P", (size_t) 2)) {
+    suffix = "\033\\";
+    s = tabsr + 2;
+  } else if ((unsigned char) *tabsr == 0x90) {
+    suffix = "\234";
+    s = tabsr + 1;
+  } else {
+    suffix = 0;
+    s = 0;
+  }
 
-    if (s != 0 && !strncmp(s, "2$u", (size_t) 2)) {
-      int value = 0;
-      s += 2;
-      while (*++s != '\0') {
-        if (*s >= '0' && *s <= '9') {
-          value = (value * 10) + (*s - '0');
-        } else if (*s == '/') {
-          if (value-- > 0 && value < min_cols) {
-            if (expect[value] != '*') {
-              expect[value] = '*';
-              ++tabstops;
-              value = 0;
-            } else {
-              valid = 0;
-              break;
-            }
-          }
-        } else {
-          if (strcmp(s, suffix))
+  if (s != 0 && !strncmp(s, "2$u", (size_t) 2)) {
+    int value = 0;
+    s += 2;
+    while (*++s != '\0') {
+      if (*s >= '0' && *s <= '9') {
+        value = (value * 10) + (*s - '0');
+      } else if (*s == '/') {
+        if (value-- > 0 && value < min_cols) {
+          if (expect[value] != '*') {
+            expect[value] = '*';
+            ++tabstops;
+            value = 0;
+          } else {
             valid = 0;
-          break;
+            break;
+          }
         }
+      } else {
+        if (strcmp(s, suffix))
+          valid = 0;
+        break;
       }
-    } else {
-      valid = 0;
     }
   } else {
     valid = 0;
