@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.34 2022/02/15 23:08:59 tom Exp $ */
+/* $Id: vt220.c,v 1.35 2022/02/25 22:54:48 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -62,7 +62,7 @@ show_KeyboardStatus(char *report)
   int save;
   const char *show = SHOW_FAILURE;
 
-  if ((code = scanto(report, &pos, ';')) == 27
+  if (scanto(report, &pos, ';') == 27
       && (code = scan_any(report, &pos, 'n')) != 0) {
     /* *INDENT-OFF* */
     switch(code) {

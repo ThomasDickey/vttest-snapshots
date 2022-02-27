@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.39 2022/02/15 22:38:50 tom Exp $ */
+/* $Id: keyboard.c,v 1.41 2022/02/26 16:33:40 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -722,6 +722,8 @@ tst_ControlKeys(MENU_ARGS)
 
     vt_move(row = max_lines - 1, col = 1);
     kbdc = inchar();
+    if (kbdc < 0)
+      break;
     vt_move(row, col);
     vt_el(0);
     if (kbdc < 32) {
@@ -733,11 +735,12 @@ tst_ControlKeys(MENU_ARGS)
       chrprint2(kbds, row, col);
       tprintf("%s", " -- not a CTRL key");
     }
-    if (kbdc < 32)
+    if (kbdc < 32) {
       ckeytab[kbdc].ccount++;
-    if (ckeytab[kbdc].ccount == 2) {
-      vt_move(1 + (kbdc % 16), 1 + 40 * (kbdc / 16));
-      tprintf("%s", ckeytab[kbdc].csymbol);
+      if (ckeytab[kbdc].ccount == 2) {
+        vt_move(1 + (kbdc % 16), 1 + 40 * (kbdc / 16));
+        tprintf("%s", ckeytab[kbdc].csymbol);
+      }
     }
   } while (kbdc != '\177');
 

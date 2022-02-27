@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.17 2022/02/15 23:18:17 tom Exp $ */
+/* $Id: sixel.c,v 1.21 2022/02/26 16:13:31 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -138,9 +138,12 @@ decode_header(void)
           tmp[use++] = *t;
         }
         if (is_final(*t)) {
+          char *tmp2;
           tmp[use++] = *t++;
           tmp[use] = '\0';
-          FontName = strcpy((char *) malloc(use + 1), tmp);
+          if ((tmp2 = malloc(use + 1)) == NULL)
+            no_memory();
+          FontName = strcpy(tmp2, tmp);
           StartingCharPtr = t;
           break;
         }
@@ -249,6 +252,8 @@ tst_display(MENU_ARGS)
   do {
     d = c;
     c = inchar();
+    if (c < 0)
+      break;
     vt_move(6, 1);
     vt_clear(0);
     if (display_char(stdout, c)) {
@@ -283,7 +288,7 @@ setup_softchars(const char *filename)
   int c;
   size_t len = 1024;
   size_t use = 0;
-  char *buffer = (char *) malloc(len);
+  char *buffer;
   char *s;
   char *first = 0;
   char *last = 0;
@@ -292,16 +297,15 @@ setup_softchars(const char *filename)
 
   /* read the file into memory */
   if ((fp = fopen(filename, "r")) == 0) {
-    perror(filename);
-    exit(EXIT_FAILURE);
+    failed(filename);
   }
+  if ((buffer = malloc(len)) == NULL)
+    no_memory();
   while ((c = fgetc(fp)) != EOF) {
     if (use + 1 >= len) {
-      char *check = (char *) realloc(buffer, len *= 2);
-      if (check == 0) {
-        perror("malloc");
-        exit(EXIT_FAILURE);
-      }
+      char *check;
+      if ((check = realloc(buffer, len *= 2)) == NULL)
+        no_memory();
       buffer = check;
     }
     buffer[use++] = (char) c;

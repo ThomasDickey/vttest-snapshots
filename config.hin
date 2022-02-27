@@ -1,4 +1,4 @@
-/* $Id: config.hin,v 1.12 2012/05/06 19:30:05 tom Exp $ */
+/* $Id: config.hin,v 1.14 2022/02/26 16:10:58 tom Exp $ */
 
 /* define this if you have the alarm() function */
 #undef HAVE_ALARM
@@ -24,11 +24,20 @@
 /* define this if you have <string.h> */
 #undef HAVE_STRING_H
 
+/* define this if you have the strerror() function */
+#undef HAVE_STRERROR
+
+/* define this if you have the sys_errlist[] array */
+#undef HAVE_SYS_ERRLIST
+
 /* define this if you have <sys/filio.h> */
 #undef HAVE_SYS_FILIO_H
 
 /* define this if you have <sys/ioctl.h> */
 #undef HAVE_SYS_IOCTL_H
+
+/* define this if you have the sys_nerr variable */
+#undef HAVE_SYS_NERR
 
 /* define this if you have the tcgetattr() function */
 #undef HAVE_TCGETATTR
@@ -50,6 +59,9 @@
 
 /* define this if we can use ioctl(,FIONREAD,) */
 #undef USE_FIONREAD
+
+/* define this for GCC's __attribute__((noreturn)) */
+#undef GCC_NORETURN
 
 /* define this for GCC's __attribute__((printf)) */
 #undef GCC_PRINTFLIKE

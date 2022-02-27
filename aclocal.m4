@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.38 2022/02/15 01:13:33 tom Exp $
+dnl $Id: aclocal.m4,v 1.39 2022/02/26 16:06:34 tom Exp $
 dnl autoconf macros for vttest - T.E.Dickey
 dnl ---------------------------------------------------------------------------
 dnl Copyright:  1997-2021,2022 by Thomas E. Dickey
@@ -343,6 +343,63 @@ if test ".$system_name" != ".$cf_cv_system_name" ; then
 	AC_MSG_RESULT(Cached system name ($system_name) does not agree with actual ($cf_cv_system_name))
 	AC_MSG_ERROR("Please remove config.cache and try again.")
 fi
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_CHECK_ERRNO version: 13 updated: 2020/03/10 18:53:47
+dnl --------------
+dnl Check for data that is usually declared in <stdio.h> or <errno.h>, e.g.,
+dnl the 'errno' variable.  Define a DECL_xxx symbol if we must declare it
+dnl ourselves.
+dnl
+dnl $1 = the name to check
+dnl $2 = the assumed type
+AC_DEFUN([CF_CHECK_ERRNO],
+[
+AC_CACHE_CHECK(if external $1 is declared, cf_cv_dcl_$1,[
+	AC_TRY_COMPILE([
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#include <stdio.h>
+#include <sys/types.h>
+#include <errno.h> ],
+	ifelse([$2],,int,[$2]) x = (ifelse([$2],,int,[$2])) $1; (void)x,
+	[cf_cv_dcl_$1=yes],
+	[cf_cv_dcl_$1=no])
+])
+
+if test "$cf_cv_dcl_$1" = no ; then
+	CF_UPPER(cf_result,decl_$1)
+	AC_DEFINE_UNQUOTED($cf_result)
+fi
+
+# It's possible (for near-UNIX clones) that the data doesn't exist
+CF_CHECK_EXTERN_DATA($1,ifelse([$2],,int,[$2]))
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_CHECK_EXTERN_DATA version: 5 updated: 2021/09/04 06:35:04
+dnl --------------------
+dnl Check for existence of external data in the current set of libraries.  If
+dnl we can modify it, it is real enough.
+dnl $1 = the name to check
+dnl $2 = its type
+AC_DEFUN([CF_CHECK_EXTERN_DATA],
+[
+AC_CACHE_CHECK(if external $1 exists, cf_cv_have_$1,[
+	AC_TRY_LINK([
+#undef $1
+extern $2 $1;
+],
+	[$1 = 2],
+	[cf_cv_have_$1=yes],
+	[cf_cv_have_$1=no])
+])
+
+if test "$cf_cv_have_$1" = yes ; then
+	CF_UPPER(cf_result,have_$1)
+	AC_DEFINE_UNQUOTED($cf_result)
+fi
+
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_CLANG_COMPILER version: 8 updated: 2021/01/01 13:31:04
@@ -1427,6 +1484,25 @@ define([CF_REMOVE_DEFINE],
 $1=`echo "$2" | \
 	sed	-e 's/-[[UD]]'"$3"'\(=[[^ 	]]*\)\?[[ 	]]/ /g' \
 		-e 's/-[[UD]]'"$3"'\(=[[^ 	]]*\)\?[$]//g'`
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_STRERROR version: 2 updated: 2001/07/11 09:34:49
+dnl -----------
+dnl Check for strerror(), or it is not found, for the related data.  POSIX
+dnl requires strerror(), so only old systems such as SunOS lack it.
+AC_DEFUN([CF_STRERROR],[
+AC_CHECK_FUNCS(strerror, AC_DEFINE(HAVE_STRERROR),[CF_SYS_ERRLIST])
+])dnl
+dnl ---------------------------------------------------------------------------
+dnl CF_SYS_ERRLIST version: 6 updated: 2001/12/30 13:03:23
+dnl --------------
+dnl Check for declaration of sys_nerr and sys_errlist in one of stdio.h and
+dnl errno.h.  Declaration of sys_errlist on BSD4.4 interferes with our
+dnl declaration.  Reported by Keith Bostic.
+AC_DEFUN([CF_SYS_ERRLIST],
+[
+    CF_CHECK_ERRNO(sys_nerr)
+    CF_CHECK_ERRNO(sys_errlist)
 ])dnl
 dnl ---------------------------------------------------------------------------
 dnl CF_TRY_XOPEN_SOURCE version: 3 updated: 2021/08/28 15:20:37

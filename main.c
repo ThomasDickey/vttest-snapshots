@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.121 2022/02/15 22:28:25 tom Exp $ */
+/* $Id: main.c,v 1.128 2022/02/26 16:15:08 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -57,8 +57,30 @@ int quick_reply = FALSE;
 int use_padding = FALSE;
 jmp_buf intrenv;
 
+static char *program;
 static char empty[1];
 static char *current_menu = empty;
+
+GCC_NORETURN void
+failed(const char *msg)
+{
+#ifdef HAVE_STRERROR
+  const char *why = strerror(errno);
+  fprintf(stderr, "%s: %s: %s\n", program, msg, why ? why : "?");
+#elif defined(HAVE_SYS_NERR) && defined(HAVE_SYS_ERRLIST)
+  const char *why = (errno > 0 && errno < sys_nerr) ? sys_errlist[errno] : "?";
+  fprintf(stderr, "%s: %s: %s\n", program, msg, why ? why : "?");
+#else
+  perror(msg);
+#endif
+  exit(EXIT_FAILURE);
+}
+
+GCC_NORETURN void
+no_memory(void)
+{
+  failed("no memory");
+}
 
 static void
 usage(void)
@@ -100,6 +122,12 @@ main(int argc, char *argv[])
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
+
+  program = strrchr(argv[0], '/');
+  if (program != NULL)
+    ++program;
+  else
+    program = argv[0];
 
   while (argc-- > 1) {
     const char *opt = *++argv;
@@ -1402,6 +1430,7 @@ scanto(const char *str, int *pos, int toc)
 {
   char c;
   int result = 0;
+  int save = *pos;
 
   while (toc != (c = str[(*pos)])) {
     *pos += 1;
@@ -1412,21 +1441,28 @@ scanto(const char *str, int *pos, int toc)
   }
   if (c == toc) {
     *pos += 1;  /* point past delimiter */
-    return (result);
+  } else {
+    result = 0;
+    *pos = save;
   }
-  return (0);
+  return (result);
 }
 
 int
 scan_any(char *str, int *pos, int toc)
 {
-  int save = *pos;
-  int value = scanto(str, pos, ';');
-  if (value == 0) {
-    *pos = save;
-    value = scanto(str, pos, toc);
-    if (str[*pos] != '\0')
-      value = 0;
+  int value = 0;
+
+  if (str[*pos] != '\0') {
+    int save = *pos;
+
+    value = scanto(str, pos, ';');
+    if (value == 0 && (save == *pos)) {
+      *pos = save;
+      value = scanto(str, pos, toc);
+      if (str[*pos] != '\0')
+        value = 0;
+    }
   }
   return value;
 }
@@ -1435,7 +1471,8 @@ static const char *
 push_menu(int number)
 {
   const char *saved = current_menu;
-  current_menu = (char *) malloc(strlen(saved) + 10);
+  if ((current_menu = (char *) malloc(strlen(saved) + 10)) == NULL)
+    no_memory();
   sprintf(current_menu, "%s%s%d", saved, *saved ? "." : "", number);
   return saved;
 }
@@ -1631,7 +1668,8 @@ chrformat(const char *s, int col, int first)
       k += (int) strlen(temp);
     }
     if (!pass) {
-      result = malloc((size_t) k + 2);
+      if ((result = malloc((size_t) k + 2)) == NULL)
+        no_memory();
       *result = '\0';
     }
   }

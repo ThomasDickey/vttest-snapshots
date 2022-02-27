@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.35 2022/02/15 23:12:39 tom Exp $ */
+/* $Id: setup.c,v 1.36 2022/02/26 16:01:16 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -162,8 +162,7 @@ enable_logging(void)
   static char my_name[] = "vttest.log";
   log_fp = fopen(my_name, "w");
   if (log_fp == 0) {
-    perror(my_name);
-    exit(EXIT_FAILURE);
+    failed(my_name);
   }
 }
 

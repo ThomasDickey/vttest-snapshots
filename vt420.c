@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.206 2022/02/15 23:29:31 tom Exp $ */
+/* $Id: vt420.c,v 1.214 2022/02/27 15:56:39 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -563,7 +563,7 @@ show_keypress(int row, int col)
     vt_move(row, col);
     vt_clear(0);
     chrprint2(report, row, col);
-    strcpy(last, report);
+    strncpy(last, report, sizeof(last) - 2)[sizeof(last) - 2] = '\0';
   }
 }
 
@@ -2206,10 +2206,10 @@ static int
 tst_DECSNLS(MENU_ARGS)
 {
   int rows;
-  int row, col;
+  int row;
   char temp[80];
 
-  vt_move(row = 1, col = 1);
+  vt_move(row = 1, 1);
   println("Testing Select Number of Lines per Screen (DECSNLS)");
   println("");
 
@@ -2264,9 +2264,11 @@ tst_DSR_area_sum(MENU_ARGS, int g)
   char *temp2;
 
   /* make an array of blank lines, to track text on the screen */
-  lines = calloc((size_t) max_lines, sizeof(char *));
+  if ((lines = calloc((size_t) max_lines, sizeof(char *))) == NULL)
+      no_memory();
   for (r = 0; r < max_lines; ++r) {
-    lines[r] = malloc((size_t) min_cols + 1);
+    if ((lines[r] = malloc((size_t) min_cols + 1)) == NULL)
+      no_memory();
     memset(lines[r], to_fill(' '), (size_t) min_cols);
     lines[r][min_cols] = '\0';
   }
@@ -2355,7 +2357,6 @@ tst_DSR_area_sum(MENU_ARGS, int g)
         if (ch > ch_end) {
           int y, x;
 
-          first = TRUE;
           for (y = 0; y < (!chk_notrim ? r : max_lines); ++y) {
             /*
              * If trimming, count through space after ":" in "All:".
@@ -2401,9 +2402,9 @@ tst_DSR_area_sum(MENU_ARGS, int g)
           sprintf(buffer, "%.4s", s);
           if (LOG_ENABLED) {
             unsigned actual;
-            sscanf(s, "%x", &actual);
+            int ok = sscanf(s, "%x", &actual);
             fprintf(log_fp, "Actual: %.4s\n", s);
-            fprintf(log_fp, "actual: %04x\n", actual);
+            fprintf(log_fp, "actual: %04x\n", ok ? actual : 0);
             fprintf(log_fp, "Expect: %04X\n", CHK(full));
           }
           fputs(buffer, stdout);
@@ -2524,7 +2525,7 @@ tst_SRM(MENU_ARGS)
   vt_move(3, 10);
 
   oldc = -1;
-  while ((newc = inchar()) != oldc)
+  while ((newc = inchar()) != oldc && newc > 0)
     oldc = newc;
 
   set_tty_echo(TRUE);
@@ -2535,7 +2536,7 @@ tst_SRM(MENU_ARGS)
   vt_move(11, 10);
 
   oldc = -1;
-  while ((newc = inchar()) != oldc)
+  while ((newc = inchar()) != oldc && newc > 0)
     oldc = newc;
 
   vt_move(max_lines - 1, 1);
