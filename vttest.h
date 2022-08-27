@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.108 2022/02/26 15:44:31 tom Exp $ */
+/* $Id: vttest.h,v 1.109 2022/08/27 14:24:03 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -364,6 +364,7 @@ extern void enable_logging(void);
 extern void finish_vt420_cursor(MENU_ARGS);
 extern void initterminal(int pn);
 extern void menus_vt420_cursor(void);
+extern void reset_colors(void);
 extern void reset_level(void);
 extern void restore_level(VTLEVEL *save);
 extern void save_level(VTLEVEL *save);

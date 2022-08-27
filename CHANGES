@@ -1,20 +1,28 @@
--- $Id: CHANGES,v 1.244 2022/02/27 16:29:13 tom Exp $
+-- $Id: CHANGES,v 1.247 2022/08/27 16:21:13 tom Exp $
 -------------------------------------------------------------------------------
 
-20220227
-        + improve checks for malloc failure, consolidating error-exits to use
-          strerror.
+20220827
+	+ modify alternate-screen tests to demonstrate the effect of setting
+	  color, as well as making their use of DECALN optional.
 
-        + fix several minor issues reported by coverity and clang; a couple
-          of test results now handle zeroes in status results.
+	+ updated/improved configure macros, i.e., for compiler-warnings
+
+	+ update config.guess
+
+20220227
+	+ improve checks for malloc failure, consolidating error-exits to use
+	  strerror.
+
+	+ fix several minor issues reported by coverity and clang; a couple
+	  of test results now handle zeroes in status results.
 
 20220215
-        + add test-screen using cursor-addressing in the status line.
+	+ add test-screen using cursor-addressing in the status line.
 
-        + add underline and bold attributes to the test-screen for status-line.
+	+ add underline and bold attributes to the test-screen for status-line.
 
-        + improve logging, showing the test-strings to give better context for
-          escape-sequences.
+	+ improve logging, showing the test-strings to give better context for
+	  escape-sequences.
 
 	+ fix typos in keyboard.c and reports.c (patch by Kelvin Sherlock).
 
@@ -206,7 +214,7 @@
 	  which do not correspond to ISO-8859-1.  This makes the National
 	  Replacement Characters easier to see.
 
-	+ modify DSR cursor-position report to check if the terminal 
+	+ modify DSR cursor-position report to check if the terminal
 	  accounts for origin-mode.
 
 	+ support --datarootdir option in makefile.in, to match configure
@@ -225,7 +233,7 @@
 	+ update config.guess, config.sub
 
 20120603
-	+ change cursor-position before IL/DL in 
+	+ change cursor-position before IL/DL in
 	  "Test of VT102-style features with BCE (Insert/Delete Char/Line)"
 	  to demonstrate whether the terminal sets the cursor to the first
 	  column as a side-effect, as noted in VT220 reference manual.
@@ -370,7 +378,7 @@
 	+ miscellaneous updates to configure script macros.
 
 	+ updated config.guess, config.sub
-	
+
 20070304
 	+ build-fix for Darwin 8.8 or OS X 10.4.x, (report by David Blanchard).
 
@@ -551,7 +559,7 @@
 	+ reset character-set of G0 after tst_vt100_charsets
 
 	+ restore terminal modes after answerback test.
-  
+
 980719
 	+ add tests to illustrate any-event and button-event tracking in XFree86
 	  xterm.

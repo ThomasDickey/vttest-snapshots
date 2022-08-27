@@ -1,10 +1,26 @@
-/* $Id: xterm.c,v 1.57 2022/02/15 23:18:17 tom Exp $ */
+/* $Id: xterm.c,v 1.62 2022/08/27 16:04:25 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
 
 #define Pause(secs) fflush(stdout); sleep(secs)
+
+static int do_decaln;
+
+static int
+toggle_color(MENU_ARGS)
+{
+  do_colors = !do_colors;
+  return MENU_NOHOLD;
+}
+
+static int
+toggle_decaln(MENU_ARGS)
+{
+  do_decaln = !do_decaln;
+  return MENU_NOHOLD;
+}
 
 static void
 check_rc(int row, int col)
@@ -32,24 +48,65 @@ check_rc(int row, int col)
   }
 }
 
-static int
-test_altscrn_47(MENU_ARGS)
+static void
+begin_altscreen(MENU_ARGS, const char *explain, int except_tite)
 {
   vt_move(1, 1);
   println(the_title);
   vt_move(3, 1);
-  println("Test private setmode 47 (to/from alternate screen)");
+  println(explain);
   vt_move(4, 1);
   println("The next screen will be filled with E's down to the prompt.");
+  if (except_tite) {
+    vt_move(5, 1);
+    println("unless titeInhibit resource is set, or alternate-screen is disabled.");
+  }
   vt_move(7, 5);
+}
+
+static void
+fill_altscreen(void)
+{
+  vt_move(12, 1);
+  if (do_decaln) {
+    println("This message should not be here.");
+    decaln();   /* fill the screen */
+  } else {
+    int y, x;
+
+    for (y = 0; y < max_lines; ++y) {
+      cup(y + 1, 1);
+      for (x = 0; x < min_cols; ++x)
+        putchar('E');
+    }
+    vt_move(12, 1);
+  }
+}
+
+static void
+finish_altscreen(void)
+{
+  vt_move(4, 1);
+  el(2);
+  println("The original screen should be restored except for this line.");
+  vt_move(max_lines - 2, 1);
+}
+
+static int
+test_altscrn_47(MENU_ARGS)
+{
+  begin_altscreen(PASS_ARGS,
+                  "Test private setmode 47 (to/from alternate screen)",
+                  0);
   decsc();
   cup(max_lines - 2, 1);
   holdit();
 
+  if (do_colors)
+    set_colors(WHITE_ON_BLUE);
+
   sm("?47");
-  vt_move(12, 1);
-  println("This message should not be here.");
-  decaln();     /* fill the screen */
+  fill_altscreen();
   vt_move(15, 7);
   decsc();
   cup(max_lines - 2, 1);
@@ -59,35 +116,31 @@ test_altscrn_47(MENU_ARGS)
   rm("?47");
   decrc();
   check_rc(7, 5);
-  vt_move(4, 1);
-  el(2);
-  println("The original screen should be restored except for this line.");
-  vt_move(max_lines - 2, 1);
+  finish_altscreen();
+
+  if (do_colors)
+    reset_colors();
+
   return MENU_HOLD;
 }
 
 static int
 test_altscrn_1047(MENU_ARGS)
 {
-  vt_move(1, 1);
-  println(the_title);
-  vt_move(3, 1);
-  println("Test private setmode 1047 (to/from alternate screen)");
-  vt_move(4, 1);
-  println("The next screen will be filled with E's down to the prompt");
-  vt_move(5, 1);
-  println("unless titeInhibit resource is set, or alternate-screen is disabled.");
-  vt_move(7, 5);
+  begin_altscreen(PASS_ARGS,
+                  "Test private setmode 1047 (to/from alternate screen)",
+                  1);
   decsc();
   vt_move(9, 7);  /* move away from the place we saved with DECSC */
   sm("?1048");  /* this saves the cursor position */
   cup(max_lines - 2, 1);
   holdit();
 
+  if (do_colors)
+    set_colors(WHITE_ON_BLUE);
+
   sm("?1047");
-  vt_move(12, 1);
-  println("This message should not be here.");
-  decaln();     /* fill the screen */
+  fill_altscreen();
   vt_move(15, 7);
   decsc();
   cup(max_lines - 2, 1);
@@ -98,33 +151,29 @@ test_altscrn_1047(MENU_ARGS)
   decrc();
   rm("?1048");
   check_rc(9, 7);
-  vt_move(4, 1);
-  el(2);
-  println("The original screen should be restored except for this line");
-  vt_move(max_lines - 2, 1);
+  finish_altscreen();
+
+  if (do_colors)
+    reset_colors();
+
   return MENU_HOLD;
 }
 
 static int
 test_altscrn_1049(MENU_ARGS)
 {
-  vt_move(1, 1);
-  println(the_title);
-  vt_move(3, 1);
-  println("Test private setmode 1049 (to/from alternate screen)");
-  vt_move(4, 1);
-  println("The next screen will be filled with E's down to the prompt.");
-  vt_move(5, 1);
-  println("unless titeInhibit resource is set, or alternate-screen is disabled.");
-  vt_move(7, 5);
+  begin_altscreen(PASS_ARGS,
+                  "Test private setmode 1049 (to/from alternate screen)",
+                  1);
   decsc();
   cup(max_lines - 2, 1);
   holdit();     /* cursor location will be one line down */
 
+  if (do_colors)
+    set_colors(WHITE_ON_BLUE);
+
   sm("?1049");  /* this saves the cursor location */
-  vt_move(12, 1);
-  println("This message should not be here.");
-  decaln();     /* fill the screen */
+  fill_altscreen();
   cup(max_lines - 2, 1);
   ed(0);
   holdit();
@@ -132,15 +181,16 @@ test_altscrn_1049(MENU_ARGS)
   rm("?1049");
   decrc();
   check_rc(max_lines - 1, 1);
-  vt_move(4, 1);
-  el(2);
-  println("The original screen should be restored except for this line");
-  vt_move(max_lines - 2, 1);
+  finish_altscreen();
+
+  if (do_colors)
+    reset_colors();
+
   return MENU_HOLD;
 }
 
 /*
- * Xterm implements an alternate screen, which is used to save the command-line
+ * XTerm implements an alternate screen, which is used to save the command-line
  * screen to restore it after running a full-screen application.
  *
  * The original scheme used separate save/restore-cursor and clear-screen
@@ -164,9 +214,13 @@ test_altscrn_1049(MENU_ARGS)
 static int
 tst_altscrn(MENU_ARGS)
 {
+  static char txt_do_colors[80];
+  static char txt_do_decaln[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
     { "Exit",                                                0 },
+    { txt_do_colors,                                         toggle_color },
+    { txt_do_decaln,                                         toggle_decaln },
     { "Switch to/from alternate screen (xterm)",             test_altscrn_47 },
     { "Improved alternate screen (XFree86 xterm mode 1047)", test_altscrn_1047 },
     { "Better alternate screen (XFree86 xterm mode 1049)",   test_altscrn_1049 },
@@ -174,11 +228,24 @@ tst_altscrn(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
+  int save_colors = do_colors;
+
+  do_decaln = 1;
+
   do {
+    sprintf(txt_do_colors, "%s after switching to alternate",
+            do_colors ? "Color" : "Do not color");
+    sprintf(txt_do_decaln, "%s after switching to alternate",
+            do_decaln ? "Use DECALN" : "Do not use DECALN");
     vt_clear(2);
     __(title(0), println("XTERM Alternate-Screen features"));
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
+
+  if (do_colors && !save_colors)
+    reset_colors();
+  do_colors = save_colors;
+
   return MENU_NOHOLD;
 }
 

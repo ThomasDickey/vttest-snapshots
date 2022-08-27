@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.214 2022/02/27 15:56:39 tom Exp $ */
+/* $Id: vt420.c,v 1.215 2022/08/27 14:23:43 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -33,7 +33,7 @@ static int use_colors = FALSE;
 
 /******************************************************************************/
 
-static void
+void
 reset_colors(void)
 {
   if (use_colors) {
