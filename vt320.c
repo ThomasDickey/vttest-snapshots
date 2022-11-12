@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.67 2022/02/26 16:34:53 tom Exp $ */
+/* $Id: vt320.c,v 1.78 2022/11/12 00:05:49 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -300,27 +300,55 @@ show_DECCIR(char *report)
   }
 
   vt_move(9, 10);
-  show_result("Char set in GL: G%d, Char set in GR: G%d", data.gl, data.gr);
+  show_result("Character set in GL: G%d", data.gl);
 
   vt_move(10, 10);
+  show_result("Character set in GR: G%d", data.gr);
+
+  vt_move(11, 10);
   if ((data.Scss & 0x4f) == data.Scss) {
-    printxx("Char set sizes:");
-    for (n = 3; n >= 0; n--) {
+    printxx(" Character set sizes:");
+    for (n = 0; n <= 3; n++) {
       printxx(" G%d(%d)", n, data.cs_sizes[n]);
     }
   } else {
     show_result(" -> unknown char set size (0x%x)", data.Scss);
   }
 
-  row = 11;
+  row = 12;
   vt_move(row, 10);
-  show_result("Character set idents for G0...G3: ");
+  show_result("Character set names for G0...G3: ");
   println("");
   for (n = 0; n < 4; ++n) {
     show_result("            %s\n", (data.cs_names[n]
                                      ? data.cs_names[n]
                                      : "?"));
     println("");
+  }
+}
+
+/******************************************************************************/
+static void
+setup_charset(void)
+{
+  int g;
+  for (g = 0; g <= 3; ++g) {
+    if (current_Gx[g] != sane_cs(g))
+      do_scs(g);
+  }
+}
+
+static void
+restore_charset(void)
+{
+  int g;
+  for (g = 0; g <= 3; ++g) {
+    if (current_Gx[g]) {
+      int save = current_Gx[g];
+      current_Gx[g] = sane_cs(g);
+      do_scs(g);
+      current_Gx[g] = save;
+    }
   }
 }
 
@@ -333,22 +361,41 @@ show_DECCIR(char *report)
  *        separator "/" occurs in a real VT320 but should have been ";".
  */
 static void
-show_DECTABSR(char *report)
+show_DECTABSR(char *report, int row)
 {
   int pos = 3;                  /* skip "2$u" */
   int stop;
-  char *buffer;
+  int *stops;
+  int n;
+  int len = 0;
+  int used = 0;
 
-  if ((buffer = malloc(strlen(report) + 1)) == NULL)
-    no_memory();
-  *buffer = '\0';
+  if ((stops = (int *) malloc(sizeof(int) * (strlen(report) + 1))) == NULL)
+      no_memory();
   strcat(report, "/");  /* simplify scanning */
   while ((stop = scanto(report, &pos, '/')) != 0) {
-    sprintf(buffer + strlen(buffer), " %d", stop);
+    stops[len++] = stop;
   }
   println("");
-  show_result("Tab stops:%s", buffer);
-  free(buffer);
+  printxx("Tab stops:");
+  row += 2;
+  ruler(row, min_cols);
+  for (n = 0; n < len; ++n) {
+    if (stops[n] <= min_cols && stops[n] > 0) {
+      cup(row, stops[n]);
+      print_chr('*');
+    }
+  }
+  cup(++row, 1);
+  for (n = used = 0; n < len; ++n) {
+    if (stops[n] <= min_cols && stops[n] > 0) {
+      if (used)
+        print_chr('\t');
+      print_chr('*');
+      ++used;
+    }
+  }
+  free(stops);
 }
 
 /******************************************************************************/
@@ -366,9 +413,13 @@ any_decrqpsr(MENU_ARGS, int Ps)
   set_tty_echo(FALSE);
 
   vt_move(row = 3, 10);
+
+  setup_charset();
   do_csi("%d$w", Ps);
   report = get_reply();
-  chrprint2(report, row, 1);
+  restore_charset();
+
+  row = chrprint2(report, row, 1);
   if ((report = skip_dcs(report)) != 0) {
     if (strip_terminator(report)
         && *report == Ps + '0'
@@ -379,7 +430,7 @@ any_decrqpsr(MENU_ARGS, int Ps)
         show_DECCIR(report);
         break;
       case 2:
-        show_DECTABSR(report);
+        show_DECTABSR(report, row);
         break;
       }
     } else {
@@ -394,6 +445,8 @@ any_decrqpsr(MENU_ARGS, int Ps)
   return MENU_HOLD;
 }
 
+/******************************************************************************/
+
 static int
 tst_DECCIR(MENU_ARGS)
 {
@@ -401,10 +454,120 @@ tst_DECCIR(MENU_ARGS)
 }
 
 static int
+tst_any_DECCIR(MENU_ARGS)
+{
+  static char whatis_Gx[4][80];
+  static char nrc_mesg[80];
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Reset (G0 ASCII, G1 Latin-1, no NRC mode)",         reset_charset },
+      { nrc_mesg,                                            toggle_nrc },
+      { whatis_Gx[0],                                        specify_G0 },
+      { whatis_Gx[1],                                        specify_G1 },
+      { whatis_Gx[2],                                        specify_G2 },
+      { whatis_Gx[3],                                        specify_G3 },
+      { "Cursor Information Report (DECCIR)",                tst_DECCIR },
+      { "",                                                  0 }
+  };
+  /* *INDENT-ON* */
+
+  dirty_charset(0);
+  reset_charset(PASS_ARGS);   /* make the menu consistent */
+
+  if (get_level() > 2) {
+    int n;
+
+    do {
+      vt_clear(2);
+      __(title(0), printxx("Character-Set Tests"));
+      __(title(2), println("Choose test type:"));
+      sprintf(nrc_mesg, "%s National Replacement Character (NRC) mode",
+              STR_ENABLE(scs_national));
+      for (n = 0; n < 4; n++) {
+        sprintf(whatis_Gx[n], "Specify G%d (now %s)",
+                n, charset_name(n, current_Gx[n]));
+      }
+    } while (menu(my_menu));
+    dirty_charset(1);
+    /* tidy in case a "vt100" emulator does not ignore SCS */
+    vt_clear(1);
+    return reset_charset(PASS_ARGS);
+  } else {
+    vt_move(1, 1);
+    printxx("Sorry, terminal supports only VT%d", terminal_id());
+    vt_move(max_lines - 1, 1);
+    return MENU_HOLD;
+  }
+}
+
+/******************************************************************************/
+
+static void
+set_tabstops(int row, int stop)
+{
+  int col;
+
+  tbc(3);       /* clear existing tab-stops */
+  for (col = 0; col < min_cols; col += stop) {
+    cup(row, 1 + col);
+    hts();
+  }
+}
+
+static int test_tabstop;
+
+static int
+reset_tabstops(MENU_ARGS)
+{
+  set_tabstops(1, test_tabstop = 8);
+  return MENU_NOHOLD;
+}
+
+static int
+toggle_tabstop(MENU_ARGS)
+{
+  if (--test_tabstop < 4)
+    test_tabstop = 10;
+  return MENU_NOHOLD;
+}
+
+static int
 tst_DECTABSR(MENU_ARGS)
 {
+  set_tabstops(1, test_tabstop);
   return any_decrqpsr(PASS_ARGS, 2);
 }
+
+static int
+tst_any_DECTABSR(MENU_ARGS)
+{
+  static char msg_toggle_tabstop[80];
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Reset Tab Stops",                                   reset_tabstops },
+      { msg_toggle_tabstop,                                  toggle_tabstop },
+      { "Tab Stop Report (DECTABSR)",                        tst_DECTABSR },
+      { "",                                                  0 }
+  };
+  /* *INDENT-ON* */
+  int last_tabstop = 0;
+
+  reset_tabstops(PASS_ARGS);  /* make the menu consistent */
+
+  do {
+    vt_clear(2);
+    __(title(0), printxx("Tab Stop Report (DECTABSR)"));
+    __(title(2), println("Choose test type:"));
+    if (last_tabstop != test_tabstop)
+      sprintf(msg_toggle_tabstop, "Set Tabs: %d", last_tabstop = test_tabstop);
+  } while (menu(my_menu));
+  vt_clear(1);
+  return reset_tabstops(PASS_ARGS);
+}
+
+/******************************************************************************/
 
 /*
  * The restore should move the cursor to 2,1; the relative move back to the
@@ -638,6 +801,8 @@ tst_DECRSPS_cursor(MENU_ARGS)
   return MENU_HOLD;
 }
 
+/******************************************************************************/
+
 static void
 tabstop_ruler(const char *tabsr, int row, int col)
 {
@@ -680,7 +845,7 @@ tabstop_ruler(const char *tabsr, int row, int col)
     while (*++s != '\0') {
       if (*s >= '0' && *s <= '9') {
         value = (value * 10) + (*s - '0');
-      } else if (*s == '/') {
+      } else if (*s == '/' || !strcmp(s, suffix)) {
         if (value-- > 0 && value < min_cols) {
           if (expect[value] != '*') {
             expect[value] = '*';
@@ -691,6 +856,8 @@ tabstop_ruler(const char *tabsr, int row, int col)
             break;
           }
         }
+        if (!strcmp(s, suffix))
+          break;
       } else {
         if (strcmp(s, suffix))
           valid = 0;
@@ -718,7 +885,7 @@ tabstop_ruler(const char *tabsr, int row, int col)
 static int
 tst_DECRSPS_tabs(MENU_ARGS)
 {
-  int row, col, stop;
+  int row, stop;
   char *old_tabs;
   char *new_tabs;
   char *s;
@@ -739,17 +906,14 @@ tst_DECRSPS_tabs(MENU_ARGS)
   println("Modified:");
   ++row;
   for (stop = 7; stop >= 4; --stop) {
-    tbc(3);     /* clear existing tab-stops */
-    for (col = 0; col < min_cols; col += stop) {
-      cup(row, 1 + col);
-      hts();
-    }
+    set_tabstops(row, stop);
     decrqpsr(2);
     new_tabs = instr();
     tabstop_ruler(new_tabs, row, 1);
     row += 2;
   }
 
+  println("");
   println("");
   println("Restore:");
   if ((s = strchr(old_tabs, 'u')) != 0)
@@ -1276,8 +1440,8 @@ tst_vt320_report_presentation(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Cursor Information Report (DECCIR)",                tst_DECCIR },
-      { "Tab Stop Report (DECTABSR)",                        tst_DECTABSR },
+      { "Cursor Information Report (DECCIR)",                tst_any_DECCIR },
+      { "Tab Stop Report (DECTABSR)",                        tst_any_DECTABSR },
       { "Request Mode (DECRQM)/Report Mode (DECRPM)",        tst_DECRPM },
       { "Restore Presentation State (DECRSPS): cursor",      tst_DECRSPS_cursor },
       { "Restore Presentation State (DECRSPS): tabstops",    tst_DECRSPS_tabs },

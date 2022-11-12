@@ -1,3 +1,9 @@
+vttest-cur (2.7.20221111) unstable; urgency=low
+
+  * maintenance updates
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Thu, 10 Nov 2022 17:35:19 -0500
+
 vttest-cur (2.7.20220827) unstable; urgency=low
 
   * maintenance updates

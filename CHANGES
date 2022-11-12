@@ -1,5 +1,20 @@
--- $Id: CHANGES,v 1.247 2022/08/27 16:21:13 tom Exp $
+-- $Id: CHANGES,v 1.252 2022/11/12 00:08:45 tom Exp $
 -------------------------------------------------------------------------------
+
+20221111
+        + improve DECTABSR test by adding menu for changing/resetting tabs.
+
+        + improve DECCIR test by adding character-set menu
+
+        + replace va_out() with vfprintf() where available, fixing some recent
+          changes which used formatting not handled in logging; improve
+          va_out() as well, e.g., for VMS (report by James Holderness).
+
+	+ updated/improved configure macros
+
+        + update install-sh
+
+	+ update config.guess, config.sub
 
 20220827
 	+ modify alternate-screen tests to demonstrate the effect of setting

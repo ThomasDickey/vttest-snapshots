@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.79 2022/02/15 22:35:23 tom Exp $ */
+/* $Id: charsets.c,v 1.83 2022/11/11 13:17:21 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -163,13 +163,13 @@ static const CHARSETS KnownCharsets[] = {
 /* *INDENT-ON* */
 
 static int hilite_not11;
-static int national;
 static int cleanup;
 
 static char sgr_hilite[10];
 static char sgr_reset[10];
 
-static int current_Gx[4];
+int scs_national;
+int current_Gx[4];
 
 static int
 lookupCode(National code)
@@ -188,7 +188,7 @@ lookupCharset(int g, int n)
   const CHARSETS *result = 0;
   if (n >= 0 && n < TABLESIZE(KnownCharsets)) {
     if (!strcmp(KnownCharsets[n].final, "A")) {
-      if (national || (g == 0)) {
+      if (scs_national || (g == 0)) {
         n = lookupCode(British);
       } else {
         n = lookupCode(British_Latin_1);
@@ -199,7 +199,7 @@ lookupCharset(int g, int n)
   return result;
 }
 
-static const char *
+const char *
 charset_name(int g, int n)
 {
   return lookupCharset(g, n)->name;
@@ -270,7 +270,7 @@ scs_params(char *dst, int g)
   return dst;
 }
 
-static void
+void
 do_scs(int g)
 {
   char buffer[80];
@@ -279,7 +279,7 @@ do_scs(int g)
 }
 
 /* reset given Gg back to sane setting */
-static int
+int
 sane_cs(int g)
 {
   return lookupCode(((g == 0) || (get_level() <= 1))
@@ -298,13 +298,19 @@ reset_scs(int g)
   return n;
 }
 
+void
+dirty_charset(int state)
+{
+  cleanup = state;
+}
+
 /* reset all of the Gn to sane settings */
-static int
+int
 reset_charset(MENU_ARGS)
 {
   int n;
 
-  decnrcm(national = FALSE);
+  decnrcm(scs_national = FALSE);
   for (n = 0; n < 4; n++) {
     int m = sane_cs(cleanup ? 0 : n);
     if (m != current_Gx[n] || (m == 0)) {
@@ -312,6 +318,7 @@ reset_charset(MENU_ARGS)
       do_scs(n);
     }
   }
+  dirty_charset(0);
   return MENU_NOHOLD;
 }
 
@@ -354,9 +361,9 @@ specify_any_Gx(MENU_ARGS, int g)
       continue;
     if (get_level() > KnownCharsets[n].last)
       continue;
-    if (((g == 0) || national) && KnownCharsets[n].allow96)
+    if (((g == 0) || scs_national) && KnownCharsets[n].allow96)
       continue;
-    if (((g != 0) && !national) && (KnownCharsets[n].code == British))
+    if (((g != 0) && !scs_national) && (KnownCharsets[n].code == British))
       continue;
     if (m && !strcmp(my_menu[m - 1].description, KnownCharsets[n].name))
       continue;
@@ -388,36 +395,36 @@ toggle_hilite(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
-static int
+int
 toggle_nrc(MENU_ARGS)
 {
-  national = !national;
-  decnrcm(national);
+  scs_national = !scs_national;
+  decnrcm(scs_national);
   return MENU_NOHOLD;
 }
 
-static int
+int
 specify_G0(MENU_ARGS)
 {
   specify_any_Gx(PASS_ARGS, 0);
   return MENU_NOHOLD;
 }
 
-static int
+int
 specify_G1(MENU_ARGS)
 {
   specify_any_Gx(PASS_ARGS, 1);
   return MENU_NOHOLD;
 }
 
-static int
+int
 specify_G2(MENU_ARGS)
 {
   specify_any_Gx(PASS_ARGS, 2);
   return MENU_NOHOLD;
 }
 
-static int
+int
 specify_G3(MENU_ARGS)
 {
   specify_any_Gx(PASS_ARGS, 3);
@@ -460,8 +467,8 @@ tst_vt100_charsets(MENU_ARGS)
           cup(row + i, 10 + 38 * g);
           send32(i, 0, tbl->not11);
         }
-        if (set_nrc != national)
-          decnrcm(national);
+        if (set_nrc != scs_national)
+          decnrcm(scs_national);
       }
       ++cset;
     }
@@ -533,7 +540,7 @@ tst_vt220_locking(MENU_ARGS)
   int i, cset;
 
   __(cup(1, 10), tprintf("Locking shifts, with NRC %s:",
-                         STR_ENABLED(national)));
+                         STR_ENABLED(scs_national)));
   for (cset = 0; cset < TABLESIZE(table); cset++) {
     int row = 3 + (4 * cset);
     int map = table[cset].mapped;
@@ -605,7 +612,7 @@ tst_vt220_single(MENU_ARGS)
     vt_clear(2);
     cup(1, 1);
     tprintf("Testing single-shift G%d into GL (SS%d) with NRC %s\n",
-            g, g, STR_ENABLED(national));
+            g, g, STR_ENABLED(scs_national));
     tprintf("G%d is %s", g, tbl->name);
 
     do_scs(g);
@@ -666,6 +673,8 @@ parse_Sdesig(const char *source, int *offset)
     if (KnownCharsets[j].code != Unknown) {
       size_t check = strlen(KnownCharsets[j].final);
       if (check <= limit
+          && (strcmp(KnownCharsets[j].final, "A")
+              || (scs_national != KnownCharsets[j].allow96))
           && !strncmp(KnownCharsets[j].final, first, check)) {
         result = KnownCharsets[j].name;
         *offset += (int) check;
@@ -713,7 +722,7 @@ tst_characters(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
-      { "Reset (ASCII for G0, G1, no NRC mode)",             reset_charset },
+      { "Reset (G0 ASCII, G1 Latin-1, no NRC mode)",         reset_charset },
       { hilite_mesg,                                         toggle_hilite },
       { nrc_mesg,                                            toggle_nrc },
       { whatis_Gx[0],                                        specify_G0 },
@@ -730,7 +739,7 @@ tst_characters(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
-  cleanup = 0;
+  dirty_charset(0);
   hilite_not11 = 1;
   toggle_hilite(PASS_ARGS);
   reset_charset(PASS_ARGS);   /* make the menu consistent */
@@ -745,13 +754,13 @@ tst_characters(MENU_ARGS)
       sprintf(hilite_mesg, "%s highlighting of non-ISO-8859-1 mapping",
               STR_ENABLE(hilite_not11));
       sprintf(nrc_mesg, "%s National Replacement Character (NRC) mode",
-              STR_ENABLE(national));
+              STR_ENABLE(scs_national));
       for (n = 0; n < 4; n++) {
         sprintf(whatis_Gx[n], "Specify G%d (now %s)",
                 n, charset_name(n, current_Gx[n]));
       }
     } while (menu(my_menu));
-    cleanup = 1;
+    dirty_charset(1);
     /* tidy in case a "vt100" emulator does not ignore SCS */
     vt_clear(1);
     return reset_charset(PASS_ARGS);

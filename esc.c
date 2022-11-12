@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.94 2022/02/15 23:26:14 tom Exp $ */
+/* $Id: esc.c,v 1.97 2022/11/10 23:46:27 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -206,28 +206,44 @@ put_string(FILE *fp, const char *s)
     put_char(fp, (int) *s++);
 }
 
+#ifdef HAVE_VFPRINTF
+#define va_out(fp, ap, fmt) vfprintf(fp, fmt, ap)
+#else
 static void
 va_out(FILE *fp, va_list ap, const char *fmt)
 {
   char temp[10];
+  int len = 0;
 
   while (*fmt != '\0') {
     if (*fmt == '%') {
-      switch (*++fmt) {
-      case 'c':
-        put_char(fp, va_arg(ap, int));
-        break;
-      case 'd':
-        sprintf(temp, "%d", va_arg(ap, int));
-        put_string(fp, temp);
-        break;
-      case 'u':
-        sprintf(temp, "%u", va_arg(ap, unsigned));
-        put_string(fp, temp);
-        break;
-      case 's':
-        put_string(fp, va_arg(ap, char *));
-        break;
+      int ch = *++fmt;
+      if (ch >= '0' && ch <= '9') {
+        ch -= '0';
+        if (len)
+          len *= 10;
+        len = ch;
+      } else {
+        switch (ch) {
+        case '%':
+          put_char(fp, '%');
+          break;
+        case 'c':
+          put_char(fp, va_arg(ap, int));
+          break;
+        case 'd':
+          sprintf(temp, "%*d", len ? len : 1, va_arg(ap, int));
+          put_string(fp, temp);
+          break;
+        case 'u':
+          sprintf(temp, "%*u", len ? len : 1, va_arg(ap, unsigned));
+          put_string(fp, temp);
+          break;
+        case 's':
+          put_string(fp, va_arg(ap, char *));
+          break;
+        }
+        len = 0;
       }
     } else {
       put_char(fp, (int) *fmt);
@@ -235,6 +251,7 @@ va_out(FILE *fp, va_list ap, const char *fmt)
     fmt++;
   }
 }
+#endif
 
 int
 tprintf(const char *fmt, ...)

@@ -1,70 +1,91 @@
-/* $Id: config.hin,v 1.14 2022/02/26 16:10:58 tom Exp $ */
+/* config.hin.  Generated automatically from configure.in by autoheader.  */
 
-/* define this if you have the alarm() function */
-#undef HAVE_ALARM
-
-/* define this if you have <fcntl.h> */
-#undef HAVE_FCNTL_H
-
-/* define this if you have <ioctl.h> */
-#undef HAVE_IOCTL_H
-
-/* define this if you have the Xenix rdchk() function */
-#undef HAVE_RDCHK
-
-/* define this if the POSIX VDISABLE symbol is defined, not equal to -1 */
-#undef HAVE_POSIX_VDISABLE
-
-/* define this if you have <sgtty.h> */
-#undef HAVE_SGTTY_H
-
-/* define this if you have <stdlib.h> */
-#undef HAVE_STDLIB_H
-
-/* define this if you have <string.h> */
-#undef HAVE_STRING_H
-
-/* define this if you have the strerror() function */
-#undef HAVE_STRERROR
-
-/* define this if you have the sys_errlist[] array */
-#undef HAVE_SYS_ERRLIST
-
-/* define this if you have <sys/filio.h> */
-#undef HAVE_SYS_FILIO_H
-
-/* define this if you have <sys/ioctl.h> */
-#undef HAVE_SYS_IOCTL_H
-
-/* define this if you have the sys_nerr variable */
-#undef HAVE_SYS_NERR
-
-/* define this if you have the tcgetattr() function */
-#undef HAVE_TCGETATTR
-
-/* define this if you have <termio.h> */
-#undef HAVE_TERMIO_H
-
-/* define this if you have <termios.h> */
-#undef HAVE_TERMIOS_H
-
-/* define this if you have <unistd.h> */
-#undef HAVE_UNISTD_H
-
-/* define this if you have the usleep() function */
-#undef HAVE_USLEEP
-
-/* define this to be the return-type of functions manipulated by 'signal()' */
-#define RETSIGTYPE void
-
-/* define this if we can use ioctl(,FIONREAD,) */
-#undef USE_FIONREAD
-
-/* define this for GCC's __attribute__((noreturn)) */
+/* Define to noreturn-attribute for gcc */
 #undef GCC_NORETURN
 
-/* define this for GCC's __attribute__((printf)) */
+/* Define to 1 if the compiler supports gcc-like printf attribute. */
+#undef GCC_PRINTF
+
+/* Define to printf-attribute for gcc */
 #undef GCC_PRINTFLIKE
 
-/* define this for GCC's __attribute__((unused)) */
+/* Define to 1 if the compiler supports gcc-like scanf attribute. */
+#undef GCC_SCANF
+
+/* Define to sscanf-attribute for gcc */
+#undef GCC_SCANFLIKE
+
+/* Define to unused-attribute for gcc */
 #undef GCC_UNUSED
+
+/* Define if you have the `alarm' function. */
+#undef HAVE_ALARM
+
+/* Define if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the <ioctl.h> header file. */
+#undef HAVE_IOCTL_H
+
+/* Define to 1 if POSIX VDISABLE symbol should be used */
+#undef HAVE_POSIX_VDISABLE
+
+/* Define if you have the `rdchk' function. */
+#undef HAVE_RDCHK
+
+/* Define if you have the <sgtty.h> header file. */
+#undef HAVE_SGTTY_H
+
+/* Define if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define if <stdnoreturn.h> header is available and working */
+#undef HAVE_STDNORETURN_H
+
+/* Define if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define if you have the <sys/filio.h> header file. */
+#undef HAVE_SYS_FILIO_H
+
+/* Define if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define if you have the `tcgetattr' function. */
+#undef HAVE_TCGETATTR
+
+/* Define if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* Define if you have the <termio.h> header file. */
+#undef HAVE_TERMIO_H
+
+/* Define if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the `usleep' function. */
+#undef HAVE_USLEEP
+
+/* Define if you have the `vfprintf' function. */
+#undef HAVE_VFPRINTF
+
+/* Define to 1 if filesystem supports mixed-case filenames. */
+#undef MIXEDCASE_FILENAMES
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Define if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define if C11 _Noreturn keyword is supported */
+#undef STDC_NORETURN
+
+/* Define to the system name. */
+#undef SYSTEM_NAME
+
+/* Define to 1 if we may use FIONREAD */
+#undef USE_FIONREAD

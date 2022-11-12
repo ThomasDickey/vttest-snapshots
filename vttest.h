@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.109 2022/08/27 14:24:03 tom Exp $ */
+/* $Id: vttest.h,v 1.111 2022/11/11 11:18:44 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -236,6 +236,8 @@ extern char lrmm_mesg[80];
 extern char lr_marg_mesg[80];
 extern char tb_marg_mesg[80];
 extern char txt_override_color[80];
+extern int current_Gx[4];
+extern int scs_national;
 
 extern RETSIGTYPE onbrk(SIG_ARGS);
 extern RETSIGTYPE onterm(SIG_ARGS);
@@ -246,6 +248,7 @@ extern char *skip_digits(char *src);
 extern char *skip_prefix(const char *prefix, char *input);
 extern char *skip_ss3(char *input);
 extern char *skip_xdigits(char *src, int *value);
+extern const char *charset_name(int g, int n);
 extern const char *parse_Sdesig(const char *source, int *offset);
 extern const char *skip_csi_2(const char *input);
 extern const char *skip_dcs_2(const char *input);
@@ -281,12 +284,18 @@ extern int not_impl(MENU_ARGS);
 extern int parse_decrqss(char *report, const char *func);
 extern int print_chr(int c);
 extern int print_str(const char *s);
+extern int reset_charset(MENU_ARGS);
 extern int rpt_DECSTBM(MENU_ARGS);
+extern int sane_cs(int g);
 extern int scan_any(char *str, int *pos, int toc);
 extern int scanto(const char *str, int *pos, int toc);
 extern int set_DECRPM(int level);
 extern int set_level(int level);
 extern int setup_terminal(MENU_ARGS);
+extern int specify_G0(MENU_ARGS);
+extern int specify_G1(MENU_ARGS);
+extern int specify_G2(MENU_ARGS);
+extern int specify_G3(MENU_ARGS);
 extern int strip_suffix(char *src, const char *suffix);
 extern int strip_terminator(char *src);
 extern int terminal_id(void);
@@ -296,6 +305,7 @@ extern int toggle_LRMM(MENU_ARGS);
 extern int toggle_SLRM(MENU_ARGS);
 extern int toggle_STBM(MENU_ARGS);
 extern int toggle_color_mode(MENU_ARGS);
+extern int toggle_nrc(MENU_ARGS);
 extern int tst_CBT(MENU_ARGS);
 extern int tst_CHA(MENU_ARGS);
 extern int tst_CHT(MENU_ARGS);
@@ -359,7 +369,9 @@ extern int tst_xterm(MENU_ARGS);
 extern int vt_move(int row, int col);
 extern void bye(void);
 extern void default_level(void);
+extern void dirty_charset(int state);
 extern void do_scrolling(void);
+extern void do_scs(int g);
 extern void enable_logging(void);
 extern void finish_vt420_cursor(MENU_ARGS);
 extern void initterminal(int pn);
