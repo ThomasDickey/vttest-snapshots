@@ -1,4 +1,4 @@
-/* $Id: patchlev.h,v 1.84 2022/11/11 22:49:13 tom Exp $ */
+/* $Id: patchlev.h,v 1.85 2022/12/28 22:14:39 tom Exp $ */
 #define RELEASE 2
 #define PATCHLEVEL 7
-#define PATCH_DATE 20221111
+#define PATCH_DATE 20221229

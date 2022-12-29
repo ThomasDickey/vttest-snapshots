@@ -1,4 +1,4 @@
-dnl $Id: aclocal.m4,v 1.41 2022/10/02 23:55:56 tom Exp $
+dnl $Id: aclocal.m4,v 1.42 2022/12/29 15:10:26 tom Exp $
 dnl autoconf macros for vttest - T.E.Dickey
 dnl ---------------------------------------------------------------------------
 dnl Copyright:  1997-2021,2022 by Thomas E. Dickey
@@ -537,7 +537,7 @@ ifelse($2,yes,[CF_GCC_ATTRIBUTES])
 fi
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_FCNTL_VS_IOCTL version: 4 updated: 2019/12/31 17:31:55
+dnl CF_FCNTL_VS_IOCTL version: 5 updated: 2022/12/06 16:25:27
 dnl -----------------
 dnl Test if we have a usable ioctl with FIONREAD, or if fcntl.h is preferred.
 AC_DEFUN([CF_FCNTL_VS_IOCTL],
@@ -546,7 +546,10 @@ AC_MSG_CHECKING(if we may use FIONREAD)
 AC_CACHE_VAL(cf_cv_use_fionread,[
 	AC_TRY_COMPILE([
 #if HAVE_SYS_FILIO_H
-#  include <sys/filio.h>	/* FIONREAD */
+#  include <sys/filio.h>	/* FIONREAD (BSDs) */
+#endif
+#if HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h>	/* FIONREAD (other...) */
 #endif
 	],[
 int l1;
@@ -629,6 +632,7 @@ then
 	AC_CHECKING([for $CC __attribute__ directives])
 cat > "conftest.$ac_ext" <<EOF
 #line __oline__ "${as_me:-configure}"
+#include <stdio.h>
 #include "confdefs.h"
 #include "conftest.h"
 #include "conftest.i"
@@ -1736,7 +1740,7 @@ AC_SUBST(MAN2HTML_PATH)
 AC_SUBST(MAN2HTML_TEMP)
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_XOPEN_SOURCE version: 62 updated: 2022/10/02 19:55:56
+dnl CF_XOPEN_SOURCE version: 63 updated: 2022/12/29 10:10:26
 dnl ---------------
 dnl Try to get _XOPEN_SOURCE defined properly that we can use POSIX functions,
 dnl or adapt to the vendor's definitions to get equivalent functionality,
@@ -1839,10 +1843,12 @@ case "$host_os" in
 	cf_save_xopen_cppflags="$CPPFLAGS"
 	CF_POSIX_C_SOURCE($cf_POSIX_C_SOURCE)
 	# Some of these niche implementations use copy/paste, double-check...
-	CF_VERBOSE(checking if _POSIX_C_SOURCE inteferes)
-	AC_TRY_COMPILE(CF__XOPEN_SOURCE_HEAD,CF__XOPEN_SOURCE_BODY,,[
-		AC_MSG_WARN(_POSIX_C_SOURCE definition is not usable)
-		CPPFLAGS="$cf_save_xopen_cppflags"])
+	if test "$cf_cv_xopen_source" != no ; then
+		CF_VERBOSE(checking if _POSIX_C_SOURCE inteferes)
+		AC_TRY_COMPILE(CF__XOPEN_SOURCE_HEAD,CF__XOPEN_SOURCE_BODY,,[
+			AC_MSG_WARN(_POSIX_C_SOURCE definition is not usable)
+			CPPFLAGS="$cf_save_xopen_cppflags"])
+	fi
 	;;
 esac
 

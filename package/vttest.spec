@@ -1,16 +1,15 @@
 Summary: vttest - test VT100-type terminal
 %define AppProgram vttest
-%define AppPatched 20221111
+%define AppPatched 20221229
 %define AppVersion 2.7.%{AppPatched}
-# $XTermId: vttest.spec,v 1.50 2022/11/11 22:49:13 tom Exp $
+# $XTermId: vttest.spec,v 1.52 2022/12/29 15:10:26 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: 1
 License: MIT
 Group: Applications/Development
-URL: ftp://invisible-island.net/%{AppProgram}
-Source0: %{AppProgram}-%{AppPatched}.tgz
-Packager: Thomas Dickey <dickey@invisible-island.net>
+URL: https://invisible-island.net/%{name}/
+Source0: https://invisible-island.net/archives/%{name}/%{name}-%{AppPatched}.tgz
 
 %description
 Vttest is a program designed to test the functionality of a VT100
@@ -48,9 +47,6 @@ make install                    DESTDIR=$RPM_BUILD_ROOT
 
 strip $RPM_BUILD_ROOT%{_bindir}/%{AppProgram}
 
-%clean
-[ "$RPM_BUILD_ROOT" != "/" ] && rm -rf $RPM_BUILD_ROOT
-
 %files
 %defattr(-,root,root)
 %{_prefix}/bin/%{AppProgram}
@@ -58,6 +54,9 @@ strip $RPM_BUILD_ROOT%{_bindir}/%{AppProgram}
 
 %changelog
 # each patch should add its ChangeLog entries here
+
+* Thu Dec 29 2022 Thomas Dickey
+- update URLs
 
 * Mon Jul 02 2018 Thomas Dickey
 - use recommended flags for build

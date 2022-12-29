@@ -1,5 +1,13 @@
--- $Id: CHANGES,v 1.252 2022/11/12 00:08:45 tom Exp $
+-- $Id: CHANGES,v 1.253 2022/12/29 15:10:26 tom Exp $
 -------------------------------------------------------------------------------
+
+20221229
+        + configure-script fixes:
+	  CF_XOPEN_SOURCE:  amend the test for conflict between _XOPEN_SOURCE
+          and _POSIX_C_SOURCE to allow for the former to be undefined because
+          unneeded.
+	  CF_FCNTL_VS_IOCTL:  include <sys/ioctl.h>, for systems which may
+          define FIONREAD there (Redhat #2151353)
 
 20221111
         + improve DECTABSR test by adding menu for changing/resetting tabs.
