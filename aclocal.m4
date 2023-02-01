@@ -1,7 +1,7 @@
-dnl $Id: aclocal.m4,v 1.42 2022/12/29 15:10:26 tom Exp $
+dnl $Id: aclocal.m4,v 1.43 2023/02/01 21:58:16 tom Exp $
 dnl autoconf macros for vttest - T.E.Dickey
 dnl ---------------------------------------------------------------------------
-dnl Copyright:  1997-2021,2022 by Thomas E. Dickey
+dnl Copyright:  1997-2022,2023 by Thomas E. Dickey
 dnl
 dnl Permission is hereby granted, free of charge, to any person obtaining a
 dnl copy of this software and associated documentation files (the
@@ -1334,7 +1334,7 @@ fi # cf_cv_posix_visible
 
 ])dnl
 dnl ---------------------------------------------------------------------------
-dnl CF_POSIX_VDISABLE version: 7 updated: 2019/12/31 17:31:55
+dnl CF_POSIX_VDISABLE version: 8 updated: 2023/01/05 18:56:58
 dnl -----------------
 dnl Special test to workaround gcc 2.6.2, which cannot parse C-preprocessor
 dnl conditionals.
@@ -1347,14 +1347,14 @@ AC_DEFUN([CF_POSIX_VDISABLE],
 AC_MSG_CHECKING(if POSIX VDISABLE symbol should be used)
 AC_CACHE_VAL(cf_cv_posix_vdisable,[
 	AC_TRY_RUN([
+$ac_includes_default
+
 #if defined(HAVE_TERMIOS_H) && defined(HAVE_TCGETATTR)
 #include <termios.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
+
 #if defined(_POSIX_VDISABLE)
-int main() { ${cf_cv_main_return:-return}(_POSIX_VDISABLE == -1); }
+int main(void) { ${cf_cv_main_return:-return}(_POSIX_VDISABLE == -1); }
 #endif],
 	[cf_cv_posix_vdisable=yes],
 	[cf_cv_posix_vdisable=no],

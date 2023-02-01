@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.30 2022/02/27 11:04:04 tom Exp $ */
+/* $Id: unix_io.c,v 1.31 2023/02/01 22:12:17 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -91,7 +91,8 @@ read_buffer(char *result, int want)
 #if USE_FIONREAD
   while (ioctl(0, FIONREAD, &l1), l1 > 0L) {
     while (l1-- > 0L) {
-      read(0, result + i, (size_t) 1);
+      if ((int) read(0, result + i, (size_t) 1) <= 0)
+        goto out1;
       if (i++ >= want)
         goto out1;
     }
@@ -187,8 +188,10 @@ inflush(void)
 #if USE_FIONREAD
   int l1;
   ioctl(0, FIONREAD, &l1);
-  while (l1-- > 0L)
-    read(0, &val, (size_t) 1);
+  while (l1-- > 0L) {
+    if ((int) read(0, &val, (size_t) 1) <= 0)
+      break;
+  }
 #else
   while (read(2, &val, (size_t) 1) > 0) ;
 #endif

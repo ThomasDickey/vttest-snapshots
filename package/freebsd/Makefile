@@ -2,7 +2,7 @@
 # $FreeBSD: head/sysutils/vttest/Makefile 478968 2018-09-04 16:47:01Z nivit $
 
 PORTNAME=	vttest
-PORTVERSION=	2022.12.29
+PORTVERSION=	2023.02.01
 CATEGORIES=	sysutils
 MASTER_SITES=	ftp://ftp.invisible-island.net/vttest/
 DISTNAME=	${PORTNAME}-${PORTVERSION:S,.,,g}

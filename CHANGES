@@ -1,5 +1,8 @@
--- $Id: CHANGES,v 1.253 2022/12/29 15:10:26 tom Exp $
+-- $Id: CHANGES,v 1.254 2023/02/01 22:02:06 tom Exp $
 -------------------------------------------------------------------------------
+
+20230201
+        + reduce compiler-warnings in configure-checks
 
 20221229
         + configure-script fixes:
