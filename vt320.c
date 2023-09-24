@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.78 2022/11/12 00:05:49 tom Exp $ */
+/* $Id: vt320.c,v 1.80 2023/09/24 16:31:06 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -1053,6 +1053,7 @@ int
 any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
 {
   int j, row, Pa, Ps;
+  int used = -1;
   char chr;
   char *report;
 
@@ -1065,6 +1066,11 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
   for (j = row = 0; j < tablesize; j++) {
     if (use_DECRPM < table[j].level)
       continue;
+
+    /* table contains duplicates, sorted with descending levels */
+    if (used >= table[j].mode)
+      continue;
+    used = table[j].mode;
 
     if (++row >= max_lines - 3) {
       restore_ttymodes();
@@ -1154,60 +1160,62 @@ tst_DEC_DECRPM(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   RQM_DATA dec_modes[] = { /* this list is sorted by code, not name */
-    DATA( DECCKM,  3 /* cursor keys */),
-    DATA( DECANM,  3 /* ANSI */),
-    DATA( DECCOLM, 3 /* column */),
-    DATA( DECSCLM, 3 /* scrolling */),
-    DATA( DECSCNM, 3 /* screen */),
-    DATA( DECOM,   3 /* origin */),
-    DATA( DECAWM,  3 /* autowrap */),
-    DATA( DECARM,  3 /* autorepeat */),
-    DATA( DECEDM,  3 /* edit */),
-    DATA( DECLTM,  3 /* line transmit */),
-    DATA( DECSCFDM,3 /* space compression field delimiter */),
-    DATA( DECTEM,  3 /* transmission execution */),
-    DATA( DECEKEM, 3 /* edit key execution */),
-    DATA( DECPFF,  3 /* print form feed */),
-    DATA( DECPEX,  3 /* printer extent */),
-    DATA( DECTCEM, 3 /* text cursor enable */),
-    DATA( DECRLM,  5 /* left-to-right */),
-    DATA( DECTEK,  3 /* 4010/4014 emulation */),
-    DATA( DECHEM,  5 /* Hebrew encoding */),
-    DATA( DECNRCM, 3 /* national replacement character set */),
-    DATA( DECGEPM, 3 /* graphics expanded print */),
-    DATA( DECGPCM, 3 /* graphics print color */),
-    DATA( DECGPCS, 3 /* graphics print color syntax */),
-    DATA( DECGPBM, 3 /* graphics print background */),
-    DATA( DECGRPM, 3 /* graphics rotated print */),
-    DATA( DEC131TM,3 /* VT131 transmit */),
-    DATA( DECNAKB, 5 /* Greek/N-A Keyboard Mapping */),
-    DATA( DECHCCM, 3 /* horizontal cursor coupling (disabled) */),
-    DATA( DECVCCM, 3 /* vertical cursor coupling */),
-    DATA( DECPCCM, 3 /* page cursor coupling */),
-    DATA( DECNKM,  3 /* numeric keypad */),
-    DATA( DECBKM,  3 /* backarrow key */),
-    DATA( DECKBUM, 3 /* keyboard usage */),
-    DATA( DECLRMM, 4 /* left/right margin mode */),
-    DATA( DECXRLM, 3 /* transmit rate linking */),
-    DATA( DECKPM,  4 /* keyboard positioning */),
-    DATA( DECNCSM, 5 /* no clearing screen on column change */),
-    DATA( DECRLCM, 5 /* right-to-left copy */),
-    DATA( DECCRTSM,5 /* CRT save */),
-    DATA( DECARSM, 5 /* auto resize */),
-    DATA( DECMCM,  5 /* modem control */),
-    DATA( DECAAM,  5 /* auto answerback */),
-    DATA( DECCANSM,5 /* conceal answerback */),
-    DATA( DECNULM, 5 /* null */),
-    DATA( DECHDPXM,5 /* half duplex */),
-    DATA( DECESKM, 5 /* enable secondary keyboard language */),
-    DATA( DECOSCNM,5 /* overscan */),
-    DATA( DECFWM,  5 /* framed windows */),
-    DATA( DECRPL,  5 /* review previous lines */),
-    DATA( DECHWUM, 5 /* host wake-up mode (CRT and energy saver) */),
-    DATA( DECATCUM,5 /* alternate text color underline */),
-    DATA( DECATCBM,5 /* alternate text color blink */),
-    DATA( DECBBSM, 5 /* bold and blink style */),
-    DATA( DECECM,  5 /* erase color */),
+    DATA( DECCKM,     3 /* cursor keys */),
+    DATA( DECANM,     3 /* ANSI */),
+    DATA( DECCOLM,    3 /* column */),
+    DATA( DECSCLM,    3 /* scrolling */),
+    DATA( DECSCNM,    3 /* screen */),
+    DATA( DECOM,      3 /* origin */),
+    DATA( DECAWM,     3 /* autowrap */),
+    DATA( DECARM,     3 /* autorepeat */),
+    DATA( DECEDM,     3 /* edit */),
+    DATA( DECLTM,     3 /* line transmit */),
+    DATA( DECSCFDM,   3 /* space compression field delimiter */),
+    DATA( DECTEM,     3 /* transmission execution */),
+    DATA( DECEKEM,    3 /* edit key execution */),
+    DATA( DECPFF,     3 /* print form feed */),
+    DATA( DECPEX,     3 /* printer extent */),
+    DATA( DECTCEM,    3 /* text cursor enable */),
+    DATA( DECRLM,     5 /* left-to-right */),
+    DATA( DECHEBM,    5 /* Hebrew keyboard mapping (VT520) */),
+    DATA( DECTEK,     3 /* 4010/4014 emulation (VT240, VT320) */),
+    DATA( DECHCEM,    5 /* Hebrew encoding */),
+    DATA( DECNRCM,    3 /* national replacement character set */),
+    DATA( DECGEPM,    3 /* graphics expanded print */),
+    DATA( DECGPCM,    3 /* graphics print color */),
+    DATA( DECGPCS,    3 /* graphics print color syntax */),
+    DATA( DECGPBM,    3 /* graphics print background */),
+    DATA( DECGRPM,    3 /* graphics rotated print */),
+    DATA( DEC131TM,   3 /* VT131 transmit */),
+    DATA( DECNAKB,    5 /* Greek/N-A Keyboard Mapping */),
+    DATA( DECHCCM,    3 /* horizontal cursor coupling (disabled) */),
+    DATA( DECVCCM,    3 /* vertical cursor coupling */),
+    DATA( DECPCCM,    3 /* page cursor coupling */),
+    DATA( DECNKM,     3 /* numeric keypad */),
+    DATA( DECBKM,     3 /* backarrow key */),
+    DATA( DECKBUM,    3 /* keyboard usage */),
+    DATA( DECLRMM,    4 /* left/right margin mode (VT420) */),
+    DATA( DECVSSM,    3 /* vertical split screen (VT320) */),
+    DATA( DECXRLM,    3 /* transmit rate linking */),
+    DATA( DECKPM,     4 /* keyboard positioning */),
+    DATA( DECNCSM,    5 /* no clearing screen on column change */),
+    DATA( DECRLCM,    5 /* right-to-left copy */),
+    DATA( DECCRTSM,   5 /* CRT save */),
+    DATA( DECARSM,    5 /* auto resize */),
+    DATA( DECMCM,     5 /* modem control */),
+    DATA( DECAAM,     5 /* auto answerback */),
+    DATA( DECCANSM,   5 /* conceal answerback */),
+    DATA( DECNULM,    5 /* null */),
+    DATA( DECHDPXM,   5 /* half duplex */),
+    DATA( DECESKM,    5 /* enable secondary keyboard language */),
+    DATA( DECOSCNM,   5 /* overscan */),
+    DATA( DECFWM,     5 /* framed windows */),
+    DATA( DECRPL,     5 /* review previous lines */),
+    DATA( DECHWUM,    5 /* host wake-up mode (CRT and energy saver) */),
+    DATA( DECATCUM,   5 /* alternate text color underline */),
+    DATA( DECATCBM,   5 /* alternate text color blink */),
+    DATA( DECBBSM,    5 /* bold and blink style */),
+    DATA( DECECM,     5 /* erase color */),
   };
   /* *INDENT-ON* */
 

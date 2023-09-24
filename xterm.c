@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.62 2022/08/27 16:04:25 tom Exp $ */
+/* $Id: xterm.c,v 1.65 2023/09/24 16:27:45 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -586,6 +586,8 @@ test_window_name(MENU_ARGS)
 #define XT_ALTSCRL 1007
 #define XT_TTY_OUT 1010
 #define XT_SCRLKEY 1011
+#define XT_FASTSCR 1014
+#define XT_SGR_PXL 1016
 #define XT_IN_8BIT 1034
 #define XT_NUMLOCK 1035
 #define XT_METAESC 1036
@@ -640,7 +642,7 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( DECRLM,     5 /* left-to-right */),
     DATA( XT_FONTSWT, 3 /* rxvt font-switching vs DECTEK */),
     DATA( XT_TEK4014, 3 /* Tektronix 4014 */),
-    DATA( DECHEM,     5 /* Hebrew encoding */),
+    DATA( DECHCEM,    5 /* Hebrew encoding */),
     DATA( XT_80_132,  3 /* 80/132 mode */),
     DATA( XT_CURSES,  3 /* curses hack */),
     DATA( DECNRCM,    3 /* national replacement character set */),
@@ -657,7 +659,8 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( DECNKM,     3 /* numeric keypad */),
     DATA( DECBKM,     3 /* backarrow key */),
     DATA( DECKBUM,    3 /* keyboard usage */),
-    DATA( DECLRMM,    4 /* left/right margin mode */),
+    DATA( DECLRMM,    4 /* left/right margin mode (VT420) */),
+    DATA( DECVSSM,    3 /* vertical split screen mode (VT320) */),
     DATA( DECXRLM,    3 /* transmit rate linking */),
     DATA( DECKPM,     4 /* keyboard positioning */),
     DATA( DECNCSM,    5 /* no clearing screen on column change */),
@@ -688,6 +691,8 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( XT_ALTSCRL, 3 /* alternate-scroll */),
     DATA( XT_TTY_OUT, 3 /* rxvt scroll tty output */),
     DATA( XT_SCRLKEY, 3 /* rxvt scroll key */),
+    DATA( XT_FASTSCR, 3 /* fast-scroll mode */),
+    DATA( XT_SGR_PXL, 3 /* SGR mouse pixel mode */),
     DATA( XT_IN_8BIT, 3 /* input eight bits */),
     DATA( XT_NUMLOCK, 3 /* real num lock */),
     DATA( XT_METAESC, 3 /* meta sends escape */),

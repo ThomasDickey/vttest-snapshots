@@ -1,5 +1,15 @@
--- $Id: CHANGES,v 1.254 2023/02/01 22:02:06 tom Exp $
+-- $Id: CHANGES,v 1.257 2023/09/24 16:22:21 tom Exp $
 -------------------------------------------------------------------------------
+
+20230924
+        + modify DEC private mode table and lookup function to handle different
+          interpretations of modes 35 and 69.
+
+        + add xterm private modes 1014, 1016 to DECRQM tests
+
+	+ updated/improved configure macros
+
+	+ update config.guess, config.sub
 
 20230201
         + reduce compiler-warnings in configure-checks

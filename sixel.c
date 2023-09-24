@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.21 2022/02/26 16:13:31 tom Exp $ */
+/* $Id: sixel.c,v 1.22 2023/09/24 17:06:57 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -174,7 +174,7 @@ find_char(int chr)
 static void
 display_head(FILE *fp)
 {
-  fprintf(fp, "Font %d:%s, Matrix %dx%d (%s, %s)\n",
+  fprintf(fp, "Font %d \"%s\", Matrix %dx%d (%s, %s)\n",
           FontNumber, FontName, MatrixWide, MatrixHigh, WidthAttr, TextCell);
   fprintf(fp, "Start %d, Erase %s\n",
           StartingCharNum, EraseCtl);
