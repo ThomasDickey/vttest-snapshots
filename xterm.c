@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.65 2023/09/24 16:27:45 tom Exp $ */
+/* $Id: xterm.c,v 1.70 2023/12/29 16:34:23 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -290,7 +290,7 @@ tst_report_font(MENU_ARGS)
 
   vt_move(row, col + 6);
   do_osc("50;?%c", BEL);
-  report = instr();
+  report = get_reply();
   row = chrprint2(report, row, col);
 
   ++row;
@@ -301,7 +301,7 @@ tst_report_font(MENU_ARGS)
   for (n = 0; n < NUMFONTS; ++n) {
     vt_move(row, col);
     do_osc("50;?%d%c", n, BEL);
-    report = instr();
+    report = get_reply();
     if (strchr(report, ';') != 0) {
       printxx("  %2d: ", n);
       row = chrprint2(report, row, col);
@@ -317,7 +317,7 @@ tst_report_font(MENU_ARGS)
   for (n = -NUMFONTS; n < NUMFONTS; ++n) {
     vt_move(row, col);
     do_osc("50;?%c%d%c", n >= 0 ? '+' : '-', n >= 0 ? n : -n, BEL);
-    report = instr();
+    report = get_reply();
     if (strchr(report, ';') != 0) {
       printxx("  %2d: ", n);
       row = chrprint2(report, row, col);
@@ -497,42 +497,42 @@ test_report_ops(MENU_ARGS)
   println("Report icon label:");
   vt_move(row, col);
   brc(20, 't');
-  report = instr();
+  report = get_reply();
   row = chrprint2(report, row, col);
 
   vt_move(row++, 1);
   println("Report window label:");
   vt_move(row, col);
   brc(21, 't');
-  report = instr();
+  report = get_reply();
   row = chrprint2(report, row, col);
 
   vt_move(row++, 1);
   println("Report size of window (chars):");
   vt_move(row, col);
   brc(18, 't');
-  report = instr();
+  report = get_reply();
   chrprint2(report, row++, col);
 
   vt_move(row++, 1);
   println("Report size of window (pixels):");
   vt_move(row, col);
   brc(14, 't');
-  report = instr();
+  report = get_reply();
   chrprint2(report, row++, col);
 
   vt_move(row++, 1);
   println("Report position of window (pixels):");
   vt_move(row, col);
   brc(13, 't');
-  report = instr();
+  report = get_reply();
   chrprint2(report, row++, col);
 
   vt_move(row++, 1);
   println("Report state of window (normal/iconified):");
   vt_move(row, col);
   brc(11, 't');
-  report = instr();
+  report = get_reply();
   chrprint2(report, row, col);
 
   vt_move(20, 1);
@@ -660,7 +660,6 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( DECBKM,     3 /* backarrow key */),
     DATA( DECKBUM,    3 /* keyboard usage */),
     DATA( DECLRMM,    4 /* left/right margin mode (VT420) */),
-    DATA( DECVSSM,    3 /* vertical split screen mode (VT320) */),
     DATA( DECXRLM,    3 /* transmit rate linking */),
     DATA( DECKPM,     4 /* keyboard positioning */),
     DATA( DECNCSM,    5 /* no clearing screen on column change */),
@@ -722,6 +721,51 @@ tst_xterm_DECRPM(MENU_ARGS)
   return code;
 }
 
+static int
+rpt_XTQMODKEYS(MENU_ARGS)
+{
+  int n;
+  char full_title[80];
+  char command[80];
+  static const char *resource[] =
+  {
+    "modifyKeyboard",
+    "modifyCursorKeys",
+    "modifyFunctionKeys",
+    "modifyOtherKeys",
+  };
+  for (n = 0; n < 4; ++n) {
+    int code = (n == 3) ? 4 : n;
+    sprintf(full_title, "%s (%s)", the_title, resource[n]);
+    sprintf(command, ">%dm", code);
+    vt_move(1, 1);
+    vt_clear(0);
+    any_decrqss(full_title, command);
+    holdit();
+  }
+  return MENU_NOHOLD;
+}
+
+static int
+tst_xterm_DECRQSS(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test VT520 features (DECRQSS)",                     tst_vt520_DECRQSS },
+      { "Query Key Modifier Options",                        rpt_XTQMODKEYS },
+      { "",                                                  0 }
+    };
+  /* *INDENT-ON* */
+
+  do {
+    vt_clear(2);
+    __(title(0), printxx("XTerm Status-Strings Reports"));
+    __(title(2), println("Choose test type:"));
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
 /*
  * Show mouse-modes, offered as an option in the mouse test-screens (since that
  * is really where these can be tested).
@@ -758,6 +802,7 @@ tst_xterm_reports(MENU_ARGS)
     { "Exit",                                                0 },
     { "Test VT520 features",                                 tst_vt520_reports },
     { "Request Mode (DECRQM)/Report Mode (DECRPM)",          tst_xterm_DECRPM },
+    { "Status-String Report (DECRQSS)",                      tst_xterm_DECRQSS },
     { "",                                                    0 }
   };
   /* *INDENT-ON* */

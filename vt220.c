@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.35 2022/02/25 22:54:48 tom Exp $ */
+/* $Id: vt220.c,v 1.39 2023/11/22 01:13:17 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -63,7 +63,9 @@ show_KeyboardStatus(char *report)
   const char *show = SHOW_FAILURE;
 
   if (scanto(report, &pos, ';') == 27
-      && (code = scan_any(report, &pos, 'n')) != 0) {
+      && (save = pos) != 0
+      && (code = scan_any(report, &pos, 'n')) >= 0
+      && (pos != save)) {
     /* *INDENT-OFF* */
     switch(code) {
     case  1:  show = "North American/ASCII"; break;
@@ -82,8 +84,10 @@ show_KeyboardStatus(char *report)
     case 14:  show = "French/Belgian";       break;
     case 15:  show = "Spanish Int.";         break;
     case 16:  show = "Portuguese";           break; /* vt3XX */
+    case 17:  show = "Katakana";             break; /* EK-VT382-RM-001 p 11-9 */
     case 19:  show = "Hebrew";               break; /* vt5XX: kermit says 14 */
     case 22:  show = "Greek";                break; /* vt5XX */
+    case 27:  show = "Thai";                 break; /* EK-VT38T-UG-001 p C-42 */
     case 28:  show = "Canadian (English)";   break; /* vt4XX */
     case 29:  show = "Turkish Q/Turkish";    break; /* vt5XX */
     case 30:  show = "Turkish F/Turkish";    break; /* vt5XX */
@@ -103,7 +107,13 @@ show_KeyboardStatus(char *report)
   }
   show_result("%s", show);
 
-  /* vt420 implements additional parameters past those reported by the VT220 */
+  /*
+   * VT420 implements additional parameters past those reported by the VT220.
+   * see:
+   *   EK-VT420-RM 002, p 239, 277
+   *   EK-VT510-RM B01, p 4-30, 5-166
+   *   EK-VT520-RM A01, p 4-28, 5-176
+   */
   save = pos;
   code = scan_any(report, &pos, 'n');
   if (save != pos) {
@@ -122,8 +132,12 @@ show_KeyboardStatus(char *report)
     vt_move(6, 10);
     /* *INDENT-OFF* */
     switch (scan_any(report, &pos, 'n')) {
-    case 0:  show = "LK201"; break;
-    case 1:  show = "LK401"; break;
+    case 0:  show = "LK201/LK301";    break;
+    case 1:  show = "LK401";          break;
+    case 2:  show = "LK443/LK444";    break;
+    case 3:  show = "LK421";          break;
+    case 4:  show = "LK411/LK450";    break;
+    case 5:  show = "PCXAL";          break;
     default: show = "unknown keyboard type";
     }
     /* *INDENT-ON* */

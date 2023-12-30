@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.215 2022/08/27 14:23:43 tom Exp $ */
+/* $Id: vt420.c,v 1.224 2023/12/29 16:36:47 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -19,10 +19,17 @@ typedef enum {
 } MARS;
 
 typedef enum {
-  chkUNDERLINE = 0x10,
-  chkINVERSE = 0x20,
-  chkBLINK = 0x40,
-  chkBOLD = 0x80
+  /* VT525 specific */
+  chkFOREGROUND = 0x1,
+  chkBACKGROUND = 0x2,
+  /* these are not visually distinct, not useful for testing */
+  chkPROTECTED = 0x4,           /* DECSCA */
+  chkINVISIBLE = 0x8,           /* SGR 8 */
+  /* these are visually distinct, used in the test */
+  chkUNDERLINE = 0x10,          /* SGR 4 */
+  chkINVERSE = 0x20,            /* SGR 7 */
+  chkBLINK = 0x40,              /* SGR 5 */
+  chkBOLD = 0x80                /* SGR 1 */
 } CHKS;
 
 int origin_mode = FALSE;
@@ -2056,12 +2063,12 @@ tst_vt420_DECRQSS(MENU_ARGS)
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test VT320 features (DECRQSS)",                     tst_vt320_DECRQSS },
-      { "Select attribute change extent (DECSACE)",          rpt_DECSACE },
-      { "Set number of lines per screen (DECSNLS)",          rpt_DECSNLS },
-      { "Set left and right margins (DECSLRM)",              rpt_DECSLRM },
       { "Enable local functions (DECELF)",                   rpt_DECELF },
       { "Local function key control (DECLFKC)",              rpt_DECLFKC },
+      { "Select attribute change extent (DECSACE)",          rpt_DECSACE },
       { "Select modifier key reporting (DECSMKR)",           rpt_DECSMKR },
+      { "Set left and right margins (DECSLRM)",              rpt_DECSLRM },
+      { "Set number of lines per screen (DECSNLS)",          rpt_DECSNLS },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
@@ -2222,7 +2229,7 @@ tst_DECSNLS(MENU_ARGS)
     fputs(temp, stdout);
     decsnls(rows);
     decrqss("*|");
-    chrprint2(instr(), row, (int) strlen(temp));
+    chrprint2(get_reply(), row, (int) strlen(temp));
     println("");
 
     restore_ttymodes();
@@ -2256,6 +2263,8 @@ tst_DSR_area_sum(MENU_ARGS, int g)
   int ch;
   int full = 0;
   int report_len;
+  int mask_bg = (decac_bg >= 0 && decac_bg < 16) ? decac_bg : 0;
+  int mask_fg = (decac_fg >= 0 && decac_fg < 16) ? (decac_fg << 4) : 0;
   int ch_1st = g ? 160 : 32;
   int ch_end = g ? 254 : 126;
   char *report;
@@ -2278,7 +2287,7 @@ tst_DSR_area_sum(MENU_ARGS, int g)
   for (r = 0; r < rows; ++r) {
     for (c = 0; c < min_cols; ++c) {
       ch = from_fill((unsigned char) lines[r][c]);
-      expected += ch;
+      expected += ch + mask_fg + mask_bg;
       if (chk_notrim || (first || (ch != ' ')))
         title_sum = expected;
       first = FALSE;
@@ -2339,11 +2348,13 @@ tst_DSR_area_sum(MENU_ARGS, int g)
         fputs(buffer, stdout);
         memcpy(&lines[r - 1][c + 2], buffer, strlen(buffer));
         sgr("0");
+        /* request checksum of the entire page */
         do_csi("%d;%d*y", pid, page);
       } else {
         sprintf(buffer, "%c %02X ", ch, ch);
         fputs(buffer, stdout);
         memcpy(&lines[r - 1][c - 1], buffer, strlen(buffer));
+        /* request checksum of the given cell at (r,c) */
         do_csi("%d;%d;%d;%d;%d;%d*y", pid, page, r, c, r, c);
       }
 
@@ -2355,9 +2366,10 @@ tst_DSR_area_sum(MENU_ARGS, int g)
         char test[5];
 
         if (ch > ch_end) {
+          int row_limit = (!chk_notrim ? r : max_lines);
           int y, x;
 
-          for (y = 0; y < (!chk_notrim ? r : max_lines); ++y) {
+          for (y = 0; y < row_limit; ++y) {
             /*
              * If trimming, count through space after ":" in "All:".
              * Otherwise, count the whole screen.
@@ -2366,9 +2378,12 @@ tst_DSR_area_sum(MENU_ARGS, int g)
 
             for (x = 0; x < col_limit; ++x) {
               int yx = (unsigned char) lines[y][x];
+
               if (chk_notrim
                   || (yx >= ' ')) {
                 full += (yx < ' ') ? ' ' : yx;
+                full += mask_bg;
+                full += mask_fg;
               }
               /*
                * Tidy up the logfile (for debugging, turn this off).
@@ -2395,7 +2410,8 @@ tst_DSR_area_sum(MENU_ARGS, int g)
           }
           sprintf(test, "%04X", CHK(full));
         } else {
-          sprintf(test, "%04X", CHK(ch));
+          int part = ch + mask_bg + mask_fg;
+          sprintf(test, "%04X", CHK(part));
         }
         if (memcmp(test, s, (size_t) 4)) {
           vt_hilite(TRUE);
@@ -2403,9 +2419,8 @@ tst_DSR_area_sum(MENU_ARGS, int g)
           if (LOG_ENABLED) {
             unsigned actual;
             int ok = sscanf(s, "%x", &actual);
-            fprintf(log_fp, "Actual: %.4s\n", s);
-            fprintf(log_fp, "actual: %04x\n", ok ? actual : 0);
-            fprintf(log_fp, "Expect: %04X\n", CHK(full));
+            fprintf(log_fp, "Actual: %.4s%s\n", s, ok ? "" : " (ERR)");
+            fprintf(log_fp, "Expect: %.4s\n", test);
           }
           fputs(buffer, stdout);
           vt_hilite(FALSE);
@@ -2479,7 +2494,7 @@ tst_DSR_macrospace(MENU_ARGS)
   set_tty_echo(FALSE);
 
   do_csi("?62n");
-  report = instr();
+  report = get_reply();
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
   if ((report = skip_csi(report)) != 0
@@ -2775,7 +2790,6 @@ tst_vt420_device_status(MENU_ARGS)
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
       { "Test Keyboard Status",                              tst_DSR_keyboard },
-      { "Test Locator Status",                               tst_DSR_locator },
       { "Test Macro Space",                                  tst_DSR_macrospace },
       { "Test Memory Checksum",                              tst_DSR_memory_sum },
       { "Test Data Integrity",                               tst_DSR_data_ok },

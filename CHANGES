@@ -1,39 +1,78 @@
--- $Id: CHANGES,v 1.257 2023/09/24 16:22:21 tom Exp $
+-- $Id: CHANGES,v 1.280 2023/12/29 15:56:52 tom Exp $
 -------------------------------------------------------------------------------
 
-20230924
-        + modify DEC private mode table and lookup function to handle different
-          interpretations of modes 35 and 69.
+20231230
+	+ modify get_reply() to wait only 0.1 seconds for a response, in case
+	  vttest is run on a terminal which is not VT100-compatible.
 
-        + add xterm private modes 1014, 1016 to DECRQM tests
+	+ switch to/from ISO-2022 mode from UTF-8 if the user's locale is
+	  currently set to UTF-8.
+
+	+ add DECRQSS test for XTQMODKEYS
+
+	+ modify character set menus to filter out NRCS charsets when NRCS is
+	  not enabled.
+
+	+ improve DECRQSS tests for DECAC and DECATC
+
+	+ add DA2 code 48 for Thai VT382
+
+	+ make separate VT510 DECRQSS menu to distinguish from VT520.
+
+	+ modify DECAUPSS/DECRQUPSS tests to exercise switching to valid
+	  combinations for VT320 and VT520, etc., to test xterm #389.
+
+	+ improve "-q" option, e.g., to avoid resetting the display of the
+	  response on string-terminator (cf: 20200920).
+
+	> fixes/improvements (report by James Holderness)
+	  + correct code and comment for DECTEK mode (38) with DECRPM
+	  + remove redundant code for DECVSSM mode (69)
+	  + correct locator status query
+	  + add identify-locator query
+	  + correct final characters in DECSDDT, DECSDPT, DECSEST tests
+	  + correct mnemonic for VT520 alternate text color
+	  + add DECPRO test with VT320 DECRQSS
+	  + add DECSRFR test with VT520 DECRQSS
+	  + add DECUS test with VT520 DECRQSS
+	  + add keyboard status codes for VT382
+	  + add keyboard types from VT420, VT510 and VT520 manuals
+	  + modify keyboard type parsing to report "unknown" for a zero
+	  + use VT525 DECAC to initialize that terminal to white-on-black
+
+20230924
+	+ modify DEC private mode table and lookup function to handle different
+	  interpretations of modes 35 and 69.
+
+	+ add xterm private modes 1014, 1016 to DECRQM tests
 
 	+ updated/improved configure macros
 
 	+ update config.guess, config.sub
 
 20230201
-        + reduce compiler-warnings in configure-checks
+	+ reduce compiler-warnings in configure-checks
 
 20221229
-        + configure-script fixes:
+	+ configure-script fixes:
 	  CF_XOPEN_SOURCE:  amend the test for conflict between _XOPEN_SOURCE
-          and _POSIX_C_SOURCE to allow for the former to be undefined because
-          unneeded.
+	  and _POSIX_C_SOURCE to allow for the former to be undefined because
+	  unneeded.
 	  CF_FCNTL_VS_IOCTL:  include <sys/ioctl.h>, for systems which may
-          define FIONREAD there (Redhat #2151353)
+	  define FIONREAD there (Redhat #2151353)
 
 20221111
-        + improve DECTABSR test by adding menu for changing/resetting tabs.
+	+ improve DECTABSR test by adding menu for changing/resetting tabs.
 
-        + improve DECCIR test by adding character-set menu
+	+ improve DECCIR test by adding character-set menu
 
-        + replace va_out() with vfprintf() where available, fixing some recent
-          changes which used formatting not handled in logging; improve
-          va_out() as well, e.g., for VMS (report by James Holderness).
+	+ replace va_out() with vfprintf() where available, fixing some recent
+	  changes which used formatting not handled in logging; improve
+	  va_out() as well, e.g., for VMS (report by James Holderness).
 
 	+ updated/improved configure macros
 
-        + update install-sh
+	+ update install-sh
 
 	+ update config.guess, config.sub
 

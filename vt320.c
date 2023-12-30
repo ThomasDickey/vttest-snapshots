@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.80 2023/09/24 16:31:06 tom Exp $ */
+/* $Id: vt320.c,v 1.94 2023/12/30 01:25:54 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -31,14 +31,44 @@ show_Locator_Status(char *report)
   show_result("%s", show);
 }
 
+static void
+show_Identify_Locator(char *report)
+{
+  int pos = 0;
+  int Ps1 = scan_any(report, &pos, 'n');
+  int Ps2 = scanto(report, &pos, 'n');
+  const char *show = SHOW_FAILURE;
+
+  if (Ps1 == 57) {
+    switch (Ps2) {
+    case 0:
+      show = "Cannot identify locator";
+      break;
+    case 1:
+      show = "Locator is mouse";
+      break;
+    case 2:
+      show = "Locator is tablet";
+      break;
+    }
+  }
+  show_result("%s", show);
+}
+
 /*
  * Though some people refer to the locator controls as "vt220", it appears in
- * later terminals (documented in the vt320 manual, but introduced as in UWS).
+ * later terminals (documented in the vt330 manual, but introduced as in UWS).
  */
-int
-tst_DSR_locator(MENU_ARGS)
+static int
+tst_DSR_locator_status(MENU_ARGS)
 {
-  return any_DSR(PASS_ARGS, "?53n", show_Locator_Status);
+  return any_DSR(PASS_ARGS, "?55n", show_Locator_Status);
+}
+
+static int
+tst_DSR_identify_locator(MENU_ARGS)
+{
+  return any_DSR(PASS_ARGS, "?56n", show_Identify_Locator);
 }
 
 static void
@@ -77,7 +107,8 @@ tst_vt320_device_status(MENU_ARGS)
       { "Test Keyboard Status",                              tst_DSR_keyboard },
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
-      { "Test Locator Status",                               tst_DSR_locator },
+      { "Test Locator Status",                               tst_DSR_locator_status },
+      { "Identify Locator",                                  tst_DSR_identify_locator },
       { "Test Extended Cursor-Position (DECXCPR)",           tst_DSR_cursor },
       { "",                                                  0 }
     };
@@ -598,7 +629,7 @@ tst_DECRSPS_cursor(MENU_ARGS)
   set_tty_echo(FALSE);
 
   decrqpsr(1);
-  old_mode = strdup(instr());
+  old_mode = strdup(get_reply());
 
   if ((s = strchr(old_mode, 'u')) != 0) {
     int item;
@@ -899,7 +930,7 @@ tst_DECRSPS_tabs(MENU_ARGS)
   println("");
   println("Original:");
   decrqpsr(2);
-  old_tabs = strdup(instr());
+  old_tabs = strdup(get_reply());
   tabstop_ruler(old_tabs, 4, 1);
 
   vt_move(row = 7, 1);
@@ -908,7 +939,7 @@ tst_DECRSPS_tabs(MENU_ARGS)
   for (stop = 7; stop >= 4; --stop) {
     set_tabstops(row, stop);
     decrqpsr(2);
-    new_tabs = instr();
+    new_tabs = get_reply();
     tabstop_ruler(new_tabs, row, 1);
     row += 2;
   }
@@ -922,7 +953,7 @@ tst_DECRSPS_tabs(MENU_ARGS)
   free(old_tabs);
 
   decrqpsr(2);
-  new_tabs = instr();
+  new_tabs = get_reply();
   tabstop_ruler(new_tabs, row + 2, 1);
 
   restore_ttymodes();
@@ -960,41 +991,6 @@ tst_DECRQDE(MENU_ARGS)
   } else {
     show_result(SHOW_FAILURE);
   }
-
-  restore_ttymodes();
-  vt_move(max_lines - 1, 1);
-  return MENU_HOLD;
-}
-
-/* Test User-Preferred Supplemental Set - VT320 */
-static int
-tst_DECRQUPSS(MENU_ARGS)
-{
-  int row, col;
-  char *report;
-  const char *show;
-
-  __(vt_move(1, 1), println("Testing DECRQUPSS/DECAUPSS Window Report"));
-
-  set_tty_raw(TRUE);
-  set_tty_echo(FALSE);
-
-  do_csi("&u");
-  report = get_reply();
-  vt_move(row = 3, col = 10);
-  chrprint2(report, row, col);
-  if ((report = skip_dcs(report)) != 0
-      && strip_terminator(report)) {
-    if (!strcmp(report, "0!u%5"))
-      show = "DEC Supplemental Graphic";
-    else if (!strcmp(report, "1!uA"))
-      show = "ISO Latin-1 supplemental";
-    else
-      show = "unknown";
-  } else {
-    show = SHOW_FAILURE;
-  }
-  show_result("%s", show);
 
   restore_ttymodes();
   vt_move(max_lines - 1, 1);
@@ -1083,7 +1079,7 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
     }
 
     do_csi((private ? "?%d$p" : "%d$p"), table[j].mode);
-    report = instr();
+    report = get_reply();
     printxx("\n     %4d: %-10s ", table[j].mode, table[j].name);
     if (LOG_ENABLED)
       fprintf(log_fp, "Testing %s\n", table[j].name);
@@ -1178,8 +1174,8 @@ tst_DEC_DECRPM(MENU_ARGS)
     DATA( DECTCEM,    3 /* text cursor enable */),
     DATA( DECRLM,     5 /* left-to-right */),
     DATA( DECHEBM,    5 /* Hebrew keyboard mapping (VT520) */),
-    DATA( DECTEK,     3 /* 4010/4014 emulation (VT240, VT320) */),
     DATA( DECHCEM,    5 /* Hebrew encoding */),
+    DATA( DECTEK,     3 /* 4010/4014 emulation (VT240, VT330/VT340) */),
     DATA( DECNRCM,    3 /* national replacement character set */),
     DATA( DECGEPM,    3 /* graphics expanded print */),
     DATA( DECGPCM,    3 /* graphics print color */),
@@ -1195,7 +1191,6 @@ tst_DEC_DECRPM(MENU_ARGS)
     DATA( DECBKM,     3 /* backarrow key */),
     DATA( DECKBUM,    3 /* keyboard usage */),
     DATA( DECLRMM,    4 /* left/right margin mode (VT420) */),
-    DATA( DECVSSM,    3 /* vertical split screen (VT320) */),
     DATA( DECXRLM,    3 /* transmit rate linking */),
     DATA( DECKPM,     4 /* keyboard positioning */),
     DATA( DECNCSM,    5 /* no clearing screen on column change */),
@@ -1255,9 +1250,12 @@ tst_DECRPM(MENU_ARGS)
 int
 any_decrqss2(const char *msg, const char *func, const char *expected)
 {
+  int code;
   int row, col;
   char *report;
   const char *show;
+  const char *suffix = NULL;
+  const char *p;
   char buffer[80];
 
   vt_move(1, 1);
@@ -1274,7 +1272,18 @@ any_decrqss2(const char *msg, const char *func, const char *expected)
 
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
-  switch (parse_decrqss(report, func)) {
+
+  /* workaround for embedded parameter in XTQMODKEYS */
+  for (p = func; *p != '\0'; ++p) {
+    if (isdigit(CharOf(*p)))
+      suffix = NULL;
+    else if (suffix == NULL)
+      suffix = p;
+  }
+  if (suffix == NULL)
+    suffix = "";
+
+  switch ((code = parse_decrqss(report, suffix))) {
   case 1:
     if (expected && strcmp(expected, report)) {
       sprintf(buffer, "ok (expect '%s', actual '%s')", expected, report);
@@ -1292,6 +1301,24 @@ any_decrqss2(const char *msg, const char *func, const char *expected)
   }
   show_result("%s", show);
 
+  if (code == 1) {
+    const char *lead = output_8bits ? "\233" : "\033[";
+    char *part = malloc(5 + strlen(report) + strlen(suffix));
+
+    if (part != NULL) {
+      char *full;
+
+      sprintf(part, "%s%s%s", lead, report, suffix);
+      full = chrformat(part, col, 0);
+      if (full != NULL) {
+        vt_move(++row, col);
+        tprintf("%s", full);
+        free(full);
+      }
+      free(part);
+    }
+  }
+
   restore_ttymodes();
   vt_move(max_lines - 1, 1);
   return MENU_HOLD;
@@ -1301,6 +1328,12 @@ int
 any_decrqss(const char *msg, const char *func)
 {
   return any_decrqss2(msg, func, (const char *) 0);
+}
+
+static int
+rpt_DECPRO(MENU_ARGS)
+{
+  return any_decrqss(the_title, "}");
 }
 
 static int
@@ -1369,14 +1402,15 @@ tst_vt320_DECRQSS(MENU_ARGS)
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
+      { "Protected fields attributes (DECPRO)",              rpt_DECPRO },
       { "Select active status display (DECSASD)",            rpt_DECSASD },
+      { "Select graphic rendition (SGR)",                    rpt_SGR },
       { "Set character attribute (DECSCA)",                  rpt_DECSCA },
-      { "Set conformance level (DECSCL)",                    rpt_DECSCL },
       { "Set columns per page (DECSCPP)",                    rpt_DECSCPP },
+      { "Set conformance level (DECSCL)",                    rpt_DECSCL },
       { "Set lines per page (DECSLPP)",                      rpt_DECSLPP },
       { "Set status line type (DECSSDT)",                    rpt_DECSSDT },
       { "Set top and bottom margins (DECSTBM)",              rpt_DECSTBM },
-      { "Select graphic rendition (SGR)",                    rpt_SGR },
       { "Set transmit termination character (DECTTC)",       rpt_DECTTC },
       { "Transmission line termination character (DECTLTC)", rpt_DECTLTC },
       { "",                                                  0 }
@@ -1481,7 +1515,7 @@ tst_vt320_reports(MENU_ARGS)
       { "Test Device Status Report (DSR)",                   tst_vt320_device_status },
       { "Test Presentation State Reports",                   tst_vt320_report_presentation },
       { "Test Terminal State Reports",                       tst_vt320_report_terminal },
-      { "Test User-Preferred Supplemental Set (DECAUPSS)",   tst_DECRQUPSS },
+      { "Test User-Preferred Supplemental Set",              tst_upss },
       { "Test Window Report (DECRPDE)",                      tst_DECRQDE },
       { "",                                                  0 }
     };

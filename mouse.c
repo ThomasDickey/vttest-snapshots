@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.41 2022/02/25 22:54:34 tom Exp $ */
+/* $Id: mouse.c,v 1.42 2023/12/29 16:34:49 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -56,7 +56,7 @@ can_do_pixels(void)
     set_tty_echo(FALSE);
 
     brc(13, 't');
-    report = instr();
+    report = get_reply();
     if ((report = skip_csi(report)) == 0
         || sscanf(report,
                   "%d;%d;%d%c%c",
@@ -72,7 +72,7 @@ can_do_pixels(void)
       result = FALSE;
     } else {
       brc(14, 't');
-      report = instr();
+      report = get_reply();
       if ((report = skip_csi(report)) == 0
           || sscanf(report,
                     "%d;%d;%d%c%c",
@@ -88,7 +88,7 @@ can_do_pixels(void)
         result = FALSE;
       } else {
         brc(16, 't');
-        report = instr();
+        report = get_reply();
         if ((report = skip_csi(report)) == 0
             || sscanf(report,
                       "%d;%d;%d%c%c",
@@ -555,7 +555,7 @@ get_screensize(MENU_ARGS)
   set_tty_echo(FALSE);
 
   brc(14, 't'); /* report window's pixel-size */
-  report = instr();
+  report = get_reply();
   if ((report = skip_csi(report)) == 0
       || sscanf(report, "4;%d;%d%c", &pixels_high, &pixels_wide, &tmp) != 3
       || tmp != 't'
@@ -566,7 +566,7 @@ get_screensize(MENU_ARGS)
   }
 
   brc(18, 't'); /* report window's char-size */
-  report = instr();
+  report = get_reply();
   if ((report = skip_csi(report)) == 0
       || sscanf(report, "8;%d;%d%c", &chars_high, &chars_wide, &tmp) != 3
       || tmp != 't'

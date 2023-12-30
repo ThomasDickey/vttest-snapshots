@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.12 2022/02/15 23:15:36 tom Exp $ */
+/* $Id: vt520.c,v 1.22 2023/12/30 01:31:17 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -189,7 +189,7 @@ rpt_DECDLDA(MENU_ARGS)
 static int
 rpt_DECSEST(MENU_ARGS)
 {
-  return any_decrqss(the_title, "-z");
+  return any_decrqss(the_title, "-r");
 }
 
 static int
@@ -207,13 +207,13 @@ rpt_DECSCS(MENU_ARGS)
 static int
 rpt_DECSDPT(MENU_ARGS)
 {
-  return any_decrqss(the_title, "(p");
+  return any_decrqss(the_title, ")p");
 }
 
 static int
 rpt_DECSDDT(MENU_ARGS)
 {
-  return any_decrqss(the_title, "$p");
+  return any_decrqss(the_title, "$q");
 }
 
 static int
@@ -226,6 +226,12 @@ static int
 rpt_DECSPRTT(MENU_ARGS)
 {
   return any_decrqss(the_title, "$s");
+}
+
+static int
+rpt_DECSRFR(MENU_ARGS)
+{
+  return any_decrqss(the_title, "\"t");
 }
 
 static int
@@ -264,56 +270,156 @@ rpt_DECSTRL(MENU_ARGS)
   return any_decrqss(the_title, "\"u");
 }
 
-/*
- * This list is separated from the main one, to keep the menu size fitting on
- * a 24x80 screen.
- */
-static int
-tst_VT520_hardware_DECRQSS(MENU_ARGS)
-{
-  /* *INDENT-OFF* */
-  static MENU my_menu[] = {
-      { "Exit",                                              0 },
-      { "Test VT420 features (DECRQSS)",                     tst_vt420_DECRQSS },
-      { "CRT Saver Timing (DECCRTST)",                       rpt_DECCRTST },
-      { "Down Line Load Allocation (DECDLDA)",               rpt_DECDLDA },
-      { "Energy Save Timing (DECSEST)",                      rpt_DECSEST },
-      { "Select Communication Port (DECSCP)",                rpt_DECSCP },
-      { "Select Communication Speed (DECSCS)",               rpt_DECSCS },
-      { "Select Digital Printed Data Type (DECSDPT)",        rpt_DECSDPT },
-      { "Select Disconnect Delay Time (DECSDDT)",            rpt_DECSDDT },
-      { "Select Flow Control Type (DECSFC)",                 rpt_DECSFC },
-      { "Select Printer Type (DECSPRTT)",                    rpt_DECSPRTT },
-      { "Select ProPrinter Character Set (DECSPPCS)",        rpt_DECSPPCS },
-      { "Select Set-Up Language (DECSSL)",                   rpt_DECSSL },
-      { "Session Page Memory Allocation (DECSPMA)",          rpt_DECSPMA },
-      { "Set Port Parameter (DECSPP)",                       rpt_DECSPP },
-      { "Set Scroll Speed (DECSSCLS)",                       rpt_DECSSCLS },
-      { "Set Transmit Rate Limit (DECSTRL)",                 rpt_DECSTRL },
-      { "",                                                  0 }
-    };
-  /* *INDENT-ON* */
-
-  do {
-    vt_clear(2);
-    __(title(0), printxx("VT520 Status-Strings Reports (Hardware-oriented)"));
-    __(title(2), println("Choose test type:"));
-  } while (menu(my_menu));
-  return MENU_NOHOLD;
-}
-
 /******************************************************************************/
 
 static int
-rpt_DECATR(MENU_ARGS)
+rpt_DECATC(MENU_ARGS)
 {
-  return any_decrqss(the_title, ",}");
+  static const char *attributes[] =
+  {
+    "normal",
+    "bold",
+    "reverse",
+    "underline",
+    "blink",
+    "bold reverse",
+    "bold underline",
+    "bold blink",
+    "reverse underline",
+    "reverse blink",
+    "underline blink",
+    "bold reverse underline",
+    "bold reverse blink",
+    "bold underline blink",
+    "reverse underline blink",
+    "bold reverse underline blink"
+  };
+
+  int ps1;
+  int row, col;
+  char *report;
+  const char *show;
+  const char *suffix = ",}";
+
+  vt_move(1, 1);
+  printxx("Testing DECRQSS: %s\n", the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  reset_decstbm();
+  reset_decslrm();
+
+  row = 3;
+  col = 10;
+
+  for (ps1 = 0; ps1 < 16; ++ps1) {
+    char func[80];
+    int fail = 1;
+    int qps, qfg, qbg;
+
+    sprintf(func, "%d%s", ps1, suffix);
+
+    decrqss(func);
+    report = get_reply();
+
+    vt_move(row, col);
+    chrprint2(report, row++, col);
+
+    switch (parse_decrqss(report, suffix)) {
+    case 1:
+      show = "ok (valid request)";
+      if (sscanf(report, "%d;%d;%d", &qps, &qfg, &qbg) == 3
+          && qps == ps1
+          && qfg >= 0 && qfg < 16
+          && qbg >= 0 && qbg < 16) {
+        fail = 0;
+        show = attributes[ps1];
+      }
+      break;
+    case 0:
+      show = "invalid request";
+      break;
+    default:
+      show = SHOW_FAILURE;
+      break;
+    }
+    show_result("%s", show);
+    if (fail)
+      break;
+  }
+
+  restore_ttymodes();
+  vt_move(max_lines - 1, 1);
+  return MENU_HOLD;
 }
 
 static int
 rpt_DECAC(MENU_ARGS)
 {
-  return any_decrqss(the_title, ",|");
+  static const char *attributes[] =
+  {
+    "normal text",
+    "window frame",
+  };
+
+  int ps1;
+  int row, col;
+  char *report;
+  const char *show;
+  const char *suffix = ",|";
+
+  vt_move(1, 1);
+  printxx("Testing DECRQSS: %s\n", the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  reset_decstbm();
+  reset_decslrm();
+
+  row = 3;
+  col = 10;
+
+  for (ps1 = 1; ps1 < 2; ++ps1) {
+    char func[80];
+    int fail = 1;
+    int qps, qfg, qbg;
+
+    sprintf(func, "%d%s", ps1, suffix);
+
+    decrqss(func);
+    report = get_reply();
+
+    vt_move(row, col);
+    chrprint2(report, row++, col);
+
+    switch (parse_decrqss(report, suffix)) {
+    case 1:
+      show = "ok (valid request)";
+      if (sscanf(report, "%d;%d;%d", &qps, &qfg, &qbg) == 3
+          && qps == ps1
+          && qfg >= 0 && qfg < 16
+          && qbg >= 0 && qbg < 16) {
+        fail = 0;
+        show = attributes[ps1 - 1];
+      }
+      break;
+    case 0:
+      show = "invalid request";
+      break;
+    default:
+      show = SHOW_FAILURE;
+      break;
+    }
+    show_result("%s", show);
+    if (fail)
+      break;
+  }
+
+  restore_ttymodes();
+  vt_move(max_lines - 1, 1);
+  return MENU_HOLD;
 }
 
 static int
@@ -383,24 +489,65 @@ rpt_DECTME(MENU_ARGS)
 }
 
 static int
-tst_VT520_DECRQSS(MENU_ARGS)
+rpt_DECUS(MENU_ARGS)
+{
+  return any_decrqss(the_title, ",y");
+}
+
+static int
+tst_VT510_DECRQSS(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
       { "Exit",                                              0 },
       { "Test VT420 features (DECRQSS)",                     tst_vt420_DECRQSS },
-      { "Test Hardware-oriented features",                   tst_VT520_hardware_DECRQSS },
-      { "Alternate Text Color (DECATR)",                     rpt_DECATR },
-      { "Assign Color (DECAC)",                              rpt_DECAC },
-      { "Select Auto Repeat Rate (DECARR)",                  rpt_DECARR },
-      { "Select Color Lookup Table (DECSTGLT)",              rpt_DECSTGLT },
-      { "Select Zero Symbol (DECSZS)",                       rpt_DECSZS },
+      { "Select Communication Port (DECSCP)",                rpt_DECSCP },
+      { "Select Communication Speed (DECSCS)",               rpt_DECSCS },
+      { "Select Digital Printed Data Type (DECSDPT)",        rpt_DECSDPT },
+      { "Select Disconnect Delay Time (DECSDDT)",            rpt_DECSDDT },
+      { "Select Flow Control Type (DECSFC)",                 rpt_DECSFC },
+      { "Select Printer Type (DECSPRTT)",                    rpt_DECSPRTT },
+      { "Select ProPrinter Character Set (DECSPPCS)",        rpt_DECSPPCS },
+      { "Select Refresh Rate Selection (DECSRFR)",           rpt_DECSRFR },
+      { "Select Set-Up Language (DECSSL)",                   rpt_DECSSL },
       { "Set Cursor Style (DECSCUSR)",                       rpt_DECSCUSR },
       { "Set Key Click Volume (DECSKCV)",                    rpt_DECSKCV },
       { "Set Lock Key Style (DECSLCK)",                      rpt_DECSLCK },
       { "Set Margin Bell Volume (DECSMBV)",                  rpt_DECSMBV },
+      { "Set Port Parameter (DECSPP)",                       rpt_DECSPP },
+      { "Set Scroll Speed (DECSSCLS)",                       rpt_DECSSCLS },
+      { "Set Transmit Rate Limit (DECSTRL)",                 rpt_DECSTRL },
       { "Set Warning Bell Volume (DECSWBV)",                 rpt_DECSWBV },
+      { "",                                                  0 }
+    };
+  /* *INDENT-ON* */
+
+  do {
+    vt_clear(2);
+    __(title(0), printxx("VT510 Status-Strings Reports"));
+    __(title(2), println("Choose test type:"));
+  } while (menu(my_menu));
+  return MENU_NOHOLD;
+}
+
+int
+tst_vt520_DECRQSS(MENU_ARGS)
+{
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test VT510 features (DECRQSS)",                     tst_VT510_DECRQSS },
+      { "Alternate Text Color (DECATC)",                     rpt_DECATC },
+      { "Assign Color (DECAC)",                              rpt_DECAC },
+      { "CRT Saver Timing (DECCRTST)",                       rpt_DECCRTST },
+      { "Down Line Load Allocation (DECDLDA)",               rpt_DECDLDA },
+      { "Energy Save Timing (DECSEST)",                      rpt_DECSEST },
+      { "Select Auto Repeat Rate (DECARR)",                  rpt_DECARR },
+      { "Select Color Lookup Table (DECSTGLT)",              rpt_DECSTGLT },
+      { "Select Zero Symbol (DECSZS)",                       rpt_DECSZS },
+      { "Session Page Memory Allocation (DECSPMA)",          rpt_DECSPMA },
       { "Terminal Mode Emulation (DECTME)",                  rpt_DECTME },
+      { "Update Session (DECUS)",                            rpt_DECUS },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
@@ -423,7 +570,7 @@ tst_VT520_report_presentation(MENU_ARGS)
       { "Exit",                                              0 },
       { "Test VT420 features",                               tst_vt420_report_presentation },
       { "Request Mode (DECRQM)/Report Mode (DECRPM)",        tst_DECRPM },
-      { "Status-String Report (DECRQSS)",                    tst_VT520_DECRQSS },
+      { "Status-String Report (DECRQSS)",                    tst_vt520_DECRQSS },
       { "",                                                  0 }
     };
   /* *INDENT-ON* */

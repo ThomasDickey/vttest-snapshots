@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.36 2022/02/26 16:01:16 tom Exp $ */
+/* $Id: setup.c,v 1.43 2023/12/05 09:16:16 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -34,40 +34,146 @@ static void
 find_levels(void)
 {
   char *report;
+  int actual_id = -1;
+  int has_color = 0;
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
   da();
   report = get_reply();
+
+  cur_level =
+    max_level = 1;  /* assume a VT100 */
+
   if (!strcmp(report, "\033/Z")) {
+    actual_id = 52;
     cur_level =
       max_level = 0;  /* must be a VT52 */
-  } else if ((report = skip_csi(report)) == 0
-             || strncmp(report, "?6", (size_t) 2)
-             || !isdigit(CharOf(report[2]))
-             || report[3] != ';') {
-    cur_level =
-      max_level = 1;  /* must be a VT100 */
-  } else {      /* "CSI ? 6 x ; ..." */
-    cur_level =
-      max_level = report[2] - '0';  /* VT220=2, VT320=3, VT420=4 */
-    if (max_level >= 4) {
-      decrqss("\"p");
-      report = get_reply();
-      if ((report = skip_dcs(report)) != 0
-          && isdigit(CharOf(*report++))   /* 0 or 1 (by observation, though 1 is an err) */
-          &&*report++ == '$'
-          && *report++ == 'r'
-          && *report++ == '6'
-          && isdigit(CharOf(*report)))
-        cur_level = *report - '0';
+  } else if ((report = skip_csi(report)) == 0 || strlen(report) < 3) {
+    actual_id = 100;
+  } else if (*report == '?') {
+    int pos = 1;
+    int check = scan_DA(report, &pos);
+    switch (check) {
+    default:
+    case 1:
+      actual_id = 100;
+      break;
+    case 2:
+    case 6:
+      actual_id = 102;
+      break;
+    case 4:
+      actual_id = 132;
+      break;
+    case 7:
+      actual_id = 131;
+      break;
+    case 12:
+      actual_id = 125;
+      break;
+    case 62:
+      actual_id = 220;
+      break;
+    case 63:
+      actual_id = 320;
+      break;
+    case 64:
+      actual_id = 420;
+      break;
+    case 65:
+      actual_id = 520;
+      break;
     }
+    cur_level = max_level = (actual_id / 100);
+  }
+
+  if (max_level >= 4) {
+    int pos = 1;                /* index of first digit */
+    int check;
+    /*
+     * Check for color feature (see below) needed in initialization of VT525.
+     * Other terminals may advertise this feature, but only VT525 will change
+     * its response in DECRQCRA according to color.
+     */
+    while ((check = scan_DA(report, &pos)) >= 0) {
+      if (check == 22) {
+        has_color = 1;
+        break;
+      }
+    }
+    decrqss("\"p");
+    report = get_reply();
+    if ((report = skip_dcs(report)) != 0
+        && isdigit(CharOf(*report++))   /* 0 or 1 (by observation, though 1 is an err) */
+        &&*report++ == '$'
+        && *report++ == 'r'
+        && *report++ == '6'
+        && isdigit(CharOf(*report)))
+      cur_level = *report - '0';
+  }
+
+  if (max_level >= 2) {
+    do_csi(">c");   /* or "CSI > 0 c" */
+    report = get_reply();
+    if ((report = skip_csi(report)) != 0 && *report == '>') {
+      int pos = 1;              /* index of first digit */
+      switch (scan_DA(report, &pos)) {
+      case 1:
+        actual_id = 220;
+        break;
+      case 2:
+        actual_id = 240;
+        break;
+      case 18:
+        actual_id = 330;
+        break;
+      case 19:
+        actual_id = 340;
+        break;
+      case 24:
+        actual_id = 320;
+        break;
+      case 28:
+        actual_id = 330;
+        break;
+      case 32:
+        actual_id = 382;
+        break;
+      case 48:
+        actual_id = 382;
+        break;
+      case 41:
+        actual_id = 420;
+        break;
+      case 61:
+        actual_id = 510;
+        break;
+      case 64:
+        actual_id = 520;
+        break;
+      case 65:
+        actual_id = 525;
+        break;
+      }
+    }
+  }
+
+  /*
+   * If the terminal advertises color (a VT525 feature), initialize the
+   * text color to the default values, to simplify the DECRQCRA test.
+   * Defaults are documented in EK-VT520-RM, p 2-32.
+   */
+  if (has_color && actual_id == 525) {
+    use_decac = 1;
+    decac(1, 7, 0);   /* normal text: assign white-on-black */
   }
 
   if (LOG_ENABLED) {
     fprintf(log_fp, "Max Operating Level: %d\n", max_level);
     fprintf(log_fp, "Cur Operating Level: %d\n", cur_level);
+    fprintf(log_fp, "Derived terminal-id: %d\n", actual_id);
   }
 
   restore_ttymodes();

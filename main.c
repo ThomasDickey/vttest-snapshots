@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.128 2022/02/26 16:15:08 tom Exp $ */
+/* $Id: main.c,v 1.133 2023/12/29 12:21:56 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -41,10 +41,16 @@
 #include <ttymodes.h>
 #include <esc.h>
 
+#ifdef HAVE_LANGINFO_CODESET
+#include <langinfo.h>
+#endif
+
 /* *INDENT-EQLS* */
 FILE *log_fp    = 0;
-int brkrd;
-int reading;
+int brkrd       = FALSE;
+int reading     = FALSE;
+int decac_bg    = -1;
+int decac_fg    = -1;
 int log_disabled = FALSE;
 int max_lines   = 24;
 int max_cols    = 132;
@@ -54,7 +60,10 @@ int output_8bits = FALSE;
 int slow_motion = FALSE;
 int tty_speed   = DEFAULT_SPEED;  /* nominal speed, for padding */
 int quick_reply = FALSE;
+int use_decac   = FALSE;
 int use_padding = FALSE;
+int assume_utf8 = FALSE;
+
 jmp_buf intrenv;
 
 static char *program;
@@ -1346,12 +1355,52 @@ initterminal(int pn)
   setup_terminal("");
 }
 
+static void
+enable_iso2022(void)
+{
+#ifdef HAVE_LANGINFO_CODESET
+  char *env = nl_langinfo(CODESET);
+  assume_utf8 = !strcmp(env, "UTF-8");
+#else
+  char *env;
+#if defined(HAVE_LOCALE_H) && defined(HAVE_STRSTR)
+  /*
+   * This is preferable to using getenv() since it ensures that we are using
+   * the locale which was actually initialized by the application.
+   */
+  env = setlocale(LC_CTYPE, 0);
+#else
+  if (((env = getenv("LANG")) != 0 && *env != '\0')
+      || ((env = getenv("LC_CTYPE")) != 0 && *env != '\0')
+      || ((env = getenv("LC_ALL")) != 0 && *env != '\0')) {
+    ;
+  }
+#endif
+  if (env != NULL && strstr(env, ".UTF-8") != NULL) {
+    assume_utf8 = TRUE;
+  }
+#endif
+  if (assume_utf8) {
+    esc("%@");
+  }
+}
+
+static void
+disable_iso2022(void)
+{
+  if (assume_utf8) {
+    esc("%G");
+  }
+}
+
   /* Set up my personal prejudices      */
 int
 setup_terminal(MENU_ARGS)
 {
   if (LOG_ENABLED)
     fprintf(log_fp, "Setup Terminal with test-defaults\n");
+
+  enable_iso2022();
 
   default_level();  /* Enter ANSI mode (if in VT52 mode)    */
   decckm(FALSE);  /* cursor keys normal   */
@@ -1365,6 +1414,8 @@ setup_terminal(MENU_ARGS)
   rm("?45");    /* Disable reverse wrap (xterm) */
   decstbm(0, 0);  /* No scroll region     */
   sgr("0");     /* Normal character attributes  */
+
+  disable_iso2022();
 
   return MENU_NOHOLD;
 }
@@ -1446,6 +1497,22 @@ scanto(const char *str, int *pos, int toc)
     *pos = save;
   }
   return (result);
+}
+
+int
+scan_DA(const char *str, int *pos)
+{
+  int value = -1;
+  if (str[*pos] != '\0') {
+    int save = *pos;
+    value = scanto(str, pos, ';');
+    if (value == 0 && *pos == save) {
+      value = scanto(str, pos, 'c');
+      if (str[*pos] != '\0')
+        value = -1;
+    }
+  }
+  return value;
 }
 
 int
@@ -1632,7 +1699,10 @@ chrformat(const char *s, int col, int first)
     int j;
     for (j = 0; s[j] != '\0'; ++j) {
       int c = CharOf(s[j]);
-      if (c == '\033') {
+      int d = CharOf(s[j + 1]);
+      /* reset on CSI, OSC, DCS, SOS, PM, APC */
+      if ((strchr("\233\235\220\230\236\237", c) != NULL)
+          || (c == '\033' && d != '\0' && strchr("[]PX^_", d) != NULL)) {
         if (j != 0)
           quicker = s + j;
       } else if (c == '\n') {

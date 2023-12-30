@@ -1,10 +1,11 @@
-/* $Id: charsets.c,v 1.83 2022/11/11 13:17:21 tom Exp $ */
+/* $Id: charsets.c,v 1.92 2023/12/29 12:40:09 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
  */
 #include <vttest.h>
 #include <esc.h>
+#include <ttymodes.h>
 
 /* the values, where specified, correspond to the keyboard-language codes */
 typedef enum {
@@ -27,13 +28,14 @@ typedef enum {
   Portuguese = 16,
   Hebrew = 17,
   British_Latin_1,
-  Cyrillic,
+  Cyrillic_DEC,
   DEC_Alt_Chars,
   DEC_Alt_Graphics,
   DEC_Spec_Graphic,
   DEC_Supp,
   DEC_Supp_Graphic,
-  DEC_Tech,
+  DEC_Technical,
+  DEC_UPSS,
   Greek,
   Greek_DEC,
   Greek_Supp,
@@ -51,7 +53,7 @@ typedef enum {
 
 typedef struct {
   National code;                /* internal name (chosen to sort 'name' member) */
-  int allow96;                  /* flag for 96-character sets (e.g., GR mapping) */
+  int cs_type;                  /* 0=94-charset, 1=NRCS(94-charset), 2=96-charset */
   int order;                    /* check-column so we can mechanically-sort this table */
   int first;                    /* first model: 0=base, 2=vt220, 3=vt320, etc. */
   int last;                     /* last model: 0=base, 2=vt220, 3=vt320, etc. */
@@ -63,6 +65,11 @@ typedef struct {
 
 /* compare mappings using only 7-bits */
 #define Not11(a,b) (((a) & 0x7f) == ((b) & 0x7f))
+
+/*
+ * User-preferred selection set is unknown until reset.
+ */
+static National current_upss = Unknown;
 
 /*
  * The "map_XXX" strings list the characters that should be replaced for the
@@ -119,45 +126,46 @@ static const char map_ISO_Latin_5[]  = "P]^p}~";
 
 static const CHARSETS KnownCharsets[] = {
   { ASCII,             0, 0, 0, 9, "B",    "US ASCII", 0 },
-  { British,           0, 0, 0, 9, "A",    "British", map_pound },
-  { British_Latin_1,   1, 0, 3, 9, "A",    "ISO Latin-1", 0 },
-  { Cyrillic,          0, 0, 5, 9, "&4",   "Cyrillic (DEC)", map_all94 },
+  { British,           1, 0, 0, 9, "A",    "British", map_pound },
+  { British_Latin_1,   2, 0, 3, 9, "A",    "ISO Latin-1", 0 },
+  { Cyrillic_DEC,      1, 0, 5, 9, "&4",   "Cyrillic (DEC)", map_all94 },
   { DEC_Spec_Graphic,  0, 0, 0, 9, "0",    "DEC Special graphics and line drawing", map_Spec_Graphic },
   { DEC_Alt_Chars,     0, 0, 0, 0, "1",    "DEC Alternate character ROM standard characters", 0 },
   { DEC_Alt_Graphics,  0, 0, 0, 0, "2",    "DEC Alternate character ROM special graphics", 0 },
-  { DEC_Supp,          0, 0, 2, 9, "<",    "DEC Supplemental", map_DEC_Supp },
-  { DEC_Supp_Graphic,  0, 0, 3, 9, "%5",   "DEC Supplemental Graphic", map_Supp_Graphic },
-  { DEC_Tech,          0, 0, 3, 9, ">",    "DEC Technical", map_all94 },
-  { Dutch,             0, 0, 2, 9, "4",    "Dutch", map_Dutch },
-  { Finnish,           0, 0, 2, 9, "5",    "Finnish", map_Finnish },
-  { Finnish,           0, 1, 2, 9, "C",    "Finnish", map_French },
-  { French,            0, 0, 2, 9, "R",    "French", map_French },
-  { French,            0, 1, 2, 9, "f",    "French", map_French }, /* Kermit (vt340 model?) */
-  { French_Canadian,   0, 0, 2, 9, "Q",    "French Canadian", map_French_Canadian },
-  { French_Canadian,   0, 1, 3, 9, "9",    "French Canadian", map_French_Canadian },
-  { German,            0, 0, 2, 9, "K",    "German", map_German },
-  { Greek,             0, 0, 5, 9, "\">",  "Greek", map_Greek },
-  { Greek_DEC,         0, 0, 5, 9, "\"?",  "Greek (DEC)", map_DEC_Greek },
-  { Greek_Supp,        1, 0, 5, 9, "F",    "ISO Greek Supplemental", map_ISO_Greek },
-  { Hebrew,            0, 0, 5, 9, "%=",   "Hebrew", map_Hebrew },
-  { Hebrew_DEC,        0, 0, 5, 9, "\"4",  "Hebrew (DEC)", map_DEC_Hebrew },
-  { Hebrew_Supp,       1, 0, 5, 9, "H",    "ISO Hebrew Supplemental", map_ISO_Hebrew },
-  { Italian,           0, 0, 2, 9, "Y",    "Italian", map_Italian },
-  { Latin_2_Supp,      1, 0, 5, 9, "B",    "ISO Latin-2 Supplemental", map_ISO_Latin_2 },
-  { Latin_5_Supp,      1, 0, 5, 9, "M",    "ISO Latin-5 Supplemental", map_ISO_Latin_5 },
-  { Latin_Cyrillic,    1, 0, 5, 9, "L",    "ISO Latin-Cyrillic", map_all96 },
-  { Norwegian_Danish,  0, 0, 3, 9, "`",    "Norwegian/Danish", map_Norwegian },
-  { Norwegian_Danish,  0, 1, 2, 9, "E",    "Norwegian/Danish", map_Norwegian },
-  { Norwegian_Danish,  0, 2, 2, 9, "6",    "Norwegian/Danish", map_Norwegian },
-  { Portuguese,        0, 0, 3, 9, "%6",   "Portuguese", map_Portuguese },
-  { Russian,           0, 0, 5, 9, "&5",   "Russian", 0 },
-  { SCS_NRCS,          0, 0, 5, 9, "%3",   "SCS", 0 },
-  { Spanish,           0, 0, 2, 9, "Z",    "Spanish", map_Spanish },
-  { Swedish,           0, 0, 2, 9, "7",    "Swedish", map_Swedish },
-  { Swedish,           0, 1, 2, 9, "H",    "Swedish", map_Swedish },
-  { Swiss,             0, 0, 2, 9, "=",    "Swiss", map_Swiss },
-  { Turkish,           0, 0, 5, 9, "%2",   "Turkish", map_Turkish },
-  { Turkish_DEC,       0, 0, 5, 9, "%0",   "Turkish (DEC)", map_DEC_Turkish },
+  { DEC_Supp,          0, 0, 2, 2, "<",    "DEC Supplemental", map_DEC_Supp },
+  { DEC_UPSS,          0, 0, 3, 9, "<",    "User-preferred supplemental", 0 },
+  { DEC_Supp_Graphic,  1, 0, 3, 9, "%5",   "DEC Supplemental Graphic", map_Supp_Graphic },
+  { DEC_Technical,     0, 0, 3, 9, ">",    "DEC Technical", map_all94 },
+  { Dutch,             1, 0, 2, 9, "4",    "Dutch", map_Dutch },
+  { Finnish,           1, 0, 2, 9, "5",    "Finnish", map_Finnish },
+  { Finnish,           1, 1, 2, 9, "C",    "Finnish", map_French },
+  { French,            1, 0, 2, 9, "R",    "French", map_French },
+  { French,            1, 1, 2, 9, "f",    "French", map_French }, /* Kermit (vt340 model?) */
+  { French_Canadian,   1, 0, 2, 9, "Q",    "French Canadian", map_French_Canadian },
+  { French_Canadian,   1, 1, 3, 9, "9",    "French Canadian", map_French_Canadian },
+  { German,            1, 0, 2, 9, "K",    "German", map_German },
+  { Greek,             1, 0, 5, 9, "\">",  "Greek", map_Greek },
+  { Greek_DEC,         1, 0, 5, 9, "\"?",  "Greek (DEC)", map_DEC_Greek },
+  { Greek_Supp,        2, 0, 5, 9, "F",    "ISO Greek Supplemental", map_ISO_Greek },
+  { Hebrew,            1, 0, 5, 9, "%=",   "Hebrew", map_Hebrew },
+  { Hebrew_DEC,        1, 0, 5, 9, "\"4",  "Hebrew (DEC)", map_DEC_Hebrew },
+  { Hebrew_Supp,       2, 0, 5, 9, "H",    "ISO Hebrew Supplemental", map_ISO_Hebrew },
+  { Italian,           1, 0, 2, 9, "Y",    "Italian", map_Italian },
+  { Latin_2_Supp,      2, 0, 5, 9, "B",    "ISO Latin-2 Supplemental", map_ISO_Latin_2 },
+  { Latin_5_Supp,      2, 0, 5, 9, "M",    "ISO Latin-5 Supplemental", map_ISO_Latin_5 },
+  { Latin_Cyrillic,    2, 0, 5, 9, "L",    "ISO Latin-Cyrillic", map_all96 },
+  { Norwegian_Danish,  1, 0, 3, 9, "`",    "Norwegian/Danish", map_Norwegian },
+  { Norwegian_Danish,  1, 1, 2, 9, "E",    "Norwegian/Danish", map_Norwegian },
+  { Norwegian_Danish,  1, 2, 2, 9, "6",    "Norwegian/Danish", map_Norwegian },
+  { Portuguese,        1, 0, 3, 9, "%6",   "Portuguese", map_Portuguese },
+  { Russian,           1, 0, 5, 9, "&5",   "Russian", 0 },
+  { SCS_NRCS,          1, 0, 5, 9, "%3",   "SCS", 0 },
+  { Spanish,           1, 0, 2, 9, "Z",    "Spanish", map_Spanish },
+  { Swedish,           1, 0, 2, 9, "7",    "Swedish", map_Swedish },
+  { Swedish,           1, 1, 2, 9, "H",    "Swedish", map_Swedish },
+  { Swiss,             1, 0, 2, 9, "=",    "Swiss", map_Swiss },
+  { Turkish,           1, 0, 5, 9, "%2",   "Turkish", map_Turkish },
+  { Turkish_DEC,       1, 0, 5, 9, "%0",   "Turkish (DEC)", map_DEC_Turkish },
   { Unknown,           0, 0,-1,-1, "?",    "Unknown", 0 }
 };
 /* *INDENT-ON* */
@@ -168,7 +176,7 @@ static int cleanup;
 static char sgr_hilite[10];
 static char sgr_reset[10];
 
-int scs_national;
+int scs_national;               /* true if NRCS should be tested */
 int current_Gx[4];
 
 static int
@@ -197,6 +205,13 @@ lookupCharset(int g, int n)
     result = &KnownCharsets[n];
   }
   return result;
+}
+
+static const char *
+code2name(National code)
+{
+  int n = lookupCode(code);
+  return KnownCharsets[n].name;
 }
 
 const char *
@@ -263,7 +278,7 @@ scs_params(char *dst, int g)
   const CHARSETS *tbl = lookupCharset(g, current_Gx[g]);
 
   sprintf(dst, "%c%s",
-          ((tbl->allow96 && get_level() > 2)
+          (((tbl->cs_type == 2) && (get_level() > 2))
            ? "?-./"[g]
            : "()*+"[g]),
           tbl->final);
@@ -361,9 +376,9 @@ specify_any_Gx(MENU_ARGS, int g)
       continue;
     if (get_level() > KnownCharsets[n].last)
       continue;
-    if (((g == 0) || scs_national) && KnownCharsets[n].allow96)
+    if (scs_national && (KnownCharsets[n].cs_type == 2))
       continue;
-    if (((g != 0) && !scs_national) && (KnownCharsets[n].code == British))
+    if (!scs_national && (KnownCharsets[n].cs_type == 1))
       continue;
     if (m && !strcmp(my_menu[m - 1].description, KnownCharsets[n].name))
       continue;
@@ -635,7 +650,7 @@ tst_vt220_single(MENU_ARGS)
           }
         }
         tprintf("%c", ch);
-        if (ch == 127 && !tbl->allow96)
+        if (ch == 127 && (tbl->cs_type != 2))
           tprintf(" ");   /* DEL should have been eaten - skip past */
         if (hilited) {
           tprintf("%s", sgr_reset);
@@ -666,7 +681,7 @@ parse_Sdesig(const char *source, int *offset)
 {
   int j;
   const char *first = source + (*offset);
-  const char *result = 0;
+  const char *result = NULL;
   size_t limit = strlen(first);
 
   for (j = 0; j < TABLESIZE(KnownCharsets); ++j) {
@@ -674,7 +689,7 @@ parse_Sdesig(const char *source, int *offset)
       size_t check = strlen(KnownCharsets[j].final);
       if (check <= limit
           && (strcmp(KnownCharsets[j].final, "A")
-              || (scs_national != KnownCharsets[j].allow96))
+              || (scs_national != (KnownCharsets[j].cs_type == 2)))
           && !strncmp(KnownCharsets[j].final, first, check)) {
         result = KnownCharsets[j].name;
         *offset += (int) check;
@@ -682,11 +697,42 @@ parse_Sdesig(const char *source, int *offset)
       }
     }
   }
-  if (result == 0) {
+  if (result == NULL) {
     static char temp[80];
     sprintf(temp, "? %#x\n", *source);
     *offset += 1;
     result = temp;
+  }
+  return result;
+}
+
+/*
+ * Lookup character set name for DECRQUPSS.
+ */
+const char *
+parse_upss_name(const char *source, int size)
+{
+  const char *result = NULL;
+  int j;
+  int allow96 = (size == 96);
+
+  for (j = 0; j < TABLESIZE(KnownCharsets); ++j) {
+    if (allow96 != (KnownCharsets[j].cs_type == 2))
+      continue;
+    if (!strcmp(source, KnownCharsets[j].final)) {
+      result = KnownCharsets[j].name;
+      current_upss = KnownCharsets[j].code;
+      break;
+    }
+  }
+  /*
+   * Work around a contradiction between DEC 070 and the reference manuals.
+   */
+  if (result == NULL
+      && allow96
+      && (!strcmp(source, "A")
+          || !strcmp(source, "B"))) {
+    result = parse_upss_name(source, 94);
   }
   return result;
 }
@@ -711,6 +757,140 @@ void
 scs_graphics(void)
 {
   scs(0, '0');
+}
+
+static void
+assign_upss(National code, int allow96)
+{
+  if (code != current_upss) {
+    int n;
+    int success = 0;
+    for (n = 0; n < TABLESIZE(KnownCharsets); ++n) {
+      if (KnownCharsets[n].code == code) {
+        if (get_level() >= KnownCharsets[n].first
+            && get_level() <= KnownCharsets[n].last)
+          success = 1;
+        break;
+      }
+    }
+    if (success) {
+      set_tty_raw(TRUE);
+      set_tty_echo(FALSE);
+      do_dcs("%d!u%s", allow96, KnownCharsets[n].final);
+      current_upss = code;
+    }
+  }
+  restore_ttymodes();
+}
+
+static int
+reset_upss(MENU_ARGS)
+{
+  assign_upss(DEC_Supp_Graphic, 0);
+  return MENU_NOHOLD;
+}
+
+/* Test Assign User-Preferred Supplemental Set - VT320 and up */
+static int
+tst_DECAUPSS(MENU_ARGS)
+{
+  MENU my_menu[TABLESIZE(KnownCharsets) + 2];
+  int n, m;
+  int level = get_level();
+
+  /*
+   * Build up a menu of the character sets we will allow the user to specify.
+   */
+  for (n = m = 0; n < TABLESIZE(KnownCharsets); n++) {
+    the_list[n] = 0;
+    if (!strcmp(KnownCharsets[n].final, "?"))
+      continue;
+    if (KnownCharsets[n].cs_type != 2)
+      switch (KnownCharsets[n].code) {
+      case ASCII: /* undocumented */
+      case DEC_Spec_Graphic:    /* undocumented */
+      case DEC_Supp_Graphic:
+      case DEC_Technical: /* undocumented */
+      case Greek_DEC:
+      case Hebrew_DEC:
+      case Turkish_DEC:
+      case Cyrillic_DEC:
+        break;
+      default:
+        continue;
+      }
+    if (KnownCharsets[n].first == 2)  /* exclude NRCS */
+      continue;
+    if (level < KnownCharsets[n].first)
+      continue;
+    if (level > KnownCharsets[n].last)
+      continue;
+    if (m && !strcmp(my_menu[m - 1].description, KnownCharsets[n].name))
+      continue;
+    my_menu[m].description = KnownCharsets[n].name;
+    my_menu[m].dispatch = lookup_Gx;
+    the_list[n] = 1;
+    m++;
+  }
+  my_menu[m].description = "";
+  my_menu[m].dispatch = 0;
+
+  do {
+    vt_clear(2);
+    __(title(0), println(the_title));
+    __(title(2), println("Choose character-set:"));
+  } while (menu(my_menu) && the_code < 0);
+
+  assign_upss(KnownCharsets[the_code].code,
+              KnownCharsets[the_code].cs_type == 2);
+  return MENU_HOLD;
+}
+
+/* Test Report User-Preferred Supplemental Set - VT320 and up */
+static int
+tst_DECRQUPSS(MENU_ARGS)
+{
+  int row, col;
+  char *report;
+  const char *show;
+  char buffer[80];
+
+  __(vt_move(1, 1), println("Testing DECRQUPSS Window Report"));
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  do_csi("&u");
+  report = get_reply();
+  vt_move(row = 3, col = 10);
+  chrprint2(report, row, col);
+  if ((report = skip_dcs(report)) != 0
+      && strip_terminator(report)) {
+    int cs_size;
+    const char *cs_name;
+
+    if (*report == '0')
+      cs_size = 94;
+    else if (*report == '1')
+      cs_size = 96;
+    else
+      cs_size = -1;
+    show = "unknown";
+    if (cs_size > 0
+        && *++report == '!'
+        && *++report == 'u'
+        && (cs_name = parse_upss_name(++report, cs_size)) != NULL) {
+      sprintf(buffer, "%s (%d characters)", cs_name, cs_size);
+      show = buffer;
+    }
+  } else {
+    show = SHOW_FAILURE;
+  }
+  show_result("%s", show);
+
+  restore_ttymodes();
+  vt_move(max_lines - 1, 1);
+  return MENU_HOLD;
 }
 
 int
@@ -766,5 +946,43 @@ tst_characters(MENU_ARGS)
     return reset_charset(PASS_ARGS);
   } else {
     return tst_vt100_charsets(PASS_ARGS);
+  }
+}
+
+int
+tst_upss(MENU_ARGS)
+{
+  static char upss_mesg[120];
+  /* *INDENT-OFF* */
+  static MENU my_menu[] = {
+      { "Exit",                                              0 },
+      { "Test character sets",                               tst_characters },
+      { "Reset UPSS (User-Preferred Supplemental Sets)",     reset_upss },
+      { upss_mesg,                                           tst_DECAUPSS },
+      { "Test DECRQUPSS",                                    tst_DECRQUPSS },
+      { "",                                                  0 }
+  };
+  /* *INDENT-ON* */
+
+  dirty_charset(0);
+  hilite_not11 = 1;
+  toggle_hilite(PASS_ARGS);
+  reset_charset(PASS_ARGS);   /* make the menu consistent */
+
+  if (get_level() > 2) {
+    do {
+      sprintf(upss_mesg,
+              "Assign UPSS (now %s)",
+              code2name(current_upss));
+      vt_clear(2);
+      __(title(0), printxx("User-Preferred Supplemental Sets Tests"));
+      __(title(2), println("Choose test type:"));
+    } while (menu(my_menu));
+    dirty_charset(1);
+    /* tidy in case a "vt100" emulator does not ignore SCS */
+    vt_clear(1);
+    return reset_upss(PASS_ARGS);
+  } else {
+    return tst_characters(PASS_ARGS);
   }
 }

@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.71 2023/09/24 16:25:28 tom Exp $ */
+/* $Id: esc.h,v 1.74 2023/11/22 08:59:57 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -64,8 +64,8 @@
 #define DECTCEM  25   /* text cursor enable */
 #define DECRLM   34   /* left-to-right */
 #define DECHEBM  35   /* Hebrew keyboard mapping (VT520) */
-#define DECTEK   35   /* 4010/4014 emulation (VT240, VT320) */
 #define DECHCEM  36   /* Hebrew encoding */
+#define DECTEK   38   /* 4010/4014 emulation (VT240, VT330/VT340) */
 #define DECNRCM  42   /* national replacement character set */
 #define DECGEPM  43   /* graphics expanded print */
 #define DECGPCM  44   /* graphics print color */
@@ -80,7 +80,6 @@
 #define DECNKM   66   /* numeric keypad */
 #define DECBKM   67   /* backarrow key */
 #define DECKBUM  68   /* keyboard usage */
-#define DECVSSM  69   /* vertical split screen (VT320) */
 #define DECLRMM  69   /* left/right margin mode (VT420) */
 #define DECXRLM  73   /* transmit rate linking */
 #define DECKPM   81   /* keyboard positioning */
@@ -141,8 +140,10 @@ void cuf(int pn);
 void cuu(int pn);
 void da(void);
 void dch(int pn);
+void decac(int flag, int fg, int bg);
 void decaln(void);
 void decarm(int flag);
+void decatc(int flag, int fg, int bg);
 void decawm(int flag);
 void decbi(void);
 void decbkm(int flag);

@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.97 2022/11/10 23:46:27 tom Exp $ */
+/* $Id: esc.c,v 1.99 2023/12/05 00:27:44 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -499,6 +499,16 @@ da(void)                        /* Device Attributes */
 }
 
 void
+decac(int flag, int fg, int bg) /* DECAC - Assign Color EK-VT520-RM, p 5-16 */
+{
+  if (use_decac) {
+    decac_fg = fg;
+    decac_bg = bg;
+  }
+  do_csi("%d;%d;%d,|", flag, fg, bg);
+}
+
+void
 decaln(void)                    /* Screen Alignment Display */
 {
   esc("#8");
@@ -511,6 +521,12 @@ decarm(int flag)                /* DECARM autorepeat */
     sm("?8");   /* autorepeat */
   else
     rm("?8");   /* no autorepeat */
+}
+
+void
+decatc(int flag, int fg, int bg)  /* DECATC - Alternate Text Color EK-VT520-RM, p 5-22 */
+{
+  do_csi("%d;%d;%d,}", flag, fg, bg);
 }
 
 void

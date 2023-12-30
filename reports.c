@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.48 2022/02/26 13:30:54 tom Exp $ */
+/* $Id: reports.c,v 1.51 2023/11/22 23:26:50 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -121,22 +121,6 @@ lookup(struct table t[], int k)
       return (t[i].msg);
   }
   return ("BAD VALUE");
-}
-
-static int
-scan_DA(const char *str, int *pos)
-{
-  int value = -1;
-  if (str[*pos] != '\0') {
-    int save = *pos;
-    value = scanto(str, pos, ';');
-    if (value == 0 && *pos == save) {
-      value = scanto(str, pos, 'c');
-      if (str[*pos] != '\0')
-        value = -1;
-    }
-  }
-  return value;
 }
 
 static void
@@ -307,7 +291,8 @@ tst_DA_2(MENU_ARGS)
     { 18,  "VT330" },
     { 19,  "VT340" },
     { 24,  "VT320" },
-    { 32,  "VT382" },
+    { 32,  "VT382" },   /* EK-VT382-RM-001, page 11-5 */
+    { 48,  "VT382" },   /* EK-VT38T-UG-001, page C-40 */
     { 28,  "DECterm" },
     { 41,  "VT420" },
     { 61,  "VT510" },

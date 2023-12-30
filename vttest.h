@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.111 2022/11/11 11:18:44 tom Exp $ */
+/* $Id: vttest.h,v 1.117 2023/12/28 23:06:16 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -120,6 +120,8 @@
 
 extern FILE *log_fp;
 extern int brkrd;
+extern int decac_bg;
+extern int decac_fg;
 extern int do_colors;
 extern int input_8bits;
 extern int log_disabled;
@@ -132,6 +134,7 @@ extern int output_8bits;
 extern int reading;
 extern int slow_motion;
 extern int tty_speed;
+extern int use_decac;
 extern int use_padding;
 extern jmp_buf intrenv;
 
@@ -250,6 +253,7 @@ extern char *skip_ss3(char *input);
 extern char *skip_xdigits(char *src, int *value);
 extern const char *charset_name(int g, int n);
 extern const char *parse_Sdesig(const char *source, int *offset);
+extern const char *parse_upss_name(const char *source, int size);
 extern const char *skip_csi_2(const char *input);
 extern const char *skip_dcs_2(const char *input);
 extern const char *skip_digits_2(const char *src);
@@ -287,6 +291,7 @@ extern int print_str(const char *s);
 extern int reset_charset(MENU_ARGS);
 extern int rpt_DECSTBM(MENU_ARGS);
 extern int sane_cs(int g);
+extern int scan_DA(const char *str, int *pos);
 extern int scan_any(char *str, int *pos, int toc);
 extern int scanto(const char *str, int *pos, int toc);
 extern int set_DECRPM(int level);
@@ -315,7 +320,6 @@ extern int tst_DECRPM(MENU_ARGS);
 extern int tst_DECSTR(MENU_ARGS);
 extern int tst_DSR_cursor(MENU_ARGS);
 extern int tst_DSR_keyboard(MENU_ARGS);
-extern int tst_DSR_locator(MENU_ARGS);
 extern int tst_DSR_printer(MENU_ARGS);
 extern int tst_DSR_userkeys(MENU_ARGS);
 extern int tst_HPA(MENU_ARGS);
@@ -345,6 +349,7 @@ extern int tst_setup(MENU_ARGS);
 extern int tst_softchars(MENU_ARGS);
 extern int tst_statusline(MENU_ARGS);
 extern int tst_tek4014(MENU_ARGS);
+extern int tst_upss(MENU_ARGS);
 extern int tst_vt220(MENU_ARGS);
 extern int tst_vt220_device_status(MENU_ARGS);
 extern int tst_vt220_reports(MENU_ARGS);
@@ -365,6 +370,7 @@ extern int tst_vt420_reports(MENU_ARGS);
 extern int tst_vt52(MENU_ARGS);
 extern int tst_vt520(MENU_ARGS);
 extern int tst_vt520_reports(MENU_ARGS);
+extern int tst_vt520_DECRQSS(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
 extern int vt_move(int row, int col);
 extern void bye(void);
