@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.117 2023/12/28 23:06:16 tom Exp $ */
+/* $Id: vttest.h,v 1.118 2024/02/16 00:03:02 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -276,6 +276,7 @@ extern int bug_w(MENU_ARGS);
 extern int chrprint2(const char *s, int row, int col);
 extern int conv_to_utf32(unsigned *target, const char *source, unsigned limit);
 extern int conv_to_utf8(unsigned char *target, unsigned source, unsigned limit);
+extern int do_scs(int g);
 extern int get_bottom_margin(int n);
 extern int get_left_margin(void);
 extern int get_level(void);
@@ -377,7 +378,6 @@ extern void bye(void);
 extern void default_level(void);
 extern void dirty_charset(int state);
 extern void do_scrolling(void);
-extern void do_scs(int g);
 extern void enable_logging(void);
 extern void finish_vt420_cursor(MENU_ARGS);
 extern void initterminal(int pn);

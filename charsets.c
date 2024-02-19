@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.92 2023/12/29 12:40:09 tom Exp $ */
+/* $Id: charsets.c,v 1.98 2024/02/18 23:28:04 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -171,7 +171,6 @@ static const CHARSETS KnownCharsets[] = {
 /* *INDENT-ON* */
 
 static int hilite_not11;
-static int cleanup;
 
 static char sgr_hilite[10];
 static char sgr_reset[10];
@@ -278,19 +277,26 @@ scs_params(char *dst, int g)
   const CHARSETS *tbl = lookupCharset(g, current_Gx[g]);
 
   sprintf(dst, "%c%s",
-          (((tbl->cs_type == 2) && (get_level() > 2))
+          (((g != 0) && (tbl->cs_type == 2) && (get_level() > 2))
            ? "?-./"[g]
            : "()*+"[g]),
           tbl->final);
   return dst;
 }
 
-void
+int
 do_scs(int g)
 {
+  int rc = 0;
   char buffer[80];
 
-  esc(scs_params(buffer, g));
+  scs_params(buffer, g);
+  /* "?" is a placeholder: you cannot designate a 96-character set into G0 */
+  if (*buffer != '?') {
+    esc(buffer);
+    rc = 1;
+  }
+  return rc;
 }
 
 /* reset given Gg back to sane setting */
@@ -308,15 +314,7 @@ sane_cs(int g)
 static int
 reset_scs(int g)
 {
-  int n = sane_cs(g);
-  do_scs(n);
-  return n;
-}
-
-void
-dirty_charset(int state)
-{
-  cleanup = state;
+  return do_scs(sane_cs(g));
 }
 
 /* reset all of the Gn to sane settings */
@@ -327,13 +325,15 @@ reset_charset(MENU_ARGS)
 
   decnrcm(scs_national = FALSE);
   for (n = 0; n < 4; n++) {
-    int m = sane_cs(cleanup ? 0 : n);
+    int m = sane_cs(n);
     if (m != current_Gx[n] || (m == 0)) {
-      current_Gx[n] = m;
-      do_scs(n);
+      int save = current_Gx[n];
+      current_Gx[n] = n ? m : 0;
+      if (!do_scs(n)) {
+        current_Gx[n] = save;
+      }
     }
   }
-  dirty_charset(0);
   return MENU_NOHOLD;
 }
 
@@ -529,6 +529,7 @@ tst_shift_in_out(MENU_ARGS)
     scs(cset, 'B');
   }
   cup(max_lines, 1);
+  scs_normal();
   return MENU_HOLD;
 }
 
@@ -919,7 +920,6 @@ tst_characters(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
-  dirty_charset(0);
   hilite_not11 = 1;
   toggle_hilite(PASS_ARGS);
   reset_charset(PASS_ARGS);   /* make the menu consistent */
@@ -940,7 +940,6 @@ tst_characters(MENU_ARGS)
                 n, charset_name(n, current_Gx[n]));
       }
     } while (menu(my_menu));
-    dirty_charset(1);
     /* tidy in case a "vt100" emulator does not ignore SCS */
     vt_clear(1);
     return reset_charset(PASS_ARGS);
@@ -964,7 +963,6 @@ tst_upss(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
-  dirty_charset(0);
   hilite_not11 = 1;
   toggle_hilite(PASS_ARGS);
   reset_charset(PASS_ARGS);   /* make the menu consistent */
@@ -978,7 +976,6 @@ tst_upss(MENU_ARGS)
       __(title(0), printxx("User-Preferred Supplemental Sets Tests"));
       __(title(2), println("Choose test type:"));
     } while (menu(my_menu));
-    dirty_charset(1);
     /* tidy in case a "vt100" emulator does not ignore SCS */
     vt_clear(1);
     return reset_upss(PASS_ARGS);

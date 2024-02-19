@@ -1,5 +1,22 @@
--- $Id: CHANGES,v 1.280 2023/12/29 15:56:52 tom Exp $
+-- $Id: CHANGES,v 1.285 2024/02/19 00:26:43 tom Exp $
 -------------------------------------------------------------------------------
+
+20240218
+	+ other improvements (report by James Holderness)
+
+	  + modify DECAC test to include the window-frame
+
+	  + accept a 23/unsupported response for DSR status of UDK
+
+	+ improve/correct resetting of character-sets after tests:
+
+	  + improve use of current settings in the reset function
+
+	  + fix a case which tried to set a 96-character set in G0
+
+	  + add a reset after SI/SO test (report by James Holderness)
+
+	+ update config.guess, config.sub
 
 20231230
 	+ modify get_reply() to wait only 0.1 seconds for a response, in case

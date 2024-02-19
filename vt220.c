@@ -1,8 +1,9 @@
-/* $Id: vt220.c,v 1.39 2023/11/22 01:13:17 tom Exp $ */
+/* $Id: vt220.c,v 1.40 2024/02/18 23:57:50 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
  * Reference:  VT220 Program Reference Manual (EK-VT220-RM-002).
+ * Reference:  DEC STD 070 Video Systems Reference Manual.
  */
 #include <vttest.h>
 #include <ttymodes.h>
@@ -68,38 +69,38 @@ show_KeyboardStatus(char *report)
       && (pos != save)) {
     /* *INDENT-OFF* */
     switch(code) {
-    case  1:  show = "North American/ASCII"; break;
-    case  2:  show = "British";              break;
-    case  3:  show = "Flemish";              break;
-    case  4:  show = "French Canadian";      break;
-    case  5:  show = "Danish";               break;
-    case  6:  show = "Finnish";              break;
-    case  7:  show = "German";               break;
-    case  8:  show = "Dutch";                break;
-    case  9:  show = "Italian";              break;
-    case 10:  show = "Swiss (French)";       break;
-    case 11:  show = "Swiss (German)";       break;
-    case 12:  show = "Swedish";              break;
-    case 13:  show = "Norwegian/Danish";     break;
-    case 14:  show = "French/Belgian";       break;
-    case 15:  show = "Spanish Int.";         break;
-    case 16:  show = "Portuguese";           break; /* vt3XX */
-    case 17:  show = "Katakana";             break; /* EK-VT382-RM-001 p 11-9 */
-    case 19:  show = "Hebrew";               break; /* vt5XX: kermit says 14 */
-    case 22:  show = "Greek";                break; /* vt5XX */
-    case 27:  show = "Thai";                 break; /* EK-VT38T-UG-001 p C-42 */
-    case 28:  show = "Canadian (English)";   break; /* vt4XX */
-    case 29:  show = "Turkish Q/Turkish";    break; /* vt5XX */
-    case 30:  show = "Turkish F/Turkish";    break; /* vt5XX */
-    case 31:  show = "Hungarian";            break; /* vt5XX */
-    case 32:  show = "Spanish National";     break; /* vt4XX in PC mode */
-    case 33:  show = "Slovak";               break; /* vt5XX */
-    case 34:  show = "Czech";                break; /* vt5XX */
-    case 35:  show = "Polish";               break; /* vt5XX */
-    case 36:  show = "Romanian";             break; /* vt5XX */
-    case 38:  show = "SCS";                  break; /* vt5XX */
-    case 39:  show = "Russian";              break; /* vt5XX */
-    case 40:  show = "Latin American";       break; /* vt5XX */
+    case  1:  show = "North American/ASCII";  break;
+    case  2:  show = "British";               break;
+    case  3:  show = "Flemish";               break;
+    case  4:  show = "French Canadian";       break;
+    case  5:  show = "Danish";                break;
+    case  6:  show = "Finnish";               break;
+    case  7:  show = "German";                break;
+    case  8:  show = "Dutch";                 break;
+    case  9:  show = "Italian";               break;
+    case 10:  show = "Swiss (French)";        break;
+    case 11:  show = "Swiss (German)";        break;
+    case 12:  show = "Swedish";               break;
+    case 13:  show = "Norwegian/Danish";      break;
+    case 14:  show = "French/Belgian";        break;
+    case 15:  show = "Spanish Int.";          break;
+    case 16:  show = "Portuguese";            break; /* vt3XX */
+    case 17:  show = "Katakana";              break; /* EK-VT382-RM-001 p 11-9 */
+    case 19:  show = "Hebrew";                break; /* vt5XX: kermit says 14 */
+    case 22:  show = "Greek";                 break; /* vt5XX */
+    case 27:  show = "Thai";                  break; /* EK-VT38T-UG-001 p C-42 */
+    case 28:  show = "Canadian (English)";    break; /* vt4XX */
+    case 29:  show = "Turkish Q/Turkish";     break; /* vt5XX */
+    case 30:  show = "Turkish F/Turkish";     break; /* vt5XX */
+    case 31:  show = "Hungarian";             break; /* vt5XX */
+    case 32:  show = "Spanish National";      break; /* vt4XX in PC mode */
+    case 33:  show = "Slovak";                break; /* vt5XX */
+    case 34:  show = "Czech";                 break; /* vt5XX */
+    case 35:  show = "Polish";                break; /* vt5XX */
+    case 36:  show = "Romanian";              break; /* vt5XX */
+    case 38:  show = "SCS";                   break; /* vt5XX */
+    case 39:  show = "Russian";               break; /* vt5XX */
+    case 40:  show = "Latin American";        break; /* vt5XX */
     default:  show = "unknown";
     }
     /* *INDENT-ON* */
@@ -120,9 +121,9 @@ show_KeyboardStatus(char *report)
     vt_move(5, 10);
     /* *INDENT-OFF* */
     switch(code) {
-    case 0:  show = "keyboard ready"; break;
-    case 3:  show = "no keyboard";    break;
-    case 8:  show = "keyboard busy";  break;
+    case 0:  show = "keyboard ready";         break;
+    case 3:  show = "no keyboard";            break;
+    case 8:  show = "keyboard busy";          break;
     default: show = "unknown keyboard status";
     }
     /* *INDENT-ON* */
@@ -132,12 +133,12 @@ show_KeyboardStatus(char *report)
     vt_move(6, 10);
     /* *INDENT-OFF* */
     switch (scan_any(report, &pos, 'n')) {
-    case 0:  show = "LK201/LK301";    break;
-    case 1:  show = "LK401";          break;
-    case 2:  show = "LK443/LK444";    break;
-    case 3:  show = "LK421";          break;
-    case 4:  show = "LK411/LK450";    break;
-    case 5:  show = "PCXAL";          break;
+    case 0:  show = "LK201/LK301";            break;
+    case 1:  show = "LK401";                  break;
+    case 2:  show = "LK443/LK444";            break;
+    case 3:  show = "LK421";                  break;
+    case 4:  show = "LK411/LK450";            break;
+    case 5:  show = "PCXAL";                  break;
     default: show = "unknown keyboard type";
     }
     /* *INDENT-ON* */
@@ -154,10 +155,10 @@ show_PrinterStatus(char *report)
   const char *show;
   /* *INDENT-OFF* */
   switch (code) {
-  case 13: show = "No printer";        break;
-  case 10: show = "Printer ready";     break;
-  case 11: show = "Printer not ready"; break;
-  case 18: show = "Printer busy";      break;
+  case 13: show = "No printer";               break;
+  case 10: show = "Printer ready";            break;
+  case 11: show = "Printer not ready";        break;
+  case 18: show = "Printer busy";             break;
   case 19: show = "Printer assigned to other session"; break;
   default: show = SHOW_FAILURE;
   }
@@ -174,8 +175,9 @@ show_UDK_Status(char *report)
   const char *show;
   /* *INDENT-OFF* */
   switch(code) {
-  case 20: show = "UDKs unlocked"; break;
-  case 21: show = "UDKs locked";   break;
+  case 20: show = "UDKs unlocked";            break;
+  case 21: show = "UDKs locked";              break;
+  case 23: show = "UDKs unsupported";         break;
   default: show = SHOW_FAILURE;
   }
   /* *INDENT-ON* */

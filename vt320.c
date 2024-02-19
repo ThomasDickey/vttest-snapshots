@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.94 2023/12/30 01:25:54 tom Exp $ */
+/* $Id: vt320.c,v 1.95 2024/02/19 00:02:52 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -503,7 +503,6 @@ tst_any_DECCIR(MENU_ARGS)
   };
   /* *INDENT-ON* */
 
-  dirty_charset(0);
   reset_charset(PASS_ARGS);   /* make the menu consistent */
 
   if (get_level() > 2) {
@@ -520,7 +519,6 @@ tst_any_DECCIR(MENU_ARGS)
                 n, charset_name(n, current_Gx[n]));
       }
     } while (menu(my_menu));
-    dirty_charset(1);
     /* tidy in case a "vt100" emulator does not ignore SCS */
     vt_clear(1);
     return reset_charset(PASS_ARGS);

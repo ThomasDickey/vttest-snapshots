@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.22 2023/12/30 01:31:17 tom Exp $ */
+/* $Id: vt520.c,v 1.23 2024/02/18 23:48:50 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -381,7 +381,7 @@ rpt_DECAC(MENU_ARGS)
   row = 3;
   col = 10;
 
-  for (ps1 = 1; ps1 < 2; ++ps1) {
+  for (ps1 = 1; ps1 <= 2; ++ps1) {
     char func[80];
     int fail = 1;
     int qps, qfg, qbg;
