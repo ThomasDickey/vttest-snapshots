@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.32 2023/12/29 15:54:37 tom Exp $ */
+/* $Id: unix_io.c,v 1.33 2024/07/08 23:19:04 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -141,6 +141,7 @@ get_reply(void)
   int old_len = 0;
   int new_len = 0;
 
+  fflush(stdout);
   zleep(100);
   do {
     new_len = read_buffer(result + old_len, (int) sizeof(result) - 2 - old_len);

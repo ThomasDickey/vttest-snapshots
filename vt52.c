@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.20 2022/02/15 23:08:59 tom Exp $ */
+/* $Id: vt52.c,v 1.21 2024/07/08 23:20:42 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -192,7 +192,7 @@ tst_vt52(MENU_ARGS)
       println("You should have to press return to continue:");
       println("");
       decrqss("\"p");
-      response = get_reply();
+      response = instr();
       vt_move(++row, col = 10);
       printxx("Response was");
       chrprint2(response, row, col);

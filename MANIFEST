@@ -1,4 +1,4 @@
-MANIFEST for vttest, version t20240218
+MANIFEST for vttest, version t20240708
 --------------------------------------------------------------------------------
 MANIFEST                        this file
 BUGS                            current bug-list
@@ -47,6 +47,8 @@ vt520.c                         vt520-specific tests
 vttest.1                        manual-page for VTTEST
 vttest.h                        renamed from header.h, common definitions of VTTEST
 xterm.c                         tests for xterm and clones
+package                         subdirectory
+package/vttest.spec             build-script
 package/debian                  subdirectory
 package/debian/changelog        build-script
 package/debian/compat           build-script
@@ -57,10 +59,9 @@ package/debian/postinst         build-script
 package/debian/preinst          build-script
 package/debian/prerm            build-script
 package/debian/rules            build-script
+package/debian/watch            build-script
 package/debian/source           subdirectory
 package/debian/source/format    build-script
-package/debian                  subdirectory
-package/debian/watch            build-script
 package/freebsd                 subdirectory
 package/freebsd/Makefile        build-script
 package/freebsd/distinfo        build-script
@@ -70,5 +71,3 @@ package/pkgsrc/DESCR            build-script
 package/pkgsrc/Makefile         build-script
 package/pkgsrc/PLIST            build-script
 package/pkgsrc/distinfo         build-script
-package                         subdirectory
-package/vttest.spec             build-script
