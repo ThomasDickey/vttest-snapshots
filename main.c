@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.133 2023/12/29 12:21:56 tom Exp $ */
+/* $Id: main.c,v 1.139 2024/09/29 13:12:27 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -41,6 +41,10 @@
 #include <ttymodes.h>
 #include <esc.h>
 
+#ifdef LOCALE
+#include <locale.h>
+#endif
+
 #ifdef HAVE_LANGINFO_CODESET
 #include <langinfo.h>
 #endif
@@ -57,6 +61,7 @@ int max_cols    = 132;
 int min_cols    = 80;
 int input_8bits = FALSE;
 int output_8bits = FALSE;
+int parse_7bits = FALSE;
 int slow_motion = FALSE;
 int tty_speed   = DEFAULT_SPEED;  /* nominal speed, for padding */
 int quick_reply = FALSE;
@@ -458,8 +463,10 @@ tst_movements(MENU_ARGS)
   println("");
   /* Now put CR in CUF sequence. */
   tprintf("A ");
-  for (i = 2; i < 10; i++)
-    tprintf("%s%c%dC%c", csi_output(), CR, 2 * i - 2, '@' + i);
+  for (i = 2; i < 10; i++) {
+    cprintf("%s%c%dC", csi_output(), CR, 2 * i - 2);
+    tprintf("%c", '@' + i);
+  }
   println("");
   /* Now put VT in CUU sequence. */
   rm("20");
@@ -478,8 +485,10 @@ tst_movements(MENU_ARGS)
   vt_move(1, 1);
   println("Test of leading zeros in ESC sequences.");
   printxx("Two lines below you should see the sentence \"%s\".", ctext);
-  for (col = 1; *ctext; col++)
-    tprintf("%s00000000004;00000000%dH%c", csi_output(), col, *ctext++);
+  for (col = 1; *ctext; col++) {
+    cprintf("%s00000000004;00000000%dH", csi_output(), col);
+    tprintf("%c", *ctext++);
+  }
   cup(20, 1);
 
   restore_ttymodes();
@@ -1358,12 +1367,14 @@ initterminal(int pn)
 static void
 enable_iso2022(void)
 {
+  char *env;
+
 #ifdef HAVE_LANGINFO_CODESET
-  char *env = nl_langinfo(CODESET);
+  (void) setlocale(LC_CTYPE, "");
+  env = nl_langinfo(CODESET);
   assume_utf8 = !strcmp(env, "UTF-8");
 #else
-  char *env;
-#if defined(HAVE_LOCALE_H) && defined(HAVE_STRSTR)
+#if defined(LOCALE)
   /*
    * This is preferable to using getenv() since it ensures that we are using
    * the locale which was actually initialized by the application.
@@ -1380,6 +1391,12 @@ enable_iso2022(void)
     assume_utf8 = TRUE;
   }
 #endif
+
+  if (LOG_ENABLED) {
+    fprintf(log_fp, "%senable ISO-2022 (%s)\n",
+            assume_utf8 ? "" : "Do not ",
+            env);
+  }
   if (assume_utf8) {
     esc("%@");
   }
@@ -1588,7 +1605,6 @@ menu2(MENU *table, int top)
   char storage[BUFSIZ];
   int pagesize = max_lines - 7 - TITLE_LINE;
   int pagetop = 1;
-  int redraw = FALSE;
 
   tablesize = 0;
   for (i = 0; !end_of_menu(table, i); i++) {
@@ -1612,9 +1628,10 @@ menu2(MENU *table, int top)
     printxx("\n          Enter choice number (0 - %d): ", tablesize);
     for (;;) {
       char *s = storage;
+      int redraw = FALSE;
+
       inputline(s);
       choice = 0;
-      redraw = FALSE;
       while ((c = *s++) != '\0') {
         if (c == '*') {
           choice = -1;

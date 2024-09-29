@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.98 2024/02/18 23:28:04 tom Exp $ */
+/* $Id: charsets.c,v 1.102 2024/09/29 13:19:36 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -41,6 +41,8 @@ typedef enum {
   Greek_Supp,
   Hebrew_DEC,
   Hebrew_Supp,
+  JIS_Roman,
+  JIS_Katakana,
   Latin_2_Supp,
   Latin_5_Supp,
   Latin_Cyrillic,
@@ -112,6 +114,11 @@ static const char map_DEC_Turkish[]  = "$&,-./48>?"
                                        "PW]^"
                                        "pw~";
 
+/* DEC VT382 94-character sets */
+static const char map_JIS_Roman[]    = "\\~";
+static const char map_JIS_Katakana[] = "!\"#$%&'()*+,-./0123456789:;<=>?"
+                                       "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_";
+
 /* ISO 96-Character Sets */
 static const char map_ISO_Greek[]    = "!\"$%*./45689:<>?"
                                        "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
@@ -151,6 +158,8 @@ static const CHARSETS KnownCharsets[] = {
   { Hebrew_DEC,        1, 0, 5, 9, "\"4",  "Hebrew (DEC)", map_DEC_Hebrew },
   { Hebrew_Supp,       2, 0, 5, 9, "H",    "ISO Hebrew Supplemental", map_ISO_Hebrew },
   { Italian,           1, 0, 2, 9, "Y",    "Italian", map_Italian },
+  { JIS_Roman,         0, 0, 3, 3, "J",    "JIS-Roman", map_JIS_Roman },
+  { JIS_Katakana,      0, 0, 3, 3, "I",    "JIS-Katakana", map_JIS_Katakana },
   { Latin_2_Supp,      2, 0, 5, 9, "B",    "ISO Latin-2 Supplemental", map_ISO_Latin_2 },
   { Latin_5_Supp,      2, 0, 5, 9, "M",    "ISO Latin-5 Supplemental", map_ISO_Latin_5 },
   { Latin_Cyrillic,    2, 0, 5, 9, "L",    "ISO Latin-Cyrillic", map_all96 },
@@ -323,7 +332,8 @@ reset_charset(MENU_ARGS)
 {
   int n;
 
-  decnrcm(scs_national = FALSE);
+  scs_national = FALSE;
+  decnrcm(scs_national);
   for (n = 0; n < 4; n++) {
     int m = sane_cs(n);
     if (m != current_Gx[n] || (m == 0)) {
@@ -765,20 +775,17 @@ assign_upss(National code, int allow96)
 {
   if (code != current_upss) {
     int n;
-    int success = 0;
     for (n = 0; n < TABLESIZE(KnownCharsets); ++n) {
       if (KnownCharsets[n].code == code) {
         if (get_level() >= KnownCharsets[n].first
-            && get_level() <= KnownCharsets[n].last)
-          success = 1;
+            && get_level() <= KnownCharsets[n].last) {
+          set_tty_raw(TRUE);
+          set_tty_echo(FALSE);
+          do_dcs("%d!u%s", allow96, KnownCharsets[n].final);
+          current_upss = code;
+        }
         break;
       }
-    }
-    if (success) {
-      set_tty_raw(TRUE);
-      set_tty_echo(FALSE);
-      do_dcs("%d!u%s", allow96, KnownCharsets[n].final);
-      current_upss = code;
     }
   }
   restore_ttymodes();

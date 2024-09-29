@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.43 2023/12/05 09:16:16 tom Exp $ */
+/* $Id: setup.c,v 1.44 2024/09/25 23:57:49 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -240,6 +240,13 @@ toggle_8bit_in(MENU_ARGS)
   return MENU_NOHOLD;
 }
 
+static int
+toggle_7bit_fsm(MENU_ARGS)
+{
+  parse_7bits = !parse_7bits;
+  return MENU_NOHOLD;
+}
+
 /*
  * This changes the CSI code to/from an escape sequence.
  */
@@ -286,6 +293,7 @@ restore_level(VTLEVEL *save)
       && save->input_8bits != input_8bits)  /* just in case level didn't change */
     s8c1t(save->input_8bits);
   output_8bits = save->output_8bits;  /* in case we thought this was VT100 */
+  parse_7bits = save->parse_7bits;  /* in case we ignored ECMA-48 */
 }
 
 void
@@ -294,11 +302,13 @@ save_level(VTLEVEL *save)
   save->cur_level = cur_level;
   save->input_8bits = input_8bits;
   save->output_8bits = output_8bits;
+  save->parse_7bits = parse_7bits;
 
   if (LOG_ENABLED)
-    fprintf(log_fp, "save_level(%d) in=%d, out=%d\n", cur_level,
+    fprintf(log_fp, "save_level(%d) in=%d, out=%d, fsm=%d\n", cur_level,
             input_8bits ? 8 : 7,
-            output_8bits ? 8 : 7);
+            output_8bits ? 8 : 7,
+            parse_7bits ? 8 : 7);
 }
 
 int
@@ -326,6 +336,7 @@ set_level(int request)
       rm("?2"); /* Reset ANSI (VT100) mode, Set VT52 mode  */
       input_8bits = FALSE;
       output_8bits = FALSE;
+      parse_7bits = FALSE;
     } else {
       if (cur_level == 0) {
         esc("<");   /* Enter ANSI mode (VT100 mode) */
@@ -333,6 +344,7 @@ set_level(int request)
       if (request == 1) {
         input_8bits = FALSE;
         output_8bits = FALSE;
+        parse_7bits = FALSE;
       }
       if (max_level > 1) {
         if (request > 1)
@@ -347,9 +359,10 @@ set_level(int request)
   }
 
   if (LOG_ENABLED)
-    fprintf(log_fp, "...set_level(%d) in=%d, out=%d\n", cur_level,
+    fprintf(log_fp, "...set_level(%d) in=%d, out=%d, fsm=%d\n", cur_level,
             input_8bits ? 8 : 7,
-            output_8bits ? 8 : 7);
+            output_8bits ? 8 : 7,
+            parse_7bits ? 8 : 7);
 
   return TRUE;
 }
@@ -381,6 +394,7 @@ tst_setup(MENU_ARGS)
 {
   static char txt_output[80] = "send 7/8";
   static char txt_input8[80] = "receive 7/8";
+  static char txt_parse7[80] = "parser 7/8";
   static char txt_DECSCL[80] = "DECSCL";
   static char txt_logging[80] = "logging";
   static char txt_padded[80] = "padding";
@@ -391,6 +405,7 @@ tst_setup(MENU_ARGS)
     { "Setup terminal to original test-configuration",       setup_terminal },
     { txt_output,                                            toggle_8bit_out },
     { txt_input8,                                            toggle_8bit_in },
+    { txt_parse7,                                            toggle_7bit_fsm },
     { txt_DECSCL,                                            toggle_DECSCL },
     { txt_logging,                                           toggle_Logging },
     { txt_padded,                                            toggle_Padding },
@@ -405,6 +420,8 @@ tst_setup(MENU_ARGS)
   do {
     sprintf(txt_output, "Send %d-bit controls", output_8bits ? 8 : 7);
     sprintf(txt_input8, "Receive %d-bit controls", input_8bits ? 8 : 7);
+    sprintf(txt_parse7, "Assume %d-bit parser (ECMA-48 section 9)",
+            parse_7bits ? 7 : 8);
     sprintf(txt_DECSCL, "Operating level %d (VT%d)",
             cur_level, cur_level ? cur_level * 100 : 52);
     sprintf(txt_logging, "Logging %s", STR_ENABLED(LOG_ENABLED));

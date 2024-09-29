@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.95 2024/02/19 00:02:52 tom Exp $ */
+/* $Id: vt320.c,v 1.98 2024/09/25 22:42:58 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -1164,6 +1164,7 @@ tst_DEC_DECRPM(MENU_ARGS)
     DATA( DECARM,     3 /* autorepeat */),
     DATA( DECEDM,     3 /* edit */),
     DATA( DECLTM,     3 /* line transmit */),
+    DATA( DECKANAM,   3 /* vt382:Katana shift */),
     DATA( DECSCFDM,   3 /* space compression field delimiter */),
     DATA( DECTEM,     3 /* transmission execution */),
     DATA( DECEKEM,    3 /* edit key execution */),
@@ -1172,7 +1173,7 @@ tst_DEC_DECRPM(MENU_ARGS)
     DATA( DECTCEM,    3 /* text cursor enable */),
     DATA( DECRLM,     5 /* left-to-right */),
     DATA( DECHEBM,    5 /* Hebrew keyboard mapping (VT520) */),
-    DATA( DECHCEM,    5 /* Hebrew encoding */),
+    DATA( DECHEM,     5 /* Hebrew encoding */),
     DATA( DECTEK,     3 /* 4010/4014 emulation (VT240, VT330/VT340) */),
     DATA( DECNRCM,    3 /* national replacement character set */),
     DATA( DECGEPM,    3 /* graphics expanded print */),
@@ -1182,6 +1183,7 @@ tst_DEC_DECRPM(MENU_ARGS)
     DATA( DECGRPM,    3 /* graphics rotated print */),
     DATA( DEC131TM,   3 /* VT131 transmit */),
     DATA( DECNAKB,    5 /* Greek/N-A Keyboard Mapping */),
+    DATA( DECKKDM,    3 /* vt382:Kanji/Katakana */),
     DATA( DECHCCM,    3 /* horizontal cursor coupling (disabled) */),
     DATA( DECVCCM,    3 /* vertical cursor coupling */),
     DATA( DECPCCM,    3 /* page cursor coupling */),
@@ -1190,6 +1192,7 @@ tst_DEC_DECRPM(MENU_ARGS)
     DATA( DECKBUM,    3 /* keyboard usage */),
     DATA( DECLRMM,    4 /* left/right margin mode (VT420) */),
     DATA( DECXRLM,    3 /* transmit rate linking */),
+    DATA( DECSDM,     3 /* vt382:Sixel display */),
     DATA( DECKPM,     4 /* keyboard positioning */),
     DATA( DECNCSM,    5 /* no clearing screen on column change */),
     DATA( DECRLCM,    5 /* right-to-left copy */),

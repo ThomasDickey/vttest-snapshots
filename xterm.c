@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.70 2023/12/29 16:34:23 tom Exp $ */
+/* $Id: xterm.c,v 1.71 2024/09/23 23:15:01 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -642,7 +642,7 @@ tst_xterm_DECRPM(MENU_ARGS)
     DATA( DECRLM,     5 /* left-to-right */),
     DATA( XT_FONTSWT, 3 /* rxvt font-switching vs DECTEK */),
     DATA( XT_TEK4014, 3 /* Tektronix 4014 */),
-    DATA( DECHCEM,    5 /* Hebrew encoding */),
+    DATA( DECHEM,     5 /* Hebrew encoding */),
     DATA( XT_80_132,  3 /* 80/132 mode */),
     DATA( XT_CURSES,  3 /* curses hack */),
     DATA( DECNRCM,    3 /* national replacement character set */),

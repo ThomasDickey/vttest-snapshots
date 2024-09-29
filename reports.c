@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.51 2023/11/22 23:26:50 tom Exp $ */
+/* $Id: reports.c,v 1.53 2024/09/19 00:01:14 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -47,21 +47,21 @@ struct table {
     {  65, "VT500 family" },
     {  -1, "" }
 },extensions[] = {
-    {   1, "132 columns" },                             /* vt400 */
-    {   2, "printer port" },                            /* vt400 */
+    {   1, "132 columns" },                             /* vt400, vt382 */
+    {   2, "printer port" },                            /* vt400, vt382 */
     {   3, "ReGIS graphics" },                          /* kermit */
-    {   4, "Sixel graphics" },                          /* kermit */
-    {   5, "Katakana extension" },                      /* vt400? */
-    {   6, "selective erase" },                         /* vt400 */
+    {   4, "Sixel graphics" },                          /* vt382, kermit */
+    {   5, "Katakana extension" },                      /* vt382 */
+    {   6, "selective erase" },                         /* vt400, vt382 */
     {   7, "soft character set (DRCS)" },               /* vt400 */
-    {   8, "user-defined keys (UDK)" },                 /* vt400 */
+    {   8, "user-defined keys (UDK)" },                 /* vt400, vt382 */
     {   9, "national replacement character-sets" },     /* kermit */
-    {  10, "text ruling vector" },                      /* ? */
+    {  10, "Two-bytes Kanji" },                         /* vt382 */
     {  11, "25th status line" },                        /* ? */
     {  12, "Serbo-Croatian (SCS)" },                    /* vt500 */
     {  13, "local editing mode" },                      /* kermit */
     {  14, "8-bit architecture" },                      /* ? */
-    {  15, "DEC technical set" },                       /* vt400 */
+    {  15, "DEC technical set" },                       /* vt400, vt382 */
     {  16, "locator device port (ReGIS)" },             /* kermit */
     {  17, "terminal state reports" },                  /* ? */
     {  18, "user windows" },                            /* vt400 */
@@ -374,14 +374,24 @@ tst_DA_3(MENU_ARGS)
 
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
-  if ((report = skip_dcs(report)) != 0
-      && strip_terminator(report) != 0
-      && *report++ == '!'
-      && *report++ == '|'
-      && strlen(report) != 0) {
-    show = SHOW_SUCCESS;
+  show = SHOW_FAILURE;
+  if (report == NULL || *report == '\0') {
+    if (get_level() < 4)  /* vt420 and up support this */
+      show = "not supported";
   } else {
-    show = SHOW_FAILURE;
+    char *content;
+    if ((content = skip_dcs(report)) != 0
+        && strip_terminator(content) != 0
+        && *content++ == '!'
+        && *content++ == '|'
+        && strlen(content) != 0) {
+      char *check;
+      if (strlen(content) == 8) {
+        (void) strtol(content, &check, 16);
+        if (*check == '\0')
+          show = SHOW_SUCCESS;
+      }
+    }
   }
   show_result("%s", show);
 

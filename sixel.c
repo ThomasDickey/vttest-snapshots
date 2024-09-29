@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.22 2023/09/24 17:06:57 tom Exp $ */
+/* $Id: sixel.c,v 1.24 2024/09/29 13:10:03 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -141,10 +141,12 @@ decode_header(void)
           char *tmp2;
           tmp[use++] = *t++;
           tmp[use] = '\0';
-          if ((tmp2 = malloc(use + 1)) == NULL)
+          if ((tmp2 = malloc(use + 1)) == NULL) {
             no_memory();
-          FontName = strcpy(tmp2, tmp);
-          StartingCharPtr = t;
+          } else {
+            FontName = strcpy(tmp2, tmp);
+            StartingCharPtr = t;
+          }
           break;
         }
       }
@@ -258,7 +260,7 @@ tst_display(MENU_ARGS)
     vt_clear(0);
     if (display_char(stdout, c)) {
       println("");
-      tprintf("Render: %cN%c", ESC, c);   /* use SS2 to invoke G2 into GL */
+      cprintf("Render: %cN%c", ESC, c);   /* use SS2 to invoke G2 into GL */
     }
   } while (c != d);
 
@@ -304,9 +306,11 @@ setup_softchars(const char *filename)
   while ((c = fgetc(fp)) != EOF) {
     if (use + 1 >= len) {
       char *check;
-      if ((check = realloc(buffer, len *= 2)) == NULL)
+      if ((check = realloc(buffer, len *= 2)) == NULL) {
         no_memory();
-      buffer = check;
+      } else {
+        buffer = check;
+      }
     }
     buffer[use++] = (char) c;
   }

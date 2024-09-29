@@ -1,4 +1,4 @@
-/* $Id: printer.c,v 1.9 2022/02/15 23:08:59 tom Exp $ */
+/* $Id: printer.c,v 1.10 2024/09/29 13:03:10 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -183,17 +183,25 @@ tst_printing(MENU_ARGS)
     __(title(2), println("Choose test type:"));
   } while (menu(my_menu));
 
-  if (pex_mode)
-    decpex(pex_mode = 0);
+  if (pex_mode) {
+    pex_mode = 0;
+    decpex(pex_mode);
+  }
 
-  if (pff_mode)
-    decpex(pff_mode = 0);
+  if (pff_mode) {
+    pff_mode = 0;
+    decpex(pff_mode);
+  }
 
-  if (assigned)
-    mc_printer_start(assigned = 0);
+  if (assigned) {
+    assigned = 0;
+    mc_printer_start(assigned);
+  }
 
-  if (started)
-    mc_printer_start(started = 0);
+  if (started) {
+    started = 0;
+    mc_printer_start(started);
+  }
 
   return MENU_NOHOLD;
 }

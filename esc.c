@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.99 2023/12/05 00:27:44 tom Exp $ */
+/* $Id: esc.c,v 1.107 2024/09/29 22:31:32 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -10,12 +10,19 @@
 #define DATA_STR "Data: "   /* use this for test-data */
 #define TELL_STR "Text: "   /* use this for test-instructions */
 
+#define VA_OUT(fp, fmt, ap) do { \
+          va_start(ap, fmt); \
+          va_out(fp, fmt, ap); \
+          va_end(ap); \
+        } while (0)
+
 static int soft_scroll;
 
 /******************************************************************************/
 
 static int pending_decstbm;
 static int pending_decslrm;
+static int putting_data;
 
 static const char csi_7[] =
 {ESC, '[', 0};
@@ -154,10 +161,12 @@ extra_padding(int msecs)
     padding(soft_scroll ? (msecs * 4) : msecs);
 }
 
+/*
+ * Print ordinary text, ensuring that the logged text has a newlne.
+ */
 int
 printxx(const char *fmt, ...)
 {
-  int endl = (strchr(fmt, '\n') != NULL ? 0 : 1);
   va_list ap;
 
   va_start(ap, fmt);
@@ -165,16 +174,23 @@ printxx(const char *fmt, ...)
   va_end(ap);
 
   if (LOG_ENABLED) {
-    va_start(ap, fmt);
+    int endl = (strchr(fmt, '\n') != NULL ? 0 : 1);
+
     fprintf(log_fp, TELL_STR);
+
+    va_start(ap, fmt);
     vfprintf(log_fp, fmt, ap);
+    va_end(ap);
+
     if (endl)
       fputs("\n", log_fp);
-    va_end(ap);
   }
   return 1;
 }
 
+/*
+ * Print a ordinary line of text, logging it.
+ */
 int
 println(const char *s)
 {
@@ -188,10 +204,14 @@ println(const char *s)
 void
 put_char(FILE *fp, int c)
 {
-  if (fp == stdout)
+  if (fp == stdout) {
+    if (parse_7bits && (putting_data > 0) && (c >= 32) && !assume_utf8)
+      c |= 128;
     putchar(c);
-  else {
+  } else {
     c &= 0xff;
+    if (putting_data < 0 && c == ESC)
+      fprintf(fp, "BUG:");
     if (c <= ' ' || c >= '\177')
       fprintf(fp, "<%d> ", c);
     else
@@ -206,44 +226,83 @@ put_string(FILE *fp, const char *s)
     put_char(fp, (int) *s++);
 }
 
-#ifdef HAVE_VFPRINTF
-#define va_out(fp, ap, fmt) vfprintf(fp, fmt, ap)
-#else
-static void
-va_out(FILE *fp, va_list ap, const char *fmt)
-{
-  char temp[10];
-  int len = 0;
+#define CHECK_FORMAT() \
+        if (form_len + 2 >= (int) sizeof(real_fmt)) { \
+          done = 2; \
+          break; \
+        }
 
+#define ADD_TO_FORMAT(c) \
+        real_fmt[form_len++] = (char) (c); \
+        real_fmt[form_len] = 0
+
+#define PUT_FORMATTED(c,arg_type) \
+        CHECK_FORMAT(); \
+        ADD_TO_FORMAT(c); \
+        if (size_arg) { \
+          size_arg = va_arg(ap, int); \
+          sprintf(real_arg, real_fmt, size_arg, va_arg(ap, arg_type));  \
+        } else { \
+          sprintf(real_arg, real_fmt, va_arg(ap, arg_type));  \
+        } \
+        put_string(fp, real_arg); \
+        real_fmt[form_len = 0] = 0
+
+/*
+ * Do our own vfprintf, so that we can reformat and log the output.
+ */
+static void
+va_out(FILE *fp, const char *fmt, va_list ap)
+{
   while (*fmt != '\0') {
     if (*fmt == '%') {
-      int ch = *++fmt;
-      if (ch >= '0' && ch <= '9') {
-        ch -= '0';
-        if (len)
-          len *= 10;
-        len = ch;
-      } else {
+      char real_fmt[20];
+      char real_arg[1024];
+      int form_len = 0;
+      int size_arg = 0;
+      int done = 0;
+
+      real_fmt[0] = 0;
+      ADD_TO_FORMAT(*fmt);
+      do {
+        int ch = *++fmt;
+
+        done = 1;
         switch (ch) {
-        case '%':
-          put_char(fp, '%');
-          break;
         case 'c':
-          put_char(fp, va_arg(ap, int));
+          ch = va_arg(ap, int);
+          /* FALLTHRU */
+        case '%':
+          put_char(fp, ch);
           break;
         case 'd':
-          sprintf(temp, "%*d", len ? len : 1, va_arg(ap, int));
-          put_string(fp, temp);
+          PUT_FORMATTED(ch, int);
           break;
         case 'u':
-          sprintf(temp, "%*u", len ? len : 1, va_arg(ap, unsigned));
-          put_string(fp, temp);
+          PUT_FORMATTED(ch, unsigned);
           break;
         case 's':
-          put_string(fp, va_arg(ap, char *));
+          PUT_FORMATTED(ch, char *);
+          break;
+        case 0:
+          done = 2;
+          break;
+        default:
+          /* provide for "%20s", etc. */
+          CHECK_FORMAT();
+          ADD_TO_FORMAT(ch);
+          done = 0;
+          if (ch == '*') {
+            /* provide for "%.*s", etc. */
+            if (++size_arg > 1) {
+              done = 2;
+            }
+          }
           break;
         }
-        len = 0;
+      } while (!done);
+      if (done > 1) {
+        put_string(fp, real_fmt);   /* bug */
       }
     } else {
       put_char(fp, (int) *fmt);
@@ -251,24 +310,50 @@ va_out(FILE *fp, va_list ap, const char *fmt)
     fmt++;
   }
 }
-#endif
 
+/*
+ * Print ordinary (non-control) text, formatted.
+ */
 int
 tprintf(const char *fmt, ...)
 {
   va_list ap;
-  va_start(ap, fmt);
-  va_out(stdout, ap, fmt);
-  va_end(ap);
+
+  putting_data = -1;  /* check for unexpected controls */
+
+  VA_OUT(stdout, fmt, ap);
   FLUSH;
 
   if (LOG_ENABLED) {
     fputs(DATA_STR, log_fp);
-    va_start(ap, fmt);
-    va_out(log_fp, ap, fmt);
-    va_end(ap);
+    VA_OUT(log_fp, fmt, ap);
     fputs("\n", log_fp);
   }
+
+  putting_data = 0;
+  return 1;
+}
+
+/*
+ * Print control text, formatted.
+ */
+int
+cprintf(const char *fmt, ...)
+{
+  va_list ap;
+
+  putting_data = 1;
+
+  VA_OUT(stdout, fmt, ap);
+  FLUSH;
+
+  if (LOG_ENABLED) {
+    fputs(SEND_STR, log_fp);
+    VA_OUT(log_fp, fmt, ap);
+    fputs("\n", log_fp);
+  }
+
+  putting_data = 0;
   return 1;
 }
 
@@ -277,20 +362,21 @@ void
 do_csi(const char *fmt, ...)
 {
   va_list ap;
-  va_start(ap, fmt);
+
+  putting_data = 1;
+
   fputs(csi_output(), stdout);
-  va_out(stdout, ap, fmt);
-  va_end(ap);
+  VA_OUT(stdout, fmt, ap);
+
   FLUSH;
 
   if (LOG_ENABLED) {
     fputs(SEND_STR, log_fp);
     put_string(log_fp, csi_output());
-    va_start(ap, fmt);
-    va_out(log_fp, ap, fmt);
-    va_end(ap);
+    VA_OUT(log_fp, fmt, ap);
     fputs("\n", log_fp);
   }
+  putting_data = 0;
 }
 
 /* DCS xxx ST */
@@ -298,22 +384,23 @@ void
 do_dcs(const char *fmt, ...)
 {
   va_list ap;
-  va_start(ap, fmt);
+
+  putting_data = 1;
+
   fputs(dcs_output(), stdout);
-  va_out(stdout, ap, fmt);
-  va_end(ap);
-  fputs(st_output(), stdout);
+  VA_OUT(stdout, fmt, ap);
+
+  put_string(stdout, st_output());
   FLUSH;
 
   if (LOG_ENABLED) {
-    va_start(ap, fmt);
     fputs(SEND_STR, log_fp);
     put_string(log_fp, dcs_output());
-    va_out(log_fp, ap, fmt);
-    va_end(ap);
+    VA_OUT(log_fp, fmt, ap);
     put_string(log_fp, st_output());
     fputs("\n", log_fp);
   }
+  putting_data = 0;
 }
 
 /* DCS xxx ST */
@@ -321,22 +408,23 @@ void
 do_osc(const char *fmt, ...)
 {
   va_list ap;
-  va_start(ap, fmt);
+
+  putting_data = 1;
+
   fputs(osc_output(), stdout);
-  va_out(stdout, ap, fmt);
-  va_end(ap);
-  fputs(st_output(), stdout);
+  VA_OUT(stdout, fmt, ap);
+
+  put_string(stdout, st_output());
   FLUSH;
 
   if (LOG_ENABLED) {
-    va_start(ap, fmt);
     fputs(SEND_STR, log_fp);
     put_string(log_fp, osc_output());
-    va_out(log_fp, ap, fmt);
-    va_end(ap);
+    VA_OUT(log_fp, fmt, ap);
     put_string(log_fp, st_output());
     fputs("\n", log_fp);
   }
+  putting_data = 0;
 }
 
 int
@@ -371,7 +459,10 @@ print_str(const char *s)
 void
 esc(const char *s)
 {
-  printf("%c%s", ESC, s);
+  putting_data = (strchr("[]", *s) == NULL) ? 1 : 0;
+
+  put_char(stdout, ESC);
+  put_string(stdout, s);
 
   if (LOG_ENABLED) {
     fprintf(log_fp, SEND_STR);
@@ -379,6 +470,8 @@ esc(const char *s)
     put_string(log_fp, s);
     fputs("\n", log_fp);
   }
+
+  putting_data = 0;
 }
 
 /*

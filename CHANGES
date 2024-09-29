@@ -1,5 +1,19 @@
--- $Id: CHANGES,v 1.287 2024/07/08 23:35:35 tom Exp $
+-- $Id: CHANGES,v 1.295 2024/09/29 22:28:16 tom Exp $
 -------------------------------------------------------------------------------
+
+20240929
+	+ add setting to demonstrate 7-bit parsing tables, as per ECMA-48
+	  section 9.
+
+	+ check DA3 response for validity
+
+	+ add charset and reports table entries for VT382
+
+	+ correct initialization for nl_langinfo() call (cf: 20231230).
+
+	+ improve configure-script handling of file pathnames
+
+	+ update config.guess, config.sub
 
 20240708
 	+ ensure stdout is flushed before getting response from DECID, fixing

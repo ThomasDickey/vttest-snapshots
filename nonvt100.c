@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.69 2022/02/15 22:32:05 tom Exp $ */
+/* $Id: nonvt100.c,v 1.70 2024/09/29 14:19:49 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -820,18 +820,20 @@ tst_VPR(MENU_ARGS)
     print_str("*\b");
   }
 
-  for (n = box.right; n > box.left; n--) {
-    if (lrmm_flag &&
-        !origin_mode &&
-        (((n == lft) && (lft > 1) && (n > box.left)) ||
-         ((n == lft + 1) && (lft > 1) && (n > box.left)) ||
-         ((n == lft - 1) && (lft > 1) && (n > box.left)) ||
-         ((n == rgt + 0) && (rgt < min_cols) && (n < box.right)))) {
-      cup(box.bottom, n);
-      print_chr('*');
-      cup(box.bottom, n);
-    } else {
-      print_str("\b*\b");
+  if (box.right > box.left) {
+    for (n = box.right; n > box.left; n--) {
+      if (lrmm_flag &&
+          !origin_mode &&
+          (((n == lft) && (lft > 1)) ||
+           ((n == lft + 1) && (lft > 1)) ||
+           ((n == lft - 1) && (lft > 1)) ||
+           ((n == rgt + 0) && (rgt < min_cols) && (n < box.right)))) {
+        cup(box.bottom, n);
+        print_chr('*');
+        cup(box.bottom, n);
+      } else {
+        print_str("\b*\b");
+      }
     }
   }
 

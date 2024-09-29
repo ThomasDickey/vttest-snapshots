@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.74 2023/11/22 08:59:57 tom Exp $ */
+/* $Id: esc.h,v 1.77 2024/09/29 10:38:28 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -56,6 +56,7 @@
 #define DECARM    8   /* autorepeat */
 #define DECEDM   10   /* edit */
 #define DECLTM   11   /* line transmit */
+#define DECKANAM 12   /* Katakana shift */
 #define DECSCFDM 13   /* space compression field delimiter */
 #define DECTEM   14   /* transmission execution */
 #define DECEKEM  16   /* edit key execution */
@@ -64,7 +65,7 @@
 #define DECTCEM  25   /* text cursor enable */
 #define DECRLM   34   /* left-to-right */
 #define DECHEBM  35   /* Hebrew keyboard mapping (VT520) */
-#define DECHCEM  36   /* Hebrew encoding */
+#define DECHEM   36   /* Hebrew encoding */
 #define DECTEK   38   /* 4010/4014 emulation (VT240, VT330/VT340) */
 #define DECNRCM  42   /* national replacement character set */
 #define DECGEPM  43   /* graphics expanded print */
@@ -74,6 +75,7 @@
 #define DECGRPM  47   /* graphics rotated print */
 #define DEC131TM 53   /* VT131 transmit */
 #define DECNAKB  57   /* Greek/N-A Keyboard Mapping */
+#define DECKKDM  59   /* Kanji/Katakana */
 #define DECHCCM  60   /* horizontal cursor coupling (disabled) */
 #define DECVCCM  61   /* vertical cursor coupling */
 #define DECPCCM  64   /* page cursor coupling */
@@ -82,6 +84,7 @@
 #define DECKBUM  68   /* keyboard usage */
 #define DECLRMM  69   /* left/right margin mode (VT420) */
 #define DECXRLM  73   /* transmit rate linking */
+#define DECSDM   80   /* Sixel display */
 #define DECKPM   81   /* keyboard positioning */
 #define DECNCSM  95   /* no clearing screen on column change */
 #define DECRLCM  96   /* right-to-left copy */
@@ -126,6 +129,7 @@ int default_1a(int pn);
 int println(const char *s);
 int printxx(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 int tprintf(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
+int cprintf(const char *fmt, ...) GCC_PRINTFLIKE(1,2);
 void brc(int pn, int c);
 void brc2(int pn1, int pn2, int c);
 void brc3(int pn1, int pn2, int pn3, int c);

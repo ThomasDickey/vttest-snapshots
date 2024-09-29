@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.118 2024/02/16 00:03:02 tom Exp $ */
+/* $Id: vttest.h,v 1.119 2024/09/26 08:19:33 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -131,11 +131,13 @@ extern int max_lines;
 extern int min_cols;
 extern int origin_mode;
 extern int output_8bits;
+extern int parse_7bits;
 extern int reading;
 extern int slow_motion;
 extern int tty_speed;
 extern int use_decac;
 extern int use_padding;
+extern int assume_utf8;
 extern jmp_buf intrenv;
 
 #ifndef TRUE
@@ -215,6 +217,7 @@ typedef struct {
   int cur_level;
   int input_8bits;
   int output_8bits;
+  int parse_7bits;
 } VTLEVEL;
 
 typedef struct {

@@ -1,4 +1,4 @@
-/* $Id: reset.c,v 1.8 2022/02/15 23:12:01 tom Exp $ */
+/* $Id: reset.c,v 1.9 2024/09/25 23:54:01 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -59,6 +59,7 @@ tst_RIS(MENU_ARGS)
   reset_level();
   input_8bits = FALSE;
   output_8bits = FALSE;
+  parse_7bits = FALSE;
   return MENU_HOLD;
 }
 

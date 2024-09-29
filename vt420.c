@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.224 2023/12/29 16:36:47 tom Exp $ */
+/* $Id: vt420.c,v 1.227 2024/09/29 14:23:53 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -1302,7 +1302,7 @@ tst_ICH_DCH(MENU_ARGS)
     if (row < last_row) {
       int mark = marker_of(n);
 
-      if (row >= top && row <= bot && row < last_row) {
+      if (row >= top && row <= bot) {
         mark_2nd = (char) mark;
         if (mark_1st == 0) {
           mark_1st = (char) mark;
@@ -1889,7 +1889,7 @@ tst_DECIC(MENU_ARGS)
     if (row < last_row) {
       int mark = marker_of(n);
 
-      if (row >= top && row <= bot && row < last_row) {
+      if (row >= top && row <= bot) {
         mark_2nd = (char) mark;
         if (mark_1st == 0) {
           mark_1st = (char) mark;
@@ -2242,15 +2242,12 @@ tst_DECSNLS(MENU_ARGS)
 #define SOH             1
 #define CHK(n)          ((-(n)) & 0xffff)
 
-#define to_fill(ch)     (!chk_notrim && ((ch) == ' ') ? SOH : (ch))
-#define from_fill(ch)   (!chk_notrim && ((ch) == SOH) ? ' ' : (ch))
+#define to_fill(ch)     (((ch) == ' ') ? SOH : (ch))
+#define from_fill(ch)   (((ch) == SOH) ? ' ' : (ch))
 
 static int
 tst_DSR_area_sum(MENU_ARGS, int g)
 {
-  static int chk_notrim = 0;    /* do not trim blanks */
-  static int chk_attrib = 0;    /* do not add video attributes to checksum */
-
   char buffer[1024];            /* allocate buffer for lines */
   int expected = 0;
   int title_sum = 0;
@@ -2288,7 +2285,7 @@ tst_DSR_area_sum(MENU_ARGS, int g)
     for (c = 0; c < min_cols; ++c) {
       ch = from_fill((unsigned char) lines[r][c]);
       expected += ch + mask_fg + mask_bg;
-      if (chk_notrim || (first || (ch != ' ')))
+      if (first || (ch != ' '))
         title_sum = expected;
       first = FALSE;
     }
@@ -2366,7 +2363,7 @@ tst_DSR_area_sum(MENU_ARGS, int g)
         char test[5];
 
         if (ch > ch_end) {
-          int row_limit = (!chk_notrim ? r : max_lines);
+          int row_limit = r;
           int y, x;
 
           for (y = 0; y < row_limit; ++y) {
@@ -2374,14 +2371,13 @@ tst_DSR_area_sum(MENU_ARGS, int g)
              * If trimming, count through space after ":" in "All:".
              * Otherwise, count the whole screen.
              */
-            int col_limit = (chk_notrim || (y < (r - 1))) ? min_cols : (c + 4);
+            int col_limit = (y < (r - 1)) ? min_cols : (c + 4);
 
             for (x = 0; x < col_limit; ++x) {
               int yx = (unsigned char) lines[y][x];
 
-              if (chk_notrim
-                  || (yx >= ' ')) {
-                full += (yx < ' ') ? ' ' : yx;
+              if (yx >= ' ') {
+                full += yx;
                 full += mask_bg;
                 full += mask_fg;
               }
@@ -2391,16 +2387,14 @@ tst_DSR_area_sum(MENU_ARGS, int g)
               if (yx == SOH + 0)
                 lines[y][x] = ' ';
             }
-            if (!chk_attrib) {
-              if (y == 2) {
-                /* add attributes for highlighted report-string */
-                full += report_len * (chkINVERSE);
-              }
-              if (y == (r - 1)) {
-                /* add attributes for "All:" */
-                full += 3 * (chkBOLD | chkUNDERLINE);
-                full += 2 * (chkBOLD);
-              }
+            if (y == 2) {
+              /* add attributes for highlighted report-string */
+              full += report_len * (chkINVERSE);
+            }
+            if (y == (r - 1)) {
+              /* add attributes for "All:" */
+              full += 3 * (chkBOLD | chkUNDERLINE);
+              full += 2 * (chkBOLD);
             }
             if (LOG_ENABLED) {
               fprintf(log_fp,
