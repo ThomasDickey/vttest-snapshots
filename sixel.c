@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.24 2024/09/29 13:10:03 tom Exp $ */
+/* $Id: sixel.c,v 1.28 2024/10/10 08:22:28 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -131,7 +131,7 @@ decode_header(void)
   for (s = font_string; *s; s++) {
     if (*s == L_CURL) {
       char *t;
-      char tmp[BUFSIZ];
+      char tmp[BUF_SIZE];
       size_t use = 0;
       for (t = s + 1; *t; t++) {
         if (is_inter(*t)) {
@@ -253,7 +253,7 @@ tst_display(MENU_ARGS)
 
   do {
     d = c;
-    c = inchar();
+    c = get_char();
     if (c < 0)
       break;
     vt_move(6, 1);
@@ -292,7 +292,7 @@ setup_softchars(const char *filename)
   size_t use = 0;
   char *buffer;
   char *s;
-  char *first = 0;
+  const char *first = 0;
   char *last = 0;
   int save_8bits = input_8bits;
   input_8bits = FALSE;  /* use the 7-bit input-parsing */
@@ -339,7 +339,7 @@ setup_softchars(const char *filename)
   }
   for (s = buffer; (*s++ = *first++) != '\0';) ;
   if (LOG_ENABLED && first != 0)
-    fprintf(log_fp, "Font String:\n%s\n", buffer);
+    fprintf(log_fp, NOTE_STR "font string %s\n", buffer);
 
   font_string = buffer;
 

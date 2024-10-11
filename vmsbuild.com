@@ -1,4 +1,4 @@
-$! $Id: vmsbuild.com,v 1.19 2010/08/28 12:17:47 tom Exp $
+$! $Id: vmsbuild.com,v 1.20 2024/10/07 00:14:17 tom Exp $
 $! VMS build-script for VTTEST.  Requires installed C compiler
 $!
 $! Tested with:
@@ -17,6 +17,7 @@ $ write optf "keyboard.obj"
 $ write optf "mouse.obj"
 $ write optf "nonvt100.obj"
 $ write optf "printer.obj"
+$ write optf "replay.obj"
 $ write optf "reports.obj"
 $ write optf "reset.obj"
 $ write optf "setup.obj"
@@ -119,6 +120,7 @@ $	call make main
 $	call make mouse
 $	call make nonvt100
 $	call make printer
+$	call make replay
 $	call make reports
 $	call make reset
 $	call make setup

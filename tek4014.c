@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.16 2022/02/15 23:17:06 tom Exp $ */
+/* $Id: tek4014.c,v 1.18 2024/10/04 00:33:40 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -80,7 +80,7 @@ tek_font(int code)
  * Decode 2 bytes from a mouse report as a coordinate value.
  */
 static int
-tek_coord(char *report, int offset)
+tek_coord(const char *report, int offset)
 {
   int hi = FIVEBITS & CharOf(report[offset]);
   int lo = FIVEBITS & CharOf(report[offset + 1]);
@@ -109,8 +109,8 @@ tek_point(int pen, int y, int x)
           0x40 | (((x & LOBITS) >> SHIFTLO) & FIVEBITS));   /* must be last */
   fprintf(stdout, "%s", temp);
   if (LOG_ENABLED) {
-    fprintf(log_fp, "*Set point (%d,%d)\n", y, x);
-    fputs("Send: ", log_fp);
+    fprintf(log_fp, NOTE_STR "set point (%d,%d)\n", y, x);
+    fputs(SEND_STR, log_fp);
     put_string(log_fp, temp);
     fputs("\n", log_fp);
   }
@@ -133,11 +133,11 @@ log_mouse_click(char *report)
     fprintf(log_fp, "Report: ");
     if ((report[0] & 0x80) != 0
         && strchr("lmrLMR", report[0] & 0x7f) != 0) {
-      fprintf(log_fp, "mouse %c", report[0] & 0x7f);
+      fprintf(log_fp, NOTE_STR "mouse %c", report[0] & 0x7f);
     } else {
-      fprintf(log_fp, "key %d", CharOf(report[0]));
+      fprintf(log_fp, NOTE_STR "key %d", CharOf(report[0]));
     }
-    fprintf(log_fp, " (%d,%d)\n", new_y, new_x);
+    fprintf(log_fp, NOTE_STR " (%d,%d)\n", new_y, new_x);
     fflush(log_fp);
   }
 }

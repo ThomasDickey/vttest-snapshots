@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.71 2024/09/23 23:15:01 tom Exp $ */
+/* $Id: xterm.c,v 1.74 2024/10/08 23:06:36 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -254,7 +254,7 @@ tst_altscrn(MENU_ARGS)
 static int
 tst_modify_font(MENU_ARGS)
 {
-  char temp[BUFSIZ];
+  char temp[BUF_SIZE];
 
   vt_move(1, 1);
   println("Please enter the font name.");
@@ -484,7 +484,7 @@ test_modify_ops(MENU_ARGS)
 static int
 test_report_ops(MENU_ARGS)
 {
-  char *report;
+  const char *report;
   int row = 3;
   int col = 10;
 
@@ -544,13 +544,48 @@ test_report_ops(MENU_ARGS)
 static int
 test_window_name(MENU_ARGS)
 {
-  char temp[BUFSIZ];
+  char temp[BUF_SIZE];
 
   vt_move(1, 1);
   println("Please enter the new window name.  Newer xterms may beep when setting the title.");
   inputline(temp);
   do_osc("0;%s%c", temp, BEL);
   return MENU_NOHOLD;
+}
+
+static int
+tst_xterm_VERSION(MENU_ARGS)
+{
+  char *report;
+  int step;
+  int row, col;
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  vt_move(1, 1);
+  println("Both testcases should all get the same response");
+  for (step = -1; step <= 0; ++step) {
+    vt_move(row = 3 + step, col = 3);
+    if (step >= 0)
+      do_csi(">%dq", step);
+    else
+      do_csi(">q");
+    report = get_reply();
+    if ((report = skip_dcs(report)) != 0
+        && strip_terminator(report)
+        && !strncmp(report, ">|", 2)) {
+      printxx(SHOW_SUCCESS);
+      vt_move(row, col + 3);
+      chrprint2(report + 2, row, col + 3);
+    } else {
+      printxx(SHOW_FAILURE);
+    }
+  }
+
+  vt_move(20, 1);
+  restore_ttymodes();
+  return MENU_HOLD;
 }
 
 #define DATA(name,level) { name, #name, level }
@@ -801,6 +836,7 @@ tst_xterm_reports(MENU_ARGS)
   static MENU my_menu[] = {
     { "Exit",                                                0 },
     { "Test VT520 features",                                 tst_vt520_reports },
+    { "Report version (XTVERSION)",                          tst_xterm_VERSION },
     { "Request Mode (DECRQM)/Report Mode (DECRPM)",          tst_xterm_DECRPM },
     { "Status-String Report (DECRQSS)",                      tst_xterm_DECRQSS },
     { "",                                                    0 }

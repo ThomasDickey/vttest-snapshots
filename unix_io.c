@@ -1,11 +1,9 @@
-/* $Id: unix_io.c,v 1.33 2024/07/08 23:19:04 tom Exp $ */
+/* $Id: unix_io.c,v 1.36 2024/10/09 23:33:43 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
 #include <vttest.h>
 #include <esc.h>
-
-#define BUF_SIZE 1024
 
 static void
 give_up(SIG_ARGS GCC_UNUSED)
@@ -35,6 +33,7 @@ inchar(void)
   int lval;
   int ch;
   char one_byte = '\0';
+  int active = is_replaying();
 
   fflush(stdout);
   lval = last_char;
@@ -67,6 +66,16 @@ inchar(void)
     last_char = ch;
   if ((last_char == 0177) && (last_char == lval))
     give_up(SIGTERM);
+
+  if (active)
+    pause_replay();
+  if (LOG_ENABLED) {
+    fputs(READ_STR, log_fp);
+    put_char(log_fp, last_char);
+    fputs("\n", log_fp);
+  }
+  if (active)
+    resume_replay();
   return (char) (last_char);
 }
 
@@ -121,14 +130,16 @@ instr(void)
 
   int i = 0;
 
+  pause_replay();
   result[i++] = inchar();
   (void) read_buffer(result + i, (int) sizeof(result) - 2);
 
   if (LOG_ENABLED) {
-    fputs("Reply: ", log_fp);
+    fputs(READ_STR, log_fp);
     put_string(log_fp, result);
     fputs("\n", log_fp);
   }
+  resume_replay();
 
   return (result);
 }
@@ -142,6 +153,8 @@ get_reply(void)
   int new_len = 0;
 
   fflush(stdout);
+  pause_replay();
+
   zleep(100);
   do {
     new_len = read_buffer(result + old_len, (int) sizeof(result) - 2 - old_len);
@@ -149,29 +162,43 @@ get_reply(void)
   } while (new_len != 0 && old_len < (BUF_SIZE - 2));
 
   if (LOG_ENABLED) {
-    fputs("Reply: ", log_fp);
+    fputs(READ_STR, log_fp);
     put_string(log_fp, result);
     fputs("\n", log_fp);
   }
+
+  resume_replay();
 
   return (result);
 }
 
 /*
- * Read to the next newline, truncating the buffer at BUFSIZ-1 characters
+ * Read to the next newline, truncating the buffer at BUF_SIZE-1 characters
  */
 void
 inputline(char *s)
 {
-  do {
-    int ch;
-    char *d = s;
-    while ((ch = getchar()) != EOF && ch != '\n') {
-      if ((d - s) < BUFSIZ - 2)
-        *d++ = (char) ch;
-    }
-    *d = 0;
-  } while (!*s);
+  char *result = s;
+
+  if (is_replaying() && (result = replay_string()) != NULL) {
+    strcpy(s, result);
+    puts(result);
+    fflush(stdout);
+    zleep(2000);
+  } else {
+    do {
+      int ch;
+      char *d = s;
+      while ((ch = getchar()) != EOF && ch != '\n') {
+        if ((d - s) < BUF_SIZE - 2)
+          *d++ = (char) ch;
+      }
+      *d = 0;
+    } while (!*s);
+  }
+
+  if (LOG_ENABLED)
+    fprintf(log_fp, READ_STR "%s\n", result);
 }
 
 /*
@@ -210,22 +237,33 @@ holdit(void)
 void
 readnl(void)
 {
-  int ch = '\0';
-  char one_byte = '\0';
+  char *result;
 
-  fflush(stdout);
-  brkrd = FALSE;
-  reading = TRUE;
-  do {
-    if (read(0, &one_byte, (size_t) 1) < 0) {
-      break;
-    } else {
-      ch = (int) one_byte;
-    }
-  } while (ch != '\n' && !brkrd);
-  if (brkrd)
-    give_up(SIGTERM);
-  reading = FALSE;
+  if (is_replaying() && (result = replay_string()) != NULL) {
+    puts(result);
+    fflush(stdout);
+    zleep(2000);
+  } else {
+    int ch = '\0';
+    char one_byte = '\0';
+
+    fflush(stdout);
+    brkrd = FALSE;
+    reading = TRUE;
+    do {
+      if (read(0, &one_byte, (size_t) 1) < 0) {
+        break;
+      } else {
+        ch = (int) one_byte;
+      }
+    } while (ch != '\n' && !brkrd);
+    if (brkrd)
+      give_up(SIGTERM);
+    reading = FALSE;
+  }
+
+  if (LOG_ENABLED)
+    fputs(READ_STR "\n", log_fp);
 }
 
 /*

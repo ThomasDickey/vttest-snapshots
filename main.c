@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.139 2024/09/29 13:12:27 tom Exp $ */
+/* $Id: main.c,v 1.150 2024/10/10 08:22:28 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -51,23 +51,25 @@
 
 /* *INDENT-EQLS* */
 FILE *log_fp    = 0;
+int allows_utf8 = FALSE;
+int assume_utf8 = FALSE;
 int brkrd       = FALSE;
-int reading     = FALSE;
+int debug_level = 0;
 int decac_bg    = -1;
 int decac_fg    = -1;
-int log_disabled = FALSE;
-int max_lines   = 24;
-int max_cols    = 132;
-int min_cols    = 80;
 int input_8bits = FALSE;
+int log_disabled = FALSE;
+int max_cols    = 132;
+int max_lines   = 24;
+int min_cols    = 80;
 int output_8bits = FALSE;
 int parse_7bits = FALSE;
+int quick_reply = FALSE;
+int reading     = FALSE;
 int slow_motion = FALSE;
 int tty_speed   = DEFAULT_SPEED;  /* nominal speed, for padding */
-int quick_reply = FALSE;
 int use_decac   = FALSE;
 int use_padding = FALSE;
-int assume_utf8 = FALSE;
 
 jmp_buf intrenv;
 
@@ -99,8 +101,27 @@ no_memory(void)
 static void
 usage(void)
 {
-  fprintf(stderr,
-          "Usage: vttest [-V] [-l] [-p] [-q] [-s] [-8] [-f font] [24x80.132]\n");
+  static const char *msg[] =
+  {
+    "Usage: vttest [options] [24x80.132]"
+    ,""
+    ,"Options:"
+    ,"  -V     print the program version, and exit"
+    ,"  -8     use 8-bit controls"
+    ,"  -d     debug (repeat for more detail)"
+    ,"  -c cmdfile  read commands from file"
+    ,"  -f fontfile load DRCS data from file"
+    ,"  -l logfile  log test results to vttest.log"
+    ,"  -p     use padding"
+    ,"  -q     filter replies to show only the most recent"
+    ,"  -s     add time delay for scrolling"
+    ,"  -u     allow some tests to use UTF-8"
+  };
+  size_t n;
+
+  for (n = 0; n < TABLESIZE(msg); ++n)
+    fprintf(stderr, "%s\n", msg[n]);
+
   exit(EXIT_FAILURE);
 }
 
@@ -136,12 +157,25 @@ main(int argc, char *argv[])
       { "",                                                  0 }
     };
   /* *INDENT-ON* */
+  char *opt_command = NULL;
+  char *opt_softchr = NULL;
+  char *opt_logging = NULL;
 
   program = strrchr(argv[0], '/');
   if (program != NULL)
     ++program;
   else
     program = argv[0];
+
+#define OPT_ARG(value) \
+    do { \
+      if (!*++opt) { \
+        if (argc-- < 1) \
+          usage(); \
+        value = *++argv; \
+      } \
+      opt = "?"; \
+    } while (0)
 
   while (argc-- > 1) {
     const char *opt = *++argv;
@@ -152,17 +186,17 @@ main(int argc, char *argv[])
           version();
           putchar('\n');
           exit(EXIT_SUCCESS);
+        case 'c':
+          OPT_ARG(opt_command);
+          break;
+        case 'd':
+          debug_level++;
+          break;
         case 'f':
-          if (!*++opt) {
-            if (argc-- < 1)
-              usage();
-            opt = *++argv;
-          }
-          setup_softchars(opt);
-          opt = "?";
+          OPT_ARG(opt_softchr);
           break;
         case 'l':
-          enable_logging();
+          OPT_ARG(opt_logging);
           break;
         case 'p':
           use_padding = TRUE;
@@ -172,6 +206,9 @@ main(int argc, char *argv[])
           break;
         case 's':
           slow_motion = TRUE;
+          break;
+        case 'u':
+          allows_utf8 = TRUE;
           break;
         case '8':
           output_8bits = TRUE;
@@ -219,6 +256,16 @@ main(int argc, char *argv[])
       }
     }
   }
+
+  /* do this first, to capture results from other options */
+  if (opt_logging)
+    enable_logging(opt_logging);
+
+  if (opt_command)
+    setup_replay(opt_command);
+
+  if (opt_softchr)
+    setup_softchars(opt_softchr);
 
 #ifdef UNIX
   initterminal(setjmp(intrenv));
@@ -288,7 +335,8 @@ tst_movements(MENU_ARGS)
     hlfxtra = (width - 80) / 2;
 
     if (LOG_ENABLED)
-      fprintf(log_fp, "tst_movements box(%d cols)\n", pass ? max_cols : min_cols);
+      fprintf(log_fp, NOTE_STR "tst_movements box(%d cols)\n",
+              pass ? max_cols : min_cols);
 
     decaln();
     cup(9, inner_l);
@@ -393,7 +441,8 @@ tst_movements(MENU_ARGS)
     int region = max_lines - 6;
 
     if (LOG_ENABLED)
-      fprintf(log_fp, "tst_movements wrap(%d cols)\n", pass ? max_cols : min_cols);
+      fprintf(log_fp, NOTE_STR "tst_movements wrap(%d cols)\n",
+              pass ? max_cols : min_cols);
 
     /* note: DECCOLM clears the screen */
     if (pass == 0) {
@@ -448,7 +497,8 @@ tst_movements(MENU_ARGS)
   deccolm(FALSE);   /* 80 cols */
 
   if (LOG_ENABLED)
-    fprintf(log_fp, "tst_movements cursor-controls in ESC sequences\n");
+    fprintf(log_fp,
+            NOTE_STR "tst_movements cursor-controls in ESC sequences\n");
 
   vt_clear(2);
   vt_move(1, 1);
@@ -479,7 +529,8 @@ tst_movements(MENU_ARGS)
   holdit();
 
   if (LOG_ENABLED)
-    fprintf(log_fp, "tst_movements leading zeros in ESC sequences\n");
+    fprintf(log_fp,
+            NOTE_STR "tst_movements leading zeros in ESC sequences\n");
 
   vt_clear(2);
   vt_move(1, 1);
@@ -1167,7 +1218,7 @@ bug_d(MENU_ARGS)
 
     cup(4, 9);
     decdwl();
-    result = inchar();
+    result = get_char();
     readnl();
     deccolm(FALSE);
   } while (result == '1');
@@ -1367,7 +1418,7 @@ initterminal(int pn)
 static void
 enable_iso2022(void)
 {
-  char *env;
+  const char *env;
 
 #ifdef HAVE_LANGINFO_CODESET
   (void) setlocale(LC_CTYPE, "");
@@ -1392,20 +1443,22 @@ enable_iso2022(void)
   }
 #endif
 
-  if (LOG_ENABLED) {
-    fprintf(log_fp, "%senable ISO-2022 (%s)\n",
-            assume_utf8 ? "" : "Do not ",
-            env);
-  }
-  if (assume_utf8) {
+  if (assume_utf8 && !allows_utf8) {
+    if (LOG_ENABLED) {
+      fprintf(log_fp, NOTE_STR "%senable ISO-2022 (%s)\n",
+              assume_utf8 ? "" : "Do not ",
+              env);
+    }
     esc("%@");
+  } else if (LOG_ENABLED) {
+    fprintf(log_fp, NOTE_STR "Keep UTF-8 enabled\n");
   }
 }
 
 static void
 disable_iso2022(void)
 {
-  if (assume_utf8) {
+  if (assume_utf8 && !allows_utf8) {
     esc("%G");
   }
 }
@@ -1415,7 +1468,7 @@ int
 setup_terminal(MENU_ARGS)
 {
   if (LOG_ENABLED)
-    fprintf(log_fp, "Setup Terminal with test-defaults\n");
+    fprintf(log_fp, NOTE_STR "Setup Terminal with test-defaults\n");
 
   enable_iso2022();
 
@@ -1442,7 +1495,7 @@ bye(void)
 {
   /* Force my personal prejudices upon the poor luser   */
   if (LOG_ENABLED)
-    fprintf(log_fp, "Cleanup & exit\n");
+    fprintf(log_fp, NOTE_STR "Cleanup & exit\n");
 
   default_level();  /* Enter ANSI mode (if in VT52 mode)    */
   decckm(FALSE);  /* cursor keys normal   */
@@ -1533,7 +1586,7 @@ scan_DA(const char *str, int *pos)
 }
 
 int
-scan_any(char *str, int *pos, int toc)
+scan_any(const char *str, int *pos, int toc)
 {
   int value = 0;
 
@@ -1581,7 +1634,7 @@ show_entry(MENU *table, int number)
 }
 
 static int
-next_menu(MENU *table, int top, int size)
+next_menu(const MENU *table, int top, int size)
 {
   int last;
   int next = top + size;
@@ -1602,7 +1655,7 @@ menu2(MENU *table, int top)
 {
   int i, tablesize, choice;
   char c;
-  char storage[BUFSIZ];
+  char storage[BUF_SIZE];
   int pagesize = max_lines - 7 - TITLE_LINE;
   int pagetop = 1;
 
@@ -1625,7 +1678,8 @@ menu2(MENU *table, int top)
       show_entry(table, pagetop + i);
     }
 
-    printxx("\n          Enter choice number (0 - %d): ", tablesize);
+    println("");
+    printxx("          Enter choice number (0 - %d): ", tablesize);
     for (;;) {
       char *s = storage;
       int redraw = FALSE;
@@ -1655,17 +1709,22 @@ menu2(MENU *table, int top)
         }
       }
 
-      if (redraw)
+      if (redraw) {
+        if (LOG_ENABLED)
+          fprintf(log_fp, NOTE_STR "Redrawing screen\n");
         break;
+      }
 
       if (choice < 0) {
+        if (LOG_ENABLED)
+          fprintf(log_fp, NOTE_STR "Selecting all choices\n");
         for (choice = 0; choice <= tablesize; choice++) {
           vt_clear(2);
           if (table[choice].dispatch != 0) {
             const char *save = push_menu(choice);
             const char *name = table[choice].description;
             if (LOG_ENABLED)
-              fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
+              fprintf(log_fp, NOTE_STR "choice %s: %s\n", current_menu, name);
             if ((*table[choice].dispatch) (name) == MENU_HOLD)
               holdit();
             pop_menu(save);
@@ -1680,7 +1739,7 @@ menu2(MENU *table, int top)
           const char *save = push_menu(choice);
           const char *name = table[choice].description;
           if (LOG_ENABLED)
-            fprintf(log_fp, "Menu %s: %s\n", current_menu, name);
+            fprintf(log_fp, NOTE_STR "choice %s: %s\n", current_menu, name);
           if ((*table[choice].dispatch) (name) != MENU_NOHOLD)
             holdit();
           pop_menu(save);
@@ -1893,10 +1952,10 @@ skip_digits(char *src)
             ? ((c) + 10 - 'A') \
             : ((c) + 10 - 'a')))
 
-char *
-skip_xdigits(char *src, int *value)
+const char *
+skip_xdigits(const char *src, int *value)
 {
-  char *base = src;
+  const char *base = src;
   *value = 0;
   while (*src != '\0' && isxdigit(CharOf(*src))) {
     int ch = CharOf(*src);
@@ -1951,7 +2010,7 @@ strip_terminator(char *src)
     }
   }
   if (!ok && LOG_ENABLED)
-    fprintf(log_fp, "Missing ST\n");
+    fprintf(log_fp, NOTE_STR "Missing ST\n");
   return ok;
 }
 
@@ -2031,7 +2090,7 @@ show_result(const char *fmt, ...)
   va_end(ap);
 
   if (LOG_ENABLED) {
-    fputs("Result: ", log_fp);
+    fputs(NOTE_STR "result ", log_fp);
     va_start(ap, fmt);
     my_vfprintf(log_fp, ap, fmt);
     va_end(ap);

@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.40 2022/02/15 22:20:40 tom Exp $ */
+/* $Id: color.c,v 1.41 2024/10/02 00:08:06 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -265,7 +265,7 @@ show_test_pattern(MENU_ARGS)
  * Clear around the box for simple_bce_test().
  */
 static void
-simple_bce_erases(BOX *box)
+simple_bce_erases(const BOX *box)
 {
   int i;
 
@@ -351,7 +351,7 @@ simple_bce_test(MENU_ARGS)
  * Clear around the box for fancy_bce_test().
  */
 static void
-fancy_bce_erases(BOX *box)
+fancy_bce_erases(const BOX *box)
 {
   int i;
 
@@ -387,7 +387,7 @@ fancy_bce_erases(BOX *box)
  * Scroll the box up/down to check if the colors are being shifted in.
  */
 static void
-fancy_bce_shifts(BOX *box)
+fancy_bce_shifts(const BOX *box)
 {
   int i;
   int limit = box->top - 1;

@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.77 2024/09/29 10:38:28 tom Exp $ */
+/* $Id: esc.h,v 1.78 2024/10/10 08:23:36 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -110,8 +110,6 @@ const char *csi_input(void);
 const char *csi_output(void);
 const char *dcs_input(void);
 const char *dcs_output(void);
-char *get_reply(void);
-char *instr(void);
 const char *osc_input(void);
 const char *osc_output(void);
 char *ss2_input(void);
@@ -120,7 +118,6 @@ char *ss3_input(void);
 char *ss3_output(void);
 char *st_input(void);
 char *st_output(void);
-char inchar(void);
 int cup(int pn1, int pn2);
 int decdc(int pn);
 int decic(int pn);

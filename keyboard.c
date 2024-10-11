@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.41 2022/02/26 16:33:40 tom Exp $ */
+/* $Id: keyboard.c,v 1.46 2024/10/10 08:22:28 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -293,10 +293,17 @@ struct natkey {
   const char *natsymbol;
 };
 
-static int same_CTLKEY(const char *response, CTLKEY *code);
+#define TR_BEGIN(func) \
+  if (LOG_ENABLED) \
+    fprintf(log_fp, NOTE_STR #func "(%s)\n", flag ? "hilite" : "")
+#define TR_ENDED(func) \
+  if (LOG_ENABLED) \
+    fprintf(log_fp, NOTE_STR "..." #func "(%s)\n", flag ? "hilite" : "")
+
+static int same_CTLKEY(const char *response, const CTLKEY *code);
 
 static int
-find_cursor_key(char *curkeystr, int ckeymode)
+find_cursor_key(const char *curkeystr, int ckeymode)
 {
   int i;
 
@@ -309,7 +316,7 @@ find_cursor_key(char *curkeystr, int ckeymode)
 }
 
 static int
-find_editing_key(char *keypadstr, int fkeymode)
+find_editing_key(const char *keypadstr, int fkeymode)
 {
   int i;
 
@@ -322,7 +329,7 @@ find_editing_key(char *keypadstr, int fkeymode)
 }
 
 static int
-find_function_key(char *keypadstr, int fkeymode)
+find_function_key(const char *keypadstr, int fkeymode)
 {
   int i;
 
@@ -335,7 +342,7 @@ find_function_key(char *keypadstr, int fkeymode)
 }
 
 static int
-find_num_keypad_key(char *keypadstr, int fkeymode)
+find_num_keypad_key(const char *keypadstr, int fkeymode)
 {
   int i;
 
@@ -372,7 +379,7 @@ default_layout(MENU_ARGS)
 }
 
 static int
-same_CTLKEY(const char *response, CTLKEY *code)
+same_CTLKEY(const char *response, const CTLKEY *code)
 {
   switch (code->prefix) {
   case CSI:
@@ -478,7 +485,7 @@ set_E47_layout(MENU_ARGS)
 }
 
 static void
-show_character(int i, char *scs_params, int hilite)
+show_character(int i, const char *scs_params, int hilite)
 {
   int special = ((scs_params != 0) && (strlen(keytab[i].symbol) == 1));
 
@@ -499,6 +506,8 @@ show_cursor_keys(int flag)
 {
   int i;
 
+  TR_BEGIN(show_cursor_keys);
+
   curkeytab = (terminal_id() < 200) ? VT100_curkeytab : LK401_curkeytab;
 
   for (i = 0; curkeytab[i].curkeysymbol[0] != '\0'; i++) {
@@ -509,6 +518,8 @@ show_cursor_keys(int flag)
     if (flag)
       vt_hilite(FALSE);
   }
+
+  TR_ENDED(show_cursor_keys);
 }
 
 static void
@@ -516,6 +527,8 @@ show_editing_keypad(int flag)
 {
   if (terminal_id() >= 200) {
     int i;
+
+    TR_BEGIN(show_editing_keypad);
 
     for (i = 0; edt_keypadtab[i].fnkeysymbol[0] != '\0'; i++) {
       vt_move(1 + 2 * edt_keypadtab[i].fnkeyrow, 1 + edt_keypadtab[i].fnkeycol);
@@ -525,6 +538,8 @@ show_editing_keypad(int flag)
       if (flag)
         vt_hilite(FALSE);
     }
+
+    TR_ENDED(show_editing_keypad);
   }
 }
 
@@ -534,6 +549,8 @@ show_function_keys(int flag)
   if (terminal_id() >= 200) {
     int i;
 
+    TR_BEGIN(show_function_keys);
+
     for (i = 0; fnkeytab[i].fnkeysymbol[0] != '\0'; i++) {
       vt_move(1 + 2 * fnkeytab[i].fnkeyrow, 1 + fnkeytab[i].fnkeycol);
       if (flag)
@@ -542,13 +559,18 @@ show_function_keys(int flag)
       if (flag)
         vt_hilite(FALSE);
     }
+
+    TR_ENDED(show_function_keys);
   }
 }
 
 static void
-show_keyboard(int flag GCC_UNUSED, char *scs_params)
+show_keyboard(int flag GCC_UNUSED, const char *scs_params)
 {
   int i;
+
+  if (LOG_ENABLED)
+    fprintf(log_fp, NOTE_STR "show_keyboard()\n");
 
   if (terminal_id() >= 200)   /* LK201 _looks_ the same as LK401 (to me) */
     keytab = LK401_keytab;
@@ -558,12 +580,17 @@ show_keyboard(int flag GCC_UNUSED, char *scs_params)
   for (i = 0; keytab[i].c != '\0'; i++) {
     show_character(i, scs_params, TRUE);
   }
+
+  if (LOG_ENABLED)
+    fprintf(log_fp, NOTE_STR "...show_keyboard()\n");
 }
 
 static void
 show_numeric_keypad(int flag)
 {
   int i;
+
+  TR_BEGIN(show_numeric_keypad);
 
   for (i = 0; num_keypadtab[i].fnkeysymbol[0] != '\0'; i++) {
     vt_move(1 + 2 * num_keypadtab[i].fnkeyrow, 1 + num_keypadtab[i].fnkeycol);
@@ -573,6 +600,8 @@ show_numeric_keypad(int flag)
     if (flag)
       vt_hilite(FALSE);
   }
+
+  TR_ENDED(show_numeric_keypad);
 }
 
 /******************************************************************************/
@@ -580,7 +609,7 @@ show_numeric_keypad(int flag)
 static int
 tst_AnswerBack(MENU_ARGS)
 {
-  char *abmstr;
+  const char *abmstr;
 
   set_tty_crmod(TRUE);
   vt_clear(2);
@@ -616,7 +645,7 @@ tst_AnswerBack(MENU_ARGS)
 static int
 tst_AutoRepeat(MENU_ARGS)
 {
-  char arptstring[BUFSIZ];
+  char arptstring[BUF_SIZE];
 
   vt_clear(2);
   vt_move(10, 1);
@@ -627,8 +656,6 @@ tst_AutoRepeat(MENU_ARGS)
   tprintf("%s", "Auto Repeat OFF: ");
   decarm(FALSE);  /* DECARM */
   inputline(arptstring);
-  if (LOG_ENABLED)
-    fprintf(log_fp, "Input: %s\n", arptstring);
   if (strlen(arptstring) == 0)
     println("No characters read!??");
   else if (strlen(arptstring) == 1)
@@ -641,8 +668,6 @@ tst_AutoRepeat(MENU_ARGS)
   tprintf("%s", "Auto Repeat ON: ");
   decarm(TRUE);
   inputline(arptstring);
-  if (LOG_ENABLED)
-    fprintf(log_fp, "Input: %s\n", arptstring);
   if (strlen(arptstring) == 0)
     println("No characters read!??");
   else if (strlen(arptstring) == 1)
@@ -721,7 +746,7 @@ tst_ControlKeys(MENU_ARGS)
     int row, col;
 
     vt_move(row = max_lines - 1, col = 1);
-    kbdc = inchar();
+    kbdc = get_char();
     if (kbdc < 0)
       break;
     vt_move(row, col);
@@ -763,7 +788,7 @@ tst_CursorKeys(MENU_ARGS)
   int i;
   int ckeymode;
   int row, col;
-  char *curkeystr;
+  const char *curkeystr;
   VTLEVEL save;
 
   static const char *curkeymodes[3] =
@@ -836,7 +861,7 @@ tst_EditingKeypad(MENU_ARGS)
   int i;
   int fkeymode;
   int row, col;
-  char *fnkeystr;
+  const char *fnkeystr;
   VTLEVEL save;
 
   static const char *fnkeymodes[] =
@@ -913,7 +938,7 @@ tst_FunctionKeys(MENU_ARGS)
   int i;
   int fkeymode;
   int row, col;
-  char *fnkeystr;
+  const char *fnkeystr;
   VTLEVEL save;
 
   static const char *fnkeymodes[] =
@@ -990,7 +1015,7 @@ tst_NumericKeypad(MENU_ARGS)
   int i;
   int fkeymode;
   int row, col;
-  char *fnkeystr;
+  const char *fnkeystr;
   VTLEVEL save;
 
   static const char *fnkeymodes[4] =
@@ -1122,7 +1147,7 @@ tst_LED_Lights(MENU_ARGS)
 
 /******************************************************************************/
 int
-tst_keyboard_layout(char *scs_params)
+tst_keyboard_layout(const char *scs_params)
 {
   int i;
   int kbdc;
@@ -1146,7 +1171,7 @@ tst_keyboard_layout(char *scs_params)
   do {          /* while (kbdc != 13) */
     int row, col;
     vt_move(row = max_lines - 1, col = 1);
-    kbdc = inchar();
+    kbdc = get_char();
     vt_move(row, col);
     vt_el(0);
     if (scs_params != 0 && kbdc > ' ' && kbdc < '\177') {
@@ -1184,7 +1209,7 @@ tst_keyboard(MENU_ARGS)
       { "Exit",                                              0 },
       { "LED Lights",                                        tst_LED_Lights },
       { "Auto Repeat",                                       tst_AutoRepeat },
-      { "KeyBoard Layout",                                   tst_KeyboardLayout },
+      { "Keyboard Layout",                                   tst_KeyboardLayout },
       { "Cursor Keys",                                       tst_CursorKeys },
       { "Numeric Keypad",                                    tst_NumericKeypad },
       { "Editing Keypad",                                    tst_EditingKeypad },

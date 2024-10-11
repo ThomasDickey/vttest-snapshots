@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.26 2022/02/27 10:05:56 tom Exp $ */
+/* $Id: ttymodes.c,v 1.27 2024/10/04 00:34:21 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -126,7 +126,7 @@ void
 log_ttymodes(char *file, int line)
 {
   if (LOG_ENABLED)
-    fprintf(log_fp, "%s @%d\n", file, line);
+    fprintf(log_fp, NOTE_STR "%s @%d\n", file, line);
 }
 #endif
 
@@ -137,19 +137,19 @@ dump_ttymodes(char *tag, int flag)
 #ifdef UNIX
   TTY tmp_modes;
   if (LOG_ENABLED) {
-    fprintf(log_fp, "%s (%d):\n", tag, flag);
+    fprintf(log_fp, NOTE_STR "%s (%d):\n", tag, flag);
 # if USE_POSIX_TERMIOS || USE_TERMIO
     tcgetattr(0, &tmp_modes);
-    fprintf(log_fp, " iflag %08o\n", tmp_modes.c_iflag);
-    fprintf(log_fp, " oflag %08o\n", tmp_modes.c_oflag);
-    fprintf(log_fp, " lflag %08o\n", tmp_modes.c_lflag);
+    fprintf(log_fp, NOTE_STR " iflag %08o\n", tmp_modes.c_iflag);
+    fprintf(log_fp, NOTE_STR " oflag %08o\n", tmp_modes.c_oflag);
+    fprintf(log_fp, NOTE_STR " lflag %08o\n", tmp_modes.c_lflag);
     if (!tmp_modes.c_lflag & ICANON) {
-      fprintf(log_fp, " %d:min  =%d\n", VMIN, tmp_modes.c_cc[VMIN]);
-      fprintf(log_fp, " %d:time =%d\n", VTIME, tmp_modes.c_cc[VTIME]);
+      fprintf(log_fp, NOTE_STR " %d:min  =%d\n", VMIN, tmp_modes.c_cc[VMIN]);
+      fprintf(log_fp, NOTE_STR " %d:time =%d\n", VTIME, tmp_modes.c_cc[VTIME]);
     }
 # else
     gtty(0, &tmp_modes);
-    fprintf(log_fp, " flags %08o\n", tmp_modes.sg_flags);
+    fprintf(log_fp, NOTE_STR " flags %08o\n", tmp_modes.sg_flags);
 # endif
   }
 #endif

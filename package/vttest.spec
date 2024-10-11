@@ -1,8 +1,8 @@
 Summary: Test VT100-type terminal
 %define AppProgram vttest
-%define AppPatched 20240929
+%define AppPatched 20241010
 %define AppVersion 2.7.%{AppPatched}
-# $XTermId: vttest.spec,v 1.62 2024/09/29 22:28:16 tom Exp $
+# $XTermId: vttest.spec,v 1.65 2024/10/10 00:07:17 tom Exp $
 Name: %{AppProgram}
 Version: %{AppVersion}
 Release: 1
@@ -55,11 +55,11 @@ strip $RPM_BUILD_ROOT%{_bindir}/%{AppProgram}
 %changelog
 # each patch should add its ChangeLog entries here
 
-* Thu Dec 29 2022 Thomas Dickey
+* Thu Dec 29 2022 Thomas E. Dickey
 - update URLs
 
-* Mon Jul 02 2018 Thomas Dickey
+* Mon Jul 02 2018 Thomas E. Dickey
 - use recommended flags for build
 
-* Thu Aug 26 2010 Thomas Dickey
+* Thu Aug 26 2010 Thomas E. Dickey
 - initial version

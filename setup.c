@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.44 2024/09/25 23:57:49 tom Exp $ */
+/* $Id: setup.c,v 1.50 2024/10/07 08:13:28 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -171,9 +171,9 @@ find_levels(void)
   }
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "Max Operating Level: %d\n", max_level);
-    fprintf(log_fp, "Cur Operating Level: %d\n", cur_level);
-    fprintf(log_fp, "Derived terminal-id: %d\n", actual_id);
+    fprintf(log_fp, NOTE_STR "Max Operating Level: %d\n", max_level);
+    fprintf(log_fp, NOTE_STR "Cur Operating Level: %d\n", cur_level);
+    fprintf(log_fp, NOTE_STR "Derived terminal-id: %d\n", actual_id);
   }
 
   restore_ttymodes();
@@ -203,7 +203,7 @@ static int
 toggle_Logging(MENU_ARGS)
 {
   if (log_fp == 0)
-    enable_logging();
+    enable_logging(NULL);
   else
     log_disabled = !log_disabled;
   return MENU_NOHOLD;
@@ -243,7 +243,11 @@ toggle_8bit_in(MENU_ARGS)
 static int
 toggle_7bit_fsm(MENU_ARGS)
 {
-  parse_7bits = !parse_7bits;
+  if (assume_utf8 && allows_utf8) {
+    parse_7bits = (parse_7bits + 1) % 3;
+  } else {
+    parse_7bits = !parse_7bits;
+  }
   return MENU_NOHOLD;
 }
 
@@ -269,13 +273,23 @@ toggle_8bit_out(MENU_ARGS)
 
 /******************************************************************************/
 
+/*
+ * While processing command-lines, "pathname" is non-null.  After that, it can
+ * be null to temporarily disable logging.
+ */
 void
-enable_logging(void)
+enable_logging(const char *pathname)
 {
-  static char my_name[] = "vttest.log";
-  log_fp = fopen(my_name, "w");
-  if (log_fp == 0) {
-    failed(my_name);
+  static char *my_name;
+  if (pathname != NULL) {
+    free(my_name);
+    my_name = strdup(pathname);
+  }
+  if (my_name != NULL) {
+    log_fp = fopen(my_name, "w");
+    if (log_fp == NULL) {
+      failed(my_name);
+    }
   }
 }
 
@@ -286,7 +300,7 @@ reset_level(void)
 }
 
 void
-restore_level(VTLEVEL *save)
+restore_level(const VTLEVEL *save)
 {
   set_level(save->cur_level);
   if (cur_level > 1
@@ -305,7 +319,8 @@ save_level(VTLEVEL *save)
   save->parse_7bits = parse_7bits;
 
   if (LOG_ENABLED)
-    fprintf(log_fp, "save_level(%d) in=%d, out=%d, fsm=%d\n", cur_level,
+    fprintf(log_fp, NOTE_STR "save_level(%d) in=%d, out=%d, fsm=%d\n",
+            cur_level,
             input_8bits ? 8 : 7,
             output_8bits ? 8 : 7,
             parse_7bits ? 8 : 7);
@@ -324,7 +339,7 @@ set_level(int request)
     find_levels();
 
   if (LOG_ENABLED)
-    fprintf(log_fp, "set_level(%d)\n", request);
+    fprintf(log_fp, NOTE_STR "set_level(%d)\n", request);
 
   if (request > max_level) {
     printxx("Sorry, this terminal supports only VT%d\n", terminal_id());
@@ -359,7 +374,8 @@ set_level(int request)
   }
 
   if (LOG_ENABLED)
-    fprintf(log_fp, "...set_level(%d) in=%d, out=%d, fsm=%d\n", cur_level,
+    fprintf(log_fp, NOTE_STR "...set_level(%d) in=%d, out=%d, fsm=%d\n",
+            cur_level,
             input_8bits ? 8 : 7,
             output_8bits ? 8 : 7,
             parse_7bits ? 8 : 7);
@@ -418,10 +434,24 @@ tst_setup(MENU_ARGS)
     find_levels();
 
   do {
-    sprintf(txt_output, "Send %d-bit controls", output_8bits ? 8 : 7);
+    sprintf(txt_output, "Send %s controls",
+            (output_8bits
+             ? ((parse_7bits > 1)
+                ? "C2"
+                : "8-bit")
+             : "7-bit"));
     sprintf(txt_input8, "Receive %d-bit controls", input_8bits ? 8 : 7);
-    sprintf(txt_parse7, "Assume %d-bit parser (ECMA-48 section 9)",
-            parse_7bits ? 7 : 8);
+    switch (parse_7bits) {
+    default:
+    case 1:
+      sprintf(txt_parse7, "Assume %d-bit parser (see ECMA-48 section 9)",
+              parse_7bits ? 7 : 8);
+      break;
+    case 2:
+      sprintf(txt_parse7,
+              "Assume parser accepts C2 (Unicode.org two-byte encoding)");
+      break;
+    }
     sprintf(txt_DECSCL, "Operating level %d (VT%d)",
             cur_level, cur_level ? cur_level * 100 : 52);
     sprintf(txt_logging, "Logging %s", STR_ENABLED(LOG_ENABLED));

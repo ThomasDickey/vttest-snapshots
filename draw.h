@@ -1,4 +1,4 @@
-/* $Id: draw.h,v 1.4 2012/04/25 09:21:24 tom Exp $ */
+/* $Id: draw.h,v 1.5 2024/10/02 00:12:34 tom Exp $ */
 
 typedef struct {
   int top;
@@ -8,7 +8,7 @@ typedef struct {
 } BOX;
 
 extern int make_box_params(BOX *box, int vmargin, int hmargin);
-extern void draw_box_outline(BOX *box, int mark);
-extern void draw_box_filled(BOX *box, int mark);
-extern void draw_box_caption(BOX *box, int margin, const char **c);
+extern void draw_box_outline(const BOX *box, int mark);
+extern void draw_box_filled(const BOX *box, int mark);
+extern void draw_box_caption(const BOX *box, int margin, const char **c);
 extern void ruler(int row, int width);

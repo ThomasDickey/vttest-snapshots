@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.53 2024/09/19 00:01:14 tom Exp $ */
+/* $Id: reports.c,v 1.56 2024/10/08 23:06:36 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -98,14 +98,14 @@ legend(int n, const char *input, const char *word, const char *description)
 {
   int i;
   size_t len = strlen(word);
-  char buf[BUFSIZ];
+  char buf[BUF_SIZE];
 
   for (i = 0; input[i] != 0; i++) {
     if ((i == 0 || !isalpha(CharOf(input[i - 1])))
         && !strncmp(word, input + i, len)) {
       sprintf(buf, "%-8s %-3s = %s", n ? "" : "Legend:", word, description);
       show_result("%s", buf);
-      println("");
+      putchar('\n');
       return n + 1;
     }
   }
@@ -191,7 +191,7 @@ tst_DA(MENU_ARGS)
       if (!strcmp(cmp, attributes[i][0])) {
         int n = 0;
         show_result(" -- means %s", attributes[i][1]);
-        println("");
+        putchar('\n');
         n = legend(n, attributes[i][1], "STP", "Processor Option");
         n = legend(n, attributes[i][1], "AVO", "Advanced Video Option");
         n = legend(n, attributes[i][1], "GPO", "Graphics Processor Option");
@@ -207,10 +207,10 @@ tst_DA(MENU_ARGS)
       int reportpos = 1;
       int value = scan_DA(cmp, &reportpos);
       show_result("%s\n", lookup(operating_level, value));
-      println("");
+      putchar('\n');
       if (value == 12) {
         if ((value = scan_DA(cmp, &reportpos)) >= 0) {
-          printxx("   ");
+          fputs("   ", stdout);
           switch (value) {
           case 2:
             show_result("no STP, AVO, no GPO (ReGIS)");
@@ -228,10 +228,10 @@ tst_DA(MENU_ARGS)
             printxx("unknown code %d", value);
             break;
           }
-          println("");
+          putchar('\n');
         }
         if ((value = scan_DA(cmp, &reportpos)) >= 0) {
-          printxx("   ");
+          fputs("   ", stdout);
           switch (value) {
           case 0:
             show_result("no printer");
@@ -243,17 +243,17 @@ tst_DA(MENU_ARGS)
             printxx("unknown code %d", value);
             break;
           }
-          println("");
+          putchar('\n');
         }
         if ((value = scan_DA(cmp, &reportpos)) >= 0) {
           tprintf("    ROM version %d", value);
-          println("");
+          putchar('\n');
         }
       } else {
         while ((value = scan_DA(cmp, &reportpos)) >= 0) {
-          printxx("   ");
+          fputs("   ", stdout);
           show_result("%d = %s\n", value, lookup(extensions, value));
-          println("");
+          putchar('\n');
         }
       }
       found = TRUE;
@@ -484,7 +484,8 @@ tst_DSR(MENU_ARGS)
   int found;
   int origin;
   int row, col;
-  char *report, *cmp;
+  char *report;
+  const char *cmp;
 
   set_tty_raw(TRUE);
 
@@ -556,7 +557,7 @@ static int
 tst_ENQ(MENU_ARGS)
 {
   int row, col;
-  char *report;
+  const char *report;
 
   vt_move(5, 1);
   println("This is a test of the ANSWERBACK MESSAGE. (To load the A.B.M.");
@@ -585,7 +586,7 @@ static int
 tst_NLM(MENU_ARGS)
 {
   int row, col;
-  char *report;
+  const char *report;
 
   vt_move(1, 1);
   println("Test of LineFeed/NewLine mode.");

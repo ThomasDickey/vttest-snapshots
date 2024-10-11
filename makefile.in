@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.49 2020/09/20 17:16:34 tom Exp $
+# $Id: makefile.in,v 1.50 2024/10/07 00:20:47 tom Exp $
 # Makefile-template for 'vttest'
 
 THIS = vttest
@@ -71,6 +71,7 @@ C_SRC = \
 	mouse.c \
 	nonvt100.c \
 	printer.c \
+	replay.c \
 	reports.c \
 	reset.c \
 	setup.c \
@@ -101,6 +102,7 @@ OBJS  = \
 	mouse$o \
 	nonvt100$o \
 	printer$o \
+	replay$o \
 	reports$o \
 	reset$o \
 	setup$o \
@@ -118,7 +120,7 @@ OBJS  = \
 	xterm$o
 
 SRC =	patchlev.h \
-	CHANGES COPYING README BUGS \
+	CHANGES COPYING README \
 	$(THIS).1 \
 	$(C_SRC) $(H_SRC) \
 	tech.set \

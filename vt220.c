@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.40 2024/02/18 23:57:50 tom Exp $ */
+/* $Id: vt220.c,v 1.42 2024/10/02 00:04:02 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -11,7 +11,7 @@
 #include <esc.h>
 
 int
-any_DSR(MENU_ARGS, const char *text, void (*explain) (char *report))
+any_DSR(MENU_ARGS, const char *text, void (*explain) (const char *report))
 {
   int row, col;
   char *report;
@@ -56,7 +56,7 @@ report_ok(const char *ref, const char *tst)
  * Response CSI ? 27; Ps n
  */
 static void
-show_KeyboardStatus(char *report)
+show_KeyboardStatus(const char *report)
 {
   int pos = 0;
   int code;
@@ -148,7 +148,7 @@ show_KeyboardStatus(char *report)
 }
 
 static void
-show_PrinterStatus(char *report)
+show_PrinterStatus(const char *report)
 {
   int pos = 0;
   int code = scanto(report, &pos, 'n');
@@ -168,7 +168,7 @@ show_PrinterStatus(char *report)
 }
 
 static void
-show_UDK_Status(char *report)
+show_UDK_Status(const char *report)
 {
   int pos = 0;
   int code = scanto(report, &pos, 'n');
@@ -205,7 +205,7 @@ tst_S8C1T(MENU_ARGS)
   set_tty_echo(FALSE);
 
   for (pass = 0; pass < 2; pass++) {
-    char *report;
+    const char *report;
     int row, col;
 
     flag = !flag;
@@ -490,7 +490,7 @@ tst_DECUDK(MENU_ARGS)
 
   for (;;) {
     int row, col;
-    char *report = instr();
+    const char *report = instr();
 
     if (*report == 'q')
       break;
@@ -526,7 +526,7 @@ tst_DSR_userkeys(MENU_ARGS)
 }
 
 static void
-show_OperatingStatus(char *report)
+show_OperatingStatus(const char *report)
 {
   int pos = 0;
   int Ps1 = scan_any(report, &pos, 'n');

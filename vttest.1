@@ -1,19 +1,72 @@
-.\" $Id: vttest.1,v 1.19 2020/09/20 18:00:03 tom Exp $
-.TH VTTEST 1 2020-09-20 "" "User commands"
+.\" $Id: vttest.1,v 1.25 2024/10/10 08:06:45 tom Exp $
+.TH VTTEST 1 2024-10-10 "" "User commands"
 .\" Bulleted paragraph
 .de bP
 .ie n  .IP \(bu 4
 .el    .IP \(bu 2
 ..
+.ie \n(.g .ds : \:
+.el       .ds : \" empty
+.
 .\" Escape single quotes in literal strings from groff's Unicode transform.
-.ie \n(.g .ds `` \(lq
-.el       .ds `` ``
-.ie \n(.g .ds '' \(rq
-.el       .ds '' ''
+.ie \n(.g \{\
+.ds `` \(lq
+.ds '' \(rq
+.\}
+.el \{\
+.ie t .ds `` ``
+.el   .ds `` ""
+.ie t .ds '' ''
+.el   .ds '' ""
+.\}",
+.\" URL hyperlink support macros from groff's "an-ext.tmac"
+.
+.\" Save the automatic hyphenation mode.
+.\"
+.\" In AT&T troff, there was no register exposing the hyphenation mode,
+.\" and no way to save and restore it.  Set `mH` to a reasonable value
+.\" for your implementation and preference.
+.de mY
+.  ie !\\n(.g \
+.    nr mH 14
+.  el \
+.    do nr mH \\n[.hy] \" groff extension register
+..
+.
+.\" Prepare link text for mail/web hyperlinks.  `MT` and `UR` call this.
+.de mV
+.  ds mU \\$1\"
+..
+.
+.\" Emit hyperlink.  The optional argument supplies trailing punctuation
+.\" after link text.  `ME` and `UE` call this.
+.de mQ
+.  mY
+.  nh
+<\\*(mU>\\$1
+.  hy \\n(mH
+.  rm mU
+..
+.
+.\" Start URL.
+.\" .UR url
+.if !\n(.g \{\
+.de UR
+.  mV \\$1
+..
+.\}
+.
+.\" End URL.
+.\" .UE [punctuation]
+.if !\n(.g \{\
+.de UE
+.  mQ \\$1
+..
+.\}
 .
 .SH NAME
-vttest \- test VT100-type terminal
-.
+vttest \-
+test VT100-type terminal
 .SH SYNOPSIS
 .B vttest \fI[options] [24x80.132]
 .
@@ -54,6 +107,11 @@ Other options are:
 .B \-V
 print the program version, and exit.
 .TP 5
+.BI \-c " commands"
+replay commands recorded by the logging option.
+Some keyboard and mouse input is required, depending on the tests,
+but otherwise menu selection and next-page responses are automated.
+.TP 5
 .BI \-f " fontfile"
 specify a file containing a DRCS (soft character definition) string.
 .TP 5
@@ -70,14 +128,47 @@ e.g., any-event mouse tests, to improve readability of the test.
 .B \-s
 add time-delay in selected panning/scrolling options to show details.
 .TP 5
+.B \-u
+suppress switch from UTF-8 mode on startup,
+and enable a third setting in the 7-bit/8-bit parsing test to allow for
+C2 controls as an alternate to 8-bit C1.
+.TP 5
 .B \-8
 use 8-bit controls (this can be changed with a menu option).
 .
-.SH AUTHOR
+.SH ENVIRONMENT
+When \fBvttest\fP starts, it checks the locale (LC_ALL, etc.),
+to determine if the terminal uses UTF-8,
+and normally switches the terminal to ISO-8859\ 1.
+Use the \*(``\fB\-u\fR\*('' option to disable this switching,
+and provide some special cases where UTF-8 encoding is accepted.
+.PP
+For example, the Unicode specification does not document its relationship
+to ECMA-48 (ISO 6429) beyond listing C0 and C1 codes which Unicode treats
+as whitespace.
+The latter (i.e., NEL U+0085) is misleading because Unicode
+describes C1 controls only obliquely.
+It goes into a little more detail regarding ECMA-35 (ISO 2022).
+\fBvttest\fP allows for both the standard encoding of C1 (single byte)
+and the variant implied by Unicode,
+referred to here as C2 (two bytes) to distinguish the two encodings.
+.
+.SH AUTHORS
 Per Lindberg
 (mcvax,seismo)!enea!suadb!lindberg
 sometime 1985.
 
-Modified by Thomas Dickey
+Modified by Thomas E. Dickey
 from June 1996, to support nonstandard screen geometry,
-VT220-VT520, ISO color and xterm-specific tests.
+VT220-VT525, ISO color and xterm-specific tests.
+.
+.SH SEE ALSO
+.nf
+.I "XTerm Control Sequences"
+.UR https://\*:invisible\-\*:island\*:.net/\*:xterm/\*:ctlseqs/\*:ctlseqs\*:.html
+.UE
+.br
+.UR https://\*:github\*:.com/\*:mattiase/\*:wraptest/
+.I "DEC VT terminal line-wrapping semantics"
+.UE
+.fi

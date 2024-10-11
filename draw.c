@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.13 2022/02/15 22:35:32 tom Exp $ */
+/* $Id: draw.c,v 1.14 2024/10/02 00:08:24 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -34,7 +34,7 @@ make_box_params(BOX *box, int vmargin, int hmargin)
 }
 
 void
-draw_box_outline(BOX *box, int mark)
+draw_box_outline(const BOX *box, int mark)
 {
   int j;
   int tlc = (mark < 0) ? 'l' : mark;
@@ -73,7 +73,7 @@ draw_box_outline(BOX *box, int mark)
 }
 
 void
-draw_box_filled(BOX *box, int mark)
+draw_box_filled(const BOX *box, int mark)
 {
   int i, j;
   int ch = (mark < 0) ? 'A' : mark;
@@ -101,7 +101,7 @@ next_word(const char *s)
 }
 
 void
-draw_box_caption(BOX *box, int margin, const char **c)
+draw_box_caption(const BOX *box, int margin, const char **c)
 {
   int x0 = (box->left + margin);
   int y0 = (box->top + margin);

@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.102 2024/09/29 13:19:36 tom Exp $ */
+/* $Id: charsets.c,v 1.105 2024/10/03 23:42:35 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -98,6 +98,8 @@ static const char map_Hebrew[]       = "`abcdefghijklmnopqrstuvwxyz";
 static const char map_Italian[]      = "#@[\\]`{|}~";
 static const char map_Norwegian[]    = "@[\\]^`{|}~";
 static const char map_Portuguese[]   = "[\\]{|}";
+static const char map_Russian[]      = "`abcdefghijklmnopqrstuvwxyz{|}~";
+static const char map_SCS[]          = "@[\\]^`{|}~";
 static const char map_Spanish[]      = "#@[\\]{|}";
 static const char map_Swedish[]      = "@[\\]^`{|}~";
 static const char map_Swiss[]        = "#@[\\]^_`{|}~";
@@ -167,8 +169,8 @@ static const CHARSETS KnownCharsets[] = {
   { Norwegian_Danish,  1, 1, 2, 9, "E",    "Norwegian/Danish", map_Norwegian },
   { Norwegian_Danish,  1, 2, 2, 9, "6",    "Norwegian/Danish", map_Norwegian },
   { Portuguese,        1, 0, 3, 9, "%6",   "Portuguese", map_Portuguese },
-  { Russian,           1, 0, 5, 9, "&5",   "Russian", 0 },
-  { SCS_NRCS,          1, 0, 5, 9, "%3",   "SCS", 0 },
+  { Russian,           1, 0, 5, 9, "&5",   "Russian", map_Russian },
+  { SCS_NRCS,          1, 0, 5, 9, "%3",   "SCS", map_SCS },
   { Spanish,           1, 0, 2, 9, "Z",    "Spanish", map_Spanish },
   { Swedish,           1, 0, 2, 9, "7",    "Swedish", map_Swedish },
   { Swedish,           1, 1, 2, 9, "H",    "Swedish", map_Swedish },
@@ -245,7 +247,7 @@ send32(int row, int upper, const char *not11)
   char buffer[33 * 8];
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "Note: send32 row %d, upper %d, not11:%s\n",
+    fprintf(log_fp, NOTE_STR "send32 row %d, upper %d, not11:%s\n",
             row, upper, not11 ? not11 : "");
   }
   for (col = 0; col <= 31; col++) {
@@ -277,7 +279,7 @@ send32(int row, int upper, const char *not11)
     used = append_sgr(buffer, used, sgr_reset);
   }
   buffer[used] = 0;
-  tprintf("%s", buffer);
+  cprintf("%s", buffer);
 }
 
 static char *
@@ -654,7 +656,7 @@ tst_vt220_single(MENU_ARGS)
           const char *p;
           for (p = tbl->not11; *p; ++p) {
             if (Not11(*p, ch)) {
-              tprintf("%s", sgr_hilite);
+              cprintf("%s", sgr_hilite);
               hilited = 1;
               break;
             }
@@ -664,7 +666,7 @@ tst_vt220_single(MENU_ARGS)
         if (ch == 127 && (tbl->cs_type != 2))
           tprintf(" ");   /* DEL should have been eaten - skip past */
         if (hilited) {
-          tprintf("%s", sgr_reset);
+          cprintf("%s", sgr_reset);
         }
         tprintf(")");
       }

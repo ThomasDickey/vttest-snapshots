@@ -1,14 +1,10 @@
-/* $Id: esc.c,v 1.107 2024/09/29 22:31:32 tom Exp $ */
+/* $Id: esc.c,v 1.117 2024/10/04 07:51:49 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 
 /* This was needed for Solaris 2.5, whose standard I/O was broken */
 #define FLUSH fflush(stdout)
-
-#define SEND_STR "Send: "   /* use this for control-sequences, sent */
-#define DATA_STR "Data: "   /* use this for test-data */
-#define TELL_STR "Text: "   /* use this for test-instructions */
 
 #define VA_OUT(fp, fmt, ap) do { \
           va_start(ap, fmt); \
@@ -204,9 +200,59 @@ println(const char *s)
 void
 put_char(FILE *fp, int c)
 {
+  c &= 0xff;
   if (fp == stdout) {
-    if (parse_7bits && (putting_data > 0) && (c >= 32) && !assume_utf8)
-      c |= 128;
+    if (parse_7bits && (putting_data > 0) && (c >= 32)) {
+      /*
+       * Construct two different tests, according to whether the locale hints
+       * that the terminal uses UTF-8.
+       */
+      if (assume_utf8) {
+        /*
+         * In the first case, we are told that the parser expects C2 where the
+         * test sends a C1 character.  Unicode.org inverted ECMA-48 to do away
+         * with the possibility of using non-UTF-8 codes in C1.  Since that
+         * disagrees with the standard (by substituting a multibyte character
+         * for a single byte), and because the first of those bytes is a 0xC2,
+         * it is appropriate to refer to this situation as a C2 character.
+         *
+         * Progressing through the range 128..255, if the test happens to be
+         * using ISO Latin-1 (ISO-8859-1), then the UTF-8 encoding happens to
+         * look correct.  That will not work for other character sets.
+         */
+        if (parse_7bits == 2 && allows_utf8 && c >= 128 && c <= 255) {
+          unsigned char buffer[10];
+          int rc = conv_to_utf8(buffer, (unsigned)c, sizeof(buffer));
+          if (rc > 1) {   /* rc should be 0, 1 or 2 */
+            fwrite(buffer, (size_t)(rc - 1), 1, fp);
+            c = buffer[rc - 1];   /* fall-thru with the last byte */
+          }
+        }
+      } else {
+        /*
+         * The second case is relevant to ECMA-48 in contrast to the above.
+         * ECMA-48 makes it clear that both 7-bit controls and 8-bit control
+         * are parsed using a 7-bit table.  We can demonstrate whether the
+         * terminal actually does this by mapping printable 7-bit characters
+         * (32 to 126) to the 160..254 range.  
+         *
+         * Because an ECMA-48 parser looks for the final character (or the
+         * string terminator for APC, etc.) using a 7-bit table, it is possible
+         * to match the final/terminating character in the 160..254 range. 
+         * Unicode.org could improve its documentation to clarify how it
+         * differs from ECMA-48, and in doing so might state that the data
+         * stream need not comply with ECMA-48 in this regard.
+         *
+         * ECMA-48 and ISO 6429 provide the same information; the former is
+         * preferred because it is freely available.  Unicode.org mentions ISO
+         * 6429 in ~10 places without providing any information on control
+         * sequences.
+         */
+        if (parse_7bits == 1 && c <= 126) {
+          c |= 128;
+        }
+      }
+    }
     putchar(c);
   } else {
     c &= 0xff;
@@ -365,7 +411,7 @@ do_csi(const char *fmt, ...)
 
   putting_data = 1;
 
-  fputs(csi_output(), stdout);
+  put_string(stdout, csi_output());
   VA_OUT(stdout, fmt, ap);
 
   FLUSH;
@@ -387,7 +433,7 @@ do_dcs(const char *fmt, ...)
 
   putting_data = 1;
 
-  fputs(dcs_output(), stdout);
+  put_string(stdout, dcs_output());
   VA_OUT(stdout, fmt, ap);
 
   put_string(stdout, st_output());
@@ -411,7 +457,7 @@ do_osc(const char *fmt, ...)
 
   putting_data = 1;
 
-  fputs(osc_output(), stdout);
+  put_string(stdout, osc_output());
   VA_OUT(stdout, fmt, ap);
 
   put_string(stdout, st_output());
@@ -459,7 +505,7 @@ print_str(const char *s)
 void
 esc(const char *s)
 {
-  putting_data = (strchr("[]", *s) == NULL) ? 1 : 0;
+  putting_data = 1;
 
   put_char(stdout, ESC);
   put_string(stdout, s);

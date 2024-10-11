@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.28 2020/03/04 02:09:37 tom Exp $ */
+/* $Id: vms_io.c,v 1.31 2024/10/09 23:56:12 tom Exp $ */
 
 #define DEBUG
 
@@ -42,7 +42,7 @@ static void
 give_up(int status)
 {
   if (LOG_ENABLED)
-    fprintf(log_fp, "status=%#x\n", status);
+    fprintf(log_fp, NOTE_STR "status=%#x\n", status);
   close_tty();
   exit(status);
 }
@@ -122,7 +122,7 @@ read_vms_tty(int length, int timed)
 
 #ifdef DEBUG
   if (LOG_ENABLED) {
-    fprintf(log_fp, "reading: len=%d, flags=%#x\n", length, my_flags);
+    fprintf(log_fp, NOTE_STR "reading: len=%d, flags=%#x\n", length, my_flags);
     fflush(log_fp);
   }
 #endif
@@ -131,7 +131,7 @@ read_vms_tty(int length, int timed)
 #ifdef DEBUG
   if (LOG_ENABLED) {
     fprintf(log_fp,
-            "read: st=%d, cnt=%#x, dev=%#x\n",
+            NOTE_STR "read: st=%d, cnt=%#x, dev=%#x\n",
             iosb.status, iosb.count, iosb.dev_dep_data);
     fflush(log_fp);
   }
@@ -169,6 +169,17 @@ inchar(void)
     if (in_flags & IO$M_NOECHO)
       putchar(c);
   }
+
+  if (active)
+    pause_replay();
+  if (LOG_ENABLED) {
+    fputs(READ_STR, log_fp);
+    put_char(log_fp, c);
+    fputs("\n", log_fp);
+  }
+  if (active)
+    resume_replay();
+
   return c;
 }
 
@@ -183,20 +194,23 @@ inchar(void)
 char *
 instr(void)
 {
-  static char result[1024];
+  static char result[BUF_SIZE];
 
   result[0] = inchar();
   zleep(100);   /* Wait 0.1 seconds */
   fflush(stdout);
+
+  pause_replay();
   read_vms_tty(sizeof(result) - 3, FALSE);
   memcpy(result + 1, ibuf, nibuf);
   result[1 + nibuf] = '\0';
 
   if (LOG_ENABLED) {
-    fputs("Reply: ", log_fp);
+    fputs(READ_STR, log_fp);
     put_string(log_fp, result);
     fputs("\n", log_fp);
   }
+  resume_replay();
 
   return (result);
 }
@@ -216,34 +230,50 @@ get_reply(void)
   result[0] = inchar();
   zleep(100);   /* Wait 0.1 seconds */
   fflush(stdout);
+  pause_replay();
+
   read_vms_tty(sizeof(result) - 3, TRUE);
   memcpy(result + 1, ibuf, nibuf);
   result[1 + nibuf] = '\0';
 
   if (LOG_ENABLED) {
-    fputs("Reply: ", log_fp);
+    fputs(READ_STR, log_fp);
     put_string(log_fp, result);
     fputs("\n", log_fp);
   }
+
+  resume_replay();
 
   return (result);
 }
 
 /*
- * Read to the next newline, truncating the buffer at BUFSIZ-1 characters
+ * Read to the next newline, truncating the buffer at BUF_SIZE-1 characters
  */
 void
 inputline(char *s)
 {
-  do {
-    int ch;
-    char *d = s;
-    while ((ch = getchar()) != EOF && ch != '\n') {
-      if ((d - s) < BUFSIZ - 2)
-        *d++ = ch;
-    }
-    *d = 0;
-  } while (!*s);
+  char *result = s;
+
+  if (is_replaying() && (result = replay_string()) != NULL) {
+    strcpy(s, result);
+    puts(result);
+    fflush(stdout);
+    zleep(2000);
+  } else {
+    do {
+      int ch;
+      char *d = s;
+      while ((ch = getchar()) != EOF && ch != '\n') {
+        if ((d - s) < BUF_SIZE - 2)
+          *d++ = ch;
+      }
+      *d = 0;
+    } while (!*s);
+  }
+
+  if (LOG_ENABLED)
+    fprintf(log_fp, READ_STR "%s\n", result);
 }
 
 /*
@@ -272,8 +302,16 @@ holdit(void)
 void
 readnl(void)
 {
-  fflush(stdout);
-  while (inchar() != '\n') ;
+  if (is_replaying() && (result = replay_string()) != NULL) {
+    puts(result);
+    fflush(stdout);
+    zleep(2000);
+  } else {
+    fflush(stdout);
+    while (inchar() != '\n') ;
+  }
+  if (LOG_ENABLED)
+    fputs(READ_STR "\n", log_fp);
 }
 
 /*
@@ -340,7 +378,7 @@ init_ttymodes(int pn)
 #ifdef DEBUG
   if (LOG_ENABLED)
     fprintf(log_fp,
-            "sense: st=%d, cnt=%#x, dev=%#x\n",
+            NOTE_STR "sense: st=%d, cnt=%#x, dev=%#x\n",
             iosb.status, iosb.count, iosb.dev_dep_data);
 #endif
 
@@ -362,11 +400,11 @@ init_ttymodes(int pn)
   tty_speed = lookup_speed(iosb.count & 0xff);
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "TTY modes %#x, %#x, %#x\n", oldmode[0], oldmode[1],
-            oldmode[2]);
-    fprintf(log_fp, "iosb.count = %#x\n", iosb.count);
-    fprintf(log_fp, "iosb.dev_dep_data = %#x\n", iosb.dev_dep_data);
-    fprintf(log_fp, "TTY speed = %d\n", tty_speed);
+    fprintf(log_fp, NOTE_STR "TTY modes %#x, %#x, %#x\n",
+            oldmode[0], oldmode[1], oldmode[2]);
+    fprintf(log_fp, NOTE_STR "iosb.count = %#x\n", iosb.count);
+    fprintf(log_fp, NOTE_STR "iosb.dev_dep_data = %#x\n", iosb.dev_dep_data);
+    fprintf(log_fp, NOTE_STR "TTY speed = %d\n", tty_speed);
   }
 }
 

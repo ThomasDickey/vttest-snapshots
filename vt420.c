@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.227 2024/09/29 14:23:53 tom Exp $ */
+/* $Id: vt420.c,v 1.233 2024/10/10 08:11:41 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -47,7 +47,7 @@ reset_colors(void)
     sgr("0");
     use_colors = FALSE;
     if (LOG_ENABLED) {
-      fprintf(log_fp, "Note: turned off colors\n");
+      fprintf(log_fp, NOTE_STR "turned off colors\n");
     }
   }
 }
@@ -61,7 +61,8 @@ set_colors(const char *value)
     sgr(value);
     use_colors = strcmp(value, "0");
     if (LOG_ENABLED) {
-      fprintf(log_fp, "Note: turned %s colors\n", use_colors ? "on" : "off");
+      fprintf(log_fp, NOTE_STR "turned %s colors\n",
+              use_colors ? "on" : "off");
     }
   }
 }
@@ -300,7 +301,7 @@ fill_outside(int ch)
   int row, col;
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "Note: filling outside margins with '%c'\n", ch);
+    fprintf(log_fp, NOTE_STR "filling outside margins with '%c'\n", ch);
   }
 
   if (!do_colors)
@@ -533,7 +534,7 @@ rpt_DECSMKR(MENU_ARGS)
 /******************************************************************************/
 
 static void
-show_DataIntegrity(char *report)
+show_DataIntegrity(const char *report)
 {
   int pos = 0;
   int code = scanto(report, &pos, 'n');
@@ -558,8 +559,8 @@ show_DataIntegrity(char *report)
 static void
 show_keypress(int row, int col)
 {
-  char *report;
-  char last[BUFSIZ];
+  const char *report;
+  char last[BUF_SIZE];
 
   last[0] = '\0';
   vt_move(row++, 1);
@@ -575,7 +576,7 @@ show_keypress(int row, int col)
 }
 
 static void
-show_MultisessionStatus(char *report)
+show_MultisessionStatus(const char *report)
 {
   int pos = 0;
   int Ps1 = scan_any(report, &pos, 'n');
@@ -663,7 +664,7 @@ static int
 tst_DECBKM(MENU_ARGS)
 {
   int row, col;
-  char *report;
+  const char *report;
 
   vt_move(1, 1);
   println(the_title);
@@ -750,8 +751,8 @@ parse_DECCKSR(char *report, int Pid, int *digits, int *checksum)
   int result = 0;
   int pos = 0;
   int actual;
-  char *after;
-  char *before;
+  const char *after;
+  const char *before;
 
   if ((report = skip_dcs(report)) != 0
       && strip_terminator(report)
@@ -2398,7 +2399,7 @@ tst_DSR_area_sum(MENU_ARGS, int g)
             }
             if (LOG_ENABLED) {
               fprintf(log_fp,
-                      "Check: %04X %2d:%s\n",
+                      NOTE_STR "check %04X %2d:%s\n",
                       CHK(full), y + 1, lines[y]);
             }
           }
@@ -2413,8 +2414,9 @@ tst_DSR_area_sum(MENU_ARGS, int g)
           if (LOG_ENABLED) {
             unsigned actual;
             int ok = sscanf(s, "%x", &actual);
-            fprintf(log_fp, "Actual: %.4s%s\n", s, ok ? "" : " (ERR)");
-            fprintf(log_fp, "Expect: %.4s\n", test);
+            fprintf(log_fp, NOTE_STR "actual %.4s%s\n",
+                    s, ok ? "" : " (ERR)");
+            fprintf(log_fp, NOTE_STR "expect %.4s\n", test);
           }
           fputs(buffer, stdout);
           vt_hilite(FALSE);
@@ -2534,8 +2536,10 @@ tst_SRM(MENU_ARGS)
   vt_move(3, 10);
 
   oldc = -1;
+  pause_replay();
   while ((newc = inchar()) != oldc && newc > 0)
     oldc = newc;
+  resume_replay();
 
   set_tty_echo(TRUE);
   srm(TRUE);
@@ -2545,8 +2549,10 @@ tst_SRM(MENU_ARGS)
   vt_move(11, 10);
 
   oldc = -1;
+  pause_replay();
   while ((newc = inchar()) != oldc && newc > 0)
     oldc = newc;
+  resume_replay();
 
   vt_move(max_lines - 1, 1);
   restore_ttymodes();

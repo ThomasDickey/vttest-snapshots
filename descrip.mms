@@ -1,4 +1,4 @@
-# $Id: descrip.mms,v 1.17 2010/08/28 12:21:13 tom Exp $
+# $Id: descrip.mms,v 1.18 2024/10/07 00:16:10 tom Exp $
 # VAX/VMS "mms" script for VTTEST
 
 THIS = vttest
@@ -20,6 +20,7 @@ C_SRC = \
 	mouse.c \
 	nonvt100.c \
 	printer.c \
+	replay.c \
 	reports.c \
 	reset.c \
 	setup.c \
@@ -51,6 +52,7 @@ OBJS = \
 	mouse.obj, \
 	nonvt100.obj, \
 	printer.obj, \
+	replay.obj, \
 	reports.obj, \
 	reset.obj, \
 	setup.obj, \
@@ -67,7 +69,7 @@ OBJS = \
 	xterm.obj
 
 SRC =	patchlev.h \
-	CHANGES COPYING README BUGS \
+	CHANGES COPYING README \
 	$(THIS).1 \
 	$(C_SRC) $(H_SRC) \
 	config.hin install.sh mkdirs.sh makefile.in configure.in

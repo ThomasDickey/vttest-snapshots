@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.42 2023/12/29 16:34:49 tom Exp $ */
+/* $Id: mouse.c,v 1.44 2024/10/04 00:32:13 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -109,7 +109,7 @@ can_do_pixels(void)
     restore_ttymodes();
 
     if (result && LOG_ENABLED) {
-      fprintf(log_fp, "Screen %dx%d at %d,%d (cell %dx%d)\n",
+      fprintf(log_fp, NOTE_STR "screen %dx%d at %d,%d (cell %dx%d)\n",
               pixels_high, pixels_wide,
               pixels_ypos, pixels_xpos,
               pixels_ychr, pixels_xchr);
@@ -161,7 +161,7 @@ xterm_coord(char *source, int *pos)
   case cUTF:
     {
       int used;
-      char *real_src = source + *pos;
+      const char *real_src = source + *pos;
       unsigned limit = (unsigned) strlen(real_src);
 
       used = conv_to_utf32((unsigned *) 0, real_src, limit);
@@ -1003,7 +1003,7 @@ toggle_ExtCoords(MENU_ARGS)
   }
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, "Toggle: from %s to %s\n",
+    fprintf(log_fp, NOTE_STR "toggle from %s to %s\n",
             nameOfExtCoords(old_ExtCoords),
             nameOfExtCoords(do_ExtCoords));
   }

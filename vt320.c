@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.98 2024/09/25 22:42:58 tom Exp $ */
+/* $Id: vt320.c,v 1.101 2024/10/04 00:35:36 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -9,7 +9,7 @@
 #include <esc.h>
 
 static void
-show_Locator_Status(char *report)
+show_Locator_Status(const char *report)
 {
   int pos = 0;
   int code = scanto(report, &pos, 'n');
@@ -32,7 +32,7 @@ show_Locator_Status(char *report)
 }
 
 static void
-show_Identify_Locator(char *report)
+show_Identify_Locator(const char *report)
 {
   int pos = 0;
   int Ps1 = scan_any(report, &pos, 'n');
@@ -72,7 +72,7 @@ tst_DSR_identify_locator(MENU_ARGS)
 }
 
 static void
-show_ExtendedCursorPosition(char *report)
+show_ExtendedCursorPosition(const char *report)
 {
   int pos = 0;
   int Pl = scan_any(report, &pos, 'R');
@@ -286,7 +286,7 @@ read_DECCIR(DECCIR_REPORT * output)
   if (value & mask) { value &= ~mask; show_result(string); }
 
 static void
-show_DECCIR(char *report)
+show_DECCIR(const char *report)
 {
   int row;
   int n;
@@ -888,8 +888,7 @@ tabstop_ruler(const char *tabsr, int row, int col)
         if (!strcmp(s, suffix))
           break;
       } else {
-        if (strcmp(s, suffix))
-          valid = 0;
+        valid = 0;
         break;
       }
     }
@@ -916,7 +915,7 @@ tst_DECRSPS_tabs(MENU_ARGS)
 {
   int row, stop;
   char *old_tabs;
-  char *new_tabs;
+  const char *new_tabs;
   char *s;
 
   vt_move(1, 1);
@@ -1080,7 +1079,7 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
     report = get_reply();
     printxx("\n     %4d: %-10s ", table[j].mode, table[j].name);
     if (LOG_ENABLED)
-      fprintf(log_fp, "Testing %s\n", table[j].name);
+      fprintf(log_fp, NOTE_STR "testing %s\n", table[j].name);
     chrprint2(report, row + 1, 23);
     if ((report = skip_csi(report)) != 0
         && sscanf(report, (private

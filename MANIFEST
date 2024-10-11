@@ -1,7 +1,6 @@
-MANIFEST for vttest, version t20240929
+MANIFEST for vttest, version t20241010
 --------------------------------------------------------------------------------
 MANIFEST                        this file
-BUGS                            current bug-list
 CHANGES                         record of changes I've made to vttest
 COPYING                         copyright notice
 README                          original version of vttest posted to comp.sources.unix, volume 7
@@ -26,6 +25,7 @@ mouse.c                         mouse tests for xterm
 nonvt100.c                      non-VT100 tests
 patchlev.h                      patch-level of VTTEST
 printer.c                       test printer functions
+replay.c                        manage replaying of log files as a command-file
 reports.c                       test device-reports
 reset.c                         test-functions for terminal-reset
 setup.c                         modify test-parameters
