@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.126 2024/10/10 08:23:59 tom Exp $ */
+/* $Id: vttest.h,v 1.127 2024/10/14 10:41:35 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -256,6 +256,7 @@ extern char *replay_string(void);
 extern char *skip_csi(char *input);
 extern char *skip_dcs(char *input);
 extern char *skip_digits(char *src);
+extern char *skip_osc(char *input);
 extern char *skip_prefix(const char *prefix, char *input);
 extern char *skip_ss3(char *input);
 extern char inchar(void);

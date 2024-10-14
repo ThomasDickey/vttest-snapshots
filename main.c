@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.150 2024/10/10 08:22:28 tom Exp $ */
+/* $Id: main.c,v 1.153 2024/10/14 10:41:09 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -1218,7 +1218,7 @@ bug_d(MENU_ARGS)
 
     cup(4, 9);
     decdwl();
-    result = get_char();
+    result = (char) get_char();
     readnl();
     deccolm(FALSE);
   } while (result == '1');
@@ -1443,15 +1443,18 @@ enable_iso2022(void)
   }
 #endif
 
-  if (assume_utf8 && !allows_utf8) {
+  if (assume_utf8) {
     if (LOG_ENABLED) {
       fprintf(log_fp, NOTE_STR "%senable ISO-2022 (%s)\n",
-              assume_utf8 ? "" : "Do not ",
+              allows_utf8 ? "Do not " : "",
               env);
     }
-    esc("%@");
-  } else if (LOG_ENABLED) {
-    fprintf(log_fp, NOTE_STR "Keep UTF-8 enabled\n");
+    if (!allows_utf8)
+      esc("%@");
+  } else {
+    if (LOG_ENABLED) {
+      fprintf(log_fp, NOTE_STR "UTF-8 is not enabled\n");
+    }
   }
 }
 
@@ -1882,6 +1885,15 @@ skip_dcs(char *input)
     return input + 1;
   }
   return skip_prefix(dcs_input(), input);
+}
+
+char *
+skip_osc(char *input)
+{
+  if (CharOf(*input) == OSC) {
+    return input + 1;
+  }
+  return skip_prefix(osc_input(), input);
 }
 
 char *

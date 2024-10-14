@@ -1,4 +1,4 @@
-/* $Id: esc.h,v 1.78 2024/10/10 08:23:36 tom Exp $ */
+/* $Id: esc.h,v 1.80 2024/10/14 17:15:14 tom Exp $ */
 
 #ifndef ESC_H
 #define ESC_H 1
@@ -11,10 +11,11 @@
 #define SO  0016  /* 14 */
 #define SI  0017  /* 15 */
 #define ESC 0033
-#define CSI 0233
 #define SS3 0217
 #define DCS 0220
+#define CSI 0233
 #define ST  0234
+#define OSC 0235
 
 /*
  * "ANSI" modes for DECRQM, DECRPM, SM and RM are a subset of the modes listed
@@ -187,6 +188,7 @@ void decscpp(int cols);
 void decsed(int pn1);
 void decsel(int pn1);
 void decsera(int top, int left, int bottom, int right);
+void decstglt(int mode);
 void decsle(int mode);
 void decslpp(int rows);
 void decslrm(int pn1, int pn2);

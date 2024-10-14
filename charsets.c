@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.105 2024/10/03 23:42:35 tom Exp $ */
+/* $Id: charsets.c,v 1.106 2024/10/13 22:44:59 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -66,7 +66,8 @@ typedef struct {
 /* *INDENT-OFF* */
 
 /* compare mappings using only 7-bits */
-#define Not11(a,b) (((a) & 0x7f) == ((b) & 0x7f))
+#define Only7(c)   ((c) & 0x7f)
+#define Not11(a,b) (Only7(a) == Only7(b))
 
 /*
  * User-preferred selection set is unknown until reset.
@@ -247,8 +248,32 @@ send32(int row, int upper, const char *not11)
   char buffer[33 * 8];
 
   if (LOG_ENABLED) {
-    fprintf(log_fp, NOTE_STR "send32 row %d, upper %d, not11:%s\n",
-            row, upper, not11 ? not11 : "");
+    fprintf(log_fp, NOTE_STR "send32 row %d, upper %d, not11:", row, upper);
+    if (not11) {
+      int lo = -1;
+      int hi = -1;
+      int nn;
+      for (nn = 0; not11[nn]; ++nn) {
+        int cc = Only7(not11[nn]);
+        if (lo < 0) {
+          lo = cc;
+        } else if (cc > hi + 1) {   /* a gap after the existing range? */
+          if (lo == hi)
+            fprintf(log_fp, " %d", hi);
+          else
+            fprintf(log_fp, " %d-%d", lo, hi);
+          lo = cc;
+        }
+        hi = cc;
+      }
+      if (lo > 0 && hi > 0) {
+        if (lo == hi)
+          fprintf(log_fp, " %d", hi);
+        else
+          fprintf(log_fp, " %d-%d", lo, hi);
+      }
+    }
+    fprintf(log_fp, "\n");
   }
   for (col = 0; col <= 31; col++) {
     char ch = (char) (row * 32 + upper + col);

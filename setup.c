@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.50 2024/10/07 08:13:28 tom Exp $ */
+/* $Id: setup.c,v 1.51 2024/10/14 20:39:48 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -10,6 +10,7 @@ static int max_level = -1;      /* maximum operating level */
 static int
 check_8bit_toggle(void)
 {
+  int result = FALSE;
   char *report;
 
   set_tty_raw(TRUE);
@@ -23,8 +24,12 @@ check_8bit_toggle(void)
 
   if ((report = skip_csi(report)) != 0
       && !strcmp(report, "1;1R"))
-    return TRUE;
-  return FALSE;
+    result = TRUE;
+  if (LOG_ENABLED) {
+    fprintf(log_fp, NOTE_STR "%svalid response from DSR 6\n",
+            result ? "" : "no");
+  }
+  return result;
 }
 
 /*

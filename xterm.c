@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.74 2024/10/08 23:06:36 tom Exp $ */
+/* $Id: xterm.c,v 1.81 2024/10/14 11:43:57 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -114,6 +114,7 @@ test_altscrn_47(MENU_ARGS)
   holdit();
 
   rm("?47");
+  vt_move(max_lines - 2, 1);
   decrc();
   check_rc(7, 5);
   finish_altscreen();
@@ -148,6 +149,7 @@ test_altscrn_1047(MENU_ARGS)
   holdit();
 
   rm("?1047");
+  vt_move(max_lines - 2, 1);
   decrc();
   rm("?1048");
   check_rc(9, 7);
@@ -178,6 +180,7 @@ test_altscrn_1049(MENU_ARGS)
   ed(0);
   holdit();
 
+  vt_move(max_lines - 2, 1);
   rm("?1049");
   decrc();
   check_rc(max_lines - 1, 1);
@@ -484,56 +487,115 @@ test_modify_ops(MENU_ARGS)
 static int
 test_report_ops(MENU_ARGS)
 {
-  const char *report;
+  /* *INDENT-OFF* */
+  static struct {
+    int csi_or_osc;
+    int pprefix;
+    const char *params;
+    const char *testing;
+  } table[] = {
+    { 0, 0, "11",   "state of window (normal/iconified)" },
+    { 0, 1, "13",   "position of window in pixels" },
+    { 0, 1, "13;2", "position of text-area in pixels" },
+    { 0, 1, "14",   "size of text-area in pixels" },
+    { 0, 1, "14;2", "size of window in pixels" },
+    { 0, 1, "15",   "size of screen in pixels" },
+    { 0, 1, "16",   "size of character in pixels" },
+    { 0, 1, "18",   "size of window in chars" },
+    { 1, 0, "20",   "icon label" },
+    { 1, 0, "21",   "window label" },
+  };
+  /* *INDENT-ON* */
+
   int row = 3;
   int col = 10;
+  int test = 0;
 
   vt_move(1, 1);
   println("Test of Window reporting.");
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
-  vt_move(row++, 1);
-  println("Report icon label:");
-  vt_move(row, col);
-  brc(20, 't');
-  report = get_reply();
-  row = chrprint2(report, row, col);
+  for (test = 0; test < TABLESIZE(table); ++test) {
+    char *report;
+    const char *params;
+    char buffer[80];
 
-  vt_move(row++, 1);
-  println("Report window label:");
-  vt_move(row, col);
-  brc(21, 't');
-  report = get_reply();
-  row = chrprint2(report, row, col);
+    if (row + 3 > max_lines - 3) {
+      restore_ttymodes();
+      vt_move(row, 1);
+      holdit();
+      vt_move(row = 3, 1);
+      vt_clear(0);
+      set_tty_raw(TRUE);
+      set_tty_echo(FALSE);
+    }
 
-  vt_move(row++, 1);
-  println("Report size of window (chars):");
-  vt_move(row, col);
-  brc(18, 't');
-  report = get_reply();
-  chrprint2(report, row++, col);
+    vt_move(row++, 1);
+    printxx("Report %s (%s):", table[test].testing, table[test].params);
+    vt_move(row, col);
+    do_csi("%st", table[test].params);
+    report = get_reply();
+    row = chrprint2(report, row, col);
+    vt_move(row++, col);
 
-  vt_move(row++, 1);
-  println("Report size of window (pixels):");
-  vt_move(row, col);
-  brc(14, 't');
-  report = get_reply();
-  chrprint2(report, row++, col);
-
-  vt_move(row++, 1);
-  println("Report position of window (pixels):");
-  vt_move(row, col);
-  brc(13, 't');
-  report = get_reply();
-  chrprint2(report, row++, col);
-
-  vt_move(row++, 1);
-  println("Report state of window (normal/iconified):");
-  vt_move(row, col);
-  brc(11, 't');
-  report = get_reply();
-  chrprint2(report, row, col);
+    if (!strcmp(table[test].params, "11")) {
+      params = skip_csi(report);
+      if (params != NULL
+          && isdigit(CharOf(*params))
+          && !strcmp(params + 1, "t")) {
+        switch (*params) {
+        case '1':
+          params = "normal";
+          break;
+        case '2':
+          params = "icon";
+          break;
+        default:
+          params = "?";
+        }
+      } else {
+        params = "?";
+      }
+    } else if (table[test].csi_or_osc) {
+      params = skip_osc(report);
+      if (params == NULL)
+        params = "?";
+      else if (!strip_suffix(report, st_input()))
+        params = "?";
+      else if (*params == 'L')
+        params = "icon label";
+      else if (*params == 'l')
+        params = "window label";
+      else
+        params = "?";
+    } else {
+      params = skip_csi(report);
+      if (table[test].pprefix) {
+        if (params[0] == table[test].params[1]
+            && params[1] == ';'
+            && strip_suffix(report, "t")) {
+          int high;
+          int wide;
+          int skip;
+          if (sscanf(params, "%d;%d;%d", &skip, &high, &wide) == 3
+              && high > 0 && wide > 0) {
+            sprintf(buffer, "%d high, %d wide", high, wide);
+            params = buffer;
+          } else {
+            params = "?";
+          }
+        } else
+          params = "?";
+      } else {
+        params = "? BUG";
+      }
+    }
+    if (*params == '?')
+      printxx("ERR");
+    else
+      printxx("OK: %s", params);
+  }
 
   vt_move(20, 1);
   restore_ttymodes();
@@ -556,9 +618,7 @@ test_window_name(MENU_ARGS)
 static int
 tst_xterm_VERSION(MENU_ARGS)
 {
-  char *report;
   int step;
-  int row, col;
 
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
@@ -566,6 +626,9 @@ tst_xterm_VERSION(MENU_ARGS)
   vt_move(1, 1);
   println("Both testcases should all get the same response");
   for (step = -1; step <= 0; ++step) {
+    char *report;
+    int row, col;
+
     vt_move(row = 3 + step, col = 3);
     if (step >= 0)
       do_csi(">%dq", step);

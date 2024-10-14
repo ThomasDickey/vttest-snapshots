@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.117 2024/10/04 07:51:49 tom Exp $ */
+/* $Id: esc.c,v 1.118 2024/10/14 17:14:53 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -985,6 +985,12 @@ void
 decsera(int top, int left, int bottom, int right)   /* VT400 Selective erase rectangular area */
 {
   do_csi("%d;%d;%d;%d${", top, left, bottom, right);
+}
+
+void
+decstglt(int mode)                /* DECSTGLT Select Color Look-Up Table */
+{
+  do_csi("%d){", mode);
 }
 
 void

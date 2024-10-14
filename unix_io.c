@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.36 2024/10/09 23:33:43 tom Exp $ */
+/* $Id: unix_io.c,v 1.37 2024/10/13 23:31:21 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -178,7 +178,7 @@ get_reply(void)
 void
 inputline(char *s)
 {
-  char *result = s;
+  char *result;
 
   if (is_replaying() && (result = replay_string()) != NULL) {
     strcpy(s, result);
@@ -189,6 +189,7 @@ inputline(char *s)
     do {
       int ch;
       char *d = s;
+      result = s;
       while ((ch = getchar()) != EOF && ch != '\n') {
         if ((d - s) < BUF_SIZE - 2)
           *d++ = (char) ch;
