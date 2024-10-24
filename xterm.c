@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.81 2024/10/14 11:43:57 tom Exp $ */
+/* $Id: xterm.c,v 1.83 2024/10/21 23:42:47 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -481,6 +481,38 @@ test_modify_ops(MENU_ARGS)
   ed(2);
   println("Raise");
   brc(5, 't');
+
+  /*
+   * That window resizing can cause a terminal emulator to send lots of
+   * SIGWINCH's, which may be queued up for delivery (and interrupt subsequent
+   * system calls).  Check if we can successfully receive replies from the
+   * terminal before proceeding.
+   */
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+  vt_move(20, 1);
+  pause_replay();
+  printxx("Working");
+  for (n = 0; n < 20; ++n) {
+    char *report;
+    char expect[20];
+    printxx(".");
+    fflush(stdout);
+    do_csi("6n");
+    sprintf(expect, "20;%dR", n + 9);
+    report = get_reply();
+    fflush(stdout);
+    fprintf(log_fp, NOTE_STR "expect '%s'\n", expect);
+    if (report != NULL
+        && (report = skip_csi(report)) != NULL
+        && !strcmp(report, expect)) {
+      break;
+    }
+    fflush(log_fp);
+    zleep(1000);
+  }
+  resume_replay();
+  restore_ttymodes();
   return MENU_HOLD;
 }
 
@@ -513,6 +545,7 @@ test_report_ops(MENU_ARGS)
 
   vt_move(1, 1);
   println("Test of Window reporting.");
+  fflush(stdout);
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
@@ -571,7 +604,7 @@ test_report_ops(MENU_ARGS)
         params = "?";
     } else {
       params = skip_csi(report);
-      if (table[test].pprefix) {
+      if (params != NULL && table[test].pprefix) {
         if (params[0] == table[test].params[1]
             && params[1] == ';'
             && strip_suffix(report, "t")) {
@@ -595,6 +628,7 @@ test_report_ops(MENU_ARGS)
       printxx("ERR");
     else
       printxx("OK: %s", params);
+    fflush(stdout);
   }
 
   vt_move(20, 1);

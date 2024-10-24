@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.28 2024/10/10 08:22:28 tom Exp $ */
+/* $Id: sixel.c,v 1.29 2024/10/22 21:33:36 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -251,6 +251,7 @@ tst_display(MENU_ARGS)
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
+  pause_replay();
   do {
     d = c;
     c = get_char();
@@ -263,6 +264,7 @@ tst_display(MENU_ARGS)
       cprintf("Render: %cN%c", ESC, c);   /* use SS2 to invoke G2 into GL */
     }
   } while (c != d);
+  resume_replay();
 
   restore_ttymodes();
   return MENU_NOHOLD;

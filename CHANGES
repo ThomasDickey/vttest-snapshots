@@ -1,5 +1,9 @@
--- $Id: CHANGES,v 1.304 2024/10/14 17:12:18 tom Exp $
+-- $Id: CHANGES,v 1.306 2024/10/24 08:18:49 tom Exp $
 -------------------------------------------------------------------------------
+
+20241024
+	+ improve replay logic for skipping consecutive wait/done chunks as in
+	  the mouse test-screens.
 
 20241014
 	+ modify checks for cursor position after alternate-screen restoring

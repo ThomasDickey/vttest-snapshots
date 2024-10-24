@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.44 2024/10/04 00:32:13 tom Exp $ */
+/* $Id: mouse.c,v 1.46 2024/10/22 20:52:39 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -585,6 +585,7 @@ show_dec_locator_events(MENU_ARGS, int mode, int pixels)
 {
   int row, now;
 
+  pause_replay();
 loop:
   vt_move(1, 1);
   ed(0);
@@ -630,6 +631,7 @@ loop:
       do_csi("'w");   /* see decefr() */
     }
   }
+  resume_replay();
 
   decelr(0, 0);
   restore_ttymodes();
@@ -656,6 +658,7 @@ loop:
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
+  pause_replay();
   for (;;) {
     char *report = instr();
 
@@ -710,8 +713,10 @@ loop:
       report += 4;
     }
   }
+  resume_replay();
 
   rm(the_mode);
+  fflush(stdout);
   restore_ttymodes();
 
   vt_move(max_lines - 2, 1);
@@ -798,9 +803,11 @@ loop:
   show_hilite(first, last);
 
   sm("?1001");
+  fflush(stdout);
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
+  pause_replay();
   for (;;) {
     char *report = instr();
 
@@ -866,8 +873,10 @@ loop:
         show_click(end_y, end_x, 'e');
     }
   }
+  resume_replay();
 
   rm("?1001");
+  fflush(stdout);
   restore_ttymodes();
 
   vt_move(max_lines - 2, 1);
@@ -889,6 +898,7 @@ test_X10_mouse(MENU_ARGS)
   unsigned b, x, y;
   int report_row, report_col;
 
+  pause_replay();
 loop:
   vt_move(1, 1);
   ed(0);
@@ -897,6 +907,7 @@ loop:
   println("Mouse events will be marked with the button number.");
 
   sm("?9");
+  fflush(stdout);
   set_tty_raw(TRUE);
   set_tty_echo(FALSE);
 
@@ -920,8 +931,10 @@ loop:
       fflush(stdout);
     }
   }
+  resume_replay();
 
   rm("?9");
+  fflush(stdout);
   restore_ttymodes();
 
   vt_move(max_lines - 2, 1);
@@ -1032,6 +1045,7 @@ toggle_FocusEvent(MENU_ARGS)
     sm("?1004");
   else
     rm("?1004");
+  fflush(stdout);
   return MENU_NOHOLD;
 }
 

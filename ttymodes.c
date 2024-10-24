@@ -1,4 +1,4 @@
-/* $Id: ttymodes.c,v 1.27 2024/10/04 00:34:21 tom Exp $ */
+/* $Id: ttymodes.c,v 1.28 2024/10/20 21:54:50 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -143,7 +143,7 @@ dump_ttymodes(char *tag, int flag)
     fprintf(log_fp, NOTE_STR " iflag %08o\n", tmp_modes.c_iflag);
     fprintf(log_fp, NOTE_STR " oflag %08o\n", tmp_modes.c_oflag);
     fprintf(log_fp, NOTE_STR " lflag %08o\n", tmp_modes.c_lflag);
-    if (!tmp_modes.c_lflag & ICANON) {
+    if (!(tmp_modes.c_lflag & ICANON)) {
       fprintf(log_fp, NOTE_STR " %d:min  =%d\n", VMIN, tmp_modes.c_cc[VMIN]);
       fprintf(log_fp, NOTE_STR " %d:time =%d\n", VTIME, tmp_modes.c_cc[VTIME]);
     }

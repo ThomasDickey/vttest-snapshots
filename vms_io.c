@@ -1,4 +1,4 @@
-/* $Id: vms_io.c,v 1.31 2024/10/09 23:56:12 tom Exp $ */
+/* $Id: vms_io.c,v 1.32 2024/10/16 00:19:36 tom Exp $ */
 
 #define DEBUG
 
@@ -196,11 +196,14 @@ instr(void)
 {
   static char result[BUF_SIZE];
 
-  result[0] = inchar();
-  zleep(100);   /* Wait 0.1 seconds */
-  fflush(stdout);
+  FILE *save = log_fp;
 
   pause_replay();
+  log_fp = NULL;
+  result[0] = inchar();
+  zleep(100);   /* Wait 0.1 seconds */
+  log_fp = save;
+
   read_vms_tty(sizeof(result) - 3, FALSE);
   memcpy(result + 1, ibuf, nibuf);
   result[1 + nibuf] = '\0';
@@ -259,7 +262,7 @@ inputline(char *s)
     strcpy(s, result);
     puts(result);
     fflush(stdout);
-    zleep(2000);
+    zleep(1000);
   } else {
     do {
       int ch;
@@ -305,7 +308,7 @@ readnl(void)
   if (is_replaying() && (result = replay_string()) != NULL) {
     puts(result);
     fflush(stdout);
-    zleep(2000);
+    zleep(1000);
   } else {
     fflush(stdout);
     while (inchar() != '\n') ;

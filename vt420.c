@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.233 2024/10/10 08:11:41 tom Exp $ */
+/* $Id: vt420.c,v 1.234 2024/10/22 20:33:01 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -567,12 +567,14 @@ show_keypress(int row, int col)
   println("When you are done, press any key twice to quit.");
   vt_move(row, col);
   fflush(stdout);
+  pause_replay();
   while (strcmp(report = instr(), last)) {
     vt_move(row, col);
     vt_clear(0);
     chrprint2(report, row, col);
     strncpy(last, report, sizeof(last) - 2)[sizeof(last) - 2] = '\0';
   }
+  resume_replay();
 }
 
 static void

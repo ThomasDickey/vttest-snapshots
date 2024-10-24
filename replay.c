@@ -1,5 +1,5 @@
 /*
- * $Id: replay.c,v 1.4 2024/10/11 00:10:48 tom Exp $
+ * $Id: replay.c,v 1.8 2024/10/22 00:22:01 tom Exp $
  */
 #include <vttest.h>
 
@@ -15,6 +15,7 @@ setup_replay(const char *pathname)
 {
   close_replay();
   rp = fopen(pathname, "rb");
+  lineno = 0;
 }
 
 void
@@ -25,8 +26,8 @@ close_replay(void)
     rp = NULL;
     paused = 0;
     marker = 0;
-    lineno = 0;
     free(buffer);
+    buffer = NULL;
     length = 0;
   }
 }
@@ -69,9 +70,12 @@ next_line(void)
     }
     if (tmp == NULL)
       close_replay();
-    ++lineno;
-    if (LOG_ENABLED && debug_level > 1)
-      fprintf(log_fp, "[%04u]: %s", lineno, buffer);
+    if (buffer != NULL)
+      ++lineno;
+    if (LOG_ENABLED && debug_level > 1) {
+      fprintf(log_fp, "[%04u]: %s", lineno,
+              (tmp && buffer) ? buffer : "<EOF>\n");
+    }
     result = buffer;
   }
   return result;
@@ -82,21 +86,48 @@ skip_to_tag(const char *tag)
 {
   size_t need = strlen(tag);
   char *check;
+  int skip = 0;
+  int jump = !strcmp(tag, WAIT_STR);
   while ((check = next_line()) != NULL) {
     if (LOG_ENABLED && debug_level > 0 && strncmp(check, SKIP_STR, need))
       fprintf(log_fp, SKIP_STR "%s", check);
-    if (!strncmp(check, tag, need)) {
+    if (!jump && !strncmp(check, WAIT_STR, need))
+      skip = 1;
+    if (!skip && !strncmp(check, tag, need))
       break;
-    }
+    if (!jump && !strncmp(check, DONE_STR, need))
+      skip = 0;
   }
 }
 
+/*
+ * Reverse the changes made by put_string/put_char
+ */
 static char *
-trim_newline(char *source)
+get_string(char *source)
 {
   size_t len = strlen(source);
+  char *temp = malloc(len + 1);
+
   if (len != 0 && source[len - 1] == '\n')
     source[--len] = '\0';
+
+  if (temp != NULL) {
+    char *s, *t;
+    for (s = source, t = temp; *s != '\0'; ++s) {
+      if (*s == '<' && isdigit(s[1])) {
+        long value = strtol(++s, &s, 10);
+        if (s == 0)
+          break;
+        *t++ = (char) (value & 0xff);
+      } else if (*s != ' ') {
+        *t++ = *s;
+      }
+    }
+    *t = '\0';
+    strcpy(source, temp);
+    free(temp);
+  }
   return source;
 }
 
@@ -124,7 +155,7 @@ replay_string(void)
   char *result = NULL;
   skip_to_tag(READ_STR);
   if (buffer != NULL && !strncmp(buffer, READ_STR, READ_LEN)) {
-    result = trim_newline(buffer) + READ_LEN;
+    result = get_string(buffer + READ_LEN);
   }
   return result;
 }
@@ -140,10 +171,12 @@ pause_replay(void)
 {
   if (is_replaying())
     skip_to_tag(WAIT_STR);
-  paused = 1;
+  paused++;
   if (LOG_ENABLED) {
-    fprintf(log_fp, WAIT_STR "%d\n", ++marker);
-    fflush(log_fp);
+    if (paused == 1) {
+      fprintf(log_fp, WAIT_STR "%d\n", ++marker);
+      fflush(log_fp);
+    }
   }
 }
 
@@ -154,11 +187,15 @@ pause_replay(void)
 void
 resume_replay(void)
 {
-  if (rp != NULL)
+  if (rp != NULL && paused == 1)
     skip_to_tag(DONE_STR);
-  paused = 0;
+  if (paused > 0) {
+    --paused;
+  }
   if (LOG_ENABLED) {
-    fprintf(log_fp, DONE_STR "%d\n", marker);
-    fflush(log_fp);
+    if (paused == 0) {
+      fprintf(log_fp, DONE_STR "%d\n", marker);
+      fflush(log_fp);
+    }
   }
 }

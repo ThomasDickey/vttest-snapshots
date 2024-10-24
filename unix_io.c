@@ -1,4 +1,4 @@
-/* $Id: unix_io.c,v 1.37 2024/10/13 23:31:21 tom Exp $ */
+/* $Id: unix_io.c,v 1.39 2024/10/20 17:18:13 tom Exp $ */
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -128,11 +128,14 @@ instr(void)
 {
   static char result[BUF_SIZE];
 
+  FILE *save = log_fp;
   int i = 0;
 
   pause_replay();
+  log_fp = NULL;
   result[i++] = inchar();
   (void) read_buffer(result + i, (int) sizeof(result) - 2);
+  log_fp = save;
 
   if (LOG_ENABLED) {
     fputs(READ_STR, log_fp);
@@ -184,7 +187,7 @@ inputline(char *s)
     strcpy(s, result);
     puts(result);
     fflush(stdout);
-    zleep(2000);
+    zleep(1000);
   } else {
     do {
       int ch;
@@ -198,8 +201,11 @@ inputline(char *s)
     } while (!*s);
   }
 
-  if (LOG_ENABLED)
-    fprintf(log_fp, READ_STR "%s\n", result);
+  if (LOG_ENABLED) {
+    fputs(READ_STR, log_fp);
+    put_string(log_fp, result);
+    fputs("\n", log_fp);
+  }
 }
 
 /*
@@ -243,7 +249,7 @@ readnl(void)
   if (is_replaying() && (result = replay_string()) != NULL) {
     puts(result);
     fflush(stdout);
-    zleep(2000);
+    zleep(1000);
   } else {
     int ch = '\0';
     char one_byte = '\0';
@@ -263,8 +269,9 @@ readnl(void)
     reading = FALSE;
   }
 
-  if (LOG_ENABLED)
+  if (LOG_ENABLED) {
     fputs(READ_STR "\n", log_fp);
+  }
 }
 
 /*
