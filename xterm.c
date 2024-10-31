@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.83 2024/10/21 23:42:47 tom Exp $ */
+/* $Id: xterm.c,v 1.84 2024/10/31 07:47:03 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -502,13 +502,16 @@ test_modify_ops(MENU_ARGS)
     sprintf(expect, "20;%dR", n + 9);
     report = get_reply();
     fflush(stdout);
-    fprintf(log_fp, NOTE_STR "expect '%s'\n", expect);
+    if (LOG_ENABLED) {
+      fprintf(log_fp, NOTE_STR "expect '%s'\n", expect);
+    }
     if (report != NULL
         && (report = skip_csi(report)) != NULL
         && !strcmp(report, expect)) {
       break;
     }
-    fflush(log_fp);
+    if (LOG_ENABLED)
+      fflush(log_fp);
     zleep(1000);
   }
   resume_replay();
