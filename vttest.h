@@ -1,4 +1,4 @@
-/* $Id: vttest.h,v 1.127 2024/10/14 10:41:35 tom Exp $ */
+/* $Id: vttest.h,v 1.128 2024/11/25 01:14:50 tom Exp $ */
 
 #ifndef VTTEST_H
 #define VTTEST_H 1
@@ -248,7 +248,7 @@ extern int current_Gx[4];
 extern int scs_national;
 
 extern RETSIGTYPE onbrk(SIG_ARGS);
-extern RETSIGTYPE onterm(SIG_ARGS);
+extern GCC_NORETURN RETSIGTYPE onterm(SIG_ARGS);
 extern char *chrformat(const char *s, int col, int first);
 extern char *get_reply(void);
 extern char *instr(void);
@@ -386,7 +386,7 @@ extern int tst_vt520_DECRQSS(MENU_ARGS);
 extern int tst_vt520_reports(MENU_ARGS);
 extern int tst_xterm(MENU_ARGS);
 extern int vt_move(int row, int col);
-extern void bye(void);
+extern GCC_NORETURN void bye(void);
 extern void close_replay(void);
 extern void default_level(void);
 extern void dirty_charset(int state);

@@ -1,8 +1,15 @@
-/* $Id: setup.c,v 1.51 2024/10/14 20:39:48 tom Exp $ */
+/* $Id: setup.c,v 1.52 2024/11/24 22:55:20 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
 #include <ttymodes.h>
+
+#define PARSE_NAME(mode) \
+        ((mode > 1) \
+          ? "C2" \
+          : (mode == 1 \
+             ? "8-bit" \
+             : "7-bit"))
 
 static int cur_level = -1;      /* current operating level (VT100=1) */
 static int max_level = -1;      /* maximum operating level */
@@ -27,7 +34,7 @@ check_8bit_toggle(void)
     result = TRUE;
   if (LOG_ENABLED) {
     fprintf(log_fp, NOTE_STR "%svalid response from DSR 6\n",
-            result ? "" : "no");
+            result ? "" : "no ");
   }
   return result;
 }
@@ -248,11 +255,67 @@ toggle_8bit_in(MENU_ARGS)
 static int
 toggle_7bit_fsm(MENU_ARGS)
 {
+  int save_7bits = parse_7bits;
+
+  /*
+   * See comment in put_char().  There are two cases for the parse_7bits value.
+   * In both cases, 7-bit controls should work when parse_7bits is zero.  The
+   * tests relate to the nonzero value:
+   *
+   * parse_7bits == 1:
+   * This is for the 8-bit environment, i.e., 8-bit controls should work.  But
+   * ECMA-49 section 9 comes into play because 7-bit controls are parsed
+   * ignoring the 8th bit.  The C1 controls have specific definitons which
+   * override that, but by ignoring the 8th bit that guarantees that after the
+   * initial C0 or C1 byte, all of the following characters will be parsed
+   * without the 8th bit.
+   *
+   * This case is tested by setting the 8th bit in the controls to ensure that
+   * the parser has to deal with that situation.
+   *
+   * parse_7bits == 2: 
+   * This is for the UTF-8 environment.  C1 controls in put_char() are recoded
+   * to UTF-8 to test if the terminal can interpret those.  Normally vttest
+   * resets UTF-8 mode on startup; the "-u" option suppresses that, allowing
+   * this test.
+   */
   if (assume_utf8 && allows_utf8) {
-    parse_7bits = (parse_7bits + 1) % 3;
+    parse_7bits = parse_7bits ? 0 : 2;
   } else {
-    parse_7bits = !parse_7bits;
+    parse_7bits = parse_7bits ? 0 : 1;
   }
+  if (LOG_ENABLED) {
+    fprintf(log_fp, NOTE_STR "toggle parser from %s to %s\n",
+            PARSE_NAME(save_7bits),
+            PARSE_NAME(parse_7bits));
+  }
+
+  /*
+   * If we're told to switch to 8-bit or C2 mode, check that we can do that.
+   */
+  if (parse_7bits != 0) {
+    int save_output = output_8bits;
+    int rc;
+    output_8bits = 1;
+    rc = check_8bit_toggle();
+    output_8bits = save_output;
+    if (!rc) {
+      int requested = parse_7bits;
+      char msg[80];
+      parse_7bits = save_7bits;
+      vt_clear(2);
+      vt_move(1, 1);
+      sprintf(msg,
+              "Sorry, this terminal does not fully support %s parsing",
+              PARSE_NAME(requested));
+      println(msg);
+      return MENU_HOLD;
+    }
+    output_8bits = save_output;
+  } else {
+    output_8bits = 0;
+  }
+
   return MENU_NOHOLD;
 }
 

@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.42 2024/10/02 00:04:02 tom Exp $ */
+/* $Id: vt220.c,v 1.43 2024/11/25 01:21:15 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -531,19 +531,17 @@ show_OperatingStatus(const char *report)
   int pos = 0;
   int Ps1 = scan_any(report, &pos, 'n');
   int Ps2 = scanto(report, &pos, 'n');
-  const char *show;
 
   switch (Ps1) {
   case 0:
-    show = "Terminal is in good operating condition";
+    show_result("Terminal is in good operating condition: %d", Ps2);
     break;
   case 3:
-    show = "Terminal has a malfunction";
+    show_result("Terminal has a malfunction: %d", Ps2);
     break;
   default:
-    show = SHOW_FAILURE;
+    show_result(SHOW_FAILURE);
   }
-  show_result(show, Ps2);
 }
 
 static int

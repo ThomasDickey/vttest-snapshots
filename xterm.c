@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.84 2024/10/31 07:47:03 tom Exp $ */
+/* $Id: xterm.c,v 1.85 2024/11/25 00:26:45 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -272,7 +272,7 @@ tst_modify_font(MENU_ARGS)
   vt_move(11, 1);
   printxx(">");
   inputline(temp);
-  do_osc("50;%s%c", temp, BEL);
+  do_osc("50;%s", temp);
   return MENU_HOLD;
 }
 
@@ -292,7 +292,7 @@ tst_report_font(MENU_ARGS)
   ++row;
 
   vt_move(row, col + 6);
-  do_osc("50;?%c", BEL);
+  do_osc("50;?");
   report = get_reply();
   row = chrprint2(report, row, col);
 
@@ -303,7 +303,7 @@ tst_report_font(MENU_ARGS)
 
   for (n = 0; n < NUMFONTS; ++n) {
     vt_move(row, col);
-    do_osc("50;?%d%c", n, BEL);
+    do_osc("50;?%d", n);
     report = get_reply();
     if (strchr(report, ';') != 0) {
       printxx("  %2d: ", n);
@@ -319,7 +319,7 @@ tst_report_font(MENU_ARGS)
 
   for (n = -NUMFONTS; n < NUMFONTS; ++n) {
     vt_move(row, col);
-    do_osc("50;?%c%d%c", n >= 0 ? '+' : '-', n >= 0 ? n : -n, BEL);
+    do_osc("50;?%c%d", n >= 0 ? '+' : '-', n >= 0 ? n : -n);
     report = get_reply();
     if (strchr(report, ';') != 0) {
       printxx("  %2d: ", n);
@@ -648,7 +648,7 @@ test_window_name(MENU_ARGS)
   vt_move(1, 1);
   println("Please enter the new window name.  Newer xterms may beep when setting the title.");
   inputline(temp);
-  do_osc("0;%s%c", temp, BEL);
+  do_osc("0;%s", temp);
   return MENU_NOHOLD;
 }
 

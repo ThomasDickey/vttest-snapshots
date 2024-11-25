@@ -1,4 +1,4 @@
-/* $Id: vt420.c,v 1.234 2024/10/22 20:33:01 tom Exp $ */
+/* $Id: vt420.c,v 1.235 2024/11/25 01:20:24 tom Exp $ */
 
 /*
  * Reference:  Installing and Using the VT420 Video Terminal (North American
@@ -583,25 +583,23 @@ show_MultisessionStatus(const char *report)
   int pos = 0;
   int Ps1 = scan_any(report, &pos, 'n');
   int Ps2 = scanto(report, &pos, 'n');
-  const char *show;
 
   switch (Ps1) {
   case 80:
-    show = "SSU sessions enabled (%d max)";
+    show_result("SSU sessions enabled (%d max)", Ps2);
     break;
   case 81:
-    show = "SSU sessions available but pending (%d max)";
+    show_result("SSU sessions available but pending (%d max)", Ps2);
     break;
   case 83:
-    show = "SSU sessions not ready";
+    show_result("SSU sessions not ready");
     break;
   case 87:
-    show = "Sessions on separate lines";
+    show_result("Sessions on separate lines");
     break;
   default:
-    show = SHOW_FAILURE;
+    show_result(SHOW_FAILURE);
   }
-  show_result(show, Ps2);
 }
 
 /******************************************************************************/

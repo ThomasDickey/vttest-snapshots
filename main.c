@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.153 2024/10/14 10:41:09 tom Exp $ */
+/* $Id: main.c,v 1.154 2024/11/25 00:37:06 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -170,7 +170,7 @@ main(int argc, char *argv[])
 #define OPT_ARG(value) \
     do { \
       if (!*++opt) { \
-        if (argc-- < 1) \
+        if (--argc < 1) \
           usage(); \
         value = *++argv; \
       } \
