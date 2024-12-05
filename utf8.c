@@ -1,4 +1,4 @@
-/* $Id: utf8.c,v 1.1 2010/08/28 12:28:16 tom Exp $ */
+/* $Id: utf8.c,v 1.2 2024/12/05 00:40:24 tom Exp $ */
 
 #include <vttest.h>
 
@@ -25,7 +25,7 @@ conv_to_utf8(unsigned char *target, unsigned source, unsigned limit)
     rc = 0;
   }
 
-  if (target != 0) {
+  if (target != NULL) {
     switch (rc) {
     case 1:
       target[0] = CH(0);
@@ -124,7 +124,7 @@ conv_to_utf32(unsigned *target, const char *source, unsigned limit)
     }
   }
 
-  if (target != 0) {
+  if (target != NULL) {
     int shift = 0;
     *target = 0;
     for (j = 1; j < rc; j++) {

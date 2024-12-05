@@ -1,5 +1,5 @@
 /*
- * $Id: replay.c,v 1.8 2024/10/22 00:22:01 tom Exp $
+ * $Id: replay.c,v 1.9 2024/12/05 00:37:39 tom Exp $
  */
 #include <vttest.h>
 
@@ -117,7 +117,7 @@ get_string(char *source)
     for (s = source, t = temp; *s != '\0'; ++s) {
       if (*s == '<' && isdigit(s[1])) {
         long value = strtol(++s, &s, 10);
-        if (s == 0)
+        if (s == NULL)
           break;
         *t++ = (char) (value & 0xff);
       } else if (*s != ' ') {

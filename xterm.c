@@ -1,4 +1,4 @@
-/* $Id: xterm.c,v 1.85 2024/11/25 00:26:45 tom Exp $ */
+/* $Id: xterm.c,v 1.87 2024/12/05 00:43:14 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -39,7 +39,7 @@ check_rc(int row, int col)
 
   vt_move(row, 1);
   el(2);
-  if ((params = skip_csi(report)) == 0
+  if ((params = skip_csi(report)) == NULL
       || strcmp(params, expected) != 0) {
     printxx("cursor save/restore %s, got \"%s\", expected \"%s\"",
             SHOW_FAILURE, params, expected);
@@ -221,13 +221,13 @@ tst_altscrn(MENU_ARGS)
   static char txt_do_decaln[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { txt_do_colors,                                         toggle_color },
     { txt_do_decaln,                                         toggle_decaln },
     { "Switch to/from alternate screen (xterm)",             test_altscrn_47 },
     { "Improved alternate screen (XFree86 xterm mode 1047)", test_altscrn_1047 },
     { "Better alternate screen (XFree86 xterm mode 1049)",   test_altscrn_1049 },
-    { "",                                                    0 }
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 
@@ -305,7 +305,7 @@ tst_report_font(MENU_ARGS)
     vt_move(row, col);
     do_osc("50;?%d", n);
     report = get_reply();
-    if (strchr(report, ';') != 0) {
+    if (strchr(report, ';') != NULL) {
       printxx("  %2d: ", n);
       row = chrprint2(report, row, col);
     }
@@ -321,7 +321,7 @@ tst_report_font(MENU_ARGS)
     vt_move(row, col);
     do_osc("50;?%c%d", n >= 0 ? '+' : '-', n >= 0 ? n : -n);
     report = get_reply();
-    if (strchr(report, ';') != 0) {
+    if (strchr(report, ';') != NULL) {
       printxx("  %2d: ", n);
       row = chrprint2(report, row, col);
     } else if (n >= 0) {
@@ -338,10 +338,10 @@ tst_font(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { "Modify font",                                         tst_modify_font },
     { "Report font(s)",                                      tst_report_font },
-    { "",                                                    0 }
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 
@@ -672,7 +672,7 @@ tst_xterm_VERSION(MENU_ARGS)
     else
       do_csi(">q");
     report = get_reply();
-    if ((report = skip_dcs(report)) != 0
+    if ((report = skip_dcs(report)) != NULL
         && strip_terminator(report)
         && !strncmp(report, ">|", 2)) {
       printxx(SHOW_SUCCESS);
@@ -680,6 +680,75 @@ tst_xterm_VERSION(MENU_ARGS)
       chrprint2(report + 2, row, col + 3);
     } else {
       printxx(SHOW_FAILURE);
+    }
+  }
+
+  vt_move(20, 1);
+  restore_ttymodes();
+  return MENU_HOLD;
+}
+
+static int
+tst_XTTITLEPOS(MENU_ARGS)
+{
+  int now, top;
+  int row = 3;
+  int first = -1;
+  int last = -1;
+  int seen = -1;
+  char *report;
+  char expect;
+  char ignore;
+
+  vt_move(1, 1);
+  println(the_title);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  vt_move(3, 3);
+  do {
+    do_csi("#S");
+    report = get_reply();
+    if ((report = skip_csi(report)) != NULL
+        && sscanf(report, "%d;%d#%c%c", &now, &top, &expect, &ignore) == 3
+        && now >= seen
+        && now >= 0
+        && top > now
+        && expect == 'S') {
+      vt_move(row++, 3);
+      printxx("[%d:%d] " SHOW_SUCCESS, now, top);
+      if (first < 0) {
+        first = now;
+        seen = now;
+        last = top;
+      }
+      seen++;
+      do_csi("22;0t");
+      do_osc("0;Title stack %d", seen);
+      zleep(200);
+    } else {
+      printxx(SHOW_FAILURE);
+      break;
+    }
+  } while (seen + 1 < last);
+
+  while (seen-- > first) {
+    do_csi("23;0t");
+    do_csi("#S");
+    report = get_reply();
+    if ((report = skip_csi(report)) != NULL
+        && sscanf(report, "%d;%d#%c%c", &now, &top, &expect, &ignore) == 3
+        && now <= seen
+        && now >= 0
+        && top == last
+        && expect == 'S') {
+      vt_move(--row, 30);
+      printxx("[%d:%d] " SHOW_SUCCESS, now, last);
+      zleep(200);
+    } else {
+      printxx(SHOW_FAILURE);
+      break;
     }
   }
 
@@ -882,14 +951,47 @@ rpt_XTQMODKEYS(MENU_ARGS)
 }
 
 static int
+rpt_XTSMTITLE(MENU_ARGS)
+{
+  int n;
+  static const char *message[] =
+  {
+    "Set window/icon labels using hexadecimal",
+    "Query window/icon labels using hexadecimal",
+    "Set window/icon labels using UTF-8",
+    "Query window/icon labels using UTF-8"
+  };
+
+  for (n = 0; n < 4; ++n) {
+    char full_title[80];
+    char command[80];
+
+    sprintf(full_title, "%s (%s)", the_title, message[n]);
+    vt_move(1, 1);
+    vt_clear(0);
+    sprintf(command, ">%dt", n);
+    /* set the value */
+    do_csi(">%dt", n);
+    any_decrqss(full_title, command);
+    zleep(500);
+    /* reset the value */
+    do_csi(">%dT", n);
+    any_decrqss(full_title, command);
+    holdit();
+  }
+  return MENU_NOHOLD;
+}
+
+static int
 tst_xterm_DECRQSS(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT520 features (DECRQSS)",                     tst_vt520_DECRQSS },
       { "Query Key Modifier Options",                        rpt_XTQMODKEYS },
-      { "",                                                  0 }
+      { "Query Title Modes",                                 rpt_XTSMTITLE },
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -934,12 +1036,13 @@ tst_xterm_reports(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { "Test VT520 features",                                 tst_vt520_reports },
     { "Report version (XTVERSION)",                          tst_xterm_VERSION },
     { "Request Mode (DECRQM)/Report Mode (DECRPM)",          tst_xterm_DECRPM },
     { "Status-String Report (DECRQSS)",                      tst_xterm_DECRQSS },
-    { "",                                                    0 }
+    { "Title-Stack Position",                                tst_XTTITLEPOS },
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 
@@ -962,7 +1065,7 @@ tst_xterm(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { "Test VT520 features",                                 tst_vt520 },
     { "Test reporting functions",                            tst_xterm_reports },
     { "Set window title",                                    test_window_name },
@@ -972,7 +1075,7 @@ tst_xterm(MENU_ARGS)
     { "Alternate-Screen features (xterm)",                   tst_altscrn },
     { "Window modify-operations (dtterm)",                   test_modify_ops },
     { "Window report-operations (dtterm)",                   test_report_ops },
-    { "",                                                    0 }
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 

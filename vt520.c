@@ -1,4 +1,4 @@
-/* $Id: vt520.c,v 1.27 2024/10/14 17:17:45 tom Exp $ */
+/* $Id: vt520.c,v 1.28 2024/12/05 00:43:14 tom Exp $ */
 
 /*
  * Reference:  VT520/VT525 Video Terminal Programmer Information
@@ -48,7 +48,7 @@ tst_vt520_cursor(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT420 features",                               tst_vt420_cursor },
       { origin_mode_mesg,                                    toggle_DECOM },
       { lrmm_mesg,                                           toggle_LRMM },
@@ -64,7 +64,7 @@ tst_vt520_cursor(MENU_ARGS)
       { "Test Next-Line (CNL)",                              tst_CNL },
       { "Test Previous-Line (CPL)",                          tst_CPL },
       { "Test Vertical-Position-Relative (VPR)",             tst_VPR },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -576,7 +576,7 @@ tst_VT510_DECRQSS(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT420 features (DECRQSS)",                     tst_vt420_DECRQSS },
       { "Select Communication Port (DECSCP)",                rpt_DECSCP },
       { "Select Communication Speed (DECSCS)",               rpt_DECSCS },
@@ -595,7 +595,7 @@ tst_VT510_DECRQSS(MENU_ARGS)
       { "Set Scroll Speed (DECSSCLS)",                       rpt_DECSSCLS },
       { "Set Transmit Rate Limit (DECSTRL)",                 rpt_DECSTRL },
       { "Set Warning Bell Volume (DECSWBV)",                 rpt_DECSWBV },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -612,7 +612,7 @@ tst_vt520_DECRQSS(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT510 features (DECRQSS)",                     tst_VT510_DECRQSS },
       { "Alternate Text Color (DECATC)",                     rpt_DECATC },
       { "Assign Color (DECAC)",                              rpt_DECAC },
@@ -625,7 +625,7 @@ tst_vt520_DECRQSS(MENU_ARGS)
       { "Session Page Memory Allocation (DECSPMA)",          rpt_DECSPMA },
       { "Terminal Mode Emulation (DECTME)",                  rpt_DECTME },
       { "Update Session (DECUS)",                            rpt_DECUS },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -644,11 +644,11 @@ tst_VT520_report_presentation(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT420 features",                               tst_vt420_report_presentation },
       { "Request Mode (DECRQM)/Report Mode (DECRPM)",        tst_DECRPM },
       { "Status-String Report (DECRQSS)",                    tst_vt520_DECRQSS },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -668,11 +668,11 @@ tst_vt520_reports(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT420 features",                               tst_vt420_reports },
       { "Test Presentation State Reports",                   tst_VT520_report_presentation },
       { "Test Device Status Reports (DSR)",                  tst_vt420_device_status },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -691,11 +691,11 @@ tst_vt520_screen(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test No Clear on Column Change (DECNCSM)",          tst_DECNCSM },
       { "Test Set Cursor Style (DECSCUSR)",                  tst_DECSCUSR },
       { "Test Alternate Text Color (DECATC)",                tst_DECATC },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -717,14 +717,14 @@ tst_vt520(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT420 features",                               tst_vt420 },
       { "Test cursor-movement",                              tst_vt520_cursor },
       { "Test editing sequences",                            not_impl },
       { "Test keyboard-control",                             not_impl },
       { "Test reporting functions",                          tst_vt520_reports },
       { "Test screen-display functions",                     tst_vt520_screen },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 

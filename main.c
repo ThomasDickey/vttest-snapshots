@@ -1,4 +1,4 @@
-/* $Id: main.c,v 1.154 2024/11/25 00:37:06 tom Exp $ */
+/* $Id: main.c,v 1.155 2024/12/05 00:37:39 tom Exp $ */
 
 /*
                                VTTEST.C
@@ -50,7 +50,7 @@
 #endif
 
 /* *INDENT-EQLS* */
-FILE *log_fp    = 0;
+FILE *log_fp    = NULL;
 int allows_utf8 = FALSE;
 int assume_utf8 = FALSE;
 int brkrd       = FALSE;
@@ -141,7 +141,7 @@ main(int argc, char *argv[])
 {
   /* *INDENT-OFF* */
   static MENU mainmenu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test of cursor movements",                          tst_movements },
       { "Test of screen features",                           tst_screen },
       { "Test of character sets",                            tst_characters },
@@ -154,7 +154,7 @@ main(int argc, char *argv[])
       { "Test of reset and self-test",                       tst_rst },
       { "Test non-VT100 (e.g., VT220, XTERM) terminals",     tst_nonvt100 },
       { "Modify test-parameters",                            tst_setup },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
   char *opt_command = NULL;
@@ -1048,7 +1048,7 @@ tst_bugs(MENU_ARGS)
   int i;
   /* *INDENT-OFF* */
   static MENU menutable[] = {
-    { "Exit to main menu",                                   0 },
+    { "Exit to main menu",                                   NULL },
     { "Bug A: Smooth scroll to jump scroll",                 bug_a },
     { "Bug B: Scrolling region",                             bug_b },
     { "Bug C: Wide to narrow screen",                        bug_c },
@@ -1059,7 +1059,7 @@ tst_bugs(MENU_ARGS)
     { "Erase right half of double width lines",              bug_l },
     { "Funny scroll regions",                                bug_s },
     /* Add more here */
-    { "",                                                    0 }
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 
@@ -1723,7 +1723,7 @@ menu2(MENU *table, int top)
           fprintf(log_fp, NOTE_STR "Selecting all choices\n");
         for (choice = 0; choice <= tablesize; choice++) {
           vt_clear(2);
-          if (table[choice].dispatch != 0) {
+          if (table[choice].dispatch != NULL) {
             const char *save = push_menu(choice);
             const char *name = table[choice].description;
             if (LOG_ENABLED)
@@ -1738,7 +1738,7 @@ menu2(MENU *table, int top)
         return 1;
       } else if (choice <= tablesize) {
         vt_clear(2);
-        if (table[choice].dispatch != 0) {
+        if (table[choice].dispatch != NULL) {
           const char *save = push_menu(choice);
           const char *name = table[choice].description;
           if (LOG_ENABLED)
@@ -1749,7 +1749,7 @@ menu2(MENU *table, int top)
         }
         if (LOG_ENABLED)
           fflush(log_fp);
-        return (table[choice].dispatch != 0);
+        return (table[choice].dispatch != NULL);
       }
       printxx("          Bad choice, try again: ");
     }
@@ -1771,7 +1771,7 @@ chrformat(const char *s, int col, int first)
 {
   int pass;
   int wrap = (min_cols - col);
-  char *result = 0;
+  char *result = NULL;
 
   if (quick_reply) {
     const char *quicker = s;
@@ -1864,7 +1864,7 @@ skip_prefix(const char *prefix, char *input)
 {
   while (*prefix != '\0') {
     if (*prefix++ != *input++)
-      return 0;
+      return NULL;
   }
   return input;
 }
@@ -1913,7 +1913,7 @@ skip_prefix_2(const char *prefix, const char *input)
 {
   while (*prefix != '\0') {
     if (*prefix++ != *input++)
-      return 0;
+      return NULL;
   }
   return input;
 }
@@ -1954,7 +1954,7 @@ skip_digits(char *src)
   char *base = src;
   while (*src != '\0' && isdigit(CharOf(*src)))
     src++;
-  return (base == src) ? 0 : src;
+  return (base == src) ? NULL : src;
 }
 
 #define xdigitOf(c) \
@@ -1975,7 +1975,7 @@ skip_xdigits(const char *src, int *value)
     *value += xdigitOf(ch);
     src++;
   }
-  return (base == src) ? 0 : src;
+  return (base == src) ? NULL : src;
 }
 
 const char *
@@ -1984,7 +1984,7 @@ skip_digits_2(const char *src)
   const char *base = src;
   while (*src != '\0' && isdigit(CharOf(*src)))
     src++;
-  return (base == src) ? 0 : src;
+  return (base == src) ? NULL : src;
 }
 
 /*
@@ -2033,7 +2033,7 @@ parse_decrqss(char *report, const char *func)
   int code = -1;
   char *parse = report;
 
-  if ((parse = skip_dcs(parse)) != 0
+  if ((parse = skip_dcs(parse)) != NULL
       && strip_terminator(parse)
       && strip_suffix(parse, func)) {
     if (!strncmp(parse, "1$r", (size_t) 3))

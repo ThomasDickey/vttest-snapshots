@@ -1,4 +1,4 @@
-/* $Id: charsets.c,v 1.106 2024/10/13 22:44:59 tom Exp $ */
+/* $Id: charsets.c,v 1.107 2024/12/05 00:38:44 tom Exp $ */
 
 /*
  * Test character-sets (e.g., SCS control, DECNRCM mode)
@@ -135,15 +135,15 @@ static const char map_ISO_Latin_2[]  = "!\"#%&)*+,./1235679:;<=>?"
 static const char map_ISO_Latin_5[]  = "P]^p}~";
 
 static const CHARSETS KnownCharsets[] = {
-  { ASCII,             0, 0, 0, 9, "B",    "US ASCII", 0 },
+  { ASCII,             0, 0, 0, 9, "B",    "US ASCII", NULL },
   { British,           1, 0, 0, 9, "A",    "British", map_pound },
-  { British_Latin_1,   2, 0, 3, 9, "A",    "ISO Latin-1", 0 },
+  { British_Latin_1,   2, 0, 3, 9, "A",    "ISO Latin-1", NULL },
   { Cyrillic_DEC,      1, 0, 5, 9, "&4",   "Cyrillic (DEC)", map_all94 },
   { DEC_Spec_Graphic,  0, 0, 0, 9, "0",    "DEC Special graphics and line drawing", map_Spec_Graphic },
-  { DEC_Alt_Chars,     0, 0, 0, 0, "1",    "DEC Alternate character ROM standard characters", 0 },
-  { DEC_Alt_Graphics,  0, 0, 0, 0, "2",    "DEC Alternate character ROM special graphics", 0 },
+  { DEC_Alt_Chars,     0, 0, 0, 0, "1",    "DEC Alternate character ROM standard characters", NULL },
+  { DEC_Alt_Graphics,  0, 0, 0, 0, "2",    "DEC Alternate character ROM special graphics", NULL },
   { DEC_Supp,          0, 0, 2, 2, "<",    "DEC Supplemental", map_DEC_Supp },
-  { DEC_UPSS,          0, 0, 3, 9, "<",    "User-preferred supplemental", 0 },
+  { DEC_UPSS,          0, 0, 3, 9, "<",    "User-preferred supplemental", NULL },
   { DEC_Supp_Graphic,  1, 0, 3, 9, "%5",   "DEC Supplemental Graphic", map_Supp_Graphic },
   { DEC_Technical,     0, 0, 3, 9, ">",    "DEC Technical", map_all94 },
   { Dutch,             1, 0, 2, 9, "4",    "Dutch", map_Dutch },
@@ -178,7 +178,7 @@ static const CHARSETS KnownCharsets[] = {
   { Swiss,             1, 0, 2, 9, "=",    "Swiss", map_Swiss },
   { Turkish,           1, 0, 5, 9, "%2",   "Turkish", map_Turkish },
   { Turkish_DEC,       1, 0, 5, 9, "%0",   "Turkish (DEC)", map_DEC_Turkish },
-  { Unknown,           0, 0,-1,-1, "?",    "Unknown", 0 }
+  { Unknown,           0, 0,-1,-1, "?",    "Unknown", NULL }
 };
 /* *INDENT-ON* */
 
@@ -204,7 +204,7 @@ lookupCode(National code)
 static const CHARSETS *
 lookupCharset(int g, int n)
 {
-  const CHARSETS *result = 0;
+  const CHARSETS *result = NULL;
   if (n >= 0 && n < TABLESIZE(KnownCharsets)) {
     if (!strcmp(KnownCharsets[n].final, "A")) {
       if (scs_national || (g == 0)) {
@@ -277,7 +277,7 @@ send32(int row, int upper, const char *not11)
   }
   for (col = 0; col <= 31; col++) {
     char ch = (char) (row * 32 + upper + col);
-    if (not11 != 0 && hilite_not11) {
+    if (not11 != NULL && hilite_not11) {
       const char *p;
       int found = 0;
       for (p = not11; *p; ++p) {
@@ -425,7 +425,7 @@ specify_any_Gx(MENU_ARGS, int g)
     m++;
   }
   my_menu[m].description = "";
-  my_menu[m].dispatch = 0;
+  my_menu[m].dispatch = NULL;
 
   do {
     vt_clear(2);
@@ -598,7 +598,7 @@ tst_vt220_locking(MENU_ARGS)
     int row = 3 + (4 * cset);
     int map = table[cset].mapped;
     const CHARSETS *tbl = lookupCharset(map, current_Gx[map]);
-    int map_gl = (strstr(table[cset].msg, "into GL") != 0);
+    int map_gl = (strstr(table[cset].msg, "into GL") != NULL);
 
     scs_normal();
     cup(row, 1);
@@ -618,7 +618,7 @@ tst_vt220_locking(MENU_ARGS)
         esc(table[cset].code);
       }
       cup(row + i, 5);
-      send32(i, 0, map_gl ? tbl->not11 : 0);
+      send32(i, 0, map_gl ? tbl->not11 : NULL);
 
       if (table[cset].upper) {
         do_scs(map);
@@ -644,7 +644,7 @@ tst_vt220_locking(MENU_ARGS)
         map_g1_to_gr();
       }
       cup(row + i, 40);
-      send32(i, 128, map_gl ? 0 : tbl->not11);
+      send32(i, 128, map_gl ? NULL : tbl->not11);
     }
     reset_scs(cset);
   }
@@ -868,7 +868,7 @@ tst_DECAUPSS(MENU_ARGS)
     m++;
   }
   my_menu[m].description = "";
-  my_menu[m].dispatch = 0;
+  my_menu[m].dispatch = NULL;
 
   do {
     vt_clear(2);
@@ -899,7 +899,7 @@ tst_DECRQUPSS(MENU_ARGS)
   report = get_reply();
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
-  if ((report = skip_dcs(report)) != 0
+  if ((report = skip_dcs(report)) != NULL
       && strip_terminator(report)) {
     int cs_size;
     const char *cs_name;
@@ -936,7 +936,7 @@ tst_characters(MENU_ARGS)
   static char nrc_mesg[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Reset (G0 ASCII, G1 Latin-1, no NRC mode)",         reset_charset },
       { hilite_mesg,                                         toggle_hilite },
       { nrc_mesg,                                            toggle_nrc },
@@ -950,7 +950,7 @@ tst_characters(MENU_ARGS)
       { "Test VT220 Single Shifts",                          tst_vt220_single },
       { "Test Soft Character Sets",                          not_impl },
       { "Test Keyboard Layout with G0 Selection",            tst_layout },
-      { "",                                                  0 }
+      { "",                                                  NULL }
   };
   /* *INDENT-ON* */
 
@@ -988,12 +988,12 @@ tst_upss(MENU_ARGS)
   static char upss_mesg[120];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test character sets",                               tst_characters },
       { "Reset UPSS (User-Preferred Supplemental Sets)",     reset_upss },
       { upss_mesg,                                           tst_DECAUPSS },
       { "Test DECRQUPSS",                                    tst_DECRQUPSS },
-      { "",                                                  0 }
+      { "",                                                  NULL }
   };
   /* *INDENT-ON* */
 

@@ -1,4 +1,4 @@
-/* $Id: vt220.c,v 1.43 2024/11/25 01:21:15 tom Exp $ */
+/* $Id: vt220.c,v 1.44 2024/12/05 00:40:24 tom Exp $ */
 
 /*
  * Reference:  VT220 Programmer Pocket Guide (EK-VT220-HR-002).
@@ -27,10 +27,10 @@ any_DSR(MENU_ARGS, const char *text, void (*explain) (const char *report))
   report = get_reply();
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
-  if ((report = skip_csi(report)) != 0
+  if ((report = skip_csi(report)) != NULL
       && strlen(report) > (1 + pmode)
       && (!pmode || (*report++ == '?'))) {
-    if (explain != 0)
+    if (explain != NULL)
       (*explain) (report);
     else
       show_result(SHOW_SUCCESS);
@@ -46,7 +46,7 @@ any_DSR(MENU_ARGS, const char *text, void (*explain) (const char *report))
 static void
 report_ok(const char *ref, const char *tst)
 {
-  if ((tst = skip_csi_2(tst)) == 0)
+  if ((tst = skip_csi_2(tst)) == NULL)
     tst = "?";
   show_result(!strcmp(ref, tst) ? SHOW_SUCCESS : SHOW_FAILURE);
 }
@@ -590,12 +590,12 @@ tst_vt220_device_status(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test Keyboard Status",                              tst_DSR_keyboard },
       { "Test Operating Status",                             tst_DSR_operating_status },
       { "Test Printer Status",                               tst_DSR_printer },
       { "Test UDK Status",                                   tst_DSR_userkeys },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -616,12 +616,12 @@ tst_vt220_screen(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test Send/Receive mode (SRM)",                      tst_SRM },
       { "Test Visible/Invisible Cursor (DECTCEM)",           tst_DECTCEM },
       { "Test Erase Char (ECH)",                             tst_ECH },
       { "Test Protected-Areas (DECSCA)",                     tst_DECSCA },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -642,9 +642,9 @@ tst_vt220_reports(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test Device Status Report (DSR)",                   tst_vt220_device_status },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -663,7 +663,7 @@ tst_vt220(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test reporting functions",                          tst_vt220_reports },
       { "Test screen-display functions",                     tst_vt220_screen },
       { "Test 8-bit controls (S7C1T/S8C1T)",                 tst_S8C1T },
@@ -671,7 +671,7 @@ tst_vt220(MENU_ARGS)
       { "Test Soft Character Sets (DECDLD)",                 tst_softchars },
       { "Test Soft Terminal Reset (DECSTR)",                 tst_DECSTR },
       { "Test User-Defined Keys (DECUDK)",                   tst_DECUDK },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 

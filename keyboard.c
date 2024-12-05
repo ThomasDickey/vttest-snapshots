@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.46 2024/10/10 08:22:28 tom Exp $ */
+/* $Id: keyboard.c,v 1.47 2024/12/05 00:37:39 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -383,11 +383,11 @@ same_CTLKEY(const char *response, const CTLKEY *code)
 {
   switch (code->prefix) {
   case CSI:
-    if ((response = skip_csi_2(response)) == 0)
+    if ((response = skip_csi_2(response)) == NULL)
       return FALSE;
     break;
   case SS3:
-    if ((response = skip_ss3_2(response)) == 0)
+    if ((response = skip_ss3_2(response)) == NULL)
       return FALSE;
     break;
   case ESC:
@@ -487,7 +487,7 @@ set_E47_layout(MENU_ARGS)
 static void
 show_character(int i, const char *scs_params, int hilite)
 {
-  int special = ((scs_params != 0) && (strlen(keytab[i].symbol) == 1));
+  int special = ((scs_params != NULL) && (strlen(keytab[i].symbol) == 1));
 
   vt_move(1 + 2 * keytab[i].row, 1 + keytab[i].col);
   if (hilite)
@@ -1095,7 +1095,7 @@ tst_KeyboardLayout(MENU_ARGS)
       { "Swedish national layout D47",                       set_D47_layout },
       { "Swedish national layout E47",                       set_E47_layout },
         /* add new keyboard layouts here */
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1174,7 +1174,7 @@ tst_keyboard_layout(const char *scs_params)
     kbdc = get_char();
     vt_move(row, col);
     vt_el(0);
-    if (scs_params != 0 && kbdc > ' ' && kbdc < '\177') {
+    if (scs_params != NULL && kbdc > ' ' && kbdc < '\177') {
       vt_hilite(TRUE);
       esc(scs_params);
       tprintf(" %c ", kbdc);
@@ -1206,7 +1206,7 @@ tst_keyboard(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "LED Lights",                                        tst_LED_Lights },
       { "Auto Repeat",                                       tst_AutoRepeat },
       { "Keyboard Layout",                                   tst_KeyboardLayout },
@@ -1216,7 +1216,7 @@ tst_keyboard(MENU_ARGS)
       { "Function Keys",                                     tst_FunctionKeys },
       { "AnswerBack",                                        tst_AnswerBack },
       { "Control Keys",                                      tst_ControlKeys },
-      { "", 0 }
+      { "", NULL }
     };
   /* *INDENT-ON* */
 

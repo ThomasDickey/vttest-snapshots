@@ -1,4 +1,4 @@
-/* $Id: esc.c,v 1.118 2024/10/14 17:14:53 tom Exp $ */
+/* $Id: esc.c,v 1.119 2024/12/05 00:44:52 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -222,9 +222,9 @@ put_char(FILE *fp, int c)
          */
         if (parse_7bits == 2 && allows_utf8 && c >= 128 && c <= 255) {
           unsigned char buffer[10];
-          int rc = conv_to_utf8(buffer, (unsigned)c, sizeof(buffer));
+          int rc = conv_to_utf8(buffer, (unsigned) c, sizeof(buffer));
           if (rc > 1) {   /* rc should be 0, 1 or 2 */
-            fwrite(buffer, (size_t)(rc - 1), 1, fp);
+            fwrite(buffer, (size_t) (rc - 1), 1, fp);
             c = buffer[rc - 1];   /* fall-thru with the last byte */
           }
         }
@@ -234,11 +234,11 @@ put_char(FILE *fp, int c)
          * ECMA-48 makes it clear that both 7-bit controls and 8-bit control
          * are parsed using a 7-bit table.  We can demonstrate whether the
          * terminal actually does this by mapping printable 7-bit characters
-         * (32 to 126) to the 160..254 range.  
+         * (32 to 126) to the 160..254 range.
          *
          * Because an ECMA-48 parser looks for the final character (or the
          * string terminator for APC, etc.) using a 7-bit table, it is possible
-         * to match the final/terminating character in the 160..254 range. 
+         * to match the final/terminating character in the 160..254 range.
          * Unicode.org could improve its documentation to clarify how it
          * differs from ECMA-48, and in doing so might state that the data
          * stream need not comply with ECMA-48 in this regard.
@@ -988,7 +988,7 @@ decsera(int top, int left, int bottom, int right)   /* VT400 Selective erase rec
 }
 
 void
-decstglt(int mode)                /* DECSTGLT Select Color Look-Up Table */
+decstglt(int mode)              /* DECSTGLT Select Color Look-Up Table */
 {
   do_csi("%d){", mode);
 }
@@ -1286,12 +1286,12 @@ s8c1t(int flag)                 /* Tell terminal to respond with 7-bit or 8-bit 
 
 /*
  * If g is zero,
- *    designate G0 as character set c 
+ *    designate G0 as character set c
  *    designate G1 as character set B (ASCII)
  *    shift-in (select G0 into GL).
  * If g is nonzero
  *    designate G0 as character set B (ASCII)
- *    designate G1 as character set c 
+ *    designate G1 as character set c
  *    shift-out (select G1 into GL).
  * See also scs_normal() and scs_graphics().
  */

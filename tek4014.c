@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.18 2024/10/04 00:33:40 tom Exp $ */
+/* $Id: tek4014.c,v 1.19 2024/12/05 00:40:24 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -132,7 +132,7 @@ log_mouse_click(char *report)
     int new_y = tek_coord(report, 3);
     fprintf(log_fp, "Report: ");
     if ((report[0] & 0x80) != 0
-        && strchr("lmrLMR", report[0] & 0x7f) != 0) {
+        && strchr("lmrLMR", report[0] & 0x7f) != NULL) {
       fprintf(log_fp, NOTE_STR "mouse %c", report[0] & 0x7f);
     } else {
       fprintf(log_fp, NOTE_STR "key %d", CharOf(report[0]));
@@ -210,7 +210,7 @@ tek_mouse_coords(MENU_ARGS)
      */
     printxx("\r\n");
     if ((report[0] & 0x80) != 0
-        && strchr("lmrLMR", report[0] & 0x7f) != 0) {
+        && strchr("lmrLMR", report[0] & 0x7f) != NULL) {
       printxx("mouse %c:", report[0] & 0x7f);
     } else {
       printxx("key: %d", CharOf(report[0]));
@@ -314,13 +314,13 @@ tst_tek4014(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { "Clear screen",                                        tek_clear },
     { "'Hello World!' in each font",                         tek_hello },
     { "Get mouse-clicks, showing coordinates",               tek_mouse_coords },
     { "Get mouse-clicks, drawing lines between",             tek_mouse_lines },
     { "Draw a grid",                                         tek_grid_demo },
-    { "",                                                    0 }
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 

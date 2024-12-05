@@ -1,4 +1,4 @@
-/* $Id: reports.c,v 1.56 2024/10/08 23:06:36 tom Exp $ */
+/* $Id: reports.c,v 1.57 2024/12/05 00:37:39 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -184,7 +184,7 @@ tst_DA(MENU_ARGS)
 
   found = FALSE;
 
-  if ((cmp = skip_csi_2(report)) != 0) {
+  if ((cmp = skip_csi_2(report)) != NULL) {
     int i;
 
     for (i = 0; *attributes[i][0] != '\0'; i++) {
@@ -203,7 +203,7 @@ tst_DA(MENU_ARGS)
   }
 
   if (!found) { /* this could be a vt200+ with some options disabled */
-    if (cmp != 0 && *cmp == '?') {
+    if (cmp != NULL && *cmp == '?') {
       int reportpos = 1;
       int value = scan_DA(cmp, &reportpos);
       show_result("%s\n", lookup(operating_level, value));
@@ -316,7 +316,7 @@ tst_DA_2(MENU_ARGS)
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
 
-  if ((report = skip_csi(report)) != 0) {
+  if ((report = skip_csi(report)) != NULL) {
     if (sscanf(report, ">%d;%d;%d%c", &Pp, &Pv, &Pc, &ch) == 4
         && ch == 'c') {
       const char *name = "unknown";
@@ -380,7 +380,7 @@ tst_DA_3(MENU_ARGS)
       show = "not supported";
   } else {
     char *content;
-    if ((content = skip_dcs(report)) != 0
+    if ((content = skip_dcs(report)) != NULL
         && strip_terminator(content) != 0
         && *content++ == '!'
         && *content++ == '|'
@@ -419,7 +419,7 @@ tst_DECREQTPARM(MENU_ARGS)
 
   report_is(report, 5, 1);
 
-  if ((cmp = skip_csi(report)) != 0)
+  if ((cmp = skip_csi(report)) != NULL)
     report = cmp;
 
   if (strlen(report) < 14
@@ -459,7 +459,7 @@ tst_DECREQTPARM(MENU_ARGS)
 
   report_is(report2, 13, 1);
 
-  if ((cmp = skip_csi(report2)) != 0)
+  if ((cmp = skip_csi(report2)) != NULL)
     report2 = cmp;
 
   if (strlen(report2) < 1
@@ -498,7 +498,7 @@ tst_DSR(MENU_ARGS)
 
   report_is(report, row, col);
 
-  if ((cmp = skip_csi(report)) != 0)
+  if ((cmp = skip_csi(report)) != NULL)
     found = !strcmp(cmp, "0n") || !strcmp(cmp, "3n");
   else
     found = 0;
@@ -522,7 +522,7 @@ tst_DSR(MENU_ARGS)
 
     report_is(report, row, col);
 
-    if ((cmp = skip_csi(report)) != 0) {
+    if ((cmp = skip_csi(report)) != NULL) {
       found = (!strcmp(cmp, "5;1R")
                ? 1
                : ((!strcmp(cmp, "8;1R") && origin)
@@ -632,7 +632,7 @@ tst_reports(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                                   0 },
+      { "Exit",                                                   NULL },
       { "<ENQ> (AnswerBack Message)",                             tst_ENQ },
       { "Set/Reset Mode - LineFeed / Newline",                    tst_NLM },
       { "Device Status Report (DSR)                 VT100 & up",  tst_DSR },
@@ -640,7 +640,7 @@ tst_reports(MENU_ARGS)
       { "Secondary Device Attributes (DA)           VT220 & up",  tst_DA_2 },
       { "Tertiary Device Attributes (DA)            VT420",       tst_DA_3 },
       { "Request Terminal Parameters (DECREQTPARM)  VT100",       tst_DECREQTPARM },
-      { "",                                                       0 }
+      { "",                                                       NULL }
     };
   /* *INDENT-ON* */
 

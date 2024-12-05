@@ -1,4 +1,4 @@
-/* $Id: nonvt100.c,v 1.70 2024/09/29 14:19:49 tom Exp $ */
+/* $Id: nonvt100.c,v 1.71 2024/12/05 00:37:39 tom Exp $ */
 
 /*
  * The list of non-VT320 codes was compiled using the list of non-VT320 codes
@@ -63,7 +63,7 @@ tst_CBT(MENU_ARGS)
     }
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -133,7 +133,7 @@ tst_CHA(MENU_ARGS)
     print_chr('*');
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -194,7 +194,7 @@ tst_CHT(MENU_ARGS)
     tprintf("\t*");
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -227,7 +227,7 @@ tst_CNL(MENU_ARGS)
     vpa(2);     /* subsequently, start from the second line */
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -262,7 +262,7 @@ tst_CPL(MENU_ARGS)
     tprintf("%d.", i);
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -329,7 +329,7 @@ tst_HPA(MENU_ARGS)
     print_chr('*');
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -405,7 +405,7 @@ tst_HPR(MENU_ARGS)
     print_chr('*');
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -629,10 +629,10 @@ tst_protected_area(MENU_ARGS)
   static char erm_mesg[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { erm_mesg,                                            toggle_ERM },
       { "Test Protected-Areas (SPA)",                        tst_SPA },
-      { "",                                                  0 },
+      { "",                                                  NULL },
     };
   /* *INDENT-ON* */
 
@@ -736,7 +736,7 @@ tst_VPA(MENU_ARGS)
     print_str("*\b");
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -845,7 +845,7 @@ tst_VPR(MENU_ARGS)
     print_str("*\b");
   }
 
-  set_colors(0);
+  set_colors(NULL);
 
   test_with_margins(FALSE);
 
@@ -876,7 +876,7 @@ tst_ecma48_curs(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test Character-Position-Absolute (HPA)",            tst_HPA },
       { "Test Cursor-Back-Tab (CBT)",                        tst_CBT },
       { "Test Cursor-Character-Absolute (CHA)",              tst_CHA },
@@ -886,7 +886,7 @@ tst_ecma48_curs(MENU_ARGS)
       { "Test Next-Line (CNL)",                              tst_CNL },
       { "Test Previous-Line (CPL)",                          tst_CPL },
       { "Test Vertical-Position-Relative (VPR)",             tst_VPR },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -903,14 +903,14 @@ tst_ecma48_misc(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Protected-Area Tests",                              tst_protected_area },
       { "Test Repeat (REP)",                                 tst_REP },
       { "Test Scroll-Down (SD)",                             tst_SD },
       { "Test Scroll-Left (SL)",                             tst_SL },
       { "Test Scroll-Right (SR)",                            tst_SR },
       { "Test Scroll-Up (SU)",                               tst_SU },
-      { "",                                                  0 },
+      { "",                                                  NULL },
     };
   /* *INDENT-ON* */
 
@@ -928,7 +928,7 @@ tst_nonvt100(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test of VT220 features",                            tst_vt220 },
       { "Test of VT320 features",                            tst_vt320 },
       { "Test of VT420 features",                            tst_vt420 },
@@ -937,7 +937,7 @@ tst_nonvt100(MENU_ARGS)
       { "Test ISO-6429 colors",                              tst_colors },
       { "Test other ISO-6429 features",                      tst_ecma48_misc },
       { "Test XTERM special features",                       tst_xterm },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 

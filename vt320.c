@@ -1,4 +1,4 @@
-/* $Id: vt320.c,v 1.101 2024/10/04 00:35:36 tom Exp $ */
+/* $Id: vt320.c,v 1.102 2024/12/05 00:43:14 tom Exp $ */
 
 /*
  * Reference:  VT330/VT340 Programmer Reference Manual (EK-VT3XX-TP-001)
@@ -102,7 +102,7 @@ tst_vt320_device_status(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT220 features",                               tst_vt220_device_status },
       { "Test Keyboard Status",                              tst_DSR_keyboard },
       { "Test Printer Status",                               tst_DSR_printer },
@@ -110,7 +110,7 @@ tst_vt320_device_status(MENU_ARGS)
       { "Test Locator Status",                               tst_DSR_locator_status },
       { "Identify Locator",                                  tst_DSR_identify_locator },
       { "Test Extended Cursor-Position (DECXCPR)",           tst_DSR_cursor },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -272,7 +272,7 @@ read_DECCIR(DECCIR_REPORT * output)
 
   do_csi("%d$w", Ps);
   report = get_reply();
-  if ((report = skip_dcs(report)) != 0
+  if ((report = skip_dcs(report)) != NULL
       && strip_terminator(report)
       && *report == Ps + '0'
       && !strncmp(report + 1, "$u", (size_t) 2)) {
@@ -451,7 +451,7 @@ any_decrqpsr(MENU_ARGS, int Ps)
   restore_charset();
 
   row = chrprint2(report, row, 1);
-  if ((report = skip_dcs(report)) != 0) {
+  if ((report = skip_dcs(report)) != NULL) {
     if (strip_terminator(report)
         && *report == Ps + '0'
         && !strncmp(report + 1, "$u", (size_t) 2)) {
@@ -491,7 +491,7 @@ tst_any_DECCIR(MENU_ARGS)
   static char nrc_mesg[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Reset (G0 ASCII, G1 Latin-1, no NRC mode)",         reset_charset },
       { nrc_mesg,                                            toggle_nrc },
       { whatis_Gx[0],                                        specify_G0 },
@@ -499,7 +499,7 @@ tst_any_DECCIR(MENU_ARGS)
       { whatis_Gx[2],                                        specify_G2 },
       { whatis_Gx[3],                                        specify_G3 },
       { "Cursor Information Report (DECCIR)",                tst_DECCIR },
-      { "",                                                  0 }
+      { "",                                                  NULL }
   };
   /* *INDENT-ON* */
 
@@ -574,11 +574,11 @@ tst_any_DECTABSR(MENU_ARGS)
   static char msg_toggle_tabstop[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Reset Tab Stops",                                   reset_tabstops },
       { msg_toggle_tabstop,                                  toggle_tabstop },
       { "Tab Stop Report (DECTABSR)",                        tst_DECTABSR },
-      { "",                                                  0 }
+      { "",                                                  NULL }
   };
   /* *INDENT-ON* */
   int last_tabstop = 0;
@@ -629,7 +629,7 @@ tst_DECRSPS_cursor(MENU_ARGS)
   decrqpsr(1);
   old_mode = strdup(get_reply());
 
-  if ((s = strchr(old_mode, 'u')) != 0) {
+  if ((s = strchr(old_mode, 'u')) != NULL) {
     int item;
     int row, col;
     int len;
@@ -864,11 +864,11 @@ tabstop_ruler(const char *tabsr, int row, int col)
     suffix = "\234";
     s = tabsr + 1;
   } else {
-    suffix = 0;
-    s = 0;
+    suffix = NULL;
+    s = NULL;
   }
 
-  if (s != 0 && !strncmp(s, "2$u", (size_t) 2)) {
+  if (s != NULL && !strncmp(s, "2$u", (size_t) 2)) {
     int value = 0;
     s += 2;
     while (*++s != '\0') {
@@ -944,7 +944,7 @@ tst_DECRSPS_tabs(MENU_ARGS)
   println("");
   println("");
   println("Restore:");
-  if ((s = strchr(old_tabs, 'u')) != 0)
+  if ((s = strchr(old_tabs, 'u')) != NULL)
     *s = 't';
   print_str(old_tabs);  /* restore original tab-stops */
   free(old_tabs);
@@ -978,7 +978,7 @@ tst_DECRQDE(MENU_ARGS)
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
 
-  if ((report = skip_csi(report)) != 0
+  if ((report = skip_csi(report)) != NULL
       && sscanf(report, "%d;%d;%d;%d;%d\"%c",
                 &Ph, &Pw, &Pml, &Pmt, &Pmp, &chr) == 6
       && chr == 'w') {
@@ -1014,7 +1014,7 @@ tst_DECRQTSR(MENU_ARGS)
   vt_move(row = 3, col = 10);
   chrprint2(report, row, col);
 
-  if ((report = skip_dcs(report)) != 0
+  if ((report = skip_dcs(report)) != NULL
       && strip_terminator(report)
       && !strncmp(report, "1$s", (size_t) 3)) {
     show = SHOW_SUCCESS;
@@ -1081,7 +1081,7 @@ any_RQM(MENU_ARGS, RQM_DATA * table, int tablesize, int private)
     if (LOG_ENABLED)
       fprintf(log_fp, NOTE_STR "testing %s\n", table[j].name);
     chrprint2(report, row + 1, 23);
-    if ((report = skip_csi(report)) != 0
+    if ((report = skip_csi(report)) != NULL
         && sscanf(report, (private
                            ? "?%d;%d$%c"
                            : "%d;%d$%c"),
@@ -1226,10 +1226,10 @@ tst_DECRPM(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "ANSI Mode Report (DECRPM)",                         tst_ISO_DECRPM },
       { "DEC Mode Report (DECRPM)",                          tst_DEC_DECRPM },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1401,7 +1401,7 @@ tst_vt320_DECRQSS(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Protected fields attributes (DECPRO)",              rpt_DECPRO },
       { "Select active status display (DECSASD)",            rpt_DECSASD },
       { "Select graphic rendition (SGR)",                    rpt_SGR },
@@ -1413,7 +1413,7 @@ tst_vt320_DECRQSS(MENU_ARGS)
       { "Set top and bottom margins (DECSTBM)",              rpt_DECSTBM },
       { "Set transmit termination character (DECTTC)",       rpt_DECTTC },
       { "Transmission line termination character (DECTLTC)", rpt_DECTLTC },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1435,12 +1435,12 @@ tst_vt320_cursor(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test Pan down (SU)",                                tst_SU },
       { "Test Pan up (SD)",                                  tst_SD},
       { "Test Vertical Cursor Coupling (DECVCCM)",           not_impl },
       { "Test Page Cursor Coupling (DECPCCM)",               not_impl },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1459,10 +1459,10 @@ tst_vt320_report_terminal(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Restore Terminal State (DECRSTS)",                  not_impl },
       { "Terminal State Report (DECRQTS/DECTSR)",            tst_DECRQTSR },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1481,14 +1481,14 @@ tst_vt320_report_presentation(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Cursor Information Report (DECCIR)",                tst_any_DECCIR },
       { "Tab Stop Report (DECTABSR)",                        tst_any_DECTABSR },
       { "Request Mode (DECRQM)/Report Mode (DECRPM)",        tst_DECRPM },
       { "Restore Presentation State (DECRSPS): cursor",      tst_DECRSPS_cursor },
       { "Restore Presentation State (DECRSPS): tabstops",    tst_DECRSPS_tabs },
       { "Status-String Report (DECRQSS)",                    tst_vt320_DECRQSS },
-      { "",                                                  0 }
+      { "",                                                  NULL }
   };
   /* *INDENT-ON* */
 
@@ -1510,14 +1510,14 @@ tst_vt320_reports(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT220 features",                               tst_vt220_reports },
       { "Test Device Status Report (DSR)",                   tst_vt320_device_status },
       { "Test Presentation State Reports",                   tst_vt320_report_presentation },
       { "Test Terminal State Reports",                       tst_vt320_report_terminal },
       { "Test User-Preferred Supplemental Set",              tst_upss },
       { "Test Window Report (DECRPDE)",                      tst_DECRQDE },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1599,10 +1599,10 @@ tst_PageFormat(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test set columns per page (DECSCPP)",               tst_DECSCPP },
       { "Test set lines per page (DECSLPP)",                 tst_DECSLPP },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1622,13 +1622,13 @@ tst_PageMovement(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test Next Page (NP)",                               not_impl },
       { "Test Preceding Page (PP)",                          not_impl },
       { "Test Page Position Absolute (PPA)",                 not_impl },
       { "Test Page Position Backward (PPB)",                 not_impl },
       { "Test Page Position Relative (PPR)",                 not_impl },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1648,10 +1648,10 @@ tst_vt320_screen(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT220 features",                               tst_vt220_screen },
       { "Test Status line (DECSASD/DECSSDT)",                tst_statusline },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
@@ -1670,14 +1670,14 @@ tst_vt320(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Test VT220 features",                               tst_vt220 },
       { "Test cursor-movement",                              tst_vt320_cursor },
       { "Test page-format controls",                         tst_PageFormat },
       { "Test page-movement controls",                       tst_PageMovement },
       { "Test reporting functions",                          tst_vt320_reports },
       { "Test screen-display functions",                     tst_vt320_screen },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 

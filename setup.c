@@ -1,4 +1,4 @@
-/* $Id: setup.c,v 1.52 2024/11/24 22:55:20 tom Exp $ */
+/* $Id: setup.c,v 1.55 2024/12/05 00:40:24 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -22,14 +22,16 @@ check_8bit_toggle(void)
 
   set_tty_raw(TRUE);
 
+  pause_replay();
   cup(1, 1);
   dsr(6);
   padding(5);   /* may not be needed */
   report = get_reply();
+  resume_replay();
 
   restore_ttymodes();
 
-  if ((report = skip_csi(report)) != 0
+  if ((report = skip_csi(report)) != NULL
       && !strcmp(report, "1;1R"))
     result = TRUE;
   if (LOG_ENABLED) {
@@ -62,7 +64,7 @@ find_levels(void)
     actual_id = 52;
     cur_level =
       max_level = 0;  /* must be a VT52 */
-  } else if ((report = skip_csi(report)) == 0 || strlen(report) < 3) {
+  } else if ((report = skip_csi(report)) == NULL || strlen(report) < 3) {
     actual_id = 100;
   } else if (*report == '?') {
     int pos = 1;
@@ -117,7 +119,7 @@ find_levels(void)
     }
     decrqss("\"p");
     report = get_reply();
-    if ((report = skip_dcs(report)) != 0
+    if ((report = skip_dcs(report)) != NULL
         && isdigit(CharOf(*report++))   /* 0 or 1 (by observation, though 1 is an err) */
         &&*report++ == '$'
         && *report++ == 'r'
@@ -129,7 +131,7 @@ find_levels(void)
   if (max_level >= 2) {
     do_csi(">c");   /* or "CSI > 0 c" */
     report = get_reply();
-    if ((report = skip_csi(report)) != 0 && *report == '>') {
+    if ((report = skip_csi(report)) != NULL && *report == '>') {
       int pos = 1;              /* index of first digit */
       switch (scan_DA(report, &pos)) {
       case 1:
@@ -214,7 +216,7 @@ toggle_DECSCL(MENU_ARGS)
 static int
 toggle_Logging(MENU_ARGS)
 {
-  if (log_fp == 0)
+  if (log_fp == NULL)
     enable_logging(NULL);
   else
     log_disabled = !log_disabled;
@@ -273,7 +275,7 @@ toggle_7bit_fsm(MENU_ARGS)
    * This case is tested by setting the 8th bit in the controls to ensure that
    * the parser has to deal with that situation.
    *
-   * parse_7bits == 2: 
+   * parse_7bits == 2:
    * This is for the UTF-8 environment.  C1 controls in put_char() are recoded
    * to UTF-8 to test if the terminal can interpret those.  Normally vttest
    * resets UTF-8 mode on startup; the "-u" option suppresses that, allowing
@@ -485,7 +487,7 @@ tst_setup(MENU_ARGS)
   static char txt_slowly[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { "Setup terminal to original test-configuration",       setup_terminal },
     { txt_output,                                            toggle_8bit_out },
     { txt_input8,                                            toggle_8bit_in },
@@ -494,7 +496,7 @@ tst_setup(MENU_ARGS)
     { txt_logging,                                           toggle_Logging },
     { txt_padded,                                            toggle_Padding },
     { txt_slowly,                                            toggle_Slowly },
-    { "",                                                    0 }
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 

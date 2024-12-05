@@ -1,4 +1,4 @@
-/* $Id: mouse.c,v 1.46 2024/10/22 20:52:39 tom Exp $ */
+/* $Id: mouse.c,v 1.47 2024/12/05 00:37:39 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -57,7 +57,7 @@ can_do_pixels(void)
 
     brc(13, 't');
     report = get_reply();
-    if ((report = skip_csi(report)) == 0
+    if ((report = skip_csi(report)) == NULL
         || sscanf(report,
                   "%d;%d;%d%c%c",
                   &reply,
@@ -73,7 +73,7 @@ can_do_pixels(void)
     } else {
       brc(14, 't');
       report = get_reply();
-      if ((report = skip_csi(report)) == 0
+      if ((report = skip_csi(report)) == NULL
           || sscanf(report,
                     "%d;%d;%d%c%c",
                     &reply,
@@ -89,7 +89,7 @@ can_do_pixels(void)
       } else {
         brc(16, 't');
         report = get_reply();
-        if ((report = skip_csi(report)) == 0
+        if ((report = skip_csi(report)) == NULL
             || sscanf(report,
                       "%d;%d;%d%c%c",
                       &reply,
@@ -199,16 +199,16 @@ sgr_param(char **report, int final, unsigned offset)
 {
   unsigned result = 0;
 
-  if (*report != 0) {
+  if (*report != NULL) {
     char *base = *report;
-    char *endp = 0;
+    char *endp = NULL;
     long value = strtol(base, &endp, 10);
 
     if (value >= (long) offset
-        && (endp == 0
+        && (endp == NULL
             || (*endp == 0 || *endp == ';' || *endp == final))) {
       result = (unsigned) value - offset;
-      if (endp != 0) {
+      if (endp != NULL) {
         if (*endp == ';')
           ++endp;
         *report = endp;
@@ -216,7 +216,7 @@ sgr_param(char **report, int final, unsigned offset)
         *report = base + strlen(base);
       }
     } else {
-      *report = 0;
+      *report = NULL;
       result = offset;
     }
   }
@@ -237,9 +237,9 @@ skip_params(char *report)
 static char *
 parse_mouse_M(char *report, unsigned *b, unsigned *x, unsigned *y)
 {
-  char *result = 0;
+  char *result = NULL;
 
-  if ((report = skip_csi(report)) != 0) {
+  if ((report = skip_csi(report)) != NULL) {
     char *finalp;
 
     switch (do_ExtCoords) {
@@ -303,9 +303,9 @@ parse_mouse_T(char *report,
               unsigned *mouse_x,
               unsigned *mouse_y)
 {
-  char *result = 0;
+  char *result = NULL;
 
-  if ((report = skip_csi(report)) != 0) {
+  if ((report = skip_csi(report)) != NULL) {
     char *finalp;
 
     switch (do_ExtCoords) {
@@ -355,9 +355,9 @@ parse_mouse_T(char *report,
 static char *
 parse_mouse_t(char *report, unsigned *x, unsigned *y)
 {
-  char *result = 0;
+  char *result = NULL;
 
-  if ((report = skip_csi(report)) != 0) {
+  if ((report = skip_csi(report)) != NULL) {
     char *finalp;
 
     switch (do_ExtCoords) {
@@ -518,7 +518,7 @@ show_locator_report(char *report, int row, int pixels)
   ToData(0);
   vt_el(2);
   chrprint2(report, report_row, report_col);
-  while ((report = skip_csi(report)) != 0
+  while ((report = skip_csi(report)) != NULL
          && (sscanf(report,
                     "%d;%d;%u;%u&w", &Pe, &Pb, &Pr, &Pc) == 4
              || sscanf(report,
@@ -556,7 +556,7 @@ get_screensize(MENU_ARGS)
 
   brc(14, 't'); /* report window's pixel-size */
   report = get_reply();
-  if ((report = skip_csi(report)) == 0
+  if ((report = skip_csi(report)) == NULL
       || sscanf(report, "4;%d;%d%c", &pixels_high, &pixels_wide, &tmp) != 3
       || tmp != 't'
       || pixels_high <= 0
@@ -567,7 +567,7 @@ get_screensize(MENU_ARGS)
 
   brc(18, 't'); /* report window's char-size */
   report = get_reply();
-  if ((report = skip_csi(report)) == 0
+  if ((report = skip_csi(report)) == NULL
       || sscanf(report, "8;%d;%d%c", &chars_high, &chars_wide, &tmp) != 3
       || tmp != 't'
       || chars_high <= 0
@@ -674,7 +674,7 @@ loop:
     ToData(0);
     chrprint2(report, report_row, report_col);
 
-    while ((report = parse_mouse_M(report, &b, &xx, &yy)) != 0) {
+    while ((report = parse_mouse_M(report, &b, &xx, &yy)) != NULL) {
       unsigned adj = 1;
       char result[80];
       char modifiers[80];
@@ -825,7 +825,7 @@ loop:
     vt_el(2);
     chrprint2(report, report_row, report_col);
 
-    if (parse_mouse_M(report, &b, &x, &y) != 0) {
+    if (parse_mouse_M(report, &b, &x, &y) != NULL) {
       b &= 7;
       if (b != 3) {
         /* send the xterm the highlighting range (it MUST be done first) */
@@ -924,7 +924,7 @@ loop:
     ToData(0);
     vt_el(2);
     chrprint2(report, report_row, report_col);
-    if (parse_mouse_M(report, &b, &x, &y) != 0) {
+    if (parse_mouse_M(report, &b, &x, &y) != NULL) {
       cup((int) y, (int) x);
       tprintf("%u", b + 1);
       vt_move((int) y, (int) x);
@@ -950,7 +950,7 @@ tst_dec_locator_events(MENU_ARGS)
   static char pixel_screensize[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { "One-Shot",                                            test_dec_locator_event },
     { "Repeated",                                            test_dec_locator_events },
     { "One-Shot (pixels)",                                   test_dec_locator_event_p },
@@ -958,7 +958,7 @@ tst_dec_locator_events(MENU_ARGS)
     { "Filter Rectangle",                                    test_dec_locator_rectangle },
     { "Filter Rectangle (unfiltered)",                       test_dec_locator_unfiltered },
     { pixel_screensize,                                      get_screensize },
-    { "",                                                    0 }
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 
@@ -1060,7 +1060,7 @@ tst_mouse(MENU_ARGS)
   static char txt_FocusEvent[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { txt_Utf8Mouse,                                         toggle_ExtCoords },
     { txt_FocusEvent,                                        toggle_FocusEvent },
     { "X10 Mouse Compatibility",                             test_X10_mouse },
@@ -1069,7 +1069,7 @@ tst_mouse(MENU_ARGS)
     { "Mouse Any-Event Tracking (XFree86 xterm)",            test_mouse_any_event },
     { "Mouse Button-Event Tracking (XFree86 xterm)",         test_mouse_button_event },
     { "DEC Locator Events (DECterm)",                        tst_dec_locator_events },
-    { "",                                                    0 }
+    { "",                                                    NULL }
   };
   /* *INDENT-ON* */
 

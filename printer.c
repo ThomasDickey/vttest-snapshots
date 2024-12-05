@@ -1,4 +1,4 @@
-/* $Id: printer.c,v 1.10 2024/09/29 13:03:10 tom Exp $ */
+/* $Id: printer.c,v 1.11 2024/12/05 00:37:39 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -156,7 +156,7 @@ tst_printing(MENU_ARGS)
   static char start_mesg[80];
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { assign_mesg,                                         tst_Assign },
       { start_mesg,                                          tst_Start },
       { pex_mesg,                                            tst_DECPEX },
@@ -167,7 +167,7 @@ tst_printing(MENU_ARGS)
       { "Test Print composed main-display (MC)",             tst_print_display },
       { "Test Print all pages (MC)",                         tst_print_all_pages },
       { "Test Print cursor line (MC)",                       tst_print_cursor },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 

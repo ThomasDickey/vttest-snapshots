@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.22 2024/11/24 00:16:17 tom Exp $ */
+/* $Id: vt52.c,v 1.23 2024/12/05 00:43:14 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -244,7 +244,7 @@ tst_vt52(MENU_ARGS)
       vt_move(row, col = 10);
       printxx("Response to CUP(1,1)/DSR(6)");
       chrprint2(response, row, col);
-      if ((temp = skip_prefix(csi_input(), response)) != 0) {
+      if ((temp = skip_prefix(csi_input(), response)) != NULL) {
         if (!strcmp("1;1R", temp)) {
           printxx("S8C1T recognized --");
           show_result(SHOW_FAILURE);
@@ -254,7 +254,7 @@ tst_vt52(MENU_ARGS)
         }
       } else {
         input_8bits = FALSE;  /* we expect this anyway */
-        if ((temp = skip_prefix(csi_input(), response)) != 0
+        if ((temp = skip_prefix(csi_input(), response)) != NULL
             && !strcmp("1;1R", temp)) {
           show_result(SHOW_SUCCESS);
         } else {

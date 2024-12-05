@@ -1,4 +1,4 @@
-/* $Id: draw.c,v 1.14 2024/10/02 00:08:24 tom Exp $ */
+/* $Id: draw.c,v 1.15 2024/12/05 00:38:44 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -111,7 +111,7 @@ draw_box_caption(const BOX *box, int margin, const char **c)
   int y = y0;
   const char *s;
 
-  while ((s = *c++) != 0) {
+  while ((s = *c++) != NULL) {
     int t;
     while ((t = *s++) != 0) {
       if (x == x0) {

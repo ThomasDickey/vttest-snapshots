@@ -1,4 +1,4 @@
-/* $Id: reset.c,v 1.9 2024/09/25 23:54:01 tom Exp $ */
+/* $Id: reset.c,v 1.10 2024/12/05 00:37:39 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -68,11 +68,11 @@ tst_rst(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Reset to Initial State (RIS)",                      tst_RIS },
       { "Invoke Terminal Test (DECTST)",                     tst_DECTST },
       { "Soft Terminal Reset (DECSTR)",                      tst_DECSTR },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 

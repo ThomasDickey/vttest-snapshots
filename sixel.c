@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.29 2024/10/22 21:33:36 tom Exp $ */
+/* $Id: sixel.c,v 1.30 2024/12/05 00:43:14 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -162,11 +162,11 @@ find_char(int chr)
 
   chr -= (' ' + StartingCharNum);
   if (chr < 0)
-    return 0;
+    return NULL;
   while (chr > 0) {
     do {
       if (*s == '\0')
-        return 0;
+        return NULL;
     } while (*s++ != ';');
     chr--;
   }
@@ -188,7 +188,7 @@ display_char(FILE *fp, int chr)
   char *s;
 
   s = find_char(chr);
-  if (s != 0) {
+  if (s != NULL) {
     int bit = 0;
     int high = 0;
     int n;
@@ -294,13 +294,13 @@ setup_softchars(const char *filename)
   size_t use = 0;
   char *buffer;
   char *s;
-  const char *first = 0;
-  char *last = 0;
+  const char *first = NULL;
+  char *last = NULL;
   int save_8bits = input_8bits;
   input_8bits = FALSE;  /* use the 7-bit input-parsing */
 
   /* read the file into memory */
-  if ((fp = fopen(filename, "r")) == 0) {
+  if ((fp = fopen(filename, "r")) == NULL) {
     failed(filename);
   }
   if ((buffer = malloc(len)) == NULL)
@@ -322,8 +322,8 @@ setup_softchars(const char *filename)
   /* find the DCS that begins the control string */
   /* and the ST that ends the control string */
   for (s = buffer; *s; s++) {
-    if (first == 0) {
-      if (skip_dcs(s) != 0)
+    if (first == NULL) {
+      if (skip_dcs(s) != NULL)
         first = s;
     } else {
       if (!strncmp(s, st_input(), (size_t) 2)) {
@@ -335,12 +335,12 @@ setup_softchars(const char *filename)
   }
   input_8bits = save_8bits;
 
-  if (first == 0 || last == 0) {
+  if (first == NULL || last == NULL) {
     fprintf(stderr, "Not a vtXXX font description: %s\n", filename);
     exit(EXIT_FAILURE);
   }
   for (s = buffer; (*s++ = *first++) != '\0';) ;
-  if (LOG_ENABLED && first != 0)
+  if (LOG_ENABLED && first != NULL)
     fprintf(log_fp, NOTE_STR "font string %s\n", buffer);
 
   font_string = buffer;
@@ -353,16 +353,16 @@ tst_softchars(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Download the soft characters (DECDLD)",             tst_DECDLD },
       { "Examine the soft characters",                       tst_display },
       { "Clear the soft characters",                         tst_cleanup },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 
   vt_move(1, 1);
-  if (font_string == 0 || *font_string == 0) {
+  if (font_string == NULL || *font_string == 0) {
     printxx("You did not specify a font-file with the -f option\n");
     return MENU_HOLD;
   }

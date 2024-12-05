@@ -1,4 +1,4 @@
-/* $Id: color.c,v 1.41 2024/10/02 00:08:06 tom Exp $ */
+/* $Id: color.c,v 1.42 2024/12/05 00:38:44 tom Exp $ */
 
 #include <vttest.h>
 #include <draw.h>
@@ -307,14 +307,14 @@ simple_bce_test(MENU_ARGS)
     "The screen background should be blue, with a box made of asterisks",
     " and this caption, in orange (non-bold yellow). ",
     " There should be no cells with the default foreground or background.",
-    0
+    NULL
   };
   static const char *text2[] =
   {
     "The screen background should be black, with a box made of asterisks",
     " and this caption, in white (actually gray - it is not bold). ",
     " Only the asterisk box should be in color.",
-    0
+    NULL
   };
 
   if (make_box_params(&box1, 3, 10) < 0
@@ -417,14 +417,14 @@ fancy_bce_test(MENU_ARGS)
     "The screen background should be blue, with a box made of asterisks",
     " and this caption, in orange (non-bold yellow). ",
     " There should be no cells with the default foreground or background.",
-    0
+    NULL
   };
   static const char *text2[] =
   {
     "The screen background should be black, with a box made of asterisks",
     " and this caption, in white (actually gray - it is not bold). ",
     " Only the asterisk box should be in color.",
-    0
+    NULL
   };
 
   if (make_box_params(&box1, 3, 10) < 0
@@ -660,11 +660,11 @@ test_vt100_colors(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU colormenu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { "Test of cursor movements",                            test_color_movements },
     { "Test of screen features",                             test_color_screen },
     { "Test Insert/Delete Char/Line",                        test_color_insdel, },
-    { "", 0 }
+    { "", NULL }
   };
   /* *INDENT-ON* */
 
@@ -693,7 +693,7 @@ tst_colors(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU colormenu[] = {
-    { "Exit",                                                0 },
+    { "Exit",                                                NULL },
     { txt_override_color,                                    toggle_color_mode, },
     { "Display color test-pattern",                          show_test_pattern, },
     { "Test SGR-0 color reset",                              test_SGR_0, },
@@ -703,7 +703,7 @@ tst_colors(MENU_ARGS)
     { "Test other ISO-6429 features with BCE",               test_ecma48_misc },
     { "Test screen features with BCE",                       test_bce_color, },
     { "Test screen features with ISO 6429 SGR 22-27 codes",  test_iso_6429_sgr, },
-    { "", 0 }
+    { "", NULL }
   };
   /* *INDENT-ON* */
 

@@ -1,4 +1,4 @@
-/* $Id: status.c,v 1.11 2022/02/16 01:28:19 tom Exp $ */
+/* $Id: status.c,v 1.12 2024/12/05 00:40:24 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -153,11 +153,11 @@ tst_statusline(MENU_ARGS)
 {
   /* *INDENT-OFF* */
   static MENU my_menu[] = {
-      { "Exit",                                              0 },
+      { "Exit",                                              NULL },
       { "Simple Status line Test",                           simple_statusline },
       { "Test Graphic-Rendition in Status line",             SGR_statusline },
       { "Test Cursor-movement in Status line",               CUP_statusline },
-      { "",                                                  0 }
+      { "",                                                  NULL }
     };
   /* *INDENT-ON* */
 

@@ -1,5 +1,12 @@
--- $Id: CHANGES,v 1.312 2024/11/25 00:38:18 tom Exp $
+-- $Id: CHANGES,v 1.317 2024/12/05 00:30:03 tom Exp $
 -------------------------------------------------------------------------------
+
+20241204
+	+ add tests for XTTITLEPOS, XTSMTITLE and XTRMTITLE from xterm #396.
+
+	+ pause/resume replay while checking the 7-bit/8-bit/C2 toggle.
+
+	+ improve lint options in configure script
 
 20241124
 	+ correct check for end-of-options (cf: 20241010)
@@ -7,7 +14,7 @@
 	+ check after toggling 7-bit/8-bit/C2 parser, revert if the terminal
 	  does not appear to support the mode.
 
-	+ modify vt52 test to check behavior of out-of-bounds cursor addressing
+	+ modify vt52 test to check behavior of out-of-bounds row-addressing
 
 20241031
 	+ add null-pointer check in window-modify tests when logging is not
