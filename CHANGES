@@ -1,5 +1,15 @@
--- $Id: CHANGES,v 1.317 2024/12/05 00:30:03 tom Exp $
+-- $Id: CHANGES,v 1.321 2024/12/08 20:00:18 tom Exp $
 -------------------------------------------------------------------------------
+
+20241208
+	+ modify sixel.c to show all of the font glyphs, for context, and also
+	  add a menu entry to quickly display the bitmap for each.
+
+	+ bracket keyboard-tests in keyboard.c with command-replay pause/resume.
+
+	+ bracket mouse-tests in tek4014.c with command-replay pause/resume.
+
+	+ amend change to VT52 cursor-addressing per DEC 070 (mintty #1299).
 
 20241204
 	+ add tests for XTTITLEPOS, XTSMTITLE and XTRMTITLE from xterm #396.

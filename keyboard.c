@@ -1,4 +1,4 @@
-/* $Id: keyboard.c,v 1.47 2024/12/05 00:37:39 tom Exp $ */
+/* $Id: keyboard.c,v 1.48 2024/12/06 22:02:22 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -734,13 +734,14 @@ tst_ControlKeys(MENU_ARGS)
     vt_hilite(FALSE);
   }
   vt_move(19, 1);
+
   set_tty_crmod(TRUE);
-  println(
-           "Push each CTRL-key TWICE. Note that you should be able to send *all*");
-  println(
-           "CTRL-codes twice, including CTRL-S (X-Off) and CTRL-Q (X-On)!");
-  println(
-           "Finish with DEL (also called DELETE or RUB OUT), or wait 1 minute.");
+  pause_replay();
+
+  println("Push each CTRL-key TWICE. Note that you should be able to send *all*");
+  println("CTRL-codes twice, including CTRL-S (X-Off) and CTRL-Q (X-On)!");
+  println("Finish with DEL (also called DELETE or RUB OUT), or wait 1 minute.");
+
   set_tty_raw(TRUE);
   do {
     int row, col;
@@ -769,7 +770,9 @@ tst_ControlKeys(MENU_ARGS)
     }
   } while (kbdc != '\177');
 
+  resume_replay();
   restore_ttymodes();
+
   vt_move(max_lines, 1);
   okflag = 1;
   for (i = 0; i < 32; i++)

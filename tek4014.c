@@ -1,4 +1,4 @@
-/* $Id: tek4014.c,v 1.19 2024/12/05 00:40:24 tom Exp $ */
+/* $Id: tek4014.c,v 1.22 2024/12/06 21:43:26 tom Exp $ */
 
 #include <vttest.h>
 #include <esc.h>
@@ -137,7 +137,7 @@ log_mouse_click(char *report)
     } else {
       fprintf(log_fp, NOTE_STR "key %d", CharOf(report[0]));
     }
-    fprintf(log_fp, NOTE_STR " (%d,%d)\n", new_y, new_x);
+    fprintf(log_fp, " (%d,%d)\n", new_y, new_x);
     fflush(log_fp);
   }
 }
@@ -191,6 +191,7 @@ tek_mouse_coords(MENU_ARGS)
   println("Any key or mouse click twice to exit...");
   status[0] = '\0';
 
+  pause_replay();
   do {
     int new_x;
     int new_y;
@@ -220,6 +221,8 @@ tek_mouse_coords(MENU_ARGS)
   } while (strcmp(report, status));
 
   tek_ALP();
+
+  resume_replay();
   restore_ttymodes();
   tek_enable(0);
   return FALSE;
@@ -254,6 +257,7 @@ tek_mouse_lines(MENU_ARGS)
   println("Any mouse click twice to exit...");
   status[0] = '\0';
 
+  pause_replay();
   do {
     strncpy(status, report, (size_t) 5)[5] = 0;
     if (old_x >= 0 && old_y >= 0) {
@@ -269,6 +273,7 @@ tek_mouse_lines(MENU_ARGS)
     new_y = tek_coord(report, 3);
   } while (strcmp(report, status));
 
+  resume_replay();
   restore_ttymodes();
   tek_enable(0);
   return FALSE;

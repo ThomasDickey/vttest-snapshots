@@ -1,4 +1,4 @@
-/* $Id: sixel.c,v 1.30 2024/12/05 00:43:14 tom Exp $ */
+/* $Id: sixel.c,v 1.31 2024/12/08 18:24:37 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -194,7 +194,20 @@ display_char(FILE *fp, int chr)
     int n;
     char bits[6][MAX_WIDTH];
 
+    for (n = 32; n < 127; ++n) {
+      int row = 6 + (n % 16);
+      int col = 8 * (n / 16);
+      vt_move(row, col);
+      if (n == chr)
+        vt_hilite(1);
+      cprintf("%d %cN%c", n, ESC, n);   /* use SS2 to invoke G2 into GL */
+      if (n == chr)
+        vt_hilite(0);
+    }
+    vt_move(6, 1);
+
     fprintf(fp, "Glyph '%c'\n", chr);
+
     do {
       if (*s >= '?' && *s <= '~') {
         for (n = 0; n < 6; n++)
@@ -239,7 +252,7 @@ tst_DECDLD(MENU_ARGS)
 }
 
 static int
-tst_display(MENU_ARGS)
+tst_display_one(MENU_ARGS)
 {
   int d, c = -1;
 
@@ -268,6 +281,27 @@ tst_display(MENU_ARGS)
 
   restore_ttymodes();
   return MENU_NOHOLD;
+}
+
+static int
+tst_display_all(MENU_ARGS)
+{
+  int c;
+
+  vt_move(1, 1);
+  display_head(stdout);
+
+  set_tty_raw(TRUE);
+  set_tty_echo(FALSE);
+
+  for (c = 32; c < 127; ++c) {
+    vt_move(6, 1);
+    display_char(stderr, c);
+    zleep(100);
+  }
+  restore_ttymodes();
+  vt_move(23, 1);
+  return MENU_HOLD;
 }
 
 /*
@@ -355,7 +389,8 @@ tst_softchars(MENU_ARGS)
   static MENU my_menu[] = {
       { "Exit",                                              NULL },
       { "Download the soft characters (DECDLD)",             tst_DECDLD },
-      { "Examine the soft characters",                       tst_display },
+      { "Examine the soft characters, one-by-one",           tst_display_one },
+      { "Examine all the soft characters",                   tst_display_all },
       { "Clear the soft characters",                         tst_cleanup },
       { "",                                                  NULL }
     };

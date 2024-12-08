@@ -1,4 +1,4 @@
-/* $Id: vt52.c,v 1.23 2024/12/05 00:43:14 tom Exp $ */
+/* $Id: vt52.c,v 1.26 2024/12/06 09:29:28 tom Exp $ */
 
 #include <vttest.h>
 #include <ttymodes.h>
@@ -43,6 +43,7 @@ tst_vt52(MENU_ARGS)
   /* *INDENT-ON* */
 
   int i, j;
+  int box_r = 71;
   char *response;
   VTLEVEL save;
 
@@ -133,9 +134,16 @@ tst_vt52(MENU_ARGS)
   }
   /*
    * Erase the "*FooBar" on the right-side of the box, leaving just "*".
+   * A real VT52 would leave a ragged right-margin; VT100 emulating VT52 won't.
    */
+  vt52cuf1();   /* Cursor Right */
+  vt52cuf1();   /* Cursor Right */
   for (i = 2; i <= max_lines - 1; i++) {
-    vt52cup(i, 71);
+    int adj = i % 3;
+    if (adj) {
+      vt52cup(i, min_cols + 1 + adj);   /* past right-margin of row i */
+    } else
+      vt52cup(i, box_r);
     vt52el();   /* Erase to end of line */
   }
 

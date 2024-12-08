@@ -1,3 +1,9 @@
+vttest-cur (2.7.20241208) unstable; urgency=low
+
+  * maintenance updates
+
+ -- Thomas E. Dickey <dickey@invisible-island.net>  Fri, 06 Dec 2024 03:41:14 -0500
+
 vttest-cur (2.7.20241204) unstable; urgency=low
 
   * maintenance updates
